@@ -25,12 +25,12 @@ RmArrayView<const RmRef<IRmGUIWidget>> RmGUIWidget::getChildren() const
 	return m_ChildWidgetList;
 }
 
-void RmGUIWidget::paint(rmpainter painter)
+void RmGUIWidget::paint(rmpainter painter, rmrect client)
 {
 	// Do nothion.
 }
 
-void RmGUIWidget::handle(rmevent_source source, rmevent event)
+void RmGUIWidget::handle(rmsource source, rmevent event)
 {
 	// Do nothion.
 }

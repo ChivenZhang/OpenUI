@@ -15,7 +15,7 @@ class RMGUI_API IRmGUIEventSource
 public:
 	virtual ~IRmGUIEventSource() = default;
 };
-using rmevent_source = RmRaw<IRmGUIEventSource>;
+using rmsource = RmRaw<IRmGUIEventSource>;
 
 /// @brief Base interface of all event handlers.
 class RMGUI_API IRmGUIEventHandler
@@ -23,6 +23,6 @@ class RMGUI_API IRmGUIEventHandler
 public:
 	virtual ~IRmGUIEventHandler() = default;
 
-	virtual void handle(rmevent_source source, rmevent event) = 0;
+	virtual void handle(rmsource source, rmevent event) = 0;
 };
 using rmevent_handler = RmRaw<IRmGUIEventHandler>;

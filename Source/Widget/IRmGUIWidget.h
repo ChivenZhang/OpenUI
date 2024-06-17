@@ -15,5 +15,5 @@ public:
 
 	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const = 0;
 
-	virtual void paint(rmpainter painter) = 0;
+	virtual void paint(rmpainter painter, rmrect client) = 0;
 };

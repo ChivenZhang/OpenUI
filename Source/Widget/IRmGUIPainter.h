@@ -5,6 +5,7 @@ struct RmRect
 {
 	float X, Y, W, H;
 };
+using rmrect = RmRaw<RmRect>;
 
 struct RmPoint
 {
