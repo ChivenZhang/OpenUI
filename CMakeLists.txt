@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-project(rmgui-in-game VERSION 0.1 LANGUAGES CXX)
+project(OpenUI VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,8 +14,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
 add_subdirectory(Source)
 
-add_executable (rmgui-in-game "rmgui-in-game.cpp" )
+#add_executable (OpenUI "OpenUI.cpp" )
 
-#add_dependencies(rmgui-in-game RMGUI)
+#add_dependencies(OpenUI RMGUI)
 
-target_link_libraries(rmgui-in-game RMGUI)
+#target_link_libraries(OpenUI RMGUI)

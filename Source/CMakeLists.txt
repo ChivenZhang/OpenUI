@@ -2,7 +2,7 @@
 
 add_definitions(-DRMGUI_SHARED_LIBRARY)
 
-add_library (RMGUI SHARED
+add_library (RmGUI SHARED
 	RmGUI.h
 	Utility/shared_recursive_mutex.h
 	Utility/span.h
@@ -12,8 +12,9 @@ add_library (RMGUI SHARED
 	Widget/IRmGUIPainter.h
 	Widget/IRmGUIEvent.h 
 	Render/IRmGUIRender.h
- "Widget/IRmGUIContext.h")
+	Widget/IRmGUIContext.h
+)
 
-target_include_directories(RMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(RMGUI)
+target_link_libraries(RmGUI)
