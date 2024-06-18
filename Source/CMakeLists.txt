@@ -4,24 +4,27 @@ add_definitions(-DRMGUI_SHARED_LIBRARY)
 
 add_library (RmGUI SHARED
 	RmGUI.h
+	Render/IRmGUIRender.h
+	Render/Private/RmGUIRender.cpp
+	Render/Private/RmGUIRender.h
 	Utility/shared_recursive_mutex.h
 	Utility/span.h
+	Utility/HashUtility.h
 	Widget/IRmGUIWidget.h
 	Widget/Private/RmGUIWidget.h
 	Widget/Private/RmGUIWidget.cpp
 	Widget/IRmGUIPainter.h
-	 
-	Render/IRmGUIRender.h
 	Widget/IRmGUIContext.h
 	Widget/IRmGUIEvent.h
-	Render/Private/RmGUIRender.cpp
-	Render/Private/RmGUIRender.h
 	Widget/Private/RmGUIContext.h 
 	Widget/Private/RmGUIContext.cpp 
 	Widget/Private/RmGUIPainter.h 
 	Widget/Private/RmGUIPainter.cpp
- "Widget/Private/RmGUIEvent.cpp" "Utility/HashUtility.h")
+	Widget/Private/RmGUIEvent.cpp 
+)
 
 target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(RmGUI)
+target_link_libraries(RmGUI 
+	cairo
+)

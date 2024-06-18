@@ -1,9 +1,3 @@
-#pragma comment(lib, "SDL2.lib")
-#pragma comment(lib, "glew32.lib")
-#pragma comment(lib, "GlU32.Lib")
-#pragma comment(lib, "OpenGL32.Lib")
-#pragma comment(lib, "RmGUI.Lib")
-
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>  
 #include <GL/glew.h>
@@ -21,7 +15,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// 创建SDL窗口  
-	window = SDL_CreateWindow("SDL2, OpenGL and GLEW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("SDL2, OpenGL and GLEW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (window == nullptr) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_Quit();
@@ -95,7 +89,7 @@ int main(int argc, char* argv[]) {
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseMoveEvent event2(event.motion.x, event.motion.y, x, y, event.button.button, event.button.button, event.key.keysym.mod);
+				IRmGUIMouseMoveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
 				context->sendEvent(nullptr, &event2);
 			}
 			break;
@@ -105,7 +99,7 @@ int main(int argc, char* argv[]) {
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseDownEvent event2(event.motion.x, event.motion.y, x, y, event.button.button, event.button.button, event.key.keysym.mod);
+				IRmGUIMouseDownEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
 				context->sendEvent(nullptr, &event2);
 			}
 			break;
@@ -114,7 +108,15 @@ int main(int argc, char* argv[]) {
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseUpEvent event2(event.motion.x, event.motion.y, x, y, event.button.button, event.button.button, event.key.keysym.mod);
+				IRmGUIMouseUpEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
+				context->sendEvent(nullptr, &event2);
+			}
+			break;
+			case SDL_MOUSEWHEEL: // 鼠标滚轮
+			{
+				int x, y;
+				SDL_GetWindowPosition(window, &x, &y);
+				IRmGUIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
 				context->sendEvent(nullptr, &event2);
 			}
 			break;
@@ -153,14 +155,14 @@ int main(int argc, char* argv[]) {
 				{
 					int x, y;
 					SDL_GetWindowPosition(window, &x, &y);
-					IRmGUIMouseEnterEvent event2(event.motion.x, event.motion.y, x, y, event.button.button, event.button.button, event.key.keysym.mod);
+					IRmGUIMouseEnterEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
 					context->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_LEAVE:
 				{
 					int x, y;
 					SDL_GetWindowPosition(window, &x, &y);
-					IRmGUIMouseLeaveEvent event2(event.motion.x, event.motion.y, x, y, event.button.button, event.button.button, event.key.keysym.mod);
+					IRmGUIMouseLeaveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
 					context->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_GAINED:
