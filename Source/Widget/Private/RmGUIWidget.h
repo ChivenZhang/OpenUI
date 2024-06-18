@@ -10,7 +10,7 @@ public:
 	virtual RmArrayView<RmRef<IRmGUIWidget>> getChildren() override;
 	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const override;
 	virtual void paint(rmpainter painter, rmrect client) override;
-	virtual void handle(rmsource source, rmevent event) override;
+	virtual void handle(rmreactor source, rmevent event) override;
 
 protected:
 	rmwidget m_ParentWidget;

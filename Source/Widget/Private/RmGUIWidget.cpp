@@ -30,7 +30,7 @@ void RmGUIWidget::paint(rmpainter painter, rmrect client)
 	// Do nothion.
 }
 
-void RmGUIWidget::handle(rmsource source, rmevent event)
+void RmGUIWidget::handle(rmreactor source, rmevent event)
 {
 	// Do nothion.
 }
