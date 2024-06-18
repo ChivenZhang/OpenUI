@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
 	// 这里可以添加OpenGL的初始化和渲染代码  
+
 	auto context = IRmGUIContext::GetInstance();
 
 	// 主循环  
@@ -185,6 +186,12 @@ int main(int argc, char* argv[]) {
 				break;
 			}
 		}
+
+		// ==================
+		SDL_GL_MakeCurrent(window, glContext);
+		glClearColor(104 / 255.0f, 33 / 255.0f, 122 / 255.0f, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		// ==================
 
 		// 更新屏幕内容  
 		SDL_GL_SwapWindow(window);

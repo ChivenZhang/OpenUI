@@ -10,7 +10,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
 #add_definitions( )
 
-# Need to Copy x64-windows from vcpkg to External folder.
+# Please copy x64-windows to External folder after install library below by vcpkg.
+# vcpkg.exe install SDL2:x64-windows
+# vcpkg.exe install glew32:x64-windows
+# vcpkg.exe install pango::x64-windows
+
 include_directories(Source)
 include_directories(External/x64-windows/include)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
