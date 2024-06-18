@@ -10,6 +10,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
 #add_definitions( )
 
+# Copy x64-windows from vcpkg
+include_directories(Source)
 include_directories(External/x64-windows/include)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
         link_directories(External/x64-windows/debug/lib)
@@ -17,12 +19,5 @@ else()
         link_directories(External/x64-windows/lib)
 endif()
 
-#add_library( )
-
 add_subdirectory(Source)
-
-#add_executable (OpenUI "OpenUI.cpp" )
-
-#add_dependencies(OpenUI RMGUI)
-
-#target_link_libraries(OpenUI RMGUI)
+add_subdirectory(Project)

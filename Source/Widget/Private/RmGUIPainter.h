@@ -31,5 +31,5 @@ public:
 	void translate(float dx, float dy) override;
 
 protected:
-
+	RmRaw<_cairo> m_NativeContext;
 };
