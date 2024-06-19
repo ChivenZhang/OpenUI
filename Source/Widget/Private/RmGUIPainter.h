@@ -1,10 +1,12 @@
 #pragma once
 #include "Widget/IRmGUIPainter.h"
 #include <cairo/cairo.h>
+class RmGUIContext;
 
 class RmGUIPainter : public IRmGUIPainter
 {
 public:
+	RmGUIPainter(RmGUIContext* context);
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawEllipse(int x, int y, int width, int height) override;
@@ -31,5 +33,5 @@ public:
 	virtual void translate(float dx, float dy) override;
 
 protected:
-	RmRaw<_cairo> m_NativeContext;
+	cairo_t* m_NativeContext;
 };

@@ -1,4 +1,5 @@
 #include "RmGUIPanel.h"
+#include <cairo/cairo.h>
 
 RmGUIPanel::RmGUIPanel(rmwidget parent)
 	:
@@ -8,9 +9,4 @@ RmGUIPanel::RmGUIPanel(rmwidget parent)
 
 void RmGUIPanel::paint(rmpainter painter, rmrect client)
 {
-}
-
-void RmGUIPanel::mouseMoveEvent(rmevent_mouse event)
-{
-	printf("mouse move in panel\n");
 }

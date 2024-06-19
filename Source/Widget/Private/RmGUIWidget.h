@@ -13,6 +13,8 @@ public:
 	virtual void setParent(rmwidget parent) override;
 	virtual RmArrayView<RmRef<IRmGUIWidget>> getChildren() override;
 	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const override;
+	virtual bool addWidget(RmRef<IRmGUIWidget> widget) override;
+	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) override;
 	virtual bool filter(rmreactor source, rmevent event) override;
 	virtual void handle(rmreactor source, rmevent event) override;
 

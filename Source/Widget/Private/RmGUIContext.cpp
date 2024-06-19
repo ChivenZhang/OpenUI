@@ -5,7 +5,7 @@ RmRef<IRmGUIContext> IRmGUIContext::GetInstance()
 	return RmNew<RmGUIContext>();
 }
 
-bool RmGUIContext::appendWidget(RmRef<IRmGUIWidget> widget)
+bool RmGUIContext::addWidget(RmRef<IRmGUIWidget> widget)
 {
 	if (widget == nullptr) return false;
 	auto result = std::find(m_TopLevelList.begin(), m_TopLevelList.end(), widget);
@@ -25,13 +25,23 @@ void RmGUIContext::sendEvent(rmreactor source, rmevent event)
 {
 	RmLambda<void(rmwidget)> foreach_func;
 	foreach_func = [&](rmwidget widget) {
-		if (widget->filter(source, event) == false) widget->handle(source, event);
+		auto result = widget->filter(source, event);
 		auto childrenList = widget->getChildren();
 		for (size_t i = 0; i < childrenList.size(); ++i) foreach_func(childrenList[i].get());
+		if (result == false) widget->handle(source, event);
 		};
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get());
 }
 
 void RmGUIContext::postEvent(rmreactor source, rmevent event)
 {
+}
+
+bool RmGUIContext::renderSurface(RmRect client)
+{
+	for (size_t i = 0; i < m_TopLevelList.size(); ++i)
+	{
+		m_TopLevelList[i]->paint(m_Painter.get(), &client);
+	}
+	return true;
 }

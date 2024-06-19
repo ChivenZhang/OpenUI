@@ -21,6 +21,10 @@ public:
 
 	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const = 0;
 
+	virtual bool addWidget(RmRef<IRmGUIWidget> widget) = 0;
+
+	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) = 0;
+
 	virtual void paint(rmpainter painter, rmrect client) = 0;
 
 protected:

@@ -1,7 +1,9 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>  
+#include <SDL2/SDL_surface.h>
 #include <GL/glew.h>
 #include <iostream>  
+#include <cairo/cairo.h>
 #include "Widget/IRmGUIContext.h"
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
@@ -43,14 +45,27 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	// 检查OpenGL版本信息  
+	//// 检查OpenGL版本信息  
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	if (renderer == NULL) {
+		// 处理错误  
+		SDL_Log("Could not create renderer: %s", SDL_GetError());
+		exit(1);
+	}
 
 	// 这里可以添加OpenGL的初始化和渲染代码  
 
 	auto context = IRmGUIContext::GetInstance();
-	context->appendWidget(RmNew<RmGUIPanel>());
-	context->appendWidget(RmNew<RmGUILabel>());
+	context->addWidget(RmNew<RmGUIPanel>());
+
+	int w, h;
+	SDL_GetWindowSize(window, &w, &h);
+	auto surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB32);
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+	auto surface_cr = cairo_image_surface_create_for_data((unsigned char*)surface->pixels, CAIRO_FORMAT_ARGB32, surface->w, surface->h, surface->pitch);
+	auto cr = cairo_create(surface_cr);
 
 	// 主循环  
 	bool quit = false;
@@ -69,7 +84,7 @@ int main(int argc, char* argv[]) {
 				return 0;
 			case SDL_KEYDOWN: // 键盘按键按下  
 				// 处理键盘按键事件...  
-				// 可以使用 event.key.keysym.sym 来获取按下的键的标识符  
+				// 可以使用 event.key.keysym.sym 来获取按下的键的标识符
 			{
 				IRmGUIKeyDownEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, RmString(), event.key.repeat);
 				context->sendEvent(nullptr, &event2);
@@ -129,6 +144,21 @@ int main(int argc, char* argv[]) {
 				// 窗体事件  
 				switch (event.window.event)
 				{
+				case SDL_WINDOWEVENT_SHOWN:
+				{
+					IRmGUIShowEvent event2;
+					context->sendEvent(nullptr, &event2);
+				} break;
+				case SDL_WINDOWEVENT_HIDDEN:
+				{
+					IRmGUIHideEvent event2;
+					context->sendEvent(nullptr, &event2);
+				} break;
+				case SDL_WINDOWEVENT_CLOSE:
+				{
+					IRmGUICloseEvent event2;
+					context->sendEvent(nullptr, &event2);
+				} break;
 				case SDL_WINDOWEVENT_MOVED:
 				{
 					IRmGUIMoveEvent event2(event.window.data1, event.window.data2);
@@ -142,6 +172,14 @@ int main(int argc, char* argv[]) {
 				{
 					IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
 					context->sendEvent(nullptr, &event2);
+
+					SDL_FreeSurface(surface);
+					cairo_destroy(cr);
+					cairo_surface_destroy(surface_cr);
+					surface = SDL_CreateRGBSurfaceWithFormat(0, event.window.data1, event.window.data2, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB32);
+					texture = SDL_CreateTextureFromSurface(renderer, surface);
+					surface_cr = cairo_image_surface_create_for_data((unsigned char*)surface->pixels, CAIRO_FORMAT_ARGB32, surface->w, surface->h, surface->pitch);
+					cr = cairo_create(surface_cr);
 				}
 				break;
 				case SDL_WINDOWEVENT_MINIMIZED:
@@ -191,17 +229,58 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		// ==================
-		SDL_GL_MakeCurrent(window, glContext);
-		glClearColor(104 / 255.0f, 33 / 255.0f, 122 / 255.0f, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
+		SDL_SetRenderDrawColor(renderer, 104, 33, 122, 255);
+		SDL_RenderClear(renderer);
+
 		// ==================
 
+		int x, y, w, h;
+		SDL_GetWindowSize(window, &w, &h);
+		SDL_GetWindowPosition(window, &x, &y);
+		context->renderSurface(RmRect{ (float)x, (float)y, (float)w, (float)h });
+
+#if 1
+		{
+			cairo_set_source_rgba(cr, 0, 0, 0, 1);
+			cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL,
+				CAIRO_FONT_WEIGHT_BOLD);
+			cairo_set_font_size(cr, 90.0);
+
+			cairo_move_to(cr, 10.0, 135.0);
+			cairo_show_text(cr, "Hello");
+
+			cairo_move_to(cr, 70.0, 165.0);
+			cairo_text_path(cr, "void");
+			cairo_set_source_rgb(cr, 0.5, 0.5, 1);
+			cairo_fill_preserve(cr);
+			cairo_set_source_rgb(cr, 0, 0, 0);
+			cairo_set_line_width(cr, 2.56);
+			cairo_stroke(cr);
+
+			/* draw helping lines */
+			cairo_set_source_rgba(cr, 1, 0.2, 0.2, 0.6);
+			cairo_arc(cr, 10.0, 135.0, 5.12, 0, 2 * M_PI);
+			cairo_close_path(cr);
+			cairo_arc(cr, 70.0, 165.0, 5.12, 0, 2 * M_PI);
+			cairo_fill(cr);
+		}
+#endif
+
+		// 获取像素数据
+		unsigned char* pixels = cairo_image_surface_get_data(surface_cr);
+		int width = cairo_image_surface_get_width(surface_cr);
+		int height = cairo_image_surface_get_height(surface_cr);
+		int pitch = cairo_image_surface_get_stride(surface_cr);
+
 		// 更新屏幕内容  
-		SDL_GL_SwapWindow(window);
+		SDL_UpdateTexture(texture, nullptr, pixels, pitch);
+		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		SDL_RenderPresent(renderer);
 	}
 
 	// 清理并退出SDL  
+	cairo_surface_destroy(surface_cr);
+	SDL_FreeSurface(surface);
 	SDL_GL_DeleteContext(glContext);
 	SDL_DestroyWindow(window);
 	SDL_Quit();

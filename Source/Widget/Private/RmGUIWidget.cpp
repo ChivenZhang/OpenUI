@@ -7,15 +7,14 @@ public:
 	rmwidget m_ParentWidget = nullptr;
 	RmVector<RmRef<IRmGUIWidget>> m_ChildWidgetList;
 };
-#define PROTECT() ((RmGUIWidgetPrivateData*)m_PrivateData)
+#define PRIVATE() ((RmGUIWidgetPrivateData*)m_PrivateData)
 
 RmGUIWidget::RmGUIWidget(rmwidget parent)
 	:
 	m_PrivateData(nullptr)
 {
 	m_PrivateData = new RmGUIWidgetPrivateData;
-
-	PROTECT()->m_ParentWidget = nullptr;
+	PRIVATE()->m_ParentWidget = nullptr;
 }
 
 RmGUIWidget::~RmGUIWidget()
@@ -35,7 +34,7 @@ RmRect RmGUIWidget::getChildrenRect() const
 
 RmRaw<IRmGUIWidget> RmGUIWidget::getParent() const
 {
-	return PROTECT()->m_ParentWidget;
+	return PRIVATE()->m_ParentWidget;
 }
 
 void RmGUIWidget::setParent(rmwidget parent)
@@ -46,12 +45,28 @@ void RmGUIWidget::setParent(rmwidget parent)
 
 RmArrayView<RmRef<IRmGUIWidget>> RmGUIWidget::getChildren()
 {
-	return PROTECT()->m_ChildWidgetList;
+	return PRIVATE()->m_ChildWidgetList;
 }
 
 RmArrayView<const RmRef<IRmGUIWidget>> RmGUIWidget::getChildren() const
 {
-	return PROTECT()->m_ChildWidgetList;
+	return PRIVATE()->m_ChildWidgetList;
+}
+
+bool RmGUIWidget::addWidget(RmRef<IRmGUIWidget> widget)
+{
+	if (widget == nullptr) return false;
+	auto result = std::find(PRIVATE()->m_ChildWidgetList.begin(), PRIVATE()->m_ChildWidgetList.end(), widget);
+	if (result == PRIVATE()->m_ChildWidgetList.end()) PRIVATE()->m_ChildWidgetList.push_back(widget);
+	return true;
+}
+
+bool RmGUIWidget::removeWidget(RmRef<IRmGUIWidget> widget)
+{
+	auto result = std::remove(PRIVATE()->m_ChildWidgetList.begin(), PRIVATE()->m_ChildWidgetList.end(), widget);
+	if (result == PRIVATE()->m_ChildWidgetList.end()) return false;
+	PRIVATE()->m_ChildWidgetList.erase(result, PRIVATE()->m_ChildWidgetList.end());
+	return true;
 }
 
 bool RmGUIWidget::filter(rmreactor source, rmevent event)
