@@ -18,6 +18,10 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
 	// 创建SDL窗口  
 	window = SDL_CreateWindow("SDL2, OpenGL and GLEW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (window == nullptr) {
@@ -241,6 +245,9 @@ int main(int argc, char* argv[]) {
 
 #if 1
 		{
+			cairo_set_source_rgba(cr, 104 / 255.0f, 33 / 255.0f, 122 / 255.0f, 255 / 255.0f);
+			cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
+			cairo_paint(cr);
 			cairo_set_source_rgba(cr, 0, 0, 0, 1);
 			cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL,
 				CAIRO_FONT_WEIGHT_BOLD);
@@ -249,15 +256,14 @@ int main(int argc, char* argv[]) {
 			cairo_move_to(cr, 10.0, 135.0);
 			cairo_show_text(cr, "Hello");
 
-			cairo_move_to(cr, 70.0, 165.0);
-			cairo_text_path(cr, "void");
+			cairo_move_to(cr, 100.0, 180.0);
+			cairo_text_path(cr, "OpenUI");
 			cairo_set_source_rgb(cr, 0.5, 0.5, 1);
 			cairo_fill_preserve(cr);
 			cairo_set_source_rgb(cr, 0, 0, 0);
 			cairo_set_line_width(cr, 2.56);
 			cairo_stroke(cr);
 
-			/* draw helping lines */
 			cairo_set_source_rgba(cr, 1, 0.2, 0.2, 0.6);
 			cairo_arc(cr, 10.0, 135.0, 5.12, 0, 2 * M_PI);
 			cairo_close_path(cr);
