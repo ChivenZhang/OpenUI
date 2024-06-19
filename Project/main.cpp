@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 			break;
 			case SDL_TEXTINPUT:
 			{
-				IRmGUITextInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
+				IRmGUIKeyInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
 				context->sendEvent(nullptr, &event2);
 			}
 			break;
