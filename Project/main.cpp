@@ -3,6 +3,8 @@
 #include <GL/glew.h>
 #include <iostream>  
 #include "Widget/IRmGUIContext.h"
+#include "Widget/Private/RmGUIPanel.h"
+#include "Widget/Private/RmGUILabel.h"
 
 int main(int argc, char* argv[]) {
 	SDL_Window* window;
@@ -47,6 +49,8 @@ int main(int argc, char* argv[]) {
 	// 这里可以添加OpenGL的初始化和渲染代码  
 
 	auto context = IRmGUIContext::GetInstance();
+	context->appendWidget(RmNew<RmGUIPanel>());
+	context->appendWidget(RmNew<RmGUILabel>());
 
 	// 主循环  
 	bool quit = false;

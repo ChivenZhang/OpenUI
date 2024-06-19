@@ -1,7 +1,8 @@
 #pragma once
 #include "Widget/IRmGUIWidget.h"
 
-class RmGUIWidget : public IRmGUIWidget
+class RmGUIWidgetPrivate;
+class RMGUI_API RmGUIWidget : public IRmGUIWidget
 {
 public:
 	RmGUIWidget(rmwidget parent = nullptr);
@@ -14,7 +15,6 @@ public:
 	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const override;
 	virtual bool filter(rmreactor source, rmevent event) override;
 	virtual void handle(rmreactor source, rmevent event) override;
-	virtual void paint(rmpainter painter, rmrect client) override;
 
 protected:
 	virtual void closeEvent(rmevent_close event) override;
@@ -40,7 +40,6 @@ protected:
 	virtual void tabletEvent(rmevent_tablet event) override;
 	virtual void wheelEvent(rmevent_wheel event) override;
 
-protected:
-	rmwidget m_ParentWidget;
-	RmVector<RmRef<IRmGUIWidget>> m_ChildWidgetList;
+private:
+	RmGUIWidgetPrivate* m_PrivateData;
 };

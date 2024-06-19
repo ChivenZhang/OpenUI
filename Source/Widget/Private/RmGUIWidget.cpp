@@ -1,13 +1,26 @@
 #include "RMGUIWidget.h"
 
+class RmGUIWidgetPrivate {};
+class RmGUIWidgetPrivateData : public RmGUIWidgetPrivate
+{
+public:
+	rmwidget m_ParentWidget = nullptr;
+	RmVector<RmRef<IRmGUIWidget>> m_ChildWidgetList;
+};
+#define PROTECT() ((RmGUIWidgetPrivateData*)m_PrivateData)
+
 RmGUIWidget::RmGUIWidget(rmwidget parent)
 	:
-	m_ParentWidget(parent)
+	m_PrivateData(nullptr)
 {
+	m_PrivateData = new RmGUIWidgetPrivateData;
+
+	PROTECT()->m_ParentWidget = nullptr;
 }
 
 RmGUIWidget::~RmGUIWidget()
 {
+	if (m_PrivateData) delete m_PrivateData; m_PrivateData = nullptr;
 }
 
 RmRect RmGUIWidget::getRect() const
@@ -22,21 +35,23 @@ RmRect RmGUIWidget::getChildrenRect() const
 
 RmRaw<IRmGUIWidget> RmGUIWidget::getParent() const
 {
-	return m_ParentWidget;
+	return PROTECT()->m_ParentWidget;
 }
 
 void RmGUIWidget::setParent(rmwidget parent)
 {
+	if (parent == this) return;
+
 }
 
 RmArrayView<RmRef<IRmGUIWidget>> RmGUIWidget::getChildren()
 {
-	return m_ChildWidgetList;
+	return PROTECT()->m_ChildWidgetList;
 }
 
 RmArrayView<const RmRef<IRmGUIWidget>> RmGUIWidget::getChildren() const
 {
-	return m_ChildWidgetList;
+	return PROTECT()->m_ChildWidgetList;
 }
 
 bool RmGUIWidget::filter(rmreactor source, rmevent event)
@@ -133,11 +148,6 @@ void RmGUIWidget::handle(rmreactor source, rmevent event)
 		focusOutEvent(RmCast<IRmGUIFocusEvent>(event));
 	} break;
 	}
-}
-
-void RmGUIWidget::paint(rmpainter painter, rmrect client)
-{
-	// Do nothion.
 }
 
 void RmGUIWidget::closeEvent(rmevent_close event)
