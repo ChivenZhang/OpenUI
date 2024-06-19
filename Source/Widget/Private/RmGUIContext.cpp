@@ -1,9 +1,8 @@
 #include "RmGUIContext.h"
 
-RmRaw<IRmGUIContext> IRmGUIContext::GetInstance()
+RmRef<IRmGUIContext> IRmGUIContext::GetInstance()
 {
-	static RmGUIContext s_Instance;
-	return &s_Instance;
+	return RmNew<RmGUIContext>();
 }
 
 void RmGUIContext::sendEvent(rmreactor source, rmevent event)

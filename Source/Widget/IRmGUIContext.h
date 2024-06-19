@@ -5,7 +5,7 @@
 class RMGUI_API IRmGUIContext
 {
 public:
-	static RmRaw<IRmGUIContext> GetInstance();
+	static RmRef<IRmGUIContext> GetInstance();
 
 public:
 	virtual ~IRmGUIContext() = default;

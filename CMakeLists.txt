@@ -8,8 +8,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
-#add_definitions( )
-
 # Please copy x64-windows to External folder after install library below by vcpkg.
 # vcpkg.exe install sdl2:x64-windows
 # vcpkg.exe install glew:x64-windows

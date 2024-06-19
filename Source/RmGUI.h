@@ -176,3 +176,33 @@ template<class T>
 using RmString16HashMap = RmHashMap<RmString16, T>;
 template<class T>
 using RmString32HashMap = RmHashMap<RmString32, T>;
+
+template<typename T, typename ... Args>
+inline RmRef<T> RmNew(Args&& ... args)
+{
+	return std::make_shared<T>(std::forward<Args>(args)...);
+}
+template<typename U, typename T>
+inline RmRef<U> RmCast(RmRef<T>&& target)
+{
+	if (target == nullptr) return nullptr;
+	return std::dynamic_pointer_cast<U>(target);
+}
+template<typename U, typename T>
+inline RmRef<U> RmCast(RmRef<T> const& target)
+{
+	if (target == nullptr) return nullptr;
+	return std::dynamic_pointer_cast<U>(target);
+}
+template<typename U, typename T>
+inline RmRaw<U> RmCast(RmRaw<T>&& target)
+{
+	if (target == nullptr) return nullptr;
+	return dynamic_cast<U*>((T*)target);
+}
+template<typename U, typename T>
+inline RmRaw<U> RmCast(RmRaw<T> const& target)
+{
+	if (target == nullptr) return nullptr;
+	return const_cast<U*>(dynamic_cast<const U*>((const T*)target));
+}
