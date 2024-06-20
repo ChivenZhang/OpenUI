@@ -41,6 +41,11 @@ RmRaw<IRmGUIPainter> SDL2Surface::getPainter() const
 	return m_Painter.get();
 }
 
+RmRaw<IRmGUIRender> SDL2Surface::getRender() const
+{
+	return m_Render.get();
+}
+
 void SDL2Surface::resize(uint32_t width, uint32_t height)
 {
 	cairo_destroy(m_NativeContext);

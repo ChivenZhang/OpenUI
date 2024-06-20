@@ -65,11 +65,10 @@ int main(int argc, char* argv[]) {
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	auto surface = RmNew<SDL2Surface>(w, h);
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface->getNativeSurface());
 	auto context = IRmGUIContext::GetInstance();
 	context->addWidget(RmNew<RmGUIPanel>());
 	context->setSurface(surface);
-
-	auto texture = SDL_CreateTextureFromSurface(renderer, surface->getNativeSurface());
 
 	// 主循环  
 	bool quit = false;
@@ -232,10 +231,9 @@ int main(int argc, char* argv[]) {
 		// 渲染所有控件
 		SDL_SetRenderDrawColor(renderer, 104, 33, 122, 255);
 		SDL_RenderClear(renderer);
-		int x, y, w, h;
+		int w, h;
 		SDL_GetWindowSize(window, &w, &h);
-		SDL_GetWindowPosition(window, &x, &y);
-		context->renderWidget(RmRect{ (float)x, (float)y, (float)w, (float)h });
+		context->renderWidget(RmRect{ 0, 0, (float)w, (float)h });
 
 		// 更新屏幕内容  
 		SDL_UpdateTexture(texture, nullptr, surface->getPixelData().data(), surface->getStride());

@@ -206,3 +206,70 @@ inline RmRaw<U> RmCast(RmRaw<T> const& target)
 	if (target == nullptr) return nullptr;
 	return const_cast<U*>(dynamic_cast<const U*>((const T*)target));
 }
+
+struct RmRect
+{
+	float X, Y, W, H;
+};
+using rmrect = RmRaw<RmRect>;
+
+struct RmPoint
+{
+	float X, Y;
+};
+
+struct RmLine
+{
+	RmPoint P0, P1;
+};
+
+struct RmColor
+{
+	float R, G, B, A;
+};
+
+struct RmPen
+{
+	RmColor Color;
+};
+
+struct RmBrush
+{
+};
+
+struct RmFont
+{
+};
+
+struct RmFloat2
+{
+	float X, Y;
+};
+
+struct RmFloat3
+{
+	float X, Y, Z;
+};
+
+struct RmFloat4
+{
+	float X, Y, Z, W;
+};
+
+struct RmFloat2x2
+{
+	RmFloat2 X, Y;
+};
+
+struct RmFloat3x3
+{
+	RmFloat3 X, Y, Z;
+};
+
+struct RmFloat4x4
+{
+	RmFloat4 X, Y, Z, W;
+};
+
+class RmImage;
+using rmimage = RmRaw<RmImage>;
