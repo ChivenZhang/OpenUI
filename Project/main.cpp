@@ -233,7 +233,8 @@ int main(int argc, char* argv[]) {
 		SDL_RenderClear(renderer);
 		int w, h;
 		SDL_GetWindowSize(window, &w, &h);
-		context->renderWidget(RmRect{ 0, 0, (float)w, (float)h });
+		context->layoutWidget(RmRect{ 0, 0, (float)w, (float)h });
+		context->paintWidget(RmRect{ 0, 0, (float)w, (float)h });
 
 		// 更新屏幕内容  
 		SDL_UpdateTexture(texture, nullptr, surface->getPixelData().data(), surface->getStride());

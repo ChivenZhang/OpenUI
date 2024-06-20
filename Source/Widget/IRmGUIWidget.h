@@ -12,6 +12,8 @@ class RMGUI_API IRmGUIWidget : public IRmGUIEventHandler
 public:
 	virtual RmRect getRect() const = 0;
 
+	virtual void setRect(RmRect client) = 0;
+
 	virtual RmRect getChildrenRect() const = 0;
 
 	virtual rmwidget getParent() const = 0;
@@ -26,7 +28,13 @@ public:
 
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) = 0;
 
+	virtual void layout(rmrect client) = 0;
+
 	virtual void paint(rmpainter painter, rmrect client) = 0;
+
+	virtual RmString getAttribute(uint32_t name) const = 0;
+
+	virtual void setAttribute(uint32_t name, RmString const& value) = 0;
 
 protected:
 	virtual void closeEvent(rmevent_close event) = 0;

@@ -9,6 +9,7 @@ public:
 	RmGUIWidget(rmwidget parent = nullptr);
 	~RmGUIWidget();
 	virtual RmRect getRect() const override;
+	virtual void setRect(RmRect client) override;
 	virtual RmRect getChildrenRect() const override;
 	virtual rmwidget getParent() const override;
 	virtual void setParent(rmwidget parent) override;
@@ -18,7 +19,10 @@ public:
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) override;
 	virtual bool filter(rmreactor source, rmevent event) override;
 	virtual void handle(rmreactor source, rmevent event) override;
+	virtual void layout(rmrect client) override;
 	virtual void paint(rmpainter painter, rmrect client) override;
+	virtual RmString getAttribute(uint32_t name) const override;
+	virtual void setAttribute(uint32_t name, RmString const& value) override;
 
 protected:
 	virtual void closeEvent(rmevent_close event) override;

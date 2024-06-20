@@ -52,7 +52,12 @@ void RmGUIContext::postEvent(rmreactor source, rmevent event)
 {
 }
 
-bool RmGUIContext::renderWidget(RmRect client)
+void RmGUIContext::layoutWidget(RmRect client)
+{
+	for (size_t i = 0; i < m_TopLevelList.size(); ++i) m_TopLevelList[i]->layout(&client);
+}
+
+bool RmGUIContext::paintWidget(RmRect client)
 {
 	if (m_Surface == nullptr || m_Surface->getPainter() == nullptr) return false;
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i) m_TopLevelList[i]->paint(m_Surface->getPainter(), &client);

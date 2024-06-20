@@ -1,13 +1,18 @@
 #include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
 #include "Widget/IRmGUIContext.h"
 
 class RmGUIWidgetPrivate {};
 class RmGUIWidgetPrivateData : public RmGUIWidgetPrivate
 {
 public:
-	rmcontext m_Context = nullptr;
-	rmwidget m_ParentWidget = nullptr;
-	RmVector<RmRef<IRmGUIWidget>> m_ChildWidgetList;
+	rmcontext Context = nullptr;
+	rmwidget Parent = nullptr;
+	RmVector<RmRef<IRmGUIWidget>> ChildrenList;
+	RmRect ClientRect, ChildrenRect;
 };
 #define PRIVATE() ((RmGUIWidgetPrivateData*)m_PrivateData)
 
@@ -16,7 +21,7 @@ RmGUIWidget::RmGUIWidget(rmwidget parent)
 	m_PrivateData(nullptr)
 {
 	m_PrivateData = new RmGUIWidgetPrivateData;
-	PRIVATE()->m_ParentWidget = nullptr;
+	PRIVATE()->Parent = nullptr;
 }
 
 RmGUIWidget::~RmGUIWidget()
@@ -26,17 +31,22 @@ RmGUIWidget::~RmGUIWidget()
 
 RmRect RmGUIWidget::getRect() const
 {
-	return RmRect();
+	return PRIVATE()->ClientRect;
+}
+
+void RmGUIWidget::setRect(RmRect client)
+{
+	PRIVATE()->ClientRect = client;
 }
 
 RmRect RmGUIWidget::getChildrenRect() const
 {
-	return RmRect();
+	return PRIVATE()->ChildrenRect;
 }
 
 RmRaw<IRmGUIWidget> RmGUIWidget::getParent() const
 {
-	return PRIVATE()->m_ParentWidget;
+	return PRIVATE()->Parent;
 }
 
 void RmGUIWidget::setParent(rmwidget parent)
@@ -47,30 +57,30 @@ void RmGUIWidget::setParent(rmwidget parent)
 
 RmArrayView<RmRef<IRmGUIWidget>> RmGUIWidget::getChildren()
 {
-	return PRIVATE()->m_ChildWidgetList;
+	return PRIVATE()->ChildrenList;
 }
 
 RmArrayView<const RmRef<IRmGUIWidget>> RmGUIWidget::getChildren() const
 {
-	return PRIVATE()->m_ChildWidgetList;
+	return PRIVATE()->ChildrenList;
 }
 
 bool RmGUIWidget::addWidget(RmRef<IRmGUIWidget> value)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
 	if (widget == nullptr) return false;
-	auto result = std::find(PRIVATE()->m_ChildWidgetList.begin(), PRIVATE()->m_ChildWidgetList.end(), widget);
-	if (result == PRIVATE()->m_ChildWidgetList.end()) PRIVATE()->m_ChildWidgetList.push_back(widget);
-	widget->setContext(PRIVATE()->m_Context);
+	auto result = std::find(PRIVATE()->ChildrenList.begin(), PRIVATE()->ChildrenList.end(), widget);
+	if (result == PRIVATE()->ChildrenList.end()) PRIVATE()->ChildrenList.push_back(widget);
+	widget->setContext(PRIVATE()->Context);
 	return true;
 }
 
 bool RmGUIWidget::removeWidget(RmRef<IRmGUIWidget> value)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
-	auto result = std::remove(PRIVATE()->m_ChildWidgetList.begin(), PRIVATE()->m_ChildWidgetList.end(), widget);
-	if (result == PRIVATE()->m_ChildWidgetList.end()) return false;
-	PRIVATE()->m_ChildWidgetList.erase(result, PRIVATE()->m_ChildWidgetList.end());
+	auto result = std::remove(PRIVATE()->ChildrenList.begin(), PRIVATE()->ChildrenList.end(), widget);
+	if (result == PRIVATE()->ChildrenList.end()) return false;
+	PRIVATE()->ChildrenList.erase(result, PRIVATE()->ChildrenList.end());
 	widget->setContext(nullptr);
 	return true;
 }
@@ -171,11 +181,25 @@ void RmGUIWidget::handle(rmreactor source, rmevent event)
 	}
 }
 
+void RmGUIWidget::layout(rmrect client)
+{
+	auto childrenList = getChildren();
+	for (size_t i = 0; i < childrenList.size(); ++i) childrenList[i]->layout(client);
+}
+
 void RmGUIWidget::paint(rmpainter painter, rmrect client)
 {
-	auto childClient = getRect();
 	auto childrenList = getChildren();
-	for (size_t i = 0; i < childrenList.size(); ++i) childrenList[i]->paint(painter, &childClient);
+	for (size_t i = 0; i < childrenList.size(); ++i) childrenList[i]->paint(painter, client);
+}
+
+RmString RmGUIWidget::getAttribute(uint32_t name) const
+{
+	return RmString();
+}
+
+void RmGUIWidget::setAttribute(uint32_t name, RmString const& value)
+{
 }
 
 void RmGUIWidget::closeEvent(rmevent_close event)
@@ -268,10 +292,10 @@ void RmGUIWidget::wheelEvent(rmevent_wheel event)
 
 RmRaw<IRmGUIContext> RmGUIWidget::getContext() const
 {
-	return PRIVATE()->m_Context;
+	return PRIVATE()->Context;
 }
 
 void RmGUIWidget::setContext(RmRaw<IRmGUIContext> context)
 {
-	PRIVATE()->m_Context = context;
+	PRIVATE()->Context = context;
 }

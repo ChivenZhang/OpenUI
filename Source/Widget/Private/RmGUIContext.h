@@ -13,7 +13,8 @@ public:
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) override;
 	virtual void sendEvent(rmreactor source, rmevent event) override;
 	virtual void postEvent(rmreactor source, rmevent event) override;
-	virtual bool renderWidget(RmRect client) override;
+	virtual void layoutWidget(RmRect client) override;
+	virtual bool paintWidget(RmRect client) override;
 
 protected:
 	RmRef<IRmGUISurface> m_Surface;

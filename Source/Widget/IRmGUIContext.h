@@ -20,7 +20,9 @@ public:
 
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) = 0;
 
-	virtual bool renderWidget(RmRect client) = 0;
+	virtual void layoutWidget(RmRect client) = 0;
+
+	virtual bool paintWidget(RmRect client) = 0;
 
 	virtual void sendEvent(rmreactor source, rmevent event) = 0;
 
