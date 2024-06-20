@@ -2,7 +2,7 @@
 
 RmGUILabel::RmGUILabel(rmwidget parent)
 	:
-	RmGUIWidget(parent)
+	RmGUIControl(parent)
 {
 }
 

@@ -5,6 +5,8 @@ add_definitions(-DRMGUI_SHARED_LIBRARY)
 add_library (RmGUI SHARED
 	RmGUI.h
 	Utility/shared_recursive_mutex.h
+	Utility/flex.h
+	Utility/flex.c
 	Utility/span.h
 	Utility/HashUtility.h
 	Widget/IRmGUIWidget.h
@@ -22,7 +24,7 @@ add_library (RmGUI SHARED
 	Widget/Private/RmGUIPanel.cpp  
 	Widget/Private/RmGUILabel.cpp 
 	Widget/IRmGUISurface.h
-)
+ "Widget/Private/RmGUIControl.h" "Widget/Private/RmGUIControl.cpp" "Widget/Private/RmGUILayout.h" "Widget/Private/RmGUILayout.cpp")
 
 target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

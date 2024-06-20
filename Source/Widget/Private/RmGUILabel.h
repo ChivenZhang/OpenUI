@@ -1,7 +1,7 @@
 #pragma once
-#include "RmGUIWidget.h"
+#include "RmGUIControl.h"
 
-class RMGUI_API RmGUILabel : public RmGUIWidget
+class RMGUI_API RmGUILabel : public RmGUIControl
 {
 public:
 	RmGUILabel(rmwidget parent = nullptr);
