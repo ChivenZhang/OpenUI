@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-add_executable (OpenUI main.cpp  "SDL2Surface.h" "SDL2Surface.cpp")
+add_executable (OpenUI main.cpp  "SDL2Painter.h" "SDL2Painter.cpp"  "SDL2Surface.h" "SDL2Surface.cpp")
 
 add_dependencies(OpenUI RmGUI)
 

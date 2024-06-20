@@ -8,9 +8,5 @@ RmGUILabel::RmGUILabel(rmwidget parent)
 
 void RmGUILabel::paint(rmpainter painter, rmrect client)
 {
-}
-
-void RmGUILabel::mouseMoveEvent(rmevent_mouse event)
-{
-	printf("mouse move in label\n");
+	RmGUIWidget::paint(painter, client);
 }

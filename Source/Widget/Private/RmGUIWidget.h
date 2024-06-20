@@ -18,6 +18,7 @@ public:
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) override;
 	virtual bool filter(rmreactor source, rmevent event) override;
 	virtual void handle(rmreactor source, rmevent event) override;
+	virtual void paint(rmpainter painter, rmrect client) override;
 
 protected:
 	virtual void closeEvent(rmevent_close event) override;

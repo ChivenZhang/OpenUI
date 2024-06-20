@@ -5,6 +5,7 @@
 #include <iostream>  
 #include <cairo/cairo.h>
 #include "Widget/IRmGUIContext.h"
+#include "SDL2Surface.h"
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
 
@@ -61,15 +62,14 @@ int main(int argc, char* argv[]) {
 
 	// 这里可以添加OpenGL的初始化和渲染代码  
 
-	auto context = IRmGUIContext::GetInstance();
-	context->addWidget(RmNew<RmGUIPanel>());
-
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
-	auto surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB32);
-	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
-	auto surface_cr = cairo_image_surface_create_for_data((unsigned char*)surface->pixels, CAIRO_FORMAT_ARGB32, surface->w, surface->h, surface->pitch);
-	auto cr = cairo_create(surface_cr);
+	auto surface = RmNew<SDL2Surface>(w, h);
+	auto context = IRmGUIContext::GetInstance();
+	context->addWidget(RmNew<RmGUIPanel>());
+	context->setSurface(surface);
+
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface->getNativeSurface());
 
 	// 主循环  
 	bool quit = false;
@@ -174,16 +174,12 @@ int main(int argc, char* argv[]) {
 					// event.window.data2 是新的高度  
 					// printf("Window resized to %dx%d\n", event.window.data1, event.window.data2);
 				{
+					surface->resize(event.window.data1, event.window.data2);
+					SDL_DestroyTexture(texture);
+					texture = SDL_CreateTextureFromSurface(renderer, surface->getNativeSurface());
+
 					IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
 					context->sendEvent(nullptr, &event2);
-
-					SDL_FreeSurface(surface);
-					cairo_destroy(cr);
-					cairo_surface_destroy(surface_cr);
-					surface = SDL_CreateRGBSurfaceWithFormat(0, event.window.data1, event.window.data2, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB32);
-					texture = SDL_CreateTextureFromSurface(renderer, surface);
-					surface_cr = cairo_image_surface_create_for_data((unsigned char*)surface->pixels, CAIRO_FORMAT_ARGB32, surface->w, surface->h, surface->pitch);
-					cr = cairo_create(surface_cr);
 				}
 				break;
 				case SDL_WINDOWEVENT_MINIMIZED:
@@ -233,58 +229,23 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		// 渲染所有控件
 		SDL_SetRenderDrawColor(renderer, 104, 33, 122, 255);
 		SDL_RenderClear(renderer);
-
-		// ==================
-
 		int x, y, w, h;
 		SDL_GetWindowSize(window, &w, &h);
 		SDL_GetWindowPosition(window, &x, &y);
-		context->renderWidget(nullptr, RmRect{ (float)x, (float)y, (float)w, (float)h });
-
-#if 1
-		{
-			cairo_set_source_rgba(cr, 104 / 255.0f, 33 / 255.0f, 122 / 255.0f, 255 / 255.0f);
-			cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
-			cairo_paint(cr);
-			cairo_set_source_rgba(cr, 0, 0, 0, 1);
-			cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL,
-				CAIRO_FONT_WEIGHT_BOLD);
-			cairo_set_font_size(cr, 90.0);
-
-			cairo_move_to(cr, 10.0, 135.0);
-			cairo_show_text(cr, "Hello");
-
-			cairo_move_to(cr, 100.0, 180.0);
-			cairo_text_path(cr, "OpenUI");
-			cairo_set_source_rgb(cr, 0.5, 0.5, 1);
-			cairo_fill_preserve(cr);
-			cairo_set_source_rgb(cr, 0, 0, 0);
-			cairo_set_line_width(cr, 2.56);
-			cairo_stroke(cr);
-
-			cairo_set_source_rgba(cr, 1, 0.2, 0.2, 0.6);
-			cairo_arc(cr, 10.0, 135.0, 5.12, 0, 2 * M_PI);
-			cairo_close_path(cr);
-			cairo_arc(cr, 70.0, 165.0, 5.12, 0, 2 * M_PI);
-			cairo_fill(cr);
-		}
-#endif
+		context->renderWidget(RmRect{ (float)x, (float)y, (float)w, (float)h });
 
 		// 更新屏幕内容  
-		unsigned char* pixels = cairo_image_surface_get_data(surface_cr);
-		int width = cairo_image_surface_get_width(surface_cr);
-		int height = cairo_image_surface_get_height(surface_cr);
-		int pitch = cairo_image_surface_get_stride(surface_cr);
-		SDL_UpdateTexture(texture, nullptr, pixels, pitch);
+		SDL_UpdateTexture(texture, nullptr, surface->getPixelData().data(), surface->getStride());
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);
 	}
 
 	// 清理并退出SDL  
-	cairo_surface_destroy(surface_cr);
-	SDL_FreeSurface(surface);
+	SDL_DestroyTexture(texture);
+	SDL_DestroyRenderer(renderer);
 	SDL_GL_DeleteContext(glContext);
 	SDL_DestroyWindow(window);
 	SDL_Quit();

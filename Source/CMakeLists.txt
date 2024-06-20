@@ -18,8 +18,8 @@ add_library (RmGUI SHARED
 	Widget/IRmGUIEvent.h
 	Widget/Private/RmGUIContext.h 
 	Widget/Private/RmGUIContext.cpp 
-	Widget/Private/RmGUIPainter.h 
-	Widget/Private/RmGUIPainter.cpp
+	 
+	
 	Widget/Private/RmGUIEvent.cpp 
  "Widget/Private/RmGUIPanel.h" "Widget/Private/RmGUILabel.h" "Widget/Private/RmGUIPanel.cpp"  "Widget/Private/RmGUILabel.cpp" "Widget/IRmGUISurface.h")
 

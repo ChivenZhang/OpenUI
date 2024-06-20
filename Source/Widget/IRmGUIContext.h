@@ -1,6 +1,7 @@
 #pragma once
 #include "IRmGUIEvent.h"
 #include "IRmGUIWidget.h"
+#include "IRmGUISurface.h"
 
 /// @brief Base interface of widget context.
 class RMGUI_API IRmGUIContext
@@ -11,11 +12,15 @@ public:
 public:
 	virtual ~IRmGUIContext() = default;
 
+	virtual RmRaw<IRmGUISurface> getSurface() const = 0;
+
+	virtual void setSurface(RmRef<IRmGUISurface> value) = 0;
+
 	virtual bool addWidget(RmRef<IRmGUIWidget> widget) = 0;
 
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) = 0;
 
-	virtual bool renderWidget(RmRaw<IRmGUIPainter> painter, RmRect client) = 0;
+	virtual bool renderWidget(RmRect client) = 0;
 
 	virtual void sendEvent(rmreactor source, rmevent event) = 0;
 

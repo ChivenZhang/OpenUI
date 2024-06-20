@@ -17,8 +17,14 @@ struct RmLine
 	RmPoint P0, P1;
 };
 
+struct RmColor
+{
+	float R, G, B, A;
+};
+
 struct RmPen
 {
+	RmColor Color;
 };
 
 struct RmBrush

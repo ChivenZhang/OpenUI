@@ -1,12 +1,11 @@
 #pragma once
 #include "Widget/IRmGUIPainter.h"
 #include <cairo/cairo.h>
-class RmGUIContext;
 
-class RmGUIPainter : public IRmGUIPainter
+class SDL2Painter : public IRmGUIPainter
 {
 public:
-	RmGUIPainter(RmGUIContext* context);
+	SDL2Painter(cairo_t* native);
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawEllipse(int x, int y, int width, int height) override;

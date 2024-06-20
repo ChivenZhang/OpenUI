@@ -171,6 +171,13 @@ void RmGUIWidget::handle(rmreactor source, rmevent event)
 	}
 }
 
+void RmGUIWidget::paint(rmpainter painter, rmrect client)
+{
+	auto childClient = getRect();
+	auto childrenList = getChildren();
+	for (size_t i = 0; i < childrenList.size(); ++i) childrenList[i]->paint(painter, &childClient);
+}
+
 void RmGUIWidget::closeEvent(rmevent_close event)
 {
 }
