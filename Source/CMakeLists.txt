@@ -21,7 +21,7 @@ add_library (RmGUI SHARED
 	Widget/Private/RmGUIPainter.h 
 	Widget/Private/RmGUIPainter.cpp
 	Widget/Private/RmGUIEvent.cpp 
- "Widget/Private/RmGUIPanel.h" "Widget/Private/RmGUILabel.h" "Widget/Private/RmGUIPanel.cpp"  "Widget/Private/RmGUILabel.cpp")
+ "Widget/Private/RmGUIPanel.h" "Widget/Private/RmGUILabel.h" "Widget/Private/RmGUIPanel.cpp"  "Widget/Private/RmGUILabel.cpp" "Widget/IRmGUISurface.h")
 
 target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

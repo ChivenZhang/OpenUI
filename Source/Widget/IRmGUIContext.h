@@ -15,10 +15,10 @@ public:
 
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) = 0;
 
+	virtual bool renderWidget(RmRaw<IRmGUIPainter> painter, RmRect client) = 0;
+
 	virtual void sendEvent(rmreactor source, rmevent event) = 0;
 
 	virtual void postEvent(rmreactor source, rmevent event) = 0;
-
-	virtual bool renderSurface(RmRect client) = 0;
 };
 using rmcontext = RmRaw<IRmGUIContext>;

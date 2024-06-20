@@ -1,6 +1,7 @@
 #pragma once
 #include "IRmGUIPainter.h"
 #include "IRmGUIEvent.h"
+class IRmGUIContext;
 
 class IRmGUIWidget;
 using rmwidget = RmRaw<IRmGUIWidget>;

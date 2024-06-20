@@ -1,9 +1,11 @@
-#include "RMGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "Widget/IRmGUIContext.h"
 
 class RmGUIWidgetPrivate {};
 class RmGUIWidgetPrivateData : public RmGUIWidgetPrivate
 {
 public:
+	rmcontext m_Context = nullptr;
 	rmwidget m_ParentWidget = nullptr;
 	RmVector<RmRef<IRmGUIWidget>> m_ChildWidgetList;
 };
@@ -53,19 +55,23 @@ RmArrayView<const RmRef<IRmGUIWidget>> RmGUIWidget::getChildren() const
 	return PRIVATE()->m_ChildWidgetList;
 }
 
-bool RmGUIWidget::addWidget(RmRef<IRmGUIWidget> widget)
+bool RmGUIWidget::addWidget(RmRef<IRmGUIWidget> value)
 {
+	auto widget = RmCast<RmGUIWidget>(value);
 	if (widget == nullptr) return false;
 	auto result = std::find(PRIVATE()->m_ChildWidgetList.begin(), PRIVATE()->m_ChildWidgetList.end(), widget);
 	if (result == PRIVATE()->m_ChildWidgetList.end()) PRIVATE()->m_ChildWidgetList.push_back(widget);
+	widget->setContext(PRIVATE()->m_Context);
 	return true;
 }
 
-bool RmGUIWidget::removeWidget(RmRef<IRmGUIWidget> widget)
+bool RmGUIWidget::removeWidget(RmRef<IRmGUIWidget> value)
 {
+	auto widget = RmCast<RmGUIWidget>(value);
 	auto result = std::remove(PRIVATE()->m_ChildWidgetList.begin(), PRIVATE()->m_ChildWidgetList.end(), widget);
 	if (result == PRIVATE()->m_ChildWidgetList.end()) return false;
 	PRIVATE()->m_ChildWidgetList.erase(result, PRIVATE()->m_ChildWidgetList.end());
+	widget->setContext(nullptr);
 	return true;
 }
 
@@ -251,4 +257,14 @@ void RmGUIWidget::tabletEvent(rmevent_tablet event)
 
 void RmGUIWidget::wheelEvent(rmevent_wheel event)
 {
+}
+
+RmRaw<IRmGUIContext> RmGUIWidget::getContext() const
+{
+	return PRIVATE()->m_Context;
+}
+
+void RmGUIWidget::setContext(RmRaw<IRmGUIContext> context)
+{
+	PRIVATE()->m_Context = context;
 }

@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
 		int x, y, w, h;
 		SDL_GetWindowSize(window, &w, &h);
 		SDL_GetWindowPosition(window, &x, &y);
-		context->renderSurface(RmRect{ (float)x, (float)y, (float)w, (float)h });
+		context->renderWidget(nullptr, RmRect{ (float)x, (float)y, (float)w, (float)h });
 
 #if 1
 		{
@@ -272,13 +272,11 @@ int main(int argc, char* argv[]) {
 		}
 #endif
 
-		// 获取像素数据
+		// 更新屏幕内容  
 		unsigned char* pixels = cairo_image_surface_get_data(surface_cr);
 		int width = cairo_image_surface_get_width(surface_cr);
 		int height = cairo_image_surface_get_height(surface_cr);
 		int pitch = cairo_image_surface_get_stride(surface_cr);
-
-		// 更新屏幕内容  
 		SDL_UpdateTexture(texture, nullptr, pixels, pitch);
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);

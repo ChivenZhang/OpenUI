@@ -1,23 +1,28 @@
 #include "RmGUIContext.h"
+#include "RmGUIWidget.h"
 
 RmRef<IRmGUIContext> IRmGUIContext::GetInstance()
 {
 	return RmNew<RmGUIContext>();
 }
 
-bool RmGUIContext::addWidget(RmRef<IRmGUIWidget> widget)
+bool RmGUIContext::addWidget(RmRef<IRmGUIWidget> value)
 {
+	auto widget = RmCast<RmGUIWidget>(value);
 	if (widget == nullptr) return false;
 	auto result = std::find(m_TopLevelList.begin(), m_TopLevelList.end(), widget);
 	if (result == m_TopLevelList.end()) m_TopLevelList.push_back(widget);
+	widget->setContext(this);
 	return true;
 }
 
-bool RmGUIContext::removeWidget(RmRef<IRmGUIWidget> widget)
+bool RmGUIContext::removeWidget(RmRef<IRmGUIWidget> value)
 {
+	auto widget = RmCast<RmGUIWidget>(value);
 	auto result = std::remove(m_TopLevelList.begin(), m_TopLevelList.end(), widget);
 	if (result == m_TopLevelList.end()) return false;
 	m_TopLevelList.erase(result, m_TopLevelList.end());
+	widget->setContext(nullptr);
 	return true;
 }
 
@@ -37,11 +42,11 @@ void RmGUIContext::postEvent(rmreactor source, rmevent event)
 {
 }
 
-bool RmGUIContext::renderSurface(RmRect client)
+bool RmGUIContext::renderWidget(RmRaw<IRmGUIPainter> painter, RmRect client)
 {
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i)
 	{
-		m_TopLevelList[i]->paint(m_Painter.get(), &client);
+		m_TopLevelList[i]->paint(painter, &client);
 	}
 	return true;
 }

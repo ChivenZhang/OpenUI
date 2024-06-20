@@ -10,10 +10,9 @@ public:
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) override;
 	virtual void sendEvent(rmreactor source, rmevent event) override;
 	virtual void postEvent(rmreactor source, rmevent event) override;
-	virtual bool renderSurface(RmRect client) override;
+	virtual bool renderWidget(RmRaw<IRmGUIPainter> painter, RmRect client) override;
 
 protected:
-	RmRef<IRmGUIPainter> m_Painter;
 	RmRef<IRmGUIWidget> m_FocusWidget;
 	RmVector<RmRef<IRmGUIWidget>> m_TopLevelList;
 	cairo_surface_t* m_NativeSurface;

@@ -1,5 +1,6 @@
 #pragma once
 #include "Widget/IRmGUIWidget.h"
+class RmGUIContext;
 
 class RmGUIWidgetPrivate;
 class RMGUI_API RmGUIWidget : public IRmGUIWidget
@@ -42,6 +43,11 @@ protected:
 	virtual void tabletEvent(rmevent_tablet event) override;
 	virtual void wheelEvent(rmevent_wheel event) override;
 
+protected:
+	virtual RmRaw<IRmGUIContext> getContext() const;
+	virtual void setContext(RmRaw<IRmGUIContext> context);
+
 private:
 	RmGUIWidgetPrivate* m_PrivateData;
+	friend class RmGUIContext;
 };
