@@ -1,0 +1,3 @@
+[submodule "External/Taitank"]
+	path = External/Taitank
+	url = https://github.com/Tencent/Taitank.git
