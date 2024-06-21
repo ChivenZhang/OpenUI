@@ -72,30 +72,32 @@ int main(int argc, char* argv[]) {
 	context->setSurface(surface);
 
 	auto root = RmNew<RmGUIVBox>();
+	context->addWidget(root);
+	root->setFixedWidth(300); root->setFixedHeight(300);
 
 	auto child0 = RmNew<RmGUIHBox>();
+	root->addWidget(child0);
+	child0->setFixedWidth(300); child0->setFixedHeight(100);
 
 	auto child1 = RmNew<RmGUIPanel>();
+	child0->addWidget(child1);
 	child1->setFixedWidth(100); child1->setFixedHeight(50);
 
 	auto child11 = RmNew<RmGUIPanel>();
+	child0->addWidget(child11);
 	child11->setFixedWidth(100); child11->setFixedHeight(50);
 
 	auto child2 = RmNew<RmGUIHBox>();
+	root->addWidget(child2);
+	child2->setFixedWidth(300); child2->setFixedHeight(100);
 
 	auto child3 = RmNew<RmGUIPanel>();
+	child2->addWidget(child3);
 	child3->setFixedWidth(100); child3->setFixedHeight(50);
 
 	auto child33 = RmNew<RmGUIPanel>();
-	child33->setFixedWidth(100); child33->setFixedHeight(50);
-
-	context->addWidget(root);
-	root->addWidget(child0);
-	child0->addWidget(child1);
-	child0->addWidget(child11);
-	root->addWidget(child2);
-	child2->addWidget(child3);
 	child2->addWidget(child33);
+	child33->setFixedWidth(100); child33->setFixedHeight(50);
 
 	// 主循环  
 	bool quit = false;
