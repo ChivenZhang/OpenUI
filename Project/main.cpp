@@ -6,6 +6,8 @@
 #include <cairo/cairo.h>
 #include "Widget/IRmGUIContext.h"
 #include "SDL2Surface.h"
+#include "Widget/Private/RmGUIHBox.h"
+#include "Widget/Private/RmGUIVBox.h"
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
 
@@ -19,12 +21,12 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	// 创建SDL窗口  
-	window = SDL_CreateWindow("SDL2, OpenGL and GLEW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("SDL2, OpenGL and GLEW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 400, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (window == nullptr) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_Quit();
@@ -69,18 +71,31 @@ int main(int argc, char* argv[]) {
 	auto context = IRmGUIContext::GetInstance();
 	context->setSurface(surface);
 
-	auto canvas = RmNew<RmGUIPanel>();
-	canvas->setWidth(500); canvas->setHeight(500);
+	auto root = RmNew<RmGUIVBox>();
 
-	auto child0 = RmNew<RmGUIPanel>();
-	child0->setWidth(100); child0->setHeight(50);
+	auto child0 = RmNew<RmGUIHBox>();
 
 	auto child1 = RmNew<RmGUIPanel>();
-	child1->setWidth(100); child1->setHeight(50);
+	child1->setFixedWidth(100); child1->setFixedHeight(50);
 
-	context->addWidget(canvas);
-	canvas->addWidget(child0);
-	canvas->addWidget(child1);
+	auto child11 = RmNew<RmGUIPanel>();
+	child11->setFixedWidth(100); child11->setFixedHeight(50);
+
+	auto child2 = RmNew<RmGUIHBox>();
+
+	auto child3 = RmNew<RmGUIPanel>();
+	child3->setFixedWidth(100); child3->setFixedHeight(50);
+
+	auto child33 = RmNew<RmGUIPanel>();
+	child33->setFixedWidth(100); child33->setFixedHeight(50);
+
+	context->addWidget(root);
+	root->addWidget(child0);
+	child0->addWidget(child1);
+	child0->addWidget(child11);
+	root->addWidget(child2);
+	child2->addWidget(child3);
+	child2->addWidget(child33);
 
 	// 主循环  
 	bool quit = false;
