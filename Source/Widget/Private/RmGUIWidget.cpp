@@ -199,7 +199,7 @@ void RmGUIWidget::handle(rmreactor source, rmevent event)
 
 void RmGUIWidget::layout(rmrect client)
 {
-	auto layout_func = [=](RmRaw<IRmGUIWidget> widget)->taitank::TaitankNodeRef {
+	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->taitank::TaitankNodeRef {
 		auto node = taitank::NodeCreate();
 		taitank::SetWidth(node, widget->getFixedWidth());
 		taitank::SetHeight(node, widget->getFixedHeight());
@@ -219,37 +219,36 @@ void RmGUIWidget::layout(rmrect client)
 		taitank::SetPadding(node, taitank::CSSDirection::CSS_TOP, widget->getPadding().Y);
 		taitank::SetPadding(node, taitank::CSSDirection::CSS_RIGHT, widget->getPadding().Z);
 		taitank::SetPadding(node, taitank::CSSDirection::CSS_BOTTOM, widget->getPadding().W);
-		taitank::SetAlignItems(node, taitank::FlexAlign::FLEX_ALIGN_CENTER);
-		taitank::SetJustifyContent(node, taitank::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
 		return node;
 		};
 
 	auto root = layout_func(this);
-	taitank::SetPosition(root, taitank::CSSDirection::CSS_LEFT, client->X);
-	taitank::SetPosition(root, taitank::CSSDirection::CSS_TOP, client->Y);
 	taitank::SetWidth(root, client->W);
 	taitank::SetHeight(root, client->H);
 	auto childList = getChildren();
-	for (size_t i = 0; i < childList.size(); ++i) root->AddChild(layout_func(childList[i].get()));
+	for (size_t i = 0; i < childList.size(); ++i)
+	{
+		auto node = layout_func(childList[i].get());
+		root->AddChild(node);
+	}
 	taitank::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
 
+	auto left = taitank::GetLeft(root); auto top = taitank::GetTop(root);
+	auto width = taitank::GetWidth(root); auto height = taitank::GetHeight(root);
+	setRect({ client->X + left, client->Y + top, width, height });
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = root->GetChild(i);
 		auto left = taitank::GetLeft(node); auto top = taitank::GetTop(node);
 		auto width = taitank::GetWidth(node); auto height = taitank::GetHeight(node);
-		childList[i]->setRect({ left, top, width, height });
+		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
 	}
-	auto left = taitank::GetLeft(root); auto top = taitank::GetTop(root);
-	auto width = taitank::GetWidth(root); auto height = taitank::GetHeight(root);
-	setRect({ left, top, width, height });
 
 	taitank::NodeFreeRecursive(root);
 }
 
 void RmGUIWidget::paint(rmpainter painter, rmrect client)
 {
-	printf("%f %f %f %f\n", client->X, client->Y, client->W, client->H);
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
 	{

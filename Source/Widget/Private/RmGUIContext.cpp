@@ -57,8 +57,15 @@ void RmGUIContext::layoutWidget(RmRect client)
 	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
 		widget->layout(&client);
+		auto left = widget->getRect().X;
+		auto top = widget->getRect().Y;
+		auto width = widget->getRect().W;
+		auto height = widget->getRect().H;
 		auto childrenList = widget->getChildren();
-		for (size_t i = 0; i < childrenList.size(); ++i) foreach_func(childrenList[i].get(), childrenList[i]->getRect());
+		for (size_t i = 0; i < childrenList.size(); ++i)
+		{
+			foreach_func(childrenList[i].get(), childrenList[i]->getRect());
+		}
 		};
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get(), client);
 }

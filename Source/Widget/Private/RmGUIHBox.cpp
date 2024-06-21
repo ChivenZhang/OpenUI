@@ -9,7 +9,7 @@ RmGUIHBox::RmGUIHBox(IRmGUIWidgetRaw parent)
 
 void RmGUIHBox::layout(rmrect client)
 {
-	auto layout_func = [=](RmRaw<IRmGUIWidget> widget)->taitank::TaitankNodeRef {
+	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->taitank::TaitankNodeRef {
 		auto node = taitank::NodeCreate();
 		taitank::SetWidth(node, widget->getFixedWidth());
 		taitank::SetHeight(node, widget->getFixedHeight());
@@ -29,31 +29,50 @@ void RmGUIHBox::layout(rmrect client)
 		taitank::SetPadding(node, taitank::CSSDirection::CSS_TOP, widget->getPadding().Y);
 		taitank::SetPadding(node, taitank::CSSDirection::CSS_RIGHT, widget->getPadding().Z);
 		taitank::SetPadding(node, taitank::CSSDirection::CSS_BOTTOM, widget->getPadding().W);
-		taitank::SetAlignItems(node, taitank::FlexAlign::FLEX_ALIGN_CENTER);
-		taitank::SetFlexDirection(node, taitank::FlexDirection::FLEX_DIRECTION_ROW);
-		taitank::SetJustifyContent(node, taitank::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
-		taitank::SetFlexGrow(node, 1.0f);
 		return node;
 		};
 
 	auto root = layout_func(this);
 	taitank::SetWidth(root, client->W);
 	taitank::SetHeight(root, client->H);
-	taitank::SetPosition(root, taitank::CSSDirection::CSS_LEFT, client->X);
-	taitank::SetPosition(root, taitank::CSSDirection::CSS_TOP, client->Y);
+	taitank::SetAlignItems(root, taitank::FlexAlign::FLEX_ALIGN_CENTER);
+	taitank::SetFlexDirection(root, taitank::FlexDirection::FLEX_DIRECTION_ROW);
+	taitank::SetJustifyContent(root, taitank::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
 	auto childList = getChildren();
-	for (size_t i = 0; i < childList.size(); ++i) root->AddChild(layout_func(childList[i].get()));
-	taitank::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
-
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
-		auto flex = root->GetChild(i);
-		auto left = taitank::GetLeft(flex); auto top = taitank::GetTop(flex);
-		auto width = taitank::GetWidth(flex); auto height = taitank::GetHeight(flex);
-		childList[i]->setRect({ left, top, width, height });
+		auto node = layout_func(childList[i].get());
+		if (RmCast<RmGUILayout>(childList[i]))
+		{
+			taitank::SetFlexGrow(node, 1.0f);
+			taitank::SetAlignSelf(node, taitank::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
+		else
+		{
+			taitank::SetAlignSelf(node, taitank::FlexAlign::FLEX_ALIGN_CENTER);
+		}
+		root->AddChild(node);
 	}
+	taitank::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
+
 	auto left = taitank::GetLeft(root); auto top = taitank::GetTop(root);
 	auto width = taitank::GetWidth(root); auto height = taitank::GetHeight(root);
-	setRect({ left, top, width, height });
+	setRect({ client->X + left, client->Y + top, width, height });
+	for (size_t i = 0; i < childList.size(); ++i)
+	{
+		auto node = root->GetChild(i);
+		auto left = taitank::GetLeft(node); auto top = taitank::GetTop(node);
+		auto width = taitank::GetWidth(node); auto height = taitank::GetHeight(node);
+		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
+	}
+
 	taitank::NodeFreeRecursive(root);
+}
+
+void RmGUIHBox::paint(rmpainter painter, rmrect client)
+{
+	painter->setPen({ 1, 0, 0, 0.5 });
+	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
+
+	RmGUIWidget::paint(painter, client);
 }
