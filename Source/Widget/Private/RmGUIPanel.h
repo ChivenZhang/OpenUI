@@ -4,6 +4,6 @@
 class RMGUI_API RmGUIPanel : public RmGUIControl
 {
 public:
-	RmGUIPanel(rmwidget parent = nullptr);
+	RmGUIPanel(IRmGUIWidgetRaw parent = nullptr);
 	virtual void paint(rmpainter painter, rmrect client) override;
 };

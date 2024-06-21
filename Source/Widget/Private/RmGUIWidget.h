@@ -6,13 +6,13 @@ class RmGUIWidgetPrivate;
 class RMGUI_API RmGUIWidget : public IRmGUIWidget
 {
 public:
-	RmGUIWidget(rmwidget parent = nullptr);
+	RmGUIWidget(IRmGUIWidgetRaw parent = nullptr);
 	~RmGUIWidget();
 	virtual RmRect getRect() const override;
 	virtual void setRect(RmRect client) override;
 	virtual RmRect getChildrenRect() const override;
-	virtual rmwidget getParent() const override;
-	virtual void setParent(rmwidget parent) override;
+	virtual IRmGUIWidgetRaw getParent() const override;
+	virtual void setParent(IRmGUIWidgetRaw parent) override;
 	virtual RmArrayView<RmRef<IRmGUIWidget>> getChildren() override;
 	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const override;
 	virtual bool addWidget(RmRef<IRmGUIWidget> widget) override;
@@ -23,6 +23,25 @@ public:
 	virtual void paint(rmpainter painter, rmrect client) override;
 	virtual RmString getAttribute(uint32_t name) const override;
 	virtual void setAttribute(uint32_t name, RmString const& value) override;
+
+	float getWidth() const;
+	void setWidth(float value);
+	float getHeight() const;
+	void setHeight(float value);
+	float getMinWidth() const;
+	void setMinWidth(float value);
+	float getMinHeight() const;
+	void setMinHeight(float value);
+	float getMaxWidth() const;
+	void setMaxWidth(float value);
+	float getMaxHeight() const;
+	void setMaxHeight(float value);
+	RmFloat4 getMargin() const;
+	void setMargin(RmFloat4 value);
+	RmFloat4 getPadding() const;
+	void setPadding(RmFloat4 value);
+	RmFloat4 getBorder() const;
+	void setBorder(RmFloat4 value);
 
 protected:
 	virtual void closeEvent(rmevent_close event) override;

@@ -4,6 +4,6 @@
 class RMGUI_API RmGUILabel : public RmGUIControl
 {
 public:
-	RmGUILabel(rmwidget parent = nullptr);
+	RmGUILabel(IRmGUIWidgetRaw parent = nullptr);
 	virtual void paint(rmpainter painter, rmrect client) override;
 };

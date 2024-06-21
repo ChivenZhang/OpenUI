@@ -1,7 +1,7 @@
 #include "RmGUIHBox.h"
 #include <taitank.h>
 
-RmGUIHBox::RmGUIHBox(rmwidget parent)
+RmGUIHBox::RmGUIHBox(IRmGUIWidgetRaw parent)
 	:
 	RmGUILayout(parent)
 {

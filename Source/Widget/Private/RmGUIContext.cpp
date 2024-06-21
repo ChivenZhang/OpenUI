@@ -38,8 +38,8 @@ bool RmGUIContext::removeWidget(RmRef<IRmGUIWidget> value)
 
 void RmGUIContext::sendEvent(rmreactor source, rmevent event)
 {
-	RmLambda<void(rmwidget)> foreach_func;
-	foreach_func = [&](rmwidget widget) {
+	RmLambda<void(IRmGUIWidgetRaw)> foreach_func;
+	foreach_func = [&](IRmGUIWidgetRaw widget) {
 		auto result = widget->filter(source, event);
 		auto childrenList = widget->getChildren();
 		for (size_t i = 0; i < childrenList.size(); ++i) foreach_func(childrenList[i].get());
@@ -54,7 +54,13 @@ void RmGUIContext::postEvent(rmreactor source, rmevent event)
 
 void RmGUIContext::layoutWidget(RmRect client)
 {
-	for (size_t i = 0; i < m_TopLevelList.size(); ++i) m_TopLevelList[i]->layout(&client);
+	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
+	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
+		widget->layout(&client);
+		auto childrenList = widget->getChildren();
+		for (size_t i = 0; i < childrenList.size(); ++i) foreach_func(childrenList[i].get(), childrenList[i]->getRect());
+		};
+	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get(), client);
 }
 
 bool RmGUIContext::paintWidget(RmRect client)

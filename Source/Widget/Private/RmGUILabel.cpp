@@ -1,6 +1,6 @@
 #include "RmGUILabel.h"
 
-RmGUILabel::RmGUILabel(rmwidget parent)
+RmGUILabel::RmGUILabel(IRmGUIWidgetRaw parent)
 	:
 	RmGUIControl(parent)
 {

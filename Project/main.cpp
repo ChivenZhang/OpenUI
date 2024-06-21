@@ -67,8 +67,20 @@ int main(int argc, char* argv[]) {
 	auto surface = RmNew<SDL2Surface>(w, h);
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface->getNativeSurface());
 	auto context = IRmGUIContext::GetInstance();
-	context->addWidget(RmNew<RmGUIPanel>());
 	context->setSurface(surface);
+
+	auto canvas = RmNew<RmGUIPanel>();
+	canvas->setWidth(500); canvas->setHeight(500);
+
+	auto child0 = RmNew<RmGUIPanel>();
+	child0->setWidth(100); child0->setHeight(50);
+
+	auto child1 = RmNew<RmGUIPanel>();
+	child1->setWidth(100); child1->setHeight(50);
+
+	context->addWidget(canvas);
+	canvas->addWidget(child0);
+	canvas->addWidget(child1);
 
 	// 主循环  
 	bool quit = false;

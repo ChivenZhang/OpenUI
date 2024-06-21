@@ -1,6 +1,6 @@
 #include "RmGUIPanel.h"
 
-RmGUIPanel::RmGUIPanel(rmwidget parent)
+RmGUIPanel::RmGUIPanel(IRmGUIWidgetRaw parent)
 	:
 	RmGUIControl(parent)
 {
