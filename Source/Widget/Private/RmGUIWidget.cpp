@@ -1,17 +1,4 @@
 #include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
 #include <taitank.h>
 
 class RmGUIWidgetPrivate {};
@@ -20,7 +7,7 @@ class RmGUIWidgetPrivateData : public RmGUIWidgetPrivate
 public:
 	RmRaw<IRmGUIContext> Context = nullptr;
 	RmRaw<IRmGUIWidget> Parent = nullptr;
-	RmVector<RmRef<IRmGUIWidget>> ChildrenList;
+	RmVector<IRmGUIWidgetRef> ChildrenList;
 	RmRect ClientRect, ChildrenRect;
 	// Attributes
 	float FixedWidth = VALUE_UNDEFINED, FixedHeight = VALUE_UNDEFINED;
@@ -69,17 +56,17 @@ void RmGUIWidget::setParent(IRmGUIWidgetRaw parent)
 	PRIVATE()->Parent = parent;
 }
 
-RmArrayView<RmRef<IRmGUIWidget>> RmGUIWidget::getChildren()
+RmArrayView<IRmGUIWidgetRef> RmGUIWidget::getChildren()
 {
 	return PRIVATE()->ChildrenList;
 }
 
-RmArrayView<const RmRef<IRmGUIWidget>> RmGUIWidget::getChildren() const
+RmArrayView<const IRmGUIWidgetRef> RmGUIWidget::getChildren() const
 {
 	return PRIVATE()->ChildrenList;
 }
 
-bool RmGUIWidget::addWidget(RmRef<IRmGUIWidget> value)
+bool RmGUIWidget::addWidget(IRmGUIWidgetRef value)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
 	if (widget == nullptr) return false;
@@ -90,7 +77,7 @@ bool RmGUIWidget::addWidget(RmRef<IRmGUIWidget> value)
 	return true;
 }
 
-bool RmGUIWidget::removeWidget(RmRef<IRmGUIWidget> value)
+bool RmGUIWidget::removeWidget(IRmGUIWidgetRef value)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
 	auto result = std::remove(PRIVATE()->ChildrenList.begin(), PRIVATE()->ChildrenList.end(), widget);
@@ -110,94 +97,94 @@ void RmGUIWidget::handle(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 {
 	switch (event->Type)
 	{
-	case HashUtility::Encrypt("Show"):
+	case RmHash("Show"):
 	{
 		showEvent(RmCast<IRmGUIShowEvent>(event));
 	} break;
-	case HashUtility::Encrypt("Hide"):
+	case RmHash("Hide"):
 	{
 		hideEvent(RmCast<IRmGUIHideEvent>(event));
 	} break;
-	case HashUtility::Encrypt("Close"):
+	case RmHash("Close"):
 	{
 		closeEvent(RmCast<IRmGUICloseEvent>(event));
 	} break;
-	case HashUtility::Encrypt("Move"):
+	case RmHash("Move"):
 	{
 		moveEvent(RmCast<IRmGUIMoveEvent>(event));
 	} break;
-	case HashUtility::Encrypt("Resize"):
+	case RmHash("Resize"):
 	{
 		resizeEvent(RmCast<IRmGUIResizeEvent>(event));
 	} break;
-	case HashUtility::Encrypt("MouseDown"):
+	case RmHash("MouseDown"):
 	{
 		mousePressEvent(RmCast<IRmGUIMouseDownEvent>(event));
 	} break;
-	case HashUtility::Encrypt("MouseUp"):
+	case RmHash("MouseUp"):
 	{
 		mouseReleaseEvent(RmCast<IRmGUIMouseUpEvent>(event));
 	} break;
-	case HashUtility::Encrypt("DoubleClick"):
+	case RmHash("DoubleClick"):
 	{
 		mouseDoubleClickEvent(RmCast<IRmGUIMouseDblClickEvent>(event));
 	} break;
-	case HashUtility::Encrypt("MouseMove"):
+	case RmHash("MouseMove"):
 	{
 		mouseMoveEvent(RmCast<IRmGUIMouseMoveEvent>(event));
 	} break;
-	case HashUtility::Encrypt("MouseWheel"):
+	case RmHash("MouseWheel"):
 	{
 		wheelEvent(RmCast<IRmGUIMouseWheelEvent>(event));
 	} break;
-	case HashUtility::Encrypt("MouseEnter"):
+	case RmHash("MouseEnter"):
 	{
 		enterEvent(RmCast<IRmGUIMouseEnterEvent>(event));
 	} break;
-	case HashUtility::Encrypt("MouseLeave"):
+	case RmHash("MouseLeave"):
 	{
 		leaveEvent(RmCast<IRmGUIMouseLeaveEvent>(event));
 	} break;
-	case HashUtility::Encrypt("KeyDown"):
+	case RmHash("KeyDown"):
 	{
 		keyPressEvent(RmCast<IRmGUIKeyDownEvent>(event));
 	} break;
-	case HashUtility::Encrypt("KeyUp"):
+	case RmHash("KeyUp"):
 	{
 		keyReleaseEvent(RmCast<IRmGUIKeyUpEvent>(event));
 	} break;
-	case HashUtility::Encrypt("KeyInput"):
+	case RmHash("KeyInput"):
 	{
 		inputEvent(RmCast<IRmGUIKeyInputEvent>(event));
 	} break;
-	case HashUtility::Encrypt("Drop"):
+	case RmHash("Drop"):
 	{
 		dropEvent(RmCast<IRmGUIDropEvent>(event));
 	} break;
-	case HashUtility::Encrypt("DragMove"):
+	case RmHash("DragMove"):
 	{
 		dragMoveEvent(RmCast<IRmGUIDragMoveEvent>(event));
 	} break;
-	case HashUtility::Encrypt("DragEnter"):
+	case RmHash("DragEnter"):
 	{
 		dragEnterEvent(RmCast<IRmGUIDragEnterEvent>(event));
 	} break;
-	case HashUtility::Encrypt("DragLeave"):
+	case RmHash("DragLeave"):
 	{
 		dragLeaveEvent(RmCast<IRmGUIDragLeaveEvent>(event));
 	} break;
-	case HashUtility::Encrypt("FocusIn"):
+	case RmHash("FocusIn"):
 	{
 		focusInEvent(RmCast<IRmGUIFocusEvent>(event));
 	} break;
-	case HashUtility::Encrypt("FocusOut"):
+	case RmHash("FocusOut"):
 	{
 		focusOutEvent(RmCast<IRmGUIFocusEvent>(event));
 	} break;
 	}
 }
 
-void RmGUIWidget::layout(rmrect client)
+void RmGUIWidget::layout(RmRectRaw client)
 {
 	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->taitank::TaitankNodeRef {
 		auto node = taitank::NodeCreate();
@@ -247,7 +234,7 @@ void RmGUIWidget::layout(rmrect client)
 	taitank::NodeFreeRecursive(root);
 }
 
-void RmGUIWidget::paint(IRmGUIPainterRaw painter, rmrect client)
+void RmGUIWidget::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)

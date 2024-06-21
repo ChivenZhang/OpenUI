@@ -11,7 +11,7 @@ public:
 
 	virtual void drawEllipse(int x, int y, int width, int height) = 0;
 
-	virtual void drawImage(int x, int y, rmimage image, int sx = 0, int sy = 0, int sw = -1, int sh = -1) = 0;
+	virtual void drawImage(int x, int y, RmImageRaw image, int sx = 0, int sy = 0, int sw = -1, int sh = -1) = 0;
 
 	virtual void drawLine(int x1, int y1, int x2, int y2) = 0;
 
@@ -31,7 +31,7 @@ public:
 
 	virtual void drawRects(RmArrayView<RmRect> rects) = 0;
 
-	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRect* boundingRect = nullptr) = 0;
+	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect = nullptr) = 0;
 
 	virtual void setPen(const RmPen& pen) = 0;
 

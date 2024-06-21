@@ -44,7 +44,7 @@ void SDL2Painter::drawEllipse(int x, int y, int width, int height)
 {
 }
 
-void SDL2Painter::drawImage(int x, int y, rmimage image, int sx, int sy, int sw, int sh)
+void SDL2Painter::drawImage(int x, int y, RmImageRaw image, int sx, int sy, int sw, int sh)
 {
 }
 
@@ -91,7 +91,7 @@ void SDL2Painter::drawRects(RmArrayView<RmRect> rects)
 {
 }
 
-void SDL2Painter::drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRect* boundingRect)
+void SDL2Painter::drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect)
 {
 }
 

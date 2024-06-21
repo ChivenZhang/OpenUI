@@ -12,13 +12,13 @@ public:
 public:
 	virtual ~IRmGUIContext() = default;
 
-	virtual RmRaw<IRmGUISurface> getSurface() const = 0;
+	virtual IRmGUISurfaceRaw getSurface() const = 0;
 
-	virtual void setSurface(RmRef<IRmGUISurface> value) = 0;
+	virtual void setSurface(IRmGUISurfaceRef value) = 0;
 
-	virtual bool addWidget(RmRef<IRmGUIWidget> widget) = 0;
+	virtual bool addWidget(IRmGUIWidgetRef widget) = 0;
 
-	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) = 0;
+	virtual bool removeWidget(IRmGUIWidgetRef widget) = 0;
 
 	virtual void layoutWidget(RmRect client) = 0;
 
@@ -28,4 +28,5 @@ public:
 
 	virtual void postEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event) = 0;
 };
-using rmcontext = RmRaw<IRmGUIContext>;
+using IRmGUIContextRef = RmRef<IRmGUIContext>;
+using IRmGUIContextRaw = RmRaw<IRmGUIContext>;

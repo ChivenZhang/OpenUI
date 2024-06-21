@@ -23,4 +23,5 @@ public:
 
 	virtual void render(RmArrayView<mesh_t> data) = 0;
 };
-using rmrender = RmRaw<IRmGUIRender>;
+using IRmGUIRenderRef = RmRef<IRmGUIRender>;
+using IRmGUIRenderRaw = RmRaw<IRmGUIRender>;

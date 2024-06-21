@@ -2,7 +2,6 @@
 #include "Widget/IRmGUIContext.h"
 #include "Widget/IRmGUIWidget.h"
 #include "Widget/IRmGUISurface.h"
-#include <cairo/cairo.h>
 
 class RmGUIContext : public IRmGUIContext
 {

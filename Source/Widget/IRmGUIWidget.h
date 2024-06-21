@@ -63,17 +63,17 @@ public:
 	virtual IRmGUIWidgetRaw getParent() const = 0;
 	virtual void setParent(IRmGUIWidgetRaw parent) = 0;
 
-	virtual RmArrayView<RmRef<IRmGUIWidget>> getChildren() = 0;
-	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const = 0;
+	virtual RmArrayView<IRmGUIWidgetRef> getChildren() = 0;
+	virtual RmArrayView<const IRmGUIWidgetRef> getChildren() const = 0;
 
-	virtual bool addWidget(RmRef<IRmGUIWidget> widget) = 0;
-	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) = 0;
+	virtual bool addWidget(IRmGUIWidgetRef widget) = 0;
+	virtual bool removeWidget(IRmGUIWidgetRef widget) = 0;
 
 	virtual RmString getAttribute(uint32_t name) const = 0;
 	virtual void setAttribute(uint32_t name, RmString const& value) = 0;
 
-	virtual void layout(rmrect client) = 0;
-	virtual void paint(IRmGUIPainterRaw painter, rmrect client) = 0;
+	virtual void layout(RmRectRaw client) = 0;
+	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) = 0;
 
 protected:
 	virtual void closeEvent(IRmGUICloseEventRaw event) = 0;

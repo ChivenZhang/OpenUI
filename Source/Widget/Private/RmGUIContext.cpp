@@ -6,17 +6,17 @@ RmRef<IRmGUIContext> IRmGUIContext::GetInstance()
 	return RmNew<RmGUIContext>();
 }
 
-RmRaw<IRmGUISurface> RmGUIContext::getSurface() const
+IRmGUISurfaceRaw RmGUIContext::getSurface() const
 {
 	return m_Surface.get();
 }
 
-void RmGUIContext::setSurface(RmRef<IRmGUISurface> value)
+void RmGUIContext::setSurface(IRmGUISurfaceRef value)
 {
 	m_Surface = value;
 }
 
-bool RmGUIContext::addWidget(RmRef<IRmGUIWidget> value)
+bool RmGUIContext::addWidget(IRmGUIWidgetRef value)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
 	if (widget == nullptr) return false;
@@ -26,7 +26,7 @@ bool RmGUIContext::addWidget(RmRef<IRmGUIWidget> value)
 	return true;
 }
 
-bool RmGUIContext::removeWidget(RmRef<IRmGUIWidget> value)
+bool RmGUIContext::removeWidget(IRmGUIWidgetRef value)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
 	auto result = std::remove(m_TopLevelList.begin(), m_TopLevelList.end(), widget);
@@ -41,8 +41,8 @@ void RmGUIContext::sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 	RmLambda<void(IRmGUIWidgetRaw)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget) {
 		auto result = widget->filter(source, event);
-		auto childrenList = widget->getChildren();
-		for (size_t i = 0; i < childrenList.size(); ++i) foreach_func(childrenList[i].get());
+		auto childList = widget->getChildren();
+		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get());
 		if (result == false) widget->handle(source, event);
 		};
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get());
@@ -57,15 +57,8 @@ void RmGUIContext::layoutWidget(RmRect client)
 	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
 		widget->layout(&client);
-		auto left = widget->getRect().X;
-		auto top = widget->getRect().Y;
-		auto width = widget->getRect().W;
-		auto height = widget->getRect().H;
-		auto childrenList = widget->getChildren();
-		for (size_t i = 0; i < childrenList.size(); ++i)
-		{
-			foreach_func(childrenList[i].get(), childrenList[i]->getRect());
-		}
+		auto childList = widget->getChildren();
+		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
 		};
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get(), client);
 }

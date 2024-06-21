@@ -6,12 +6,12 @@ RmGUIScroll::RmGUIScroll(IRmGUIWidgetRaw parent)
 {
 }
 
-void RmGUIScroll::layout(rmrect client)
+void RmGUIScroll::layout(RmRectRaw client)
 {
 	RmGUIWidget::layout(client);
 }
 
-void RmGUIScroll::paint(IRmGUIPainterRaw painter, rmrect client)
+void RmGUIScroll::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	RmGUIWidget::paint(painter, client);
 }

@@ -9,7 +9,7 @@ public:
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawEllipse(int x, int y, int width, int height) override;
-	virtual void drawImage(int x, int y, rmimage image, int sx, int sy, int sw, int sh) override;
+	virtual void drawImage(int x, int y, RmImageRaw image, int sx, int sy, int sw, int sh) override;
 	virtual void drawLine(int x1, int y1, int x2, int y2) override;
 	virtual void drawLines(RmArrayView<RmLine> lines) override;
 	virtual void drawPie(int x, int y, int width, int height, int startAngle, int spanAngle) override;
@@ -19,7 +19,7 @@ public:
 	virtual void drawPolyline(RmArrayView<RmPoint> points) override;
 	virtual void drawRect(int x, int y, int width, int height) override;
 	virtual void drawRects(RmArrayView<RmRect> rects) override;
-	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRect* boundingRect) override;
+	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect) override;
 	virtual void setPen(const RmPen& pen) override;
 	virtual void setBrush(const RmBrush& brush) override;
 	virtual void setFont(const RmFont& font) override;

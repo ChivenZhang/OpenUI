@@ -16,9 +16,11 @@ public:
 
 	virtual RmArrayView<const uint8_t> getPixelData() const = 0;
 
-	virtual RmRaw<IRmGUIPainter> getPainter() const = 0;
+	virtual IRmGUIPainterRaw getPainter() const = 0;
 
-	virtual RmRaw<IRmGUIRender> getRender() const = 0;
+	virtual IRmGUIRenderRaw getRender() const = 0;
 
 	virtual void resize(uint32_t width, uint32_t height) = 0;
 };
+using IRmGUISurfaceRef = RmRef<IRmGUISurface>;
+using IRmGUISurfaceRaw = RmRaw<IRmGUISurface>;

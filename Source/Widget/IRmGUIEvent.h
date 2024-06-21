@@ -1,15 +1,14 @@
 #pragma once
 #include "RmGUI.h"
-#include "Utility/HashUtility.h"
 
 /// @brief Base interface of all events.
 class RMGUI_API IRmGUIEvent
 {
-public:
+protected:
 	IRmGUIEvent(uint32_t type) : Type(type), Accept(false) {}
-
 	virtual ~IRmGUIEvent() = default;
 
+public:
 	const uint32_t Type;
 	bool Accept;
 };
@@ -43,7 +42,7 @@ class IRmGUIShowEvent : public IRmGUIEvent
 public:
 	IRmGUIShowEvent()
 		:
-		IRmGUIEvent(HashUtility::Encrypt("Show")) {}
+		IRmGUIEvent(RmHash("Show")) {}
 };
 using IRmGUIShowEventRaw = RmRaw<IRmGUIShowEvent>;
 
@@ -52,7 +51,7 @@ class IRmGUIHideEvent : public IRmGUIEvent
 public:
 	IRmGUIHideEvent()
 		:
-		IRmGUIEvent(HashUtility::Encrypt("Hide")) {}
+		IRmGUIEvent(RmHash("Hide")) {}
 };
 using IRmGUIHideEventRaw = RmRaw<IRmGUIHideEvent>;
 
@@ -61,7 +60,7 @@ class IRmGUICloseEvent : public IRmGUIEvent
 public:
 	IRmGUICloseEvent()
 		:
-		IRmGUIEvent(HashUtility::Encrypt("Close")) {}
+		IRmGUIEvent(RmHash("Close")) {}
 };
 using IRmGUICloseEventRaw = RmRaw<IRmGUICloseEvent>;
 
@@ -70,10 +69,10 @@ class IRmGUIFocusEvent : public IRmGUIEvent
 public:
 	IRmGUIFocusEvent(bool focus)
 		:
-		IRmGUIEvent(focus ? HashUtility::Encrypt("FocusIn") : HashUtility::Encrypt("FocusOut")) {}
+		IRmGUIEvent(focus ? RmHash("FocusIn") : RmHash("FocusOut")) {}
 
-	bool gotFocus() const { return Type == HashUtility::Encrypt("FocusIn"); }
-	bool lostFocus() const { return Type == HashUtility::Encrypt("FocusOut"); }
+	bool gotFocus() const { return Type == RmHash("FocusIn"); }
+	bool lostFocus() const { return Type == RmHash("FocusOut"); }
 };
 using IRmGUIFocusEventRaw = RmRaw<IRmGUIFocusEvent>;
 
@@ -82,7 +81,7 @@ class IRmGUIMoveEvent : public IRmGUIEvent
 public:
 	IRmGUIMoveEvent(int32_t x, int32_t y, int32_t oldX = 0, int32_t oldY = 0)
 		:
-		IRmGUIEvent(HashUtility::Encrypt("Move")),
+		IRmGUIEvent(RmHash("Move")),
 		X(x), Y(y), OldX(oldX), OldY(oldY) {}
 
 	const int32_t X, Y, OldX, OldY;
@@ -94,7 +93,7 @@ class IRmGUIResizeEvent : public IRmGUIEvent
 public:
 	IRmGUIResizeEvent(int32_t w, int32_t h, int32_t oldW = 0, int32_t oldH = 0)
 		:
-		IRmGUIEvent(HashUtility::Encrypt("Resize")),
+		IRmGUIEvent(RmHash("Resize")),
 		W(w), H(h), OldW(oldW), OldH(oldH) {}
 
 	const int32_t W, H, OldW, OldH;
@@ -120,7 +119,7 @@ class IRmGUIMouseDownEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseDownEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("MouseDown"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("MouseDown"), x, y, globalX, globalY, button, buttons, modifiers) {}
 };
 using IRmGUIMouseDownEventRaw = RmRaw<IRmGUIMouseDownEvent>;
 
@@ -129,7 +128,7 @@ class IRmGUIMouseUpEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseUpEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("MouseUp"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("MouseUp"), x, y, globalX, globalY, button, buttons, modifiers) {}
 };
 using IRmGUIMouseUpEventRaw = RmRaw<IRmGUIMouseUpEvent>;
 
@@ -138,7 +137,7 @@ class IRmGUIMouseDblClickEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseDblClickEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("DoubleClick"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("DoubleClick"), x, y, globalX, globalY, button, buttons, modifiers) {}
 };
 using IRmGUIMouseDblClickEventRaw = RmRaw<IRmGUIMouseDblClickEvent>;
 
@@ -147,7 +146,7 @@ class IRmGUIMouseMoveEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseMoveEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("MouseMove"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("MouseMove"), x, y, globalX, globalY, button, buttons, modifiers) {}
 };
 using IRmGUIMouseMoveEventRaw = RmRaw<IRmGUIMouseMoveEvent>;
 
@@ -156,7 +155,7 @@ class IRmGUIMouseWheelEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseWheelEvent(int32_t px, int32_t py, int32_t ax, int32_t ay, int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("MouseWheel"), x, y, globalX, globalY, button, buttons, modifiers),
+		IRmGUIMouseEvent(RmHash("MouseWheel"), x, y, globalX, globalY, button, buttons, modifiers),
 		PixelX(px), PixelY(py), AngleX(ax), AngleY(ay) {}
 
 	const int32_t PixelX, PixelY, AngleX, AngleY;
@@ -168,7 +167,7 @@ class IRmGUIMouseEnterEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseEnterEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("MouseEnter"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("MouseEnter"), x, y, globalX, globalY, button, buttons, modifiers) {}
 };
 using IRmGUIMouseEnterEventRaw = RmRaw<IRmGUIMouseEnterEvent>;
 
@@ -177,7 +176,7 @@ class IRmGUIMouseLeaveEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseLeaveEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("MouseLeave"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("MouseLeave"), x, y, globalX, globalY, button, buttons, modifiers) {}
 };
 using IRmGUIMouseLeaveEventRaw = RmRaw<IRmGUIMouseLeaveEvent>;
 
@@ -186,7 +185,7 @@ class IRmGUIMouseTabletEvent : public IRmGUIMouseEvent
 public:
 	IRmGUIMouseTabletEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers, float pressure, float rotation, float tangentialPressure, float xTile, float yTile, float z)
 		:
-		IRmGUIMouseEvent(HashUtility::Encrypt("Tablet"), x, y, globalX, globalY, button, buttons, modifiers),
+		IRmGUIMouseEvent(RmHash("Tablet"), x, y, globalX, globalY, button, buttons, modifiers),
 		Pressure(pressure), Rotation(rotation), TangentialPressure(tangentialPressure), XTile(xTile), YTile(yTile), Z(z) {}
 
 	const float Pressure, Rotation, TangentialPressure, XTile, YTile, Z;
@@ -214,7 +213,7 @@ class IRmGUIKeyDownEvent : public IRmGUIKeyEvent
 public:
 	IRmGUIKeyDownEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1)
 		:
-		IRmGUIKeyEvent(HashUtility::Encrypt("KeyDown"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
+		IRmGUIKeyEvent(RmHash("KeyDown"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
 };
 using IRmGUIKeyDownEventRaw = RmRaw<IRmGUIKeyDownEvent>;
 
@@ -223,7 +222,7 @@ class IRmGUIKeyUpEvent : public IRmGUIKeyEvent
 public:
 	IRmGUIKeyUpEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1)
 		:
-		IRmGUIKeyEvent(HashUtility::Encrypt("KeyUp"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
+		IRmGUIKeyEvent(RmHash("KeyUp"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
 };
 using IRmGUIKeyUpEventRaw = RmRaw<IRmGUIKeyUpEvent>;
 
@@ -232,7 +231,7 @@ class IRmGUIKeyInputEvent : public IRmGUIKeyEvent
 public:
 	IRmGUIKeyInputEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1)
 		:
-		IRmGUIKeyEvent(HashUtility::Encrypt("KeyInput"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
+		IRmGUIKeyEvent(RmHash("KeyInput"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
 };
 using IRmGUIKeyInputEventRaw = RmRaw<IRmGUIKeyInputEvent>;
 
@@ -241,7 +240,7 @@ class IRmGUIDropEvent : public IRmGUIEvent
 public:
 	IRmGUIDropEvent()
 		:
-		IRmGUIEvent(HashUtility::Encrypt("Drop")) {}
+		IRmGUIEvent(RmHash("Drop")) {}
 };
 using IRmGUIDropEventRaw = RmRaw<IRmGUIDropEvent>;
 
@@ -269,7 +268,7 @@ class IRmGUIDragMoveEvent : public IRmGUIDragEvent
 public:
 	IRmGUIDragMoveEvent(int32_t x, int32_t y, uint32_t buttons, uint32_t modifiers, rmmime data = nullptr)
 		:
-		IRmGUIDragEvent(HashUtility::Encrypt("DragMove"), x, y, buttons, modifiers, data) {}
+		IRmGUIDragEvent(RmHash("DragMove"), x, y, buttons, modifiers, data) {}
 };
 using IRmGUIDragMoveEventRaw = RmRaw<IRmGUIDragMoveEvent>;
 
@@ -278,7 +277,7 @@ class IRmGUIDragEnterEvent : public IRmGUIDragEvent
 public:
 	IRmGUIDragEnterEvent(int32_t x, int32_t y, uint32_t buttons, uint32_t modifiers, rmmime data = nullptr)
 		:
-		IRmGUIDragEvent(HashUtility::Encrypt("DragEnter"), x, y, buttons, modifiers, data) {}
+		IRmGUIDragEvent(RmHash("DragEnter"), x, y, buttons, modifiers, data) {}
 };
 using IRmGUIDragEnterEventRaw = RmRaw<IRmGUIDragEnterEvent>;
 
@@ -287,6 +286,6 @@ class IRmGUIDragLeaveEvent : public IRmGUIEvent
 public:
 	IRmGUIDragLeaveEvent()
 		:
-		IRmGUIEvent(HashUtility::Encrypt("DragLeave")) {}
+		IRmGUIEvent(RmHash("DragLeave")) {}
 };
 using IRmGUIDragLeaveEventRaw = RmRaw<IRmGUIDragLeaveEvent>;

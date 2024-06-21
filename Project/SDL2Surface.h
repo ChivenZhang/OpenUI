@@ -12,8 +12,8 @@ public:
 	virtual uint32_t getHeight() const override;
 	virtual uint32_t getStride() const override;
 	virtual RmArrayView<const uint8_t> getPixelData() const override;
-	virtual RmRaw<IRmGUIPainter> getPainter() const override;
-	virtual RmRaw<IRmGUIRender> getRender() const override;
+	virtual IRmGUIPainterRaw getPainter() const override;
+	virtual IRmGUIRenderRaw getRender() const override;
 	virtual void resize(uint32_t width, uint32_t height) override;
 	SDL_Surface* getNativeSurface() const;
 
@@ -21,6 +21,6 @@ protected:
 	SDL_Surface* m_WindowSurface;
 	cairo_surface_t* m_NativeSurface;
 	cairo_t* m_NativeContext;
-	RmRef<IRmGUIPainter> m_Painter;
-	RmRef<IRmGUIRender> m_Render;
+	IRmGUIPainterRef m_Painter;
+	IRmGUIRenderRef m_Render;
 };

@@ -36,12 +36,12 @@ RmArrayView<const uint8_t> SDL2Surface::getPixelData() const
 	return RmArrayView<const uint8_t>((uint8_t*)m_WindowSurface->pixels, m_WindowSurface->h * m_WindowSurface->w * m_WindowSurface->pitch);
 }
 
-RmRaw<IRmGUIPainter> SDL2Surface::getPainter() const
+IRmGUIPainterRaw SDL2Surface::getPainter() const
 {
 	return m_Painter.get();
 }
 
-RmRaw<IRmGUIRender> SDL2Surface::getRender() const
+IRmGUIRenderRaw SDL2Surface::getRender() const
 {
 	return m_Render.get();
 }

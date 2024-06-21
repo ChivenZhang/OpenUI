@@ -7,7 +7,7 @@ RmGUIVBox::RmGUIVBox(IRmGUIWidgetRaw parent)
 {
 }
 
-void RmGUIVBox::layout(rmrect client)
+void RmGUIVBox::layout(RmRectRaw client)
 {
 	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->taitank::TaitankNodeRef {
 		auto node = taitank::NodeCreate();
@@ -69,7 +69,7 @@ void RmGUIVBox::layout(rmrect client)
 	taitank::NodeFreeRecursive(root);
 }
 
-void RmGUIVBox::paint(IRmGUIPainterRaw painter, rmrect client)
+void RmGUIVBox::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	painter->setPen({ 194 / 255.0f, 195 / 255.0f, 201 / 255.0f, 1.0f });
 	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);

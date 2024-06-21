@@ -4,9 +4,7 @@ add_definitions(-DRMGUI_SHARED_LIBRARY)
 
 add_library (RmGUI SHARED
 	RmGUI.h
-	Utility/shared_recursive_mutex.h
 	Utility/span.h
-	Utility/HashUtility.h
 	Widget/IRmGUIWidget.h
 	Widget/IRmGUIPainter.h
 	Widget/IRmGUIRender.h

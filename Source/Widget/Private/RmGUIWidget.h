@@ -13,14 +13,14 @@ public:
 	virtual RmRect getChildrenRect() const override;
 	virtual IRmGUIWidgetRaw getParent() const override;
 	virtual void setParent(IRmGUIWidgetRaw parent) override;
-	virtual RmArrayView<RmRef<IRmGUIWidget>> getChildren() override;
-	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const override;
-	virtual bool addWidget(RmRef<IRmGUIWidget> widget) override;
-	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) override;
+	virtual RmArrayView<IRmGUIWidgetRef> getChildren() override;
+	virtual RmArrayView<const IRmGUIWidgetRef> getChildren() const override;
+	virtual bool addWidget(IRmGUIWidgetRef widget) override;
+	virtual bool removeWidget(IRmGUIWidgetRef widget) override;
 	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
 	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
-	virtual void layout(rmrect client) override;
-	virtual void paint(IRmGUIPainterRaw painter, rmrect client) override;
+	virtual void layout(RmRectRaw client) override;
+	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
 	virtual RmString getAttribute(uint32_t name) const override;
 	virtual void setAttribute(uint32_t name, RmString const& value) override;
 

@@ -70,12 +70,6 @@
 #include <bitset>
 #include <exception>
 #include <functional>
-#include <thread>
-#include <future>
-#include <atomic>
-#include <mutex>
-#include "Utility/shared_recursive_mutex.h"
-#include <condition_variable>
 
 template<class T>
 using RmRaw = T*;
@@ -137,20 +131,6 @@ using RmTuple = std::tuple<TS...>;
 using RmException = std::exception;
 template <class T>
 using RmLambda = std::function<T>;
-using RmThread = std::thread;
-template <class T>
-using RmFuture = std::future<T>;
-template <class T>
-using RmPromise = std::promise<T>;
-template <class T>
-using RmAtomic = std::atomic<T>;
-using RmMutex = std::recursive_mutex;
-using RmMutexLock = std::lock_guard<RmMutex>;
-using RmUniqueLock = std::unique_lock<RmMutex>;
-using RmSharedMutex = std::shared_recursive_mutex;
-using RmMutexReadLock = std::shared_lock<RmSharedMutex>;
-using RmMutexWriteLock = std::unique_lock<RmSharedMutex>;
-using RmMutexUnlock = std::condition_variable_any;
 using RmStringList = RmVector<RmString>;
 using RmWStringList = RmVector<RmWString>;
 using RmString8List = RmVector<RmString8>;
@@ -207,11 +187,19 @@ inline RmRaw<U> RmCast(RmRaw<T> const& target)
 	return const_cast<U*>(dynamic_cast<const U*>((const T*)target));
 }
 
+inline constexpr uint32_t RmHash(RmCString value)
+{
+	uint32_t hash = 0; // From JDK 8
+	if (value == nullptr) return hash;
+	while (*value) hash = hash * 31 + (*value++);
+	return hash;
+}
+
 struct RmRect
 {
 	float X, Y, W, H;
 };
-using rmrect = RmRaw<RmRect>;
+using RmRectRaw = RmRaw<RmRect>;
 
 struct RmPoint
 {
@@ -272,4 +260,4 @@ struct RmFloat4x4
 };
 
 class RmImage;
-using rmimage = RmRaw<RmImage>;
+using RmImageRaw = RmRaw<RmImage>;
