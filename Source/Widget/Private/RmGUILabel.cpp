@@ -6,7 +6,7 @@ RmGUILabel::RmGUILabel(IRmGUIWidgetRaw parent)
 {
 }
 
-void RmGUILabel::paint(rmpainter painter, rmrect client)
+void RmGUILabel::paint(IRmGUIPainterRaw painter, rmrect client)
 {
 	RmGUIWidget::paint(painter, client);
 }

@@ -7,5 +7,5 @@ class RMGUI_API RmGUIVBox : public RmGUILayout
 public:
 	RmGUIVBox(IRmGUIWidgetRaw parent = nullptr);
 	virtual void layout(rmrect client) override;
-	virtual void paint(rmpainter painter, rmrect client) override;
+	virtual void paint(IRmGUIPainterRaw painter, rmrect client) override;
 };

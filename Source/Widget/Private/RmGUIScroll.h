@@ -1,11 +1,11 @@
 #pragma once
 #include "RmGUILayout.h"
 
-/// @brief Horizontal Layout
-class RMGUI_API RmGUIHBox : public RmGUILayout
+/// @brief Scroll Layout
+class RMGUI_API RmGUIScroll : public RmGUILayout
 {
 public:
-	RmGUIHBox(IRmGUIWidgetRaw parent = nullptr);
+	RmGUIScroll(IRmGUIWidgetRaw parent = nullptr);
 	virtual void layout(rmrect client) override;
 	virtual void paint(IRmGUIPainterRaw painter, rmrect client) override;
 };

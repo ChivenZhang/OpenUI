@@ -17,10 +17,10 @@ public:
 	virtual RmArrayView<const RmRef<IRmGUIWidget>> getChildren() const override;
 	virtual bool addWidget(RmRef<IRmGUIWidget> widget) override;
 	virtual bool removeWidget(RmRef<IRmGUIWidget> widget) override;
-	virtual bool filter(rmreactor source, rmevent event) override;
-	virtual void handle(rmreactor source, rmevent event) override;
+	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
+	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
 	virtual void layout(rmrect client) override;
-	virtual void paint(rmpainter painter, rmrect client) override;
+	virtual void paint(IRmGUIPainterRaw painter, rmrect client) override;
 	virtual RmString getAttribute(uint32_t name) const override;
 	virtual void setAttribute(uint32_t name, RmString const& value) override;
 
@@ -57,28 +57,28 @@ public:
 	virtual void setBorder(RmFloat4 value) override;
 
 protected:
-	virtual void closeEvent(rmevent_close event) override;
-	virtual void dragEnterEvent(rmevent_drag_enter event) override;
-	virtual void dragLeaveEvent(rmevent_drag_leave event) override;
-	virtual void dragMoveEvent(rmevent_drag_move event) override;
-	virtual void dropEvent(rmevent_drop event) override;
-	virtual void enterEvent(rmevent_enter event) override;
-	virtual void focusInEvent(rmevent_focus event) override;
-	virtual void focusOutEvent(rmevent_focus event) override;
-	virtual void hideEvent(rmevent_hide event) override;
-	virtual void inputEvent(rmevent_input event) override;
-	virtual void keyPressEvent(rmevent_key_down event) override;
-	virtual void keyReleaseEvent(rmevent_key_up event) override;
-	virtual void leaveEvent(rmevent_leave event) override;
-	virtual void mouseDoubleClickEvent(rmevent_mouse event) override;
-	virtual void mouseMoveEvent(rmevent_mouse event) override;
-	virtual void mousePressEvent(rmevent_mouse event) override;
-	virtual void mouseReleaseEvent(rmevent_mouse event) override;
-	virtual void moveEvent(rmevent_move event) override;
-	virtual void resizeEvent(rmevent_resize event) override;
-	virtual void showEvent(rmevent_show event) override;
-	virtual void tabletEvent(rmevent_tablet event) override;
-	virtual void wheelEvent(rmevent_wheel event) override;
+	virtual void closeEvent(IRmGUICloseEventRaw event) override;
+	virtual void dragEnterEvent(IRmGUIDragEnterEventRaw event) override;
+	virtual void dragLeaveEvent(IRmGUIDragLeaveEventRaw event) override;
+	virtual void dragMoveEvent(IRmGUIDragMoveEventRaw event) override;
+	virtual void dropEvent(IRmGUIDropEventRaw event) override;
+	virtual void enterEvent(IRmGUIMouseEnterEventRaw event) override;
+	virtual void focusInEvent(IRmGUIFocusEventRaw event) override;
+	virtual void focusOutEvent(IRmGUIFocusEventRaw event) override;
+	virtual void hideEvent(IRmGUIHideEventRaw event) override;
+	virtual void inputEvent(IRmGUIKeyInputEventRaw event) override;
+	virtual void keyPressEvent(IRmGUIKeyDownEventRaw event) override;
+	virtual void keyReleaseEvent(IRmGUIKeyUpEventRaw event) override;
+	virtual void leaveEvent(IRmGUIMouseLeaveEventRaw event) override;
+	virtual void mouseDoubleClickEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
+	virtual void moveEvent(IRmGUIMoveEventRaw event) override;
+	virtual void resizeEvent(IRmGUIResizeEventRaw event) override;
+	virtual void showEvent(IRmGUIShowEventRaw event) override;
+	virtual void tabletEvent(IRmGUIMouseTabletEventRaw event) override;
+	virtual void wheelEvent(IRmGUIMouseWheelEventRaw event) override;
 
 protected:
 	virtual RmRaw<IRmGUIContext> getContext() const;

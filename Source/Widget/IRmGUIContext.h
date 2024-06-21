@@ -24,8 +24,8 @@ public:
 
 	virtual bool paintWidget(RmRect client) = 0;
 
-	virtual void sendEvent(rmreactor source, rmevent event) = 0;
+	virtual void sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event) = 0;
 
-	virtual void postEvent(rmreactor source, rmevent event) = 0;
+	virtual void postEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event) = 0;
 };
 using rmcontext = RmRaw<IRmGUIContext>;

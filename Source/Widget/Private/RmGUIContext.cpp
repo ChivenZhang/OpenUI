@@ -36,7 +36,7 @@ bool RmGUIContext::removeWidget(RmRef<IRmGUIWidget> value)
 	return true;
 }
 
-void RmGUIContext::sendEvent(rmreactor source, rmevent event)
+void RmGUIContext::sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 {
 	RmLambda<void(IRmGUIWidgetRaw)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget) {
@@ -48,7 +48,7 @@ void RmGUIContext::sendEvent(rmreactor source, rmevent event)
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get());
 }
 
-void RmGUIContext::postEvent(rmreactor source, rmevent event)
+void RmGUIContext::postEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 {
 }
 

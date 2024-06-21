@@ -54,4 +54,5 @@ public:
 	virtual void translate(float dx, float dy) = 0;
 
 };
-using rmpainter = RmRaw<IRmGUIPainter>;
+using IRmGUIPainterRef = RmRef<IRmGUIPainter>;
+using IRmGUIPainterRaw = RmRaw<IRmGUIPainter>;

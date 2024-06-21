@@ -8,7 +8,7 @@ using IRmGUIWidgetRef = RmRef<IRmGUIWidget>;
 using IRmGUIWidgetRaw = RmRaw<IRmGUIWidget>;
 
 /// @brief Base interface of all widgets.
-class RMGUI_API IRmGUIWidget : public IRmGUIEventHandler
+class RMGUI_API IRmGUIWidget : public IRmGUIHandler
 {
 public:
 	virtual float getPositionX() const = 0;
@@ -73,50 +73,50 @@ public:
 	virtual void setAttribute(uint32_t name, RmString const& value) = 0;
 
 	virtual void layout(rmrect client) = 0;
-	virtual void paint(rmpainter painter, rmrect client) = 0;
+	virtual void paint(IRmGUIPainterRaw painter, rmrect client) = 0;
 
 protected:
-	virtual void closeEvent(rmevent_close event) = 0;
+	virtual void closeEvent(IRmGUICloseEventRaw event) = 0;
 
-	virtual void dragEnterEvent(rmevent_drag_enter event) = 0;
+	virtual void dragEnterEvent(IRmGUIDragEnterEventRaw event) = 0;
 
-	virtual void dragLeaveEvent(rmevent_drag_leave event) = 0;
+	virtual void dragLeaveEvent(IRmGUIDragLeaveEventRaw event) = 0;
 
-	virtual void dragMoveEvent(rmevent_drag_move event) = 0;
+	virtual void dragMoveEvent(IRmGUIDragMoveEventRaw event) = 0;
 
-	virtual void dropEvent(rmevent_drop event) = 0;
+	virtual void dropEvent(IRmGUIDropEventRaw event) = 0;
 
-	virtual void enterEvent(rmevent_enter event) = 0;
+	virtual void enterEvent(IRmGUIMouseEnterEventRaw event) = 0;
 
-	virtual void focusInEvent(rmevent_focus event) = 0;
+	virtual void focusInEvent(IRmGUIFocusEventRaw event) = 0;
 
-	virtual void focusOutEvent(rmevent_focus event) = 0;
+	virtual void focusOutEvent(IRmGUIFocusEventRaw event) = 0;
 
-	virtual void hideEvent(rmevent_hide event) = 0;
+	virtual void hideEvent(IRmGUIHideEventRaw event) = 0;
 
-	virtual void inputEvent(rmevent_input event) = 0;
+	virtual void inputEvent(IRmGUIKeyInputEventRaw event) = 0;
 
-	virtual void keyPressEvent(rmevent_key_down event) = 0;
+	virtual void keyPressEvent(IRmGUIKeyDownEventRaw event) = 0;
 
-	virtual void keyReleaseEvent(rmevent_key_up event) = 0;
+	virtual void keyReleaseEvent(IRmGUIKeyUpEventRaw event) = 0;
 
-	virtual void leaveEvent(rmevent_leave event) = 0;
+	virtual void leaveEvent(IRmGUIMouseLeaveEventRaw event) = 0;
 
-	virtual void mouseDoubleClickEvent(rmevent_mouse event) = 0;
+	virtual void mouseDoubleClickEvent(IRmGUIMouseEventRaw event) = 0;
 
-	virtual void mouseMoveEvent(rmevent_mouse event) = 0;
+	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) = 0;
 
-	virtual void mousePressEvent(rmevent_mouse event) = 0;
+	virtual void mousePressEvent(IRmGUIMouseEventRaw event) = 0;
 
-	virtual void mouseReleaseEvent(rmevent_mouse event) = 0;
+	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) = 0;
 
-	virtual void moveEvent(rmevent_move event) = 0;
+	virtual void moveEvent(IRmGUIMoveEventRaw event) = 0;
 
-	virtual void resizeEvent(rmevent_resize event) = 0;
+	virtual void resizeEvent(IRmGUIResizeEventRaw event) = 0;
 
-	virtual void showEvent(rmevent_show event) = 0;
+	virtual void showEvent(IRmGUIShowEventRaw event) = 0;
 
-	virtual void tabletEvent(rmevent_tablet event) = 0;
+	virtual void tabletEvent(IRmGUIMouseTabletEventRaw event) = 0;
 
-	virtual void wheelEvent(rmevent_wheel event) = 0;
+	virtual void wheelEvent(IRmGUIMouseWheelEventRaw event) = 0;
 };

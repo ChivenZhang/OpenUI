@@ -30,6 +30,8 @@ add_library (RmGUI SHARED
 	Widget/Private/RmGUIHBox.cpp
 	Widget/Private/RmGUIVBox.h
 	Widget/Private/RmGUIVBox.cpp
+	Widget/Private/RmGUIScroll.h
+	Widget/Private/RmGUIScroll.cpp
 )
 
 target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

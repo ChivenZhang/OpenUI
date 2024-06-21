@@ -6,7 +6,7 @@ RmGUIPanel::RmGUIPanel(IRmGUIWidgetRaw parent)
 {
 }
 
-void RmGUIPanel::paint(rmpainter painter, rmrect client)
+void RmGUIPanel::paint(IRmGUIPainterRaw painter, rmrect client)
 {
 	painter->setPen({ 0, 0, 1, 0.5 });
 	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);

@@ -69,9 +69,9 @@ void RmGUIVBox::layout(rmrect client)
 	taitank::NodeFreeRecursive(root);
 }
 
-void RmGUIVBox::paint(rmpainter painter, rmrect client)
+void RmGUIVBox::paint(IRmGUIPainterRaw painter, rmrect client)
 {
-	painter->setPen({ 0, 1, 0, 0.5 });
+	painter->setPen({ 194 / 255.0f, 195 / 255.0f, 201 / 255.0f, 1.0f });
 	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
 
 	RmGUIWidget::paint(painter, client);

@@ -101,12 +101,12 @@ bool RmGUIWidget::removeWidget(RmRef<IRmGUIWidget> value)
 	return true;
 }
 
-bool RmGUIWidget::filter(rmreactor source, rmevent event)
+bool RmGUIWidget::filter(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 {
 	return false;
 }
 
-void RmGUIWidget::handle(rmreactor source, rmevent event)
+void RmGUIWidget::handle(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 {
 	switch (event->Type)
 	{
@@ -247,7 +247,7 @@ void RmGUIWidget::layout(rmrect client)
 	taitank::NodeFreeRecursive(root);
 }
 
-void RmGUIWidget::paint(rmpainter painter, rmrect client)
+void RmGUIWidget::paint(IRmGUIPainterRaw painter, rmrect client)
 {
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
@@ -426,91 +426,91 @@ void RmGUIWidget::setBorder(RmFloat4 value)
 	PRIVATE()->Border = value;
 }
 
-void RmGUIWidget::closeEvent(rmevent_close event)
+void RmGUIWidget::closeEvent(IRmGUICloseEventRaw event)
 {
 }
 
-void RmGUIWidget::dragEnterEvent(rmevent_drag_enter event)
+void RmGUIWidget::dragEnterEvent(IRmGUIDragEnterEventRaw event)
 {
 }
 
-void RmGUIWidget::dragLeaveEvent(rmevent_drag_leave event)
+void RmGUIWidget::dragLeaveEvent(IRmGUIDragLeaveEventRaw event)
 {
 }
 
-void RmGUIWidget::dragMoveEvent(rmevent_drag_move event)
+void RmGUIWidget::dragMoveEvent(IRmGUIDragMoveEventRaw event)
 {
 }
 
-void RmGUIWidget::dropEvent(rmevent_drop event)
+void RmGUIWidget::dropEvent(IRmGUIDropEventRaw event)
 {
 }
 
-void RmGUIWidget::enterEvent(rmevent_enter event)
+void RmGUIWidget::enterEvent(IRmGUIMouseEnterEventRaw event)
 {
 }
 
-void RmGUIWidget::focusInEvent(rmevent_focus event)
+void RmGUIWidget::focusInEvent(IRmGUIFocusEventRaw event)
 {
 }
 
-void RmGUIWidget::focusOutEvent(rmevent_focus event)
+void RmGUIWidget::focusOutEvent(IRmGUIFocusEventRaw event)
 {
 }
 
-void RmGUIWidget::hideEvent(rmevent_hide event)
+void RmGUIWidget::hideEvent(IRmGUIHideEventRaw event)
 {
 }
 
-void RmGUIWidget::inputEvent(rmevent_input event)
+void RmGUIWidget::inputEvent(IRmGUIKeyInputEventRaw event)
 {
 }
 
-void RmGUIWidget::keyPressEvent(rmevent_key_down event)
+void RmGUIWidget::keyPressEvent(IRmGUIKeyDownEventRaw event)
 {
 }
 
-void RmGUIWidget::keyReleaseEvent(rmevent_key_up event)
+void RmGUIWidget::keyReleaseEvent(IRmGUIKeyUpEventRaw event)
 {
 }
 
-void RmGUIWidget::leaveEvent(rmevent_leave event)
+void RmGUIWidget::leaveEvent(IRmGUIMouseLeaveEventRaw event)
 {
 }
 
-void RmGUIWidget::mouseDoubleClickEvent(rmevent_mouse event)
+void RmGUIWidget::mouseDoubleClickEvent(IRmGUIMouseEventRaw event)
 {
 }
 
-void RmGUIWidget::mouseMoveEvent(rmevent_mouse event)
+void RmGUIWidget::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
 }
 
-void RmGUIWidget::mousePressEvent(rmevent_mouse event)
+void RmGUIWidget::mousePressEvent(IRmGUIMouseEventRaw event)
 {
 }
 
-void RmGUIWidget::mouseReleaseEvent(rmevent_mouse event)
+void RmGUIWidget::mouseReleaseEvent(IRmGUIMouseEventRaw event)
 {
 }
 
-void RmGUIWidget::moveEvent(rmevent_move event)
+void RmGUIWidget::moveEvent(IRmGUIMoveEventRaw event)
 {
 }
 
-void RmGUIWidget::resizeEvent(rmevent_resize event)
+void RmGUIWidget::resizeEvent(IRmGUIResizeEventRaw event)
 {
 }
 
-void RmGUIWidget::showEvent(rmevent_show event)
+void RmGUIWidget::showEvent(IRmGUIShowEventRaw event)
 {
 }
 
-void RmGUIWidget::tabletEvent(rmevent_tablet event)
+void RmGUIWidget::tabletEvent(IRmGUIMouseTabletEventRaw event)
 {
 }
 
-void RmGUIWidget::wheelEvent(rmevent_wheel event)
+void RmGUIWidget::wheelEvent(IRmGUIMouseWheelEventRaw event)
 {
 }
 
