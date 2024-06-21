@@ -22,7 +22,7 @@ public:
 
 	virtual void layoutWidget(RmRect client) = 0;
 
-	virtual bool paintWidget(RmRect client) = 0;
+	virtual void paintWidget(RmRect client) = 0;
 
 	virtual void sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event) = 0;
 

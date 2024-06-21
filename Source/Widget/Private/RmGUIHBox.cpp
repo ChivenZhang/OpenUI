@@ -71,8 +71,7 @@ void RmGUIHBox::layout(RmRectRaw client)
 
 void RmGUIHBox::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
+	RmGUIWidget::paint(painter, client);
 	painter->setPen({ 194 / 255.0f, 195 / 255.0f, 201/255.0f, 1.0f });
 	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
-
-	RmGUIWidget::paint(painter, client);
 }

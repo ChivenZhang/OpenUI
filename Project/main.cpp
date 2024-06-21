@@ -306,7 +306,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		// 渲染所有控件
-		SDL_SetRenderDrawColor(renderer, 104, 33, 122, 255);
+		SDL_SetRenderDrawColor(renderer, 238, 238, 242, 255);
 		SDL_RenderClear(renderer);
 		int w, h;
 		SDL_GetWindowSize(window, &w, &h);

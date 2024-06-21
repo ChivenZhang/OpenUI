@@ -63,9 +63,15 @@ void RmGUIContext::layoutWidget(RmRect client)
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get(), client);
 }
 
-bool RmGUIContext::paintWidget(RmRect client)
+void RmGUIContext::paintWidget(RmRect client)
 {
-	if (m_Surface == nullptr || m_Surface->getPainter() == nullptr) return false;
-	for (size_t i = 0; i < m_TopLevelList.size(); ++i) m_TopLevelList[i]->paint(m_Surface->getPainter(), &client);
-	return true;
+	if (m_Surface == nullptr || m_Surface->getPainter() == nullptr) return;
+	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
+	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
+		if (widget->getVisible() == false) return;
+		widget->paint(m_Surface->getPainter(), &client);
+		auto childList = widget->getChildren();
+		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
+		};
+	for (size_t i = 0; i < m_TopLevelList.size(); ++i) foreach_func(m_TopLevelList[i].get(), client);
 }

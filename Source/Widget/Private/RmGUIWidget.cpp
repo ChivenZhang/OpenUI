@@ -1,4 +1,6 @@
 #include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
 #include <taitank.h>
 
 class RmGUIWidgetPrivate {};
@@ -8,12 +10,13 @@ public:
 	RmRaw<IRmGUIContext> Context = nullptr;
 	RmRaw<IRmGUIWidget> Parent = nullptr;
 	RmVector<IRmGUIWidgetRef> ChildrenList;
-	RmRect ClientRect, ChildrenRect;
-	// Attributes
+
 	float FixedWidth = VALUE_UNDEFINED, FixedHeight = VALUE_UNDEFINED;
 	float MinWidth = VALUE_UNDEFINED, MinHeight = VALUE_UNDEFINED;
 	float MaxWidth = VALUE_UNDEFINED, MaxHeight = VALUE_UNDEFINED;
+	RmRect ClientRect, ChildrenRect;
 	RmFloat4 Margin = {}, Padding = {}, Border = {};
+	bool Visible = true;
 };
 #define PRIVATE() ((RmGUIWidgetPrivateData*)m_PrivateData)
 
@@ -236,12 +239,6 @@ void RmGUIWidget::layout(RmRectRaw client)
 
 void RmGUIWidget::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
-	auto childList = getChildren();
-	for (size_t i = 0; i < childList.size(); ++i)
-	{
-		auto bounds = childList[i]->getRect();
-		childList[i]->paint(painter, &bounds);
-	}
 }
 
 RmString RmGUIWidget::getAttribute(uint32_t name) const
@@ -253,24 +250,14 @@ void RmGUIWidget::setAttribute(uint32_t name, RmString const& value)
 {
 }
 
-float RmGUIWidget::getPositionX() const
+bool RmGUIWidget::getVisible() const
 {
-	return PRIVATE()->ClientRect.X;
+	return PRIVATE()->Visible;
 }
 
-void RmGUIWidget::setPositionX(float value)
+void RmGUIWidget::setVisible(bool value)
 {
-	PRIVATE()->ClientRect.X = value;
-}
-
-float RmGUIWidget::getPositionY() const
-{
-	return PRIVATE()->ClientRect.Y;
-}
-
-void RmGUIWidget::setPositionY(float value)
-{
-	PRIVATE()->ClientRect.Y = value;
+	PRIVATE()->Visible = value;
 }
 
 float RmGUIWidget::getWidth() const
@@ -351,6 +338,26 @@ float RmGUIWidget::getFixedHeight() const
 void RmGUIWidget::setFixedHeight(float value)
 {
 	PRIVATE()->FixedHeight = value;
+}
+
+float RmGUIWidget::getPositionX() const
+{
+	return PRIVATE()->ClientRect.X;
+}
+
+void RmGUIWidget::setPositionX(float value)
+{
+	PRIVATE()->ClientRect.X = value;
+}
+
+float RmGUIWidget::getPositionY() const
+{
+	return PRIVATE()->ClientRect.Y;
+}
+
+void RmGUIWidget::setPositionY(float value)
+{
+	PRIVATE()->ClientRect.Y = value;
 }
 
 void RmGUIWidget::setPosition(float x, float y)

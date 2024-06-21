@@ -4,9 +4,11 @@
 /// @brief Base interface of all events.
 class RMGUI_API IRmGUIEvent
 {
+public:
+	virtual ~IRmGUIEvent() = default;
+
 protected:
 	IRmGUIEvent(uint32_t type) : Type(type), Accept(false) {}
-	virtual ~IRmGUIEvent() = default;
 
 public:
 	const uint32_t Type;

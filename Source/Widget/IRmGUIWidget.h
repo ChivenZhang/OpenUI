@@ -11,11 +11,8 @@ using IRmGUIWidgetRaw = RmRaw<IRmGUIWidget>;
 class RMGUI_API IRmGUIWidget : public IRmGUIHandler
 {
 public:
-	virtual float getPositionX() const = 0;
-	virtual void setPositionX(float value) = 0;
-
-	virtual float getPositionY() const = 0;
-	virtual void setPositionY(float value) = 0;
+	virtual bool getVisible() const = 0;
+	virtual void  setVisible(bool value) = 0;
 
 	virtual float getWidth() const = 0;
 	virtual void setWidth(float value) = 0;
@@ -40,6 +37,12 @@ public:
 
 	virtual float getFixedHeight() const = 0;
 	virtual void setFixedHeight(float value) = 0;
+
+	virtual float getPositionX() const = 0;
+	virtual void setPositionX(float value) = 0;
+
+	virtual float getPositionY() const = 0;
+	virtual void setPositionY(float value) = 0;
 
 	virtual void setPosition(float x, float y) = 0;
 	virtual void setSize(float width, float height) = 0;

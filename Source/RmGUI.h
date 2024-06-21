@@ -17,6 +17,8 @@
 #	error "At least c++ standard version 11"
 #endif
 
+// ============================================
+
 #ifdef RMGUI_SHARED_LIBRARY
 #	if defined(_WIN32)
 #		define RMGUI_API __declspec(dllexport)
@@ -34,6 +36,8 @@
 #		define RMGUI_C_API 
 #	endif
 #endif
+
+// ============================================
 
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
@@ -70,6 +74,8 @@
 #include <bitset>
 #include <exception>
 #include <functional>
+
+// ============================================
 
 template<class T>
 using RmRaw = T*;
@@ -157,6 +163,8 @@ using RmString16HashMap = RmHashMap<RmString16, T>;
 template<class T>
 using RmString32HashMap = RmHashMap<RmString32, T>;
 
+// ============================================
+
 template<typename T, typename ... Args>
 inline RmRef<T> RmNew(Args&& ... args)
 {
@@ -194,6 +202,8 @@ inline constexpr uint32_t RmHash(RmCString value)
 	while (*value) hash = hash * 31 + (*value++);
 	return hash;
 }
+
+// ============================================
 
 struct RmRect
 {
