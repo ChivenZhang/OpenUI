@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	// 创建SDL窗口  
-	window = SDL_CreateWindow("SDL2, OpenGL and GLEW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 400, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 400, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (window == nullptr) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_Quit();
@@ -77,42 +77,6 @@ int main(int argc, char* argv[]) {
 
 #if 1
 	{
-		auto root = RmNew<RmGUIHBox>();
-		top->addWidget(root);
-		root->setBorder({ 5,5,5,5 });
-
-		auto child0 = RmNew<RmGUIVBox>();
-		root->addWidget(child0);
-		child0->setBorder({ 5,5,5,5 });
-
-		auto child1 = RmNew<RmGUIPanel>();
-		child0->addWidget(child1);
-		child1->setFixedWidth(100); child1->setFixedHeight(50);
-		child1->setBorder({ 5,5,5,5 });
-
-		auto child11 = RmNew<RmGUIPanel>();
-		child0->addWidget(child11);
-		child11->setFixedWidth(100); child11->setFixedHeight(50);
-		child11->setBorder({ 5,5,5,5 });
-
-		auto child2 = RmNew<RmGUIVBox>();
-		root->addWidget(child2);
-		child2->setBorder({ 5,5,5,5 });
-
-		auto child3 = RmNew<RmGUIPanel>();
-		child2->addWidget(child3);
-		child3->setFixedWidth(100); child3->setFixedHeight(50);
-		child3->setBorder({ 5,5,5,5 });
-
-		auto child33 = RmNew<RmGUIPanel>();
-		child2->addWidget(child33);
-		child33->setFixedWidth(100); child33->setFixedHeight(50);
-		child33->setBorder({ 5,5,5,5 });
-	}
-#endif
-
-#if 1
-	{
 		auto root = RmNew<RmGUIVBox>();
 		top->addWidget(root);
 		root->setBorder({ 5,5,5,5 });
@@ -132,6 +96,52 @@ int main(int argc, char* argv[]) {
 		child11->setBorder({ 5,5,5,5 });
 
 		auto child2 = RmNew<RmGUIHBox>();
+		root->addWidget(child2);
+		child2->setBorder({ 5,5,5,5 });
+
+		auto child3 = RmNew<RmGUIPanel>();
+		child2->addWidget(child3);
+		child3->setFixedWidth(100); child3->setFixedHeight(50);
+		child3->setBorder({ 5,5,5,5 });
+
+		auto child33 = RmNew<RmGUIPanel>();
+		child2->addWidget(child33);
+		child33->setFixedWidth(100); child33->setFixedHeight(50);
+		child33->setBorder({ 5,5,5,5 });
+
+		auto child333 = RmNew<RmGUIPanel>();
+		child2->addWidget(child333);
+		child333->setFixedWidth(100); child333->setFixedHeight(50);
+		child333->setBorder({ 5,5,5,5 });
+	}
+#endif
+
+#if 1
+	{
+		auto root = RmNew<RmGUIHBox>();
+		top->addWidget(root);
+		root->setBorder({ 5,5,5,5 });
+
+		auto child0 = RmNew<RmGUIVBox>();
+		root->addWidget(child0);
+		child0->setBorder({ 5,5,5,5 });
+
+		auto child1 = RmNew<RmGUIPanel>();
+		child0->addWidget(child1);
+		child1->setFixedWidth(100); child1->setFixedHeight(50);
+		child1->setBorder({ 5,5,5,5 });
+
+		auto child11 = RmNew<RmGUIPanel>();
+		child0->addWidget(child11);
+		child11->setFixedWidth(100); child11->setFixedHeight(50);
+		child11->setBorder({ 5,5,5,5 });
+
+		auto child111 = RmNew<RmGUIPanel>();
+		child0->addWidget(child111);
+		child111->setFixedWidth(100); child111->setFixedHeight(50);
+		child111->setBorder({ 5,5,5,5 });
+
+		auto child2 = RmNew<RmGUIVBox>();
 		root->addWidget(child2);
 		child2->setBorder({ 5,5,5,5 });
 

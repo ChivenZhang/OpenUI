@@ -1,5 +1,6 @@
 #include "RmGUIVBox.h"
 #include <taitank.h>
+namespace flex = taitank;
 
 RmGUIVBox::RmGUIVBox(IRmGUIWidgetRaw parent)
 	:
@@ -9,64 +10,64 @@ RmGUIVBox::RmGUIVBox(IRmGUIWidgetRaw parent)
 
 void RmGUIVBox::layout(RmRectRaw client)
 {
-	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->taitank::TaitankNodeRef {
-		auto node = taitank::NodeCreate();
-		taitank::SetWidth(node, widget->getFixedWidth());
-		taitank::SetHeight(node, widget->getFixedHeight());
-		taitank::SetMinWidth(node, widget->getMinWidth());
-		taitank::SetMinHeight(node, widget->getMinHeight());
-		taitank::SetMaxWidth(node, widget->getMaxWidth());
-		taitank::SetMaxHeight(node, widget->getMaxHeight());
-		taitank::SetBorder(node, taitank::CSSDirection::CSS_LEFT, widget->getBorder().X);
-		taitank::SetBorder(node, taitank::CSSDirection::CSS_TOP, widget->getBorder().Y);
-		taitank::SetBorder(node, taitank::CSSDirection::CSS_RIGHT, widget->getBorder().Z);
-		taitank::SetBorder(node, taitank::CSSDirection::CSS_BOTTOM, widget->getBorder().W);
-		taitank::SetMargin(node, taitank::CSSDirection::CSS_LEFT, widget->getMargin().X);
-		taitank::SetMargin(node, taitank::CSSDirection::CSS_TOP, widget->getMargin().Y);
-		taitank::SetMargin(node, taitank::CSSDirection::CSS_RIGHT, widget->getMargin().Z);
-		taitank::SetMargin(node, taitank::CSSDirection::CSS_BOTTOM, widget->getMargin().W);
-		taitank::SetPadding(node, taitank::CSSDirection::CSS_LEFT, widget->getPadding().X);
-		taitank::SetPadding(node, taitank::CSSDirection::CSS_TOP, widget->getPadding().Y);
-		taitank::SetPadding(node, taitank::CSSDirection::CSS_RIGHT, widget->getPadding().Z);
-		taitank::SetPadding(node, taitank::CSSDirection::CSS_BOTTOM, widget->getPadding().W);
+	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->flex::TaitankNodeRef {
+		auto node = flex::NodeCreate();
+		flex::SetWidth(node, widget->getFixedWidth());
+		flex::SetHeight(node, widget->getFixedHeight());
+		flex::SetMinWidth(node, widget->getMinWidth());
+		flex::SetMinHeight(node, widget->getMinHeight());
+		flex::SetMaxWidth(node, widget->getMaxWidth());
+		flex::SetMaxHeight(node, widget->getMaxHeight());
+		flex::SetBorder(node, flex::CSSDirection::CSS_LEFT, widget->getBorder().X);
+		flex::SetBorder(node, flex::CSSDirection::CSS_TOP, widget->getBorder().Y);
+		flex::SetBorder(node, flex::CSSDirection::CSS_RIGHT, widget->getBorder().Z);
+		flex::SetBorder(node, flex::CSSDirection::CSS_BOTTOM, widget->getBorder().W);
+		flex::SetMargin(node, flex::CSSDirection::CSS_LEFT, widget->getMargin().X);
+		flex::SetMargin(node, flex::CSSDirection::CSS_TOP, widget->getMargin().Y);
+		flex::SetMargin(node, flex::CSSDirection::CSS_RIGHT, widget->getMargin().Z);
+		flex::SetMargin(node, flex::CSSDirection::CSS_BOTTOM, widget->getMargin().W);
+		flex::SetPadding(node, flex::CSSDirection::CSS_LEFT, widget->getPadding().X);
+		flex::SetPadding(node, flex::CSSDirection::CSS_TOP, widget->getPadding().Y);
+		flex::SetPadding(node, flex::CSSDirection::CSS_RIGHT, widget->getPadding().Z);
+		flex::SetPadding(node, flex::CSSDirection::CSS_BOTTOM, widget->getPadding().W);
 		return node;
 		};
 
 	auto root = layout_func(this);
-	taitank::SetWidth(root, client->W);
-	taitank::SetHeight(root, client->H);
-	taitank::SetAlignItems(root, taitank::FlexAlign::FLEX_ALIGN_CENTER);
-	taitank::SetFlexDirection(root, taitank::FlexDirection::FLEX_DIRECTION_COLUMN);
-	taitank::SetJustifyContent(root, taitank::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
+	flex::SetWidth(root, client->W);
+	flex::SetHeight(root, client->H);
+	flex::SetAlignItems(root, flex::FlexAlign::FLEX_ALIGN_CENTER);
+	flex::SetFlexDirection(root, flex::FlexDirection::FLEX_DIRECTION_COLUMN);
+	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
 		if (RmCast<RmGUILayout>(childList[i]))
 		{
-			taitank::SetFlexGrow(node, 1.0f);
-			taitank::SetAlignSelf(node, taitank::FlexAlign::FLEX_ALIGN_STRETCH);
+			flex::SetFlexGrow(node, 1.0f);
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
 		}
 		else
 		{
-			taitank::SetAlignSelf(node, taitank::FlexAlign::FLEX_ALIGN_CENTER);
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
 		}
 		root->AddChild(node);
 	}
-	taitank::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
+	flex::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
 
-	auto left = taitank::GetLeft(root); auto top = taitank::GetTop(root);
-	auto width = taitank::GetWidth(root); auto height = taitank::GetHeight(root);
+	auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
+	auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
 	setRect({ client->X + left, client->Y + top, width, height });
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = root->GetChild(i);
-		auto left = taitank::GetLeft(node); auto top = taitank::GetTop(node);
-		auto width = taitank::GetWidth(node); auto height = taitank::GetHeight(node);
+		auto left = flex::GetLeft(node); auto top = flex::GetTop(node);
+		auto width = flex::GetWidth(node); auto height = flex::GetHeight(node);
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
 	}
 
-	taitank::NodeFreeRecursive(root);
+	flex::NodeFreeRecursive(root);
 }
 
 void RmGUIVBox::paint(IRmGUIPainterRaw painter, RmRectRaw client)

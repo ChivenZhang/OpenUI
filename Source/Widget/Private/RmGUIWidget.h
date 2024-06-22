@@ -87,6 +87,6 @@ protected:
 	virtual void setContext(RmRaw<IRmGUIContext> context);
 
 private:
-	RmGUIWidgetPrivate* m_PrivateData;
 	friend class RmGUIContext;
+	RmRaw<RmGUIWidgetPrivate> m_PrivateData;
 };
