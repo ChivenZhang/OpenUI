@@ -4,6 +4,8 @@
 class RmGUISignalPrivate {};
 using RmGUISignalPrivateRaw = RmRaw<RmGUISignalPrivate>;
 
+// ===================================================
+
 /// @brief implementation of signal with argments.
 /// @tparam ...T 
 template <class... T>
@@ -20,8 +22,6 @@ public:
 private:
 	RmGUISignalPrivateRaw m_Private;
 };
-template <class... T>
-using RmGUISignalAsRaw = RmGUISignalAs<T...>;
 
 template <class... T>
 class RmGUISignalSlot
@@ -110,6 +110,7 @@ inline void RmGUISignalAs<T...>::emit(T... args)
 
 // ===================================================
 
+/// @brief implementation of signal without argment.
 template <>
 class RMGUI_API RmGUISignalAs<void> : public IRmGUISignalAs<>
 {
@@ -133,14 +134,13 @@ public:
 	IRmGUIWidgetRaw Owner = nullptr;
 	RmLambda<void()> Slot;
 };
-using RmGUISignalSlotVoidRef = RmRef<RmGUISignalSlot<>>;
 
 template <>
 class RmGUISignalPrivateData<void> : public RmGUISignalPrivate
 {
 public:
 	uint32_t ConnectID = 0;
-	RmVector<RmGUISignalSlotVoidRef> ConnectList;
+	RmVector<RmRef<RmGUISignalSlot<>>> ConnectList;
 };
 #define PRIVATE_SIGNAL_VOID() ((RmGUISignalPrivateData<>*)m_Private)
 
@@ -182,7 +182,7 @@ inline void RmGUISignalAs<void>::disconnect(IRmGUIWidgetRaw owner, uint32_t hand
 
 inline void RmGUISignalAs<void>::disconnect(IRmGUIWidgetRaw owner)
 {
-	RmVector<RmGUISignalSlotVoidRef> result;
+	RmVector<RmRef<RmGUISignalSlot<>>> result;
 	auto& connectList = PRIVATE_SIGNAL_VOID()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
 	{
@@ -202,3 +202,6 @@ inline void RmGUISignalAs<void>::emit()
 	for (size_t i = 0; i < connectList.size(); ++i)
 		if (connectList[i]->Slot) connectList[i]->Slot();
 }
+
+template <class... T>
+using RmGUISignalAsRaw = RmGUISignalAs<T...>;

@@ -25,9 +25,8 @@ public:
 
 	virtual void emit(T... args) = 0;
 };
-template <class... T>
-using IRmGUISignalAsRaw = RmRaw<IRmGUISignalAs<T...>>;
 
+/// @brief Base interface of signals without argment.
 template <>
 class RMGUI_API IRmGUISignalAs<void> : public IRmGUISignal
 {
@@ -40,3 +39,6 @@ public:
 
 	virtual void emit() = 0;
 };
+
+template <class... T>
+using IRmGUISignalAsRaw = RmRaw<IRmGUISignalAs<T...>>;
