@@ -2,7 +2,6 @@
 #include <taitank.h>
 namespace flex = taitank;
 
-class RmGUIWidgetPrivate {};
 class RmGUIWidgetPrivateData : public RmGUIWidgetPrivate
 {
 public:
@@ -15,7 +14,7 @@ public:
 	float MaxWidth = VALUE_UNDEFINED, MaxHeight = VALUE_UNDEFINED;
 	RmRect ClientRect, ChildrenRect;
 	RmFloat4 Margin = {}, Padding = {}, Border = {};
-	bool Visible = true;
+	bool Visible = true, Enable = true;
 };
 #define PRIVATE() ((RmGUIWidgetPrivateData*)m_PrivateData)
 
@@ -29,7 +28,7 @@ RmGUIWidget::RmGUIWidget(IRmGUIWidgetRaw parent)
 
 RmGUIWidget::~RmGUIWidget()
 {
-	if (m_PrivateData) delete m_PrivateData; m_PrivateData = nullptr;
+	delete m_PrivateData; m_PrivateData = nullptr;
 }
 
 RmRect RmGUIWidget::getRect() const
@@ -257,6 +256,16 @@ bool RmGUIWidget::getVisible() const
 void RmGUIWidget::setVisible(bool value)
 {
 	PRIVATE()->Visible = value;
+}
+
+bool RmGUIWidget::getEnable() const
+{
+	return PRIVATE()->Enable;
+}
+
+void RmGUIWidget::setEnable(bool value)
+{
+	PRIVATE()->Enable = value;
 }
 
 float RmGUIWidget::getWidth() const

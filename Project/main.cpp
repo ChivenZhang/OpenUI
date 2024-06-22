@@ -10,6 +10,7 @@
 #include "Widget/Private/RmGUIVBox.h"
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
+#include "Widget/Private/RmGUIButton.h"
 
 int main(int argc, char* argv[]) {
 	SDL_Window* window;
@@ -163,6 +164,10 @@ int main(int argc, char* argv[]) {
 		top->addWidget(root);
 		root->setFixedWidth(400); root->setFixedHeight(200);
 		root->setBorder({ 5,5,5,5 });
+
+		auto button = RmNew<RmGUIButton>();
+		root->addWidget(button);
+		button->setFixedWidth(100); button->setFixedHeight(30);
 	}
 #endif
 

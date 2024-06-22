@@ -14,6 +14,9 @@ public:
 	virtual bool getVisible() const = 0;
 	virtual void  setVisible(bool value) = 0;
 
+	virtual bool getEnable() const = 0;
+	virtual void  setEnable(bool value) = 0;
+
 	virtual float getWidth() const = 0;
 	virtual void setWidth(float value) = 0;
 

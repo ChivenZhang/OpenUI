@@ -2,7 +2,7 @@
 #include "Widget/IRmGUIWidget.h"
 class RmGUIContext;
 
-class RmGUIWidgetPrivate;
+class RmGUIWidgetPrivate {};
 class RMGUI_API RmGUIWidget : public IRmGUIWidget
 {
 public:
@@ -26,6 +26,8 @@ public:
 
 	virtual bool getVisible() const override;
 	virtual void  setVisible(bool value) override;
+	virtual bool getEnable() const override;
+	virtual void  setEnable(bool value) override;
 	virtual float getWidth() const override;
 	virtual void setWidth(float value) override;
 	virtual float getHeight() const override;
