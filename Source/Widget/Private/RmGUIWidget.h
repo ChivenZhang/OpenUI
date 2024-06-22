@@ -3,6 +3,7 @@
 class RmGUIContext;
 
 class RmGUIWidgetPrivate {};
+using RmGUIWidgetPrivateRaw = RmRaw<RmGUIWidgetPrivate>;
 class RMGUI_API RmGUIWidget : public IRmGUIWidget
 {
 public:
@@ -90,5 +91,5 @@ protected:
 
 private:
 	friend class RmGUIContext;
-	RmRaw<RmGUIWidgetPrivate> m_PrivateData;
+	RmGUIWidgetPrivateRaw m_PrivateData;
 };

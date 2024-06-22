@@ -10,6 +10,7 @@ add_library (RmGUI SHARED
 	Widget/IRmGUIRender.h
 	Widget/IRmGUIContext.h
 	Widget/IRmGUIEvent.h
+	Widget/IRmGUISignal.h
 	Widget/IRmGUISurface.h
 	Widget/Private/RmGUIWidget.h
 	Widget/Private/RmGUIWidget.cpp
@@ -30,7 +31,9 @@ add_library (RmGUI SHARED
 	Widget/Private/RmGUIVBox.cpp
 	Widget/Private/RmGUIScroll.h
 	Widget/Private/RmGUIScroll.cpp
- "Widget/Private/RmGUIButton.h" "Widget/Private/RmGUIButton.cpp")
+	Widget/Private/RmGUIButton.h
+	Widget/Private/RmGUIButton.cpp
+	Widget/Private/RmGUISignal.h)
 
 target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

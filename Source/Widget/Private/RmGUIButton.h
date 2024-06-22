@@ -1,5 +1,6 @@
 #pragma once
 #include "RmGUIControl.h"
+#include "RmGUISignal.h"
 
 /// @brief Button Control
 class RMGUI_API RmGUIButton : public RmGUIControl
@@ -14,6 +15,9 @@ protected:
 	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
 
+public:
+	IRmGUISignalAsRaw<> onClicked;
+
 private:
-	RmGUIWidgetPrivate* m_PrivateButton;
+	RmGUIWidgetPrivateRaw m_PrivateButton;
 };

@@ -168,6 +168,10 @@ int main(int argc, char* argv[]) {
 		auto button = RmNew<RmGUIButton>();
 		root->addWidget(button);
 		button->setFixedWidth(100); button->setFixedHeight(30);
+		auto handle = button->onClicked->connect(nullptr, []() {
+			printf("click button\n");
+			});
+		// button->onClicked->disconnect(nullptr, handle);
 	}
 #endif
 

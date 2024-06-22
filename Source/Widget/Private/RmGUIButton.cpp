@@ -21,6 +21,7 @@ public:
 	RmString Text;
 	bool Pressed = false;
 	bool Hovered = false;
+	RmGUISignalAs<> OnClicked;
 };
 #define PRIVATE() ((RmGUIButtonPrivateData*) m_PrivateButton)
 
@@ -40,6 +41,7 @@ RmGUIButton::RmGUIButton(IRmGUIWidgetRaw parent)
 	PRIVATE()->TextStyle.Pen = { .Style = RmPen::NoPen, .Color = {0 / 255.0f, 0 / 255.0f, 0 / 255.0f, 1.0f} };
 	PRIVATE()->TextStyle.Brush = { .Color = {0 / 255.0f, 0 / 255.0f, 0 / 255.0f, 1.0f} };
 	PRIVATE()->Text = "Button";
+	onClicked = &PRIVATE()->OnClicked;
 }
 
 RmGUIButton::~RmGUIButton()
@@ -91,10 +93,11 @@ void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
 	if (client.X <= event->X && event->X <= client.X + client.W
 		&& client.Y <= event->Y && event->Y <= client.Y + client.H)
 	{
-		if (event->Button == 1) PRIVATE()->Pressed = true;
-
-		// TODO: emit signals
-		printf("pressed %d\n", PRIVATE()->Pressed);
+		if (event->Button == 1)
+		{
+			PRIVATE()->Pressed = true;
+			PRIVATE()->OnClicked.emit();
+		}
 	}
 }
 
