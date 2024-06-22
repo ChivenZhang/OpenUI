@@ -51,6 +51,7 @@ void SDL2Painter::drawImage(int x, int y, RmImageRaw image, int sx, int sy, int 
 void SDL2Painter::drawLine(int x1, int y1, int x2, int y2)
 {
 	auto cr = m_NativeContext;
+
 	cairo_line_to(cr, x1, y1);
 	cairo_line_to(cr, x2, y2);
 	cairo_stroke(cr);

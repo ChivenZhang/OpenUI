@@ -207,13 +207,13 @@ inline constexpr uint32_t RmHash(RmCString value)
 
 struct RmRect
 {
-	float X, Y, W, H;
+	float X = 0, Y = 0, W = 0, H = 0;
 };
 using RmRectRaw = RmRaw<RmRect>;
 
 struct RmPoint
 {
-	float X, Y;
+	float X = 0, Y = 0;
 };
 
 struct RmLine
@@ -223,16 +223,53 @@ struct RmLine
 
 struct RmColor
 {
-	float R, G, B, A;
+	float R = 0, G = 0, B = 0, A = 0;
 };
 
 struct RmPen
 {
+	using style_t = enum
+	{
+		NoPen = 0,
+		SolidLine,
+		DashLine,
+		DotLine,
+		DashDotLine,
+		DashDotDotLine,
+		CustomDashLine,
+	};
+
 	RmColor Color;
+	style_t Style = style_t::NoPen;
+	float Width = 1.0f;
 };
 
 struct RmBrush
 {
+	using style_t = enum
+	{
+		NoBrush = 0,
+		SolidPattern,
+		Dense1Pattern,
+		Dense2Pattern,
+		Dense3Pattern,
+		Dense4Pattern,
+		Dense5Pattern,
+		Dense6Pattern,
+		Dense7Pattern,
+		HorPattern,
+		VerPattern,
+		CrossPattern,
+		BDiagPattern,
+		FDiagPattern,
+		DiagCrossPattern,
+		LinearGradientPattern,
+		ConicalGradientPattern,
+		RadialGradientPattern,
+		TexturePattern,
+	};
+	RmColor Color;
+	style_t Style = style_t::NoBrush;
 };
 
 struct RmFont
@@ -241,17 +278,17 @@ struct RmFont
 
 struct RmFloat2
 {
-	float X, Y;
+	float X = 0, Y = 0;
 };
 
 struct RmFloat3
 {
-	float X, Y, Z;
+	float X = 0, Y = 0, Z = 0;
 };
 
 struct RmFloat4
 {
-	float X, Y, Z, W;
+	float X = 0, Y = 0, Z = 0, W = 0;
 };
 
 struct RmFloat2x2
