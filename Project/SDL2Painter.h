@@ -19,6 +19,7 @@ public:
 	virtual void drawPolyline(RmArrayView<RmPoint> points) override;
 	virtual void drawRect(int x, int y, int width, int height) override;
 	virtual void drawRects(RmArrayView<RmRect> rects) override;
+	virtual void drawRoundedRect(int x, int y, int width, int height, float xRadius, float yRadius) override;
 	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect) override;
 	virtual void setPen(const RmPen& pen) override;
 	virtual void setBrush(const RmBrush& brush) override;
@@ -33,4 +34,8 @@ public:
 
 protected:
 	cairo_t* m_NativeContext;
+	RmPen m_Pen;
+	RmBrush m_Brush;
+	RmRect m_CilpRect;
+	bool m_EnableCilp;
 };

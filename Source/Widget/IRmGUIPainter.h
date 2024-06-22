@@ -31,6 +31,8 @@ public:
 
 	virtual void drawRects(RmArrayView<RmRect> rects) = 0;
 
+	virtual void drawRoundedRect(int x, int y, int w, int h, float xRadius, float yRadius) = 0;
+
 	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect = nullptr) = 0;
 
 	virtual void setPen(const RmPen& pen) = 0;
@@ -40,6 +42,8 @@ public:
 	virtual void setFont(const RmFont& font) = 0;
 
 	virtual void setClipping(bool enable) = 0;
+
+	// virtual void setClipPath(RmArrayView<RmPoint> points) = 0;
 
 	virtual void setClipRect(int x, int y, int width, int height) = 0;
 

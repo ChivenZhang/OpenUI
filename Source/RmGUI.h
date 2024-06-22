@@ -49,6 +49,8 @@
 #pragma warning(disable:26815)
 #pragma warning(disable:26816)
 
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <assert.h>
 #include <iostream>
 #include <utility>
@@ -211,20 +213,43 @@ struct RmRect
 };
 using RmRectRaw = RmRaw<RmRect>;
 
+inline bool operator ==(RmRect a, RmRect b)
+{
+	return a.X == b.X && a.Y == b.Y && a.W == b.W && a.H == b.H;
+}
+
 struct RmPoint
 {
 	float X = 0, Y = 0;
 };
+using RmPointRaw = RmRaw<RmPoint>;
+
+inline bool operator ==(RmPoint a, RmPoint b)
+{
+	return a.X == b.X && a.Y == b.Y;
+}
 
 struct RmLine
 {
 	RmPoint P0, P1;
 };
+using RmLineRaw = RmRaw<RmLine>;
+
+inline bool operator ==(RmLine a, RmLine b)
+{
+	return a.P0 == b.P0 && a.P1 == b.P1;
+}
 
 struct RmColor
 {
 	float R = 0, G = 0, B = 0, A = 0;
 };
+using RmColorRaw = RmRaw<RmColor>;
+
+inline bool operator ==(RmColor a, RmColor b)
+{
+	return a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A;
+}
 
 struct RmPen
 {
@@ -238,9 +263,8 @@ struct RmPen
 		DashDotDotLine,
 		CustomDashLine,
 	};
-
-	RmColor Color;
-	style_t Style = style_t::NoPen;
+	style_t Style = style_t::SolidLine;
+	RmColor Color = RmColor{ 0, 0, 0, 1 };
 	float Width = 1.0f;
 };
 
@@ -268,8 +292,8 @@ struct RmBrush
 		RadialGradientPattern,
 		TexturePattern,
 	};
-	RmColor Color;
-	style_t Style = style_t::NoBrush;
+	style_t Style = style_t::SolidPattern;
+	RmColor Color = RmColor{ 0, 0, 0, 1 };
 };
 
 struct RmFont
@@ -281,30 +305,60 @@ struct RmFloat2
 	float X = 0, Y = 0;
 };
 
+inline bool operator ==(RmFloat2 a, RmFloat2 b)
+{
+	return a.X == b.X && a.Y == b.Y;
+}
+
 struct RmFloat3
 {
 	float X = 0, Y = 0, Z = 0;
 };
+
+inline bool operator ==(RmFloat3 a, RmFloat3 b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+}
 
 struct RmFloat4
 {
 	float X = 0, Y = 0, Z = 0, W = 0;
 };
 
+inline bool operator ==(RmFloat4 a, RmFloat4 b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
+}
+
 struct RmFloat2x2
 {
 	RmFloat2 X, Y;
 };
+
+inline bool operator ==(RmFloat2x2 a, RmFloat2x2 b)
+{
+	return a.X == b.X && a.Y == b.Y;
+}
 
 struct RmFloat3x3
 {
 	RmFloat3 X, Y, Z;
 };
 
+inline bool operator ==(RmFloat3x3 a, RmFloat3x3 b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+}
+
 struct RmFloat4x4
 {
 	RmFloat4 X, Y, Z, W;
 };
+
+inline bool operator ==(RmFloat4x4 a, RmFloat4x4 b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
+}
 
 class RmImage;
 using RmImageRaw = RmRaw<RmImage>;

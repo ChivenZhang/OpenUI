@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
 	context->addWidget(top);
 	top->setBorder({ 5,5,5,5 });
 
-#if 1
+#if 0
 	{
 		auto root = RmNew<RmGUIVBox>();
 		top->addWidget(root);
@@ -116,13 +116,13 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-#if 1
+#if 0
 	{
 		auto root = RmNew<RmGUIHBox>();
 		top->addWidget(root);
 		root->setBorder({ 5,5,5,5 });
 
-		auto child0 = RmNew<RmGUIVBox>();
+		auto child0 = RmNew<RmGUIPanel>();
 		root->addWidget(child0);
 		child0->setBorder({ 5,5,5,5 });
 
@@ -154,6 +154,15 @@ int main(int argc, char* argv[]) {
 		child2->addWidget(child33);
 		child33->setFixedWidth(100); child33->setFixedHeight(50);
 		child33->setBorder({ 5,5,5,5 });
+	}
+#endif
+
+#if 1
+	{
+		auto root = RmNew<RmGUIPanel>();
+		top->addWidget(root);
+		root->setFixedWidth(400); root->setFixedHeight(200);
+		root->setBorder({ 5,5,5,5 });
 	}
 #endif
 
