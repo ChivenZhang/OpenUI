@@ -8,6 +8,29 @@ SDL2Painter::SDL2Painter(cairo_t* native)
 	cairo_set_source_rgba(cr, 0, 0, 0, 1);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
 	cairo_paint(cr);
+
+	m_NativeLayout = pango_cairo_create_layout(cr);
+	auto& font = m_Font;
+	auto layout = m_NativeLayout;
+	auto font_desc = pango_font_description_new();
+	pango_font_description_set_family(font_desc, font.Family.c_str());
+	pango_font_description_set_style(font_desc, (PangoStyle)font.Style);
+	pango_font_description_set_size(font_desc, font.Size * PANGO_SCALE);
+	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
+	pango_layout_set_font_description(layout, font_desc);
+	pango_font_description_free(font_desc);
+}
+
+SDL2Painter::~SDL2Painter()
+{
+	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
+}
+
+RmRect SDL2Painter::boundingRect(int x, int y, int w, int h, RmString const& text)
+{
+	auto cr = m_NativeContext;
+
+	return RmRect();
 }
 
 void SDL2Painter::drawArc(int x, int y, int width, int height, int startAngle, int spanAngle)
@@ -325,26 +348,50 @@ void SDL2Painter::drawRoundedRect(int x, int y, int width, int height, float xRa
 	}
 }
 
-void SDL2Painter::drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect)
+void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect)
 {
 	auto cr = m_NativeContext;
+	auto layout = m_NativeLayout;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
 		cairo_save(cr);
-		cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-		cairo_set_font_size(cr, height);
-		cairo_move_to(cr, x, y);
+		pango_layout_set_text(layout, text.c_str(), -1);
+		pango_layout_set_width(layout, width * PANGO_SCALE);
+		pango_layout_set_height(layout, height * PANGO_SCALE);
+
+		int text_width, text_height;
+		auto baseline = pango_layout_get_baseline(layout);
+		pango_layout_get_pixel_size(layout, &text_width, &text_height);
+
+		auto& font = m_Font;
+		if (font.Align & RmFont::AlignTop) cairo_move_to(cr, x, y);
+		else if (font.Align & RmFont::AlignBottom) cairo_move_to(cr, x, y + height - text_height);
+		else if (font.Align & RmFont::AlignVCenter) cairo_move_to(cr, x, y + (height - text_height) * 0.5);
+		else if (font.Align & RmFont::AlignBaseline) cairo_move_to(cr, x, y + baseline);
+		else cairo_move_to(cr, x, y);
+
 		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
-		cairo_show_text(cr, text.c_str());
+		pango_cairo_show_layout(cr, layout);
 		cairo_restore(cr);
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
 		cairo_save(cr);
-		cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-		cairo_set_font_size(cr, height);
-		cairo_move_to(cr, x, y);
-		cairo_text_path(cr, text.c_str());
+		pango_layout_set_width(layout, width * PANGO_SCALE);
+		pango_layout_set_height(layout, height * PANGO_SCALE);
+
+		int text_width, text_height;
+		auto baseline = pango_layout_get_baseline(layout);
+		pango_layout_get_pixel_size(layout, &text_width, &text_height);
+
+		auto& font = m_Font;
+		if (font.Align & RmFont::AlignTop) cairo_move_to(cr, x, y);
+		else if (font.Align & RmFont::AlignBottom) cairo_move_to(cr, x, y + height - text_height);
+		else if (font.Align & RmFont::AlignVCenter) cairo_move_to(cr, x, y + (height - text_height) * 0.5);
+		else if (font.Align & RmFont::AlignBaseline) cairo_move_to(cr, x, y + baseline);
+		else cairo_move_to(cr, x, y);
+
+		pango_cairo_layout_path(cr, layout);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
 		cairo_stroke(cr);
@@ -354,19 +401,64 @@ void SDL2Painter::drawText(int x, int y, int width, int height, int flags, const
 
 void SDL2Painter::setPen(const RmPen& pen)
 {
-	auto cr = m_NativeContext;
 	m_Pen = pen;
 }
 
 void SDL2Painter::setBrush(const RmBrush& brush)
 {
-	auto cr = m_NativeContext;
-	cairo_set_source_rgba(cr, brush.Color.R, brush.Color.G, brush.Color.B, brush.Color.A);
 	m_Brush = brush;
 }
 
 void SDL2Painter::setFont(const RmFont& font)
 {
+	auto layout = m_NativeLayout;
+	auto font_desc = pango_layout_get_font_description(layout);
+	if (pango_font_description_get_family(font_desc) != font.Family
+		|| pango_font_description_get_style(font_desc) != (PangoStyle)font.Style
+		|| pango_font_description_get_size(font_desc) != font.Size * PANGO_SCALE
+		|| pango_font_description_get_weight(font_desc) != (PangoWeight)font.Weight)
+	{
+		auto font_desc = pango_font_description_new();
+		pango_font_description_set_family(font_desc, font.Family.c_str());
+		pango_font_description_set_style(font_desc, (PangoStyle)font.Style);
+		pango_font_description_set_size(font_desc, font.Size * PANGO_SCALE);
+		pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
+		pango_layout_set_font_description(layout, font_desc);
+		pango_font_description_free(font_desc);
+	}
+
+	if (font.Align & RmFont::AlignLeft)
+	{
+		pango_layout_set_justify(layout, false);
+		pango_layout_set_alignment(layout, PangoAlignment::PANGO_ALIGN_LEFT);
+	}
+	else if (font.Align & RmFont::AlignRight)
+	{
+		pango_layout_set_justify(layout, false);
+		pango_layout_set_alignment(layout, PangoAlignment::PANGO_ALIGN_RIGHT);
+	}
+	else if (font.Align & RmFont::AlignCenter)
+	{
+		pango_layout_set_justify(layout, false);
+		pango_layout_set_alignment(layout, PangoAlignment::PANGO_ALIGN_CENTER);
+	}
+	else if (font.Align & RmFont::AlignJustify) pango_layout_set_justify(layout, true);
+
+	switch (font.Direction)
+	{
+	case RmFont::DirectionAutoLayout: pango_layout_set_auto_dir(layout, true); break;
+	default: pango_layout_set_auto_dir(layout, false); break;
+	}
+	switch (font.Ellipsize)
+	{
+	case RmFont::EllipsizeNone: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_NONE); break;
+	case RmFont::EllipsizeStart: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_START); break;
+	case RmFont::EllipsizeMiddle: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_MIDDLE); break;
+	case RmFont::EllipsizeEnd: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_END); break;
+	}
+	pango_layout_set_spacing(layout, font.Spacing);
+	pango_layout_set_line_spacing(layout, font.LineSpacing);
+	m_Font = font;
 }
 
 void SDL2Painter::setClipping(bool enable)
@@ -393,10 +485,12 @@ void SDL2Painter::setClipRect(int x, int y, int width, int height)
 
 void SDL2Painter::setViewport(int x, int y, int width, int height)
 {
+	// TODO
 }
 
 void SDL2Painter::shear(float sh, float sv)
 {
+	// TODO
 }
 
 void SDL2Painter::rotate(float angle)

@@ -1,5 +1,6 @@
 #pragma once
 #include "Widget/IRmGUIWidget.h"
+#include "RmGUISignal.h"
 class RmGUIContext;
 
 class RmGUIWidgetPrivate {};

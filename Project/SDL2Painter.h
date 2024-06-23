@@ -1,11 +1,14 @@
 #pragma once
 #include "Widget/IRmGUIPainter.h"
 #include <cairo/cairo.h>
+#include <pango/pangocairo.h>
 
 class SDL2Painter : public IRmGUIPainter
 {
 public:
 	SDL2Painter(cairo_t* native);
+	~SDL2Painter();
+	virtual RmRect boundingRect(int x, int y, int w, int h, RmString const& text) override;
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawEllipse(int x, int y, int width, int height) override;
@@ -20,7 +23,7 @@ public:
 	virtual void drawRect(int x, int y, int width, int height) override;
 	virtual void drawRects(RmArrayView<RmRect> rects) override;
 	virtual void drawRoundedRect(int x, int y, int width, int height, float xRadius, float yRadius) override;
-	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect) override;
+	virtual void drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect) override;
 	virtual void setPen(const RmPen& pen) override;
 	virtual void setBrush(const RmBrush& brush) override;
 	virtual void setFont(const RmFont& font) override;
@@ -34,8 +37,10 @@ public:
 
 protected:
 	cairo_t* m_NativeContext;
+	PangoLayout* m_NativeLayout;
 	RmPen m_Pen;
 	RmBrush m_Brush;
+	RmFont m_Font;
 	RmRect m_CilpRect;
-	bool m_EnableCilp;
+	bool m_EnableCilp = false;
 };

@@ -4,8 +4,8 @@ libdir=${prefix}/lib
 
 Name: harfbuzz
 Description: HarfBuzz text shaping library
-Version: 8.0.0
-Requires.private: freetype2
+Version: 8.5.0
+Requires.private: freetype2 >=  12.0.6
 Libs: "-L${libdir}" -lharfbuzz
 Cflags: "-I${includedir}/harfbuzz"
 

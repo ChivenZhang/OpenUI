@@ -5,6 +5,8 @@
 class RMGUI_API IRmGUIPainter
 {
 public:
+	virtual RmRect boundingRect(int x, int y, int w, int h, RmString const& text) = 0;
+
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) = 0;
 
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) = 0;
@@ -33,7 +35,7 @@ public:
 
 	virtual void drawRoundedRect(int x, int y, int w, int h, float xRadius, float yRadius) = 0;
 
-	virtual void drawText(int x, int y, int width, int height, int flags, const RmString& text, RmRectRaw boundingRect = nullptr) = 0;
+	virtual void drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect = nullptr) = 0;
 
 	virtual void setPen(const RmPen& pen) = 0;
 
@@ -56,7 +58,6 @@ public:
 	virtual void scale(float dx, float dy) = 0;
 
 	virtual void translate(float dx, float dy) = 0;
-
 };
 using IRmGUIPainterRef = RmRef<IRmGUIPainter>;
 using IRmGUIPainterRaw = RmRaw<IRmGUIPainter>;

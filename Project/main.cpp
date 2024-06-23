@@ -165,13 +165,22 @@ int main(int argc, char* argv[]) {
 		root->setFixedWidth(400); root->setFixedHeight(200);
 		root->setBorder({ 5,5,5,5 });
 
+		auto label = RmNew<RmGUILabel>();
+		root->addWidget(label);
+		label->setText("A Label");
+		label->setFixedWidth(100);
+		label->setFixedHeight(30);
+		label->setTextAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
+		auto style = label->getStyle();
+		style.Brush.Color = { 0,0,1,1 };
+		label->setStyle(style);
+
 		auto button = RmNew<RmGUIButton>();
 		root->addWidget(button);
-		button->setFixedWidth(100); button->setFixedHeight(30);
-		auto handle = button->onClicked->connect(nullptr, []() {
-			printf("click button\n");
-			});
-		// button->onClicked->disconnect(nullptr, handle);
+		button->setText("A Button");
+		button->setFixedWidth(100);
+		button->setFixedHeight(30);
+		button->onClicked->connect(nullptr, []() { printf("click button\n"); });
 	}
 #endif
 

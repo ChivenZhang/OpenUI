@@ -9,12 +9,12 @@ public:
 	RmRaw<IRmGUIWidget> Parent = nullptr;
 	RmVector<IRmGUIWidgetRef> ChildrenList;
 
-	float FixedWidth = VALUE_UNDEFINED, FixedHeight = VALUE_UNDEFINED;
 	float MinWidth = VALUE_UNDEFINED, MinHeight = VALUE_UNDEFINED;
 	float MaxWidth = VALUE_UNDEFINED, MaxHeight = VALUE_UNDEFINED;
+	float FixedWidth = VALUE_UNDEFINED, FixedHeight = VALUE_UNDEFINED;
+	bool Visible = true, Enable = true;
 	RmRect ClientRect, ChildrenRect;
 	RmFloat4 Margin = {}, Padding = {}, Border = {};
-	bool Visible = true, Enable = true;
 };
 #define PRIVATE() ((RmGUIWidgetPrivateData*)m_PrivateData)
 
@@ -213,6 +213,7 @@ void RmGUIWidget::layout(RmRectRaw client)
 	auto root = layout_func(this);
 	flex::SetWidth(root, client->W);
 	flex::SetHeight(root, client->H);
+	flex::SetFlexDirection(root, flex::FlexDirection::FLEX_DIRECTION_ROW);
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
 	{

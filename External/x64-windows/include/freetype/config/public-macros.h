@@ -4,7 +4,7 @@
  *
  *   Define a set of compiler macros used in public FreeType headers.
  *
- * Copyright (C) 2020-2022 by
+ * Copyright (C) 2020-2023 by
  * David Turner, Robert Wilhelm, and Werner Lemberg.
  *
  * This file is part of the FreeType project, and may only be used,
@@ -67,7 +67,7 @@ FT_BEGIN_HEADER
 
 #if defined( FT2_BUILD_LIBRARY ) && defined( DLL_EXPORT )
 #define FT_PUBLIC_FUNCTION_ATTRIBUTE  __declspec( dllexport )
-#elif defined( DLL_IMPORT )
+#elif 1
 #define FT_PUBLIC_FUNCTION_ATTRIBUTE  __declspec( dllimport )
 #endif
 

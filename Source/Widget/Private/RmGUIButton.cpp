@@ -1,36 +1,39 @@
 #include "RmGUIButton.h"
+#include "RmGUILabel.h"
+#include <taitank.h>
+namespace flex = taitank;
 
-struct RmGUIButtonStyle
+static struct RmGUIButtonStyle
 {
 	RmPen Pen;
 	RmBrush Brush;
 	RmFloat2 Round = { 4, 4 };
 };
 
-struct RmGUIButtonTextStyle
+static struct RmGUIButtonTextStyle
 {
 	RmPen Pen;
+	RmFont Font;
 	RmBrush Brush;
 };
 
-class RmGUIButtonPrivateData : public RmGUIWidgetPrivate
+class RmGUIButtonPrivate : public RmGUIWidgetPrivate
 {
 public:
 	RmGUIButtonStyle Normal, Hover, Press, Disable;
-	RmGUIButtonTextStyle TextStyle;
-	RmString Text;
+	RmGUILabelRef LabelWidget;
+	RmGUISignalAs<> OnClicked;
 	bool Pressed = false;
 	bool Hovered = false;
-	RmGUISignalAs<> OnClicked;
 };
-#define PRIVATE() ((RmGUIButtonPrivateData*) m_PrivateButton)
+#define PRIVATE() ((RmGUIButtonPrivate*) m_PrivateButton)
 
 RmGUIButton::RmGUIButton(IRmGUIWidgetRaw parent)
 	:
 	RmGUIControl(parent),
 	m_PrivateButton(nullptr)
 {
-	m_PrivateButton = new RmGUIButtonPrivateData;
+	m_PrivateButton = new RmGUIButtonPrivate;
 
 	PRIVATE()->Normal.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
 	PRIVATE()->Normal.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
@@ -38,15 +41,70 @@ RmGUIButton::RmGUIButton(IRmGUIWidgetRaw parent)
 	PRIVATE()->Hover.Brush = { .Color = {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f} };
 	PRIVATE()->Press.Pen = { .Color = {0 / 255.0f, 84 / 255.0f, 153 / 255.0f, 1.0f} };
 	PRIVATE()->Press.Brush = { .Color = {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f} };
-	PRIVATE()->TextStyle.Pen = { .Style = RmPen::NoPen, .Color = {0 / 255.0f, 0 / 255.0f, 0 / 255.0f, 1.0f} };
-	PRIVATE()->TextStyle.Brush = { .Color = {0 / 255.0f, 0 / 255.0f, 0 / 255.0f, 1.0f} };
-	PRIVATE()->Text = "Button";
 	onClicked = &PRIVATE()->OnClicked;
+	PRIVATE()->LabelWidget = RmNew<RmGUILabel>();
+	PRIVATE()->LabelWidget->setTextAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
+	addWidget(PRIVATE()->LabelWidget);
 }
 
 RmGUIButton::~RmGUIButton()
 {
 	delete m_PrivateButton; m_PrivateButton = nullptr;
+}
+
+void RmGUIButton::layout(RmRectRaw client)
+{
+	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->flex::TaitankNodeRef {
+		auto node = flex::NodeCreate();
+		flex::SetWidth(node, widget->getFixedWidth());
+		flex::SetHeight(node, widget->getFixedHeight());
+		flex::SetMinWidth(node, widget->getMinWidth());
+		flex::SetMinHeight(node, widget->getMinHeight());
+		flex::SetMaxWidth(node, widget->getMaxWidth());
+		flex::SetMaxHeight(node, widget->getMaxHeight());
+		flex::SetBorder(node, flex::CSSDirection::CSS_LEFT, widget->getBorder().X);
+		flex::SetBorder(node, flex::CSSDirection::CSS_TOP, widget->getBorder().Y);
+		flex::SetBorder(node, flex::CSSDirection::CSS_RIGHT, widget->getBorder().Z);
+		flex::SetBorder(node, flex::CSSDirection::CSS_BOTTOM, widget->getBorder().W);
+		flex::SetMargin(node, flex::CSSDirection::CSS_LEFT, widget->getMargin().X);
+		flex::SetMargin(node, flex::CSSDirection::CSS_TOP, widget->getMargin().Y);
+		flex::SetMargin(node, flex::CSSDirection::CSS_RIGHT, widget->getMargin().Z);
+		flex::SetMargin(node, flex::CSSDirection::CSS_BOTTOM, widget->getMargin().W);
+		flex::SetPadding(node, flex::CSSDirection::CSS_LEFT, widget->getPadding().X);
+		flex::SetPadding(node, flex::CSSDirection::CSS_TOP, widget->getPadding().Y);
+		flex::SetPadding(node, flex::CSSDirection::CSS_RIGHT, widget->getPadding().Z);
+		flex::SetPadding(node, flex::CSSDirection::CSS_BOTTOM, widget->getPadding().W);
+		return node;
+		};
+
+	auto root = layout_func(this);
+	flex::SetWidth(root, client->W);
+	flex::SetHeight(root, client->H);
+	flex::SetAlignItems(root, flex::FlexAlign::FLEX_ALIGN_CENTER);
+	flex::SetFlexDirection(root, flex::FlexDirection::FLEX_DIRECTION_ROW);
+	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
+	auto childList = getChildren();
+	for (size_t i = 0; i < childList.size(); ++i)
+	{
+		auto node = layout_func(childList[i].get());
+		flex::SetFlexGrow(node, 1.0f);
+		flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		root->AddChild(node);
+	}
+	flex::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
+
+	auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
+	auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
+	setRect({ client->X + left, client->Y + top, width, height });
+	for (size_t i = 0; i < childList.size(); ++i)
+	{
+		auto node = root->GetChild(i);
+		auto left = flex::GetLeft(node); auto top = flex::GetTop(node);
+		auto width = flex::GetWidth(node); auto height = flex::GetHeight(node);
+		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
+	}
+
+	flex::NodeFreeRecursive(root);
 }
 
 void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
@@ -78,13 +136,36 @@ void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 	}
 
 	painter->drawRoundedRect(client->X, client->Y, client->W, client->H, round.X, round.Y);
+}
 
-	if (PRIVATE()->Text.empty() == false)
-	{
-		painter->setPen(PRIVATE()->TextStyle.Pen);
-		painter->setBrush(PRIVATE()->TextStyle.Brush);
-		painter->drawText(client->X + 25, client->Y + 20, 0, 16, 0, PRIVATE()->Text);
-	}
+RmString RmGUIButton::getText() const
+{
+	return PRIVATE()->LabelWidget->getText();
+}
+
+void RmGUIButton::setText(RmString const& text)
+{
+	PRIVATE()->LabelWidget->setText(text);
+}
+
+RmGUILabelTextStyle RmGUIButton::getStyle() const
+{
+	return PRIVATE()->LabelWidget->getStyle();
+}
+
+void RmGUIButton::setStyle(RmGUILabelTextStyle const& style)
+{
+	PRIVATE()->LabelWidget->setStyle(style);
+}
+
+RmFontAligns RmGUIButton::getTextAlignment() const
+{
+	return PRIVATE()->LabelWidget->getTextAlignment();
+}
+
+void RmGUIButton::setTextAlignment(RmFontAligns value)
+{
+	PRIVATE()->LabelWidget->setTextAlignment(value);
 }
 
 void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)

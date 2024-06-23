@@ -102,27 +102,32 @@ inline void RmGUISignalAs<T...>::emit(T... args)
 {
 	// Call slot list in this signal
 
+	bool hasDirty = false;
 	auto& connectList = PRIVATE_SIGNAL()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
 	{
-		if (connectList[i]->Slot && connectList[i]->Dirty == false) connectList[i]->Slot(std::forward<T>(args)...);
+		if (connectList[i]->Slot)
+		{
+			if (connectList[i]->Dirty == false) connectList[i]->Slot(std::forward<T>(args)...);
+			else hasDirty = true;
+		}
 	}
 
-	// Check dirty mark in slots
+	// Check slots in dirty mark
 
-	RmVector<RmGUISignalSlotRef<T...>> result;
-	for (size_t i = 0; i < connectList.size(); ++i)
+	if (hasDirty)
 	{
-		if (connectList[i]->Dirty) result.push_back(connectList[i]);
-	}
-
-	// Delete slots disconnected
-
-	for (size_t i = 0; i < result.size(); ++i)
-	{
-		auto index = std::find(connectList.begin(), connectList.end(), result[i]);
-		if (index == connectList.end()) continue;
-		connectList.erase(index);
+		RmVector<RmGUISignalSlotRef<T...>> result;
+		for (size_t i = 0; i < connectList.size(); ++i)
+		{
+			if (connectList[i]->Dirty) result.push_back(connectList[i]);
+		}
+		for (size_t i = 0; i < result.size(); ++i)
+		{
+			auto index = std::find(connectList.begin(), connectList.end(), result[i]);
+			if (index == connectList.end()) continue;
+			connectList.erase(index);
+		}
 	}
 }
 
@@ -215,27 +220,32 @@ inline void RmGUISignalAs<void>::emit()
 {
 	// Call slot list in this signal
 
+	bool hasDirty = false;
 	auto& connectList = PRIVATE_SIGNAL_VOID()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
 	{
-		if (connectList[i]->Slot && connectList[i]->Dirty == false) connectList[i]->Slot();
+		if (connectList[i]->Slot)
+		{
+			if (connectList[i]->Dirty == false) connectList[i]->Slot();
+			else hasDirty = true;
+		}
 	}
 
-	// Check dirty mark in slots
+	// Check slots in dirty mark
 
-	RmVector<RmGUISignalSlotRef<>> result;
-	for (size_t i = 0; i < connectList.size(); ++i)
+	if (hasDirty)
 	{
-		if (connectList[i]->Dirty) result.push_back(connectList[i]);
-	}
-
-	// Delete slots disconnected
-
-	for (size_t i = 0; i < result.size(); ++i)
-	{
-		auto index = std::find(connectList.begin(), connectList.end(), result[i]);
-		if (index == connectList.end()) continue;
-		connectList.erase(index);
+		RmVector<RmGUISignalSlotRef<>> result;
+		for (size_t i = 0; i < connectList.size(); ++i)
+		{
+			if (connectList[i]->Dirty) result.push_back(connectList[i]);
+		}
+		for (size_t i = 0; i < result.size(); ++i)
+		{
+			auto index = std::find(connectList.begin(), connectList.end(), result[i]);
+			if (index == connectList.end()) continue;
+			connectList.erase(index);
+		}
 	}
 }
 

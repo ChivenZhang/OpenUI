@@ -298,7 +298,62 @@ struct RmBrush
 
 struct RmFont
 {
+	using align_t = enum
+	{
+		AlignLeft = 0x0001,
+		AlignRight = 0x0002,
+		AlignCenter = 0x0004,
+		AlignJustify = 0x0008,
+		AlignTop = 0x0020,
+		AlignBottom = 0x0040,
+		AlignVCenter = 0x0080,
+		AlignBaseline = 0x0100,
+	};
+	using direction_t = enum
+	{
+		DirectionAutoLayout = 0,
+		DirectionLeftToRight = 1,
+		DirectionRightToLeft = 2,
+	};
+	using ellipsize_t = enum
+	{
+		EllipsizeNone = 0,
+		EllipsizeStart = 1,
+		EllipsizeMiddle = 2,
+		EllipsizeEnd = 3,
+	};
+	using style_t = enum
+	{
+		StyleNormal = 0,
+		StyleOblique = 1,
+		StyleItalic = 2,
+	};
+	using weight_t = enum
+	{
+		WeightThin = 100,
+		WeightExtraLight = 200,
+		WeightLight = 300,
+		WeightNormal = 400,
+		WeightMedium = 500,
+		WeightDemiBold = 600,
+		WeightBold = 700,
+		WeightExtraBold = 800,
+		WeightBlack = 900,
+	};
+	RmString Family = "Sans";
+	uint32_t Align = align_t::AlignLeft;
+	style_t Style = style_t::StyleNormal;
+	weight_t Weight = weight_t::WeightNormal;
+	ellipsize_t Ellipsize = ellipsize_t::EllipsizeEnd;
+	direction_t Direction = direction_t::DirectionAutoLayout;
+	uint32_t Size = 12, Spacing = 0, LineSpacing = 0;
 };
+using RmFontAlign = RmFont::align_t;
+using RmFontAligns = uint32_t;
+using RmFontDirection = RmFont::direction_t;
+using RmFontEllipsize = RmFont::ellipsize_t;
+using RmFontStyle = RmFont::style_t;
+using RmFontWeight = RmFont::weight_t;
 
 struct RmFloat2
 {
