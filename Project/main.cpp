@@ -178,8 +178,8 @@ int main(int argc, char* argv[]) {
 		auto button = RmNew<RmGUIButton>();
 		root->addWidget(button);
 		button->setText("A Button");
-		button->setFixedWidth(100);
-		button->setFixedHeight(45);
+		//button->setFixedWidth(100);
+		//button->setFixedHeight(45);
 		button->onClicked->connect(nullptr, []() { printf("click button\n"); });
 	}
 #endif
