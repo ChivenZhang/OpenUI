@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
 		root->addWidget(label);
 		label->setText("A Label");
 		label->setFixedWidth(100);
-		label->setFixedHeight(30);
+		label->setFixedHeight(45);
 		label->setTextAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
 		auto style = label->getStyle();
 		style.Brush.Color = { 0,0,1,1 };
@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
 		root->addWidget(button);
 		button->setText("A Button");
 		button->setFixedWidth(100);
-		button->setFixedHeight(30);
+		button->setFixedHeight(45);
 		button->onClicked->connect(nullptr, []() { printf("click button\n"); });
 	}
 #endif

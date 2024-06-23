@@ -43,7 +43,7 @@ void RmGUIVBox::layout(RmRectRaw client)
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		if (RmCast<RmGUILayout>(childList[i]))
+		if (childList[i]->getFixedWidth() == VALUE_UNDEFINED || childList[i]->getFixedHeight() == VALUE_UNDEFINED)
 		{
 			flex::SetFlexGrow(node, 1.0f);
 			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
