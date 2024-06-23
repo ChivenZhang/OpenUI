@@ -18,8 +18,8 @@ public:
 	void setText(RmString const& text);
 	RmGUILabelTextStyle getStyle() const;
 	void setStyle(RmGUILabelTextStyle const& style);
-	RmFontAligns getTextAlignment() const;
-	void setTextAlignment(RmFontAligns value);
+	RmFontAligns getAlignment() const;
+	void setAlignment(RmFontAligns value);
 
 protected:
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;

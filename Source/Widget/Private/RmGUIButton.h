@@ -14,8 +14,12 @@ public:
 	void setText(RmString const& text);
 	RmGUILabelTextStyle getStyle() const;
 	void setStyle(RmGUILabelTextStyle const& style);
-	RmFontAligns getTextAlignment() const;
-	void setTextAlignment(RmFontAligns value);
+	RmFontAligns getAlignment() const;
+	void setAlignment(RmFontAligns value);
+	bool getChecked() const;
+	void  setChecked(bool value);
+	bool getCheckable() const;
+	void  setCheckable(bool value);
 
 protected:
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
@@ -23,7 +27,10 @@ protected:
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
 
 public:
-	IRmGUISignalAsRaw<> onClicked;
+	IRmGUISignalAsRaw<bool> clicked;
+	IRmGUISignalAsRaw<> pressed;
+	IRmGUISignalAsRaw<> released;
+	IRmGUISignalAsRaw<bool> toggled;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateButton;

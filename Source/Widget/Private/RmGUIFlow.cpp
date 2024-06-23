@@ -58,9 +58,12 @@ void RmGUIFlow::layout(RmRectRaw client)
 	}
 	flex::DoLayout(root, RmNAN, RmNAN);
 
-	auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
-	auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
-	setRect({ client->X + left, client->Y + top, width, height });
+	if (getParent() == nullptr)
+	{
+		auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
+		auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
+		setRect({ client->X + left, client->Y + top, width, height });
+	}
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = root->GetChild(i);

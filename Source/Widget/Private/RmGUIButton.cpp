@@ -1,4 +1,8 @@
 #include "RmGUIButton.h"
+#include "RmGUIButton.h"
+#include "RmGUIButton.h"
+#include "RmGUIButton.h"
+#include "RmGUIButton.h"
 #include "RmGUILabel.h"
 #include <taitank.h>
 namespace flex = taitank;
@@ -22,9 +26,14 @@ class RmGUIButtonPrivate : public RmGUIWidgetPrivate
 public:
 	RmGUIButtonStyle Normal, Hover, Press, Disable;
 	RmGUILabelRef LabelWidget;
-	RmGUISignalAs<> OnClicked;
+	RmGUISignalAs<bool> OnClicked;
+	RmGUISignalAs<> OnPressed;
+	RmGUISignalAs<> OnReleased;
+	RmGUISignalAs<bool> OnToggled;
 	bool Pressed = false;
 	bool Hovered = false;
+	bool Checked = false;
+	bool Checkable = false;
 };
 #define PRIVATE() ((RmGUIButtonPrivate*) m_PrivateButton)
 
@@ -41,9 +50,12 @@ RmGUIButton::RmGUIButton(IRmGUIWidgetRaw parent)
 	PRIVATE()->Hover.Brush = { .Color = {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f} };
 	PRIVATE()->Press.Pen = { .Color = {0 / 255.0f, 84 / 255.0f, 153 / 255.0f, 1.0f} };
 	PRIVATE()->Press.Brush = { .Color = {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f} };
-	onClicked = &PRIVATE()->OnClicked;
+	clicked = &PRIVATE()->OnClicked;
+	pressed = &PRIVATE()->OnPressed;
+	released = &PRIVATE()->OnReleased;
+	toggled = &PRIVATE()->OnToggled;
 	PRIVATE()->LabelWidget = RmNew<RmGUILabel>();
-	PRIVATE()->LabelWidget->setTextAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
+	PRIVATE()->LabelWidget->setAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
 	addWidget(PRIVATE()->LabelWidget);
 }
 
@@ -88,22 +100,28 @@ void RmGUIButton::layout(RmRectRaw client)
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		if (std::isnan(childList[i]->getFixedWidth()) || std::isnan(childList[i]->getFixedHeight()))
-		{
-			flex::SetFlexGrow(node, 1.0f);
-			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
-		}
-		else
+		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
 		{
 			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
+		}
+		if (std::isnan(childList[i]->getFixedWidth()))
+		{
+			flex::SetFlexGrow(node, 1.0f);
+		}
+		if (std::isnan(childList[i]->getFixedHeight()))
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
 		}
 		root->AddChild(node);
 	}
 	flex::DoLayout(root, RmNAN, RmNAN);
 
-	auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
-	auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
-	setRect({ client->X + left, client->Y + top, width, height });
+	if (getParent() == nullptr)
+	{
+		auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
+		auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
+		setRect({ client->X + left, client->Y + top, width, height });
+	}
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = root->GetChild(i);
@@ -129,7 +147,7 @@ void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 		painter->setPen(PRIVATE()->Disable.Pen);
 		painter->setBrush(PRIVATE()->Disable.Brush);
 	}
-	else if (PRIVATE()->Pressed)
+	else if (PRIVATE()->Checkable && PRIVATE()->Checked || PRIVATE()->Checkable == false && PRIVATE()->Pressed)
 	{
 		round = PRIVATE()->Press.Round;
 		painter->setPen(PRIVATE()->Press.Pen);
@@ -171,14 +189,35 @@ void RmGUIButton::setStyle(RmGUILabelTextStyle const& style)
 	PRIVATE()->LabelWidget->setStyle(style);
 }
 
-RmFontAligns RmGUIButton::getTextAlignment() const
+RmFontAligns RmGUIButton::getAlignment() const
 {
-	return PRIVATE()->LabelWidget->getTextAlignment();
+	return PRIVATE()->LabelWidget->getAlignment();
 }
 
-void RmGUIButton::setTextAlignment(RmFontAligns value)
+void RmGUIButton::setAlignment(RmFontAligns value)
 {
-	PRIVATE()->LabelWidget->setTextAlignment(value);
+	PRIVATE()->LabelWidget->setAlignment(value);
+}
+
+bool RmGUIButton::getChecked() const
+{
+	return PRIVATE()->Checked;
+}
+
+void RmGUIButton::setChecked(bool value)
+{
+	PRIVATE()->Checked = value;
+}
+
+bool RmGUIButton::getCheckable() const
+{
+	return PRIVATE()->Checkable;
+}
+
+void RmGUIButton::setCheckable(bool value)
+{
+	if (PRIVATE()->Checkable != value) PRIVATE()->Checked = false;
+	PRIVATE()->Checkable = value;
 }
 
 void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
@@ -190,14 +229,23 @@ void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
 		if (event->Button == 1)
 		{
 			PRIVATE()->Pressed = true;
-			PRIVATE()->OnClicked.emit();
+			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
+			PRIVATE()->OnPressed.emit();
+			PRIVATE()->OnClicked.emit(PRIVATE()->Checked);
 		}
 	}
 }
 
 void RmGUIButton::mouseReleaseEvent(IRmGUIMouseEventRaw event)
 {
-	if (event->Button == 1) PRIVATE()->Pressed = false;
+	if (event->Button == 1)
+	{
+		if (PRIVATE()->Pressed)
+		{
+			PRIVATE()->Pressed = false;
+			PRIVATE()->OnReleased.emit();
+		}
+	}
 }
 
 void RmGUIButton::mouseMoveEvent(IRmGUIMouseEventRaw event)

@@ -61,12 +61,12 @@ void RmGUILabel::setStyle(RmGUILabelTextStyle const& style)
 	PRIVATE()->TextStyle = style;
 }
 
-RmFontAligns RmGUILabel::getTextAlignment() const
+RmFontAligns RmGUILabel::getAlignment() const
 {
 	return PRIVATE()->TextStyle.Font.Align;
 }
 
-void RmGUILabel::setTextAlignment(RmFontAligns value)
+void RmGUILabel::setAlignment(RmFontAligns value)
 {
 	PRIVATE()->TextStyle.Font.Align = value;
 }

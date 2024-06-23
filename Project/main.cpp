@@ -13,6 +13,9 @@
 #include "Widget/Private/RmGUILabel.h"
 #include "Widget/Private/RmGUIButton.h"
 
+
+static int count = 0;
+
 int main(int argc, char* argv[]) {
 	SDL_Window* window;
 	SDL_GLContext glContext;
@@ -161,18 +164,17 @@ int main(int argc, char* argv[]) {
 
 #if 1
 	{
-		auto root = RmNew<RmGUIPanel>();
+		auto root = RmNew<RmGUIFlow>();
 		top->addWidget(root);
 		// root->setFixedWidth(400); root->setFixedHeight(200);
 		root->setBorder({ 5,5,5,5 });
 
 		auto label = RmNew<RmGUILabel>();
-		root->addWidget(label);
-		label->setText("这是文本");
-		label->setFixedWidth(100); label->setFixedHeight(45);
-		label->setTextAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
+		label->setText("计数:0");
+		label->setFixedWidth(100); label->setFixedHeight(35);
+		label->setAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
+		label->setMargin({ 5,5,5,5 });
 		auto style = label->getStyle();
-		style.Font.Size = 16;
 		style.Brush.Color = { 0,0,0,1 };
 		style.Font.Style = RmFont::StyleItalic;
 		style.Font.Weight = RmFont::WeightBold;
@@ -180,33 +182,43 @@ int main(int argc, char* argv[]) {
 
 		auto button1 = RmNew<RmGUIButton>();
 		root->addWidget(button1);
-		button1->setText("这是按钮1");
-		button1->setFixedWidth(100); button1->setFixedHeight(40);
+		button1->setText("自减");
+		button1->setFixedWidth(100); button1->setFixedHeight(35);
+		button1->setMargin({ 5,5,5,5 });
+		// button1->setCheckable(true);
 		style = button1->getStyle();
-		style.Font.Size = 16;
 		style.Brush.Color = { 0.5,0,1,1 };
 		button1->setStyle(style);
-		button1->onClicked->connect(nullptr, []() { printf("click button1\n"); });
+		button1->clicked->connect(nullptr, [=](bool checked) {
+			label->setText("计数:" + std::to_string(count = std::clamp(--count, 0, 100)));
+			});
+
+		root->addWidget(label);
 
 		auto button2 = RmNew<RmGUIButton>();
 		root->addWidget(button2);
-		button2->setText("这是按钮2");
-		button2->setMinWidth(80); button2->setFixedHeight(40);
+		button2->setText("自增 ");
+		button2->setFixedWidth(100); button2->setFixedHeight(35);
+		button2->setMargin({ 5,5,5,5 });
 		style = button2->getStyle();
-		style.Font.Size = 16;
 		style.Brush.Color = { 0.5,0,1,1 };
 		button2->setStyle(style);
-		button2->onClicked->connect(nullptr, []() { printf("click button2\n"); });
+		button2->clicked->connect(nullptr, [=](bool checked) {
+			label->setText("计数:" + std::to_string(count = std::clamp(++count, 0, 100)));
+			});
 
 		auto button3 = RmNew<RmGUIButton>();
 		root->addWidget(button3);
-		button3->setText("这是按钮3");
-		button3->setFixedWidth(50); button3->setMinHeight(40);
+		button3->setText("重置");
+		button3->setFixedWidth(100); button3->setFixedHeight(35);
+		button3->setMargin({ 5,5,5,5 });
 		style = button3->getStyle();
-		style.Font.Size = 16;
 		style.Brush.Color = { 0.5,0,1,1 };
 		button3->setStyle(style);
-		button3->onClicked->connect(nullptr, []() { printf("click button3\n"); });
+		button3->clicked->connect(nullptr, [=](bool checked) {
+			label->setText("计数:" + std::to_string(count = 0));
+			});
+
 	}
 #endif
 
