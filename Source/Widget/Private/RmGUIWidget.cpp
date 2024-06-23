@@ -9,9 +9,9 @@ public:
 	RmRaw<IRmGUIWidget> Parent = nullptr;
 	RmVector<IRmGUIWidgetRef> ChildrenList;
 
-	float MinWidth = VALUE_UNDEFINED, MinHeight = VALUE_UNDEFINED;
-	float MaxWidth = VALUE_UNDEFINED, MaxHeight = VALUE_UNDEFINED;
-	float FixedWidth = VALUE_UNDEFINED, FixedHeight = VALUE_UNDEFINED;
+	float MinWidth = RmNAN, MinHeight = RmNAN;
+	float MaxWidth = RmNAN, MaxHeight = RmNAN;
+	float FixedWidth = RmNAN, FixedHeight = RmNAN;
 	bool Visible = true, Enable = true;
 	RmRect ClientRect, ChildrenRect;
 	RmFloat4 Margin = {}, Padding = {}, Border = {};
@@ -218,9 +218,21 @@ void RmGUIWidget::layout(RmRectRaw client)
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
+		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_START);
+		}
+		if (std::isnan(childList[i]->getFixedWidth()))
+		{
+			flex::SetFlexGrow(node, 1.0f);
+		}
+		if (std::isnan(childList[i]->getFixedHeight()))
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
 		root->AddChild(node);
 	}
-	flex::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
+	flex::DoLayout(root, RmNAN, RmNAN);
 
 	auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
 	auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);

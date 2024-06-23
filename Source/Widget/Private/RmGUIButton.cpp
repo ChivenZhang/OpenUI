@@ -83,15 +83,23 @@ void RmGUIButton::layout(RmRectRaw client)
 	flex::SetAlignItems(root, flex::FlexAlign::FLEX_ALIGN_CENTER);
 	flex::SetFlexDirection(root, flex::FlexDirection::FLEX_DIRECTION_ROW);
 	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
+
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		flex::SetFlexGrow(node, 1.0f);
-		flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		if (std::isnan(childList[i]->getFixedWidth()) || std::isnan(childList[i]->getFixedHeight()))
+		{
+			flex::SetFlexGrow(node, 1.0f);
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
+		else
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
+		}
 		root->AddChild(node);
 	}
-	flex::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
+	flex::DoLayout(root, RmNAN, RmNAN);
 
 	auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
 	auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
@@ -109,6 +117,11 @@ void RmGUIButton::layout(RmRectRaw client)
 
 void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
+	RmGUIWidget::paint(painter, client);
+	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
+	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
+	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
+
 	RmFloat2 round;
 	if (getEnable() == false)
 	{

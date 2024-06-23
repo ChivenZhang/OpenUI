@@ -38,23 +38,26 @@ void RmGUIHBox::layout(RmRectRaw client)
 	flex::SetHeight(root, client->H);
 	flex::SetAlignItems(root, flex::FlexAlign::FLEX_ALIGN_CENTER);
 	flex::SetFlexDirection(root, flex::FlexDirection::FLEX_DIRECTION_ROW);
-	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
+	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_AROUND);
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		if (childList[i]->getFixedWidth() == VALUE_UNDEFINED || childList[i]->getFixedHeight() == VALUE_UNDEFINED)
-		{
-			flex::SetFlexGrow(node, 1.0f);
-			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
-		}
-		else
+		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
 		{
 			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
 		}
+		if (std::isnan(childList[i]->getFixedWidth()))
+		{
+			flex::SetFlexGrow(node, 1.0f);
+		}
+		if (std::isnan(childList[i]->getFixedHeight()))
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
 		root->AddChild(node);
 	}
-	flex::DoLayout(root, VALUE_UNDEFINED, VALUE_UNDEFINED);
+	flex::DoLayout(root, RmNAN, RmNAN);
 
 	auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
 	auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);

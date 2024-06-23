@@ -2,6 +2,7 @@
 #include "IRmGUIPainter.h"
 #include "IRmGUIEvent.h"
 class IRmGUIContext;
+#define RmNAN (NAN)
 
 class IRmGUIWidget;
 using IRmGUIWidgetRef = RmRef<IRmGUIWidget>;

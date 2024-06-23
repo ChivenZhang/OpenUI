@@ -258,7 +258,7 @@ void SDL2Painter::drawPolyline(RmArrayView<RmPoint> points)
 void SDL2Painter::drawRect(int x, int y, int width, int height)
 {
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush && 0 < width && 0 < height)
+	if (m_Brush.Style != RmBrush::NoBrush && 0 <= width && 0 <= height)
 	{
 		cairo_save(cr);
 		cairo_rectangle(cr, x, y, width, height);
@@ -266,7 +266,7 @@ void SDL2Painter::drawRect(int x, int y, int width, int height)
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen && 0 < width && 0 < height)
+	if (m_Pen.Style != RmPen::NoPen && 0 <= width && 0 <= height)
 	{
 		cairo_save(cr);
 		cairo_rectangle(cr, x, y, width, height);
@@ -352,6 +352,7 @@ void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& 
 {
 	auto cr = m_NativeContext;
 	auto layout = m_NativeLayout;
+	auto& font = m_Font;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
 		cairo_save(cr);
@@ -363,7 +364,6 @@ void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& 
 		auto baseline = pango_layout_get_baseline(layout);
 		pango_layout_get_pixel_size(layout, &text_width, &text_height);
 
-		auto& font = m_Font;
 		if (font.Align & RmFont::AlignTop) cairo_move_to(cr, x, y);
 		else if (font.Align & RmFont::AlignBottom) cairo_move_to(cr, x, y + height - text_height);
 		else if (font.Align & RmFont::AlignVCenter) cairo_move_to(cr, x, y + (height - text_height) * 0.5);
@@ -384,7 +384,6 @@ void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& 
 		auto baseline = pango_layout_get_baseline(layout);
 		pango_layout_get_pixel_size(layout, &text_width, &text_height);
 
-		auto& font = m_Font;
 		if (font.Align & RmFont::AlignTop) cairo_move_to(cr, x, y);
 		else if (font.Align & RmFont::AlignBottom) cairo_move_to(cr, x, y + height - text_height);
 		else if (font.Align & RmFont::AlignVCenter) cairo_move_to(cr, x, y + (height - text_height) * 0.5);

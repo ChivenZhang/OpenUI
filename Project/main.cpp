@@ -8,6 +8,7 @@
 #include "SDL2Surface.h"
 #include "Widget/Private/RmGUIHBox.h"
 #include "Widget/Private/RmGUIVBox.h"
+#include "Widget/Private/RmGUIFlow.h"
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
 #include "Widget/Private/RmGUIButton.h"
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	// 创建SDL窗口  
-	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 400, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 600, 400, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (window == nullptr) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_Quit();
@@ -72,7 +73,7 @@ int main(int argc, char* argv[]) {
 	auto context = IRmGUIContext::GetInstance();
 	context->setSurface(surface);
 
-	auto top = RmNew<RmGUIHBox>();
+	auto top = RmNew<RmGUIVBox>();
 	context->addWidget(top);
 	top->setBorder({ 5,5,5,5 });
 
@@ -162,25 +163,50 @@ int main(int argc, char* argv[]) {
 	{
 		auto root = RmNew<RmGUIPanel>();
 		top->addWidget(root);
-		root->setFixedWidth(400); root->setFixedHeight(200);
+		// root->setFixedWidth(400); root->setFixedHeight(200);
 		root->setBorder({ 5,5,5,5 });
 
 		auto label = RmNew<RmGUILabel>();
 		root->addWidget(label);
-		label->setText("A Label");
-		label->setFixedWidth(100);
-		label->setFixedHeight(45);
+		label->setText("这是文本");
+		label->setFixedWidth(100); label->setFixedHeight(45);
 		label->setTextAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
 		auto style = label->getStyle();
-		style.Brush.Color = { 0,0,1,1 };
+		style.Font.Size = 16;
+		style.Brush.Color = { 0,0,0,1 };
+		style.Font.Style = RmFont::StyleItalic;
+		style.Font.Weight = RmFont::WeightBold;
 		label->setStyle(style);
 
-		auto button = RmNew<RmGUIButton>();
-		root->addWidget(button);
-		button->setText("A Button");
-		button->setFixedWidth(100);
-		button->setFixedHeight(45);
-		button->onClicked->connect(nullptr, []() { printf("click button\n"); });
+		auto button1 = RmNew<RmGUIButton>();
+		root->addWidget(button1);
+		button1->setText("这是按钮1");
+		button1->setFixedWidth(100); button1->setFixedHeight(40);
+		style = button1->getStyle();
+		style.Font.Size = 16;
+		style.Brush.Color = { 0.5,0,1,1 };
+		button1->setStyle(style);
+		button1->onClicked->connect(nullptr, []() { printf("click button1\n"); });
+
+		auto button2 = RmNew<RmGUIButton>();
+		root->addWidget(button2);
+		button2->setText("这是按钮2");
+		button2->setMinWidth(80); button2->setFixedHeight(40);
+		style = button2->getStyle();
+		style.Font.Size = 16;
+		style.Brush.Color = { 0.5,0,1,1 };
+		button2->setStyle(style);
+		button2->onClicked->connect(nullptr, []() { printf("click button2\n"); });
+
+		auto button3 = RmNew<RmGUIButton>();
+		root->addWidget(button3);
+		button3->setText("这是按钮3");
+		button3->setFixedWidth(50); button3->setMinHeight(40);
+		style = button3->getStyle();
+		style.Font.Size = 16;
+		style.Brush.Color = { 0.5,0,1,1 };
+		button3->setStyle(style);
+		button3->onClicked->connect(nullptr, []() { printf("click button3\n"); });
 	}
 #endif
 
@@ -232,7 +258,7 @@ int main(int argc, char* argv[]) {
 			break;
 			case SDL_MOUSEBUTTONDOWN: // 鼠标点击  
 				// 处理鼠标点击事件...  
-				// 可以使用 event.button.button 来获取被点击的鼠标按钮的编号  
+				// 可以使用 event.button1.button1 来获取被点击的鼠标按钮的编号  
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
