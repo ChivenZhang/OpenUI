@@ -6,7 +6,7 @@ using RmGUISignalPrivateRaw = RmRaw<RmGUISignalPrivate>;
 
 // ===================================================
 
-/// @brief implementation of signal with argments.
+/// @brief implement of signal with arguments.
 /// @tparam ...T 
 template <class... T>
 class RMGUI_API RmGUISignalAs : public IRmGUISignalAs<T...>
@@ -128,7 +128,7 @@ inline void RmGUISignalAs<T...>::emit(T... args)
 
 // ===================================================
 
-/// @brief implementation of signal without argment.
+/// @brief implement of signal without argument.
 template <>
 class RMGUI_API RmGUISignalAs<void> : public IRmGUISignalAs<>
 {
@@ -148,6 +148,7 @@ template <>
 class RmGUISignalSlot<void>
 {
 public:
+	bool Dirty = false;
 	uint32_t Handle = 0;
 	IRmGUIWidgetRaw Owner = nullptr;
 	RmLambda<void()> Slot;

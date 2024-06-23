@@ -11,7 +11,7 @@ public:
 
 };
 
-/// @brief Base interface of signals with argments.
+/// @brief Base interface of signals with arguments.
 /// @tparam ...T 
 template <class... T>
 class RMGUI_API IRmGUISignalAs : public IRmGUISignal
@@ -26,7 +26,7 @@ public:
 	virtual void emit(T... args) = 0;
 };
 
-/// @brief Base interface of signals without argment.
+/// @brief Base interface of signals without argument.
 template <>
 class RMGUI_API IRmGUISignalAs<void> : public IRmGUISignal
 {
