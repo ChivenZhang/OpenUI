@@ -27,6 +27,7 @@ template <class... T>
 class RmGUISignalSlot
 {
 public:
+	bool Dirty = false;
 	uint32_t Handle = 0;
 	IRmGUIWidgetRaw Owner = nullptr;
 	RmLambda<void(T...)> Slot;
@@ -77,7 +78,7 @@ inline void RmGUISignalAs<T...>::disconnect(IRmGUIWidgetRaw owner, uint32_t hand
 	{
 		if (connectList[i]->Owner == owner && connectList[i]->Handle == handle)
 		{
-			connectList.erase(connectList.begin() + i);
+			connectList[i]->Dirty = true;
 			return;
 		}
 	}
@@ -86,26 +87,43 @@ inline void RmGUISignalAs<T...>::disconnect(IRmGUIWidgetRaw owner, uint32_t hand
 template<class... T>
 inline void RmGUISignalAs<T...>::disconnect(IRmGUIWidgetRaw owner)
 {
-	RmVector<RmGUISignalSlotRef<T...>> result;
 	auto& connectList = PRIVATE_SIGNAL()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
 	{
-		if (connectList[i]->Owner == owner) result.push_back(connectList[i]);
-	}
-	for (size_t i = 0; i < result.size(); ++i)
-	{
-		auto index = std::find(connectList.begin(), connectList.end(), result[i]);
-		if (index == connectList.end()) continue;
-		connectList.erase(index);
+		if (connectList[i]->Owner == owner)
+		{
+			connectList[i]->Dirty = true;
+		}
 	}
 }
 
 template<class... T>
 inline void RmGUISignalAs<T...>::emit(T... args)
 {
+	// Call slot list in this signal
+
 	auto& connectList = PRIVATE_SIGNAL()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
-		if (connectList[i]->Slot) connectList[i]->Slot(std::forward<T>(args)...);
+	{
+		if (connectList[i]->Slot && connectList[i]->Dirty == false) connectList[i]->Slot(std::forward<T>(args)...);
+	}
+
+	// Check dirty mark in slots
+
+	RmVector<RmGUISignalSlotRef<T...>> result;
+	for (size_t i = 0; i < connectList.size(); ++i)
+	{
+		if (connectList[i]->Dirty) result.push_back(connectList[i]);
+	}
+
+	// Delete slots disconnected
+
+	for (size_t i = 0; i < result.size(); ++i)
+	{
+		auto index = std::find(connectList.begin(), connectList.end(), result[i]);
+		if (index == connectList.end()) continue;
+		connectList.erase(index);
+	}
 }
 
 // ===================================================
@@ -174,7 +192,7 @@ inline void RmGUISignalAs<void>::disconnect(IRmGUIWidgetRaw owner, uint32_t hand
 	{
 		if (connectList[i]->Owner == owner && connectList[i]->Handle == handle)
 		{
-			connectList.erase(connectList.begin() + i);
+			connectList[i]->Dirty = true;
 			return;
 		}
 	}
@@ -182,25 +200,42 @@ inline void RmGUISignalAs<void>::disconnect(IRmGUIWidgetRaw owner, uint32_t hand
 
 inline void RmGUISignalAs<void>::disconnect(IRmGUIWidgetRaw owner)
 {
-	RmVector<RmRef<RmGUISignalSlot<>>> result;
 	auto& connectList = PRIVATE_SIGNAL_VOID()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
 	{
-		if (connectList[i]->Owner == owner) result.push_back(connectList[i]);
+		if (connectList[i]->Owner == owner)
+		{
+			connectList[i]->Dirty = true;
+		}
 	}
+}
+
+inline void RmGUISignalAs<void>::emit()
+{
+	// Call slot list in this signal
+
+	auto& connectList = PRIVATE_SIGNAL_VOID()->ConnectList;
+	for (size_t i = 0; i < connectList.size(); ++i)
+	{
+		if (connectList[i]->Slot && connectList[i]->Dirty == false) connectList[i]->Slot();
+	}
+
+	// Check dirty mark in slots
+
+	RmVector<RmGUISignalSlotRef<>> result;
+	for (size_t i = 0; i < connectList.size(); ++i)
+	{
+		if (connectList[i]->Dirty) result.push_back(connectList[i]);
+	}
+
+	// Delete slots disconnected
+
 	for (size_t i = 0; i < result.size(); ++i)
 	{
 		auto index = std::find(connectList.begin(), connectList.end(), result[i]);
 		if (index == connectList.end()) continue;
 		connectList.erase(index);
 	}
-}
-
-inline void RmGUISignalAs<void>::emit()
-{
-	auto& connectList = PRIVATE_SIGNAL_VOID()->ConnectList;
-	for (size_t i = 0; i < connectList.size(); ++i)
-		if (connectList[i]->Slot) connectList[i]->Slot();
 }
 
 template <class... T>

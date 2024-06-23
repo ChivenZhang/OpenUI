@@ -10,13 +10,13 @@ public:
 	~RmGUIButton();
 	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
 
-public:
-	IRmGUISignalAsRaw<> onClicked;
-
 protected:
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
+
+public:
+	IRmGUISignalAsRaw<> onClicked;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateButton;
