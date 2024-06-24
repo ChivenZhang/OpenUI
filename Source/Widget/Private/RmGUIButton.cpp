@@ -3,6 +3,7 @@
 #include "RmGUIButton.h"
 #include "RmGUIButton.h"
 #include "RmGUIButton.h"
+#include "RmGUIButton.h"
 #include "RmGUILabel.h"
 #include <taitank.h>
 namespace flex = taitank;
@@ -25,7 +26,7 @@ class RmGUIButtonPrivate : public RmGUIWidgetPrivate
 {
 public:
 	RmGUIButtonStyle Normal, Hover, Press, Disable;
-	RmGUILabelRef LabelWidget;
+	RmGUILabelRef Label;
 	RmGUISignalAs<bool> OnClicked;
 	RmGUISignalAs<> OnPressed;
 	RmGUISignalAs<> OnReleased;
@@ -54,9 +55,9 @@ RmGUIButton::RmGUIButton(IRmGUIWidgetRaw parent)
 	pressed = &PRIVATE()->OnPressed;
 	released = &PRIVATE()->OnReleased;
 	toggled = &PRIVATE()->OnToggled;
-	PRIVATE()->LabelWidget = RmNew<RmGUILabel>();
-	PRIVATE()->LabelWidget->setAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
-	addWidget(PRIVATE()->LabelWidget);
+	PRIVATE()->Label = RmNew<RmGUILabel>();
+	PRIVATE()->Label->setAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
+	addWidget(PRIVATE()->Label);
 }
 
 RmGUIButton::~RmGUIButton()
@@ -168,32 +169,32 @@ void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 
 RmString RmGUIButton::getText() const
 {
-	return PRIVATE()->LabelWidget->getText();
+	return PRIVATE()->Label->getText();
 }
 
 void RmGUIButton::setText(RmString const& text)
 {
-	PRIVATE()->LabelWidget->setText(text);
+	PRIVATE()->Label->setText(text);
 }
 
 RmGUILabelTextStyle RmGUIButton::getStyle() const
 {
-	return PRIVATE()->LabelWidget->getStyle();
+	return PRIVATE()->Label->getStyle();
 }
 
 void RmGUIButton::setStyle(RmGUILabelTextStyle const& style)
 {
-	PRIVATE()->LabelWidget->setStyle(style);
+	PRIVATE()->Label->setStyle(style);
 }
 
 RmFontAligns RmGUIButton::getAlignment() const
 {
-	return PRIVATE()->LabelWidget->getAlignment();
+	return PRIVATE()->Label->getAlignment();
 }
 
 void RmGUIButton::setAlignment(RmFontAligns value)
 {
-	PRIVATE()->LabelWidget->setAlignment(value);
+	PRIVATE()->Label->setAlignment(value);
 }
 
 bool RmGUIButton::getChecked() const
@@ -215,6 +216,11 @@ void RmGUIButton::setCheckable(bool value)
 {
 	if (PRIVATE()->Checkable != value) PRIVATE()->Checked = false;
 	PRIVATE()->Checkable = value;
+}
+
+bool RmGUIButton::getDown() const
+{
+	return PRIVATE()->Pressed;
 }
 
 void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)

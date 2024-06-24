@@ -1,4 +1,4 @@
-#pragma
+#pragma once
 #include "Widget/IRmGUISignal.h"
 
 class RmGUISignalPrivate {};

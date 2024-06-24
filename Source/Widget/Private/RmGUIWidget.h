@@ -20,7 +20,7 @@ public:
 	virtual bool addWidget(IRmGUIWidgetRef widget) override;
 	virtual bool removeWidget(IRmGUIWidgetRef widget) override;
 	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
-	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
+	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) final override;
 	virtual void layout(RmRectRaw client) override;
 	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
 	virtual RmString getAttribute(uint32_t name) const override;

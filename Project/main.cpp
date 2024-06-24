@@ -13,6 +13,7 @@
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
 #include "Widget/Private/RmGUIButton.h"
+#include "Widget/Private/RmGUIScrollBar.h"
 
 
 static int count = 0;
@@ -220,6 +221,29 @@ int main(int argc, char* argv[]) {
 			label->setText("计数:" + std::to_string(count = 0));
 			});
 
+		auto scrollbar = RmNew<RmGUIScrollBar>();
+		root->addWidget(scrollbar);
+		scrollbar->setMinWidth(35); scrollbar->setFixedHeight(20);
+		scrollbar->setMargin({ 5,5,5,5 });
+		scrollbar->setRange(0, 1000);
+		scrollbar->setTracking(true);
+		scrollbar->setOrientation(true);
+		scrollbar->setValue(200);
+		scrollbar->valueChanged->connect(nullptr, [=](int32_t value) {
+			printf("%d\n", value);
+			});
+
+		auto scrollbar2 = RmNew<RmGUIScrollBar>();
+		root->addWidget(scrollbar2);
+		scrollbar2->setFixedWidth(20); scrollbar2->setMinHeight(35);
+		scrollbar2->setMargin({ 5,5,5,5 });
+		scrollbar2->setRange(0, 1000);
+		scrollbar2->setTracking(true);
+		scrollbar2->setOrientation(false);
+		scrollbar2->setValue(600);
+		scrollbar2->valueChanged->connect(nullptr, [=](int32_t value) {
+			printf("%d\n", value);
+			});
 	}
 #endif
 

@@ -2,7 +2,7 @@
 #include "RmGUIControl.h"
 #include "RmGUILabel.h"
 
-/// @brief Button Control
+/// @brief Slider Control
 class RMGUI_API RmGUIButton : public RmGUIControl
 {
 public:
@@ -20,6 +20,7 @@ public:
 	void  setChecked(bool value);
 	bool getCheckable() const;
 	void  setCheckable(bool value);
+	bool getDown() const;
 
 protected:
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;

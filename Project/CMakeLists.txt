@@ -27,9 +27,8 @@ target_link_libraries(OpenUI
 	debug getopt
 	debug gio-2.0
 	debug glew32d
-	debug glew32d.pdb
 	debug glib-2.0
-	debug GlU32.Lib
+	debug GlU32
 	debug gmodule-2.0
 	debug gobject-2.0
 	debug gthread-2.0
@@ -39,7 +38,7 @@ target_link_libraries(OpenUI
 	debug intl
 	debug libexpatd
 	debug libpng16d
-	debug OpenGL32.Lib
+	debug OpenGL32
 	debug pango-1.0
 	debug pangocairo-1.0
 	debug pangoft2-1.0
@@ -73,7 +72,7 @@ target_link_libraries(OpenUI
 	optimized gio-2.0
 	optimized glew32
 	optimized glib-2.0
-	optimized GlU32.Lib
+	optimized GlU32
 	optimized gmodule-2.0
 	optimized gobject-2.0
 	optimized gthread-2.0
@@ -83,7 +82,7 @@ target_link_libraries(OpenUI
 	optimized intl
 	optimized libexpat
 	optimized libpng16
-	optimized OpenGL32.Lib
+	optimized OpenGL32
 	optimized pango-1.0
 	optimized pangocairo-1.0
 	optimized pangoft2-1.0
