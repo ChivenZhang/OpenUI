@@ -39,7 +39,7 @@ void SDL2Painter::drawArc(int x, int y, int width, int height, int startAngle, i
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
@@ -50,7 +50,7 @@ void SDL2Painter::drawArc(int x, int y, int width, int height, int startAngle, i
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
@@ -68,7 +68,7 @@ void SDL2Painter::drawChord(int x, int y, int width, int height, int startAngle,
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
@@ -79,7 +79,7 @@ void SDL2Painter::drawChord(int x, int y, int width, int height, int startAngle,
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
@@ -106,11 +106,13 @@ void SDL2Painter::drawLine(int x1, int y1, int x2, int y2)
 	auto cr = m_NativeContext;
 	if (m_Pen.Style != RmPen::NoPen)
 	{
+		cairo_save(cr); setClipping(true);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
 		cairo_move_to(cr, x1, y1);
 		cairo_line_to(cr, x2, y2);
 		cairo_stroke(cr);
+		cairo_restore(cr);
 	}
 }
 
@@ -119,6 +121,7 @@ void SDL2Painter::drawLines(RmArrayView<RmLine> lines)
 	auto cr = m_NativeContext;
 	if (m_Pen.Style != RmPen::NoPen && 2 <= lines.size())
 	{
+		cairo_save(cr); setClipping(true);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
 		for (size_t i = 0; i < lines.size(); ++i)
@@ -127,6 +130,7 @@ void SDL2Painter::drawLines(RmArrayView<RmLine> lines)
 			else cairo_line_to(cr, lines[i].P1.X, lines[i].P1.Y);
 		}
 		cairo_stroke(cr);
+		cairo_restore(cr);
 	}
 }
 
@@ -136,7 +140,7 @@ void SDL2Painter::drawPie(int x, int y, int width, int height, int startAngle, i
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
@@ -148,7 +152,7 @@ void SDL2Painter::drawPie(int x, int y, int width, int height, int startAngle, i
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
@@ -167,7 +171,7 @@ void SDL2Painter::drawPoint(int x, int y)
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x - 1, y - 1, 2, 2);
 		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
 		cairo_fill(cr);
@@ -175,7 +179,7 @@ void SDL2Painter::drawPoint(int x, int y)
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x - 1, y - 1, 2, 2);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
@@ -189,7 +193,7 @@ void SDL2Painter::drawPoints(RmArrayView<RmPoint> points)
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i) cairo_rectangle(cr, points[i].X - 1, points[i].Y - 1, 2, 2);
 		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
 		cairo_fill(cr);
@@ -197,7 +201,7 @@ void SDL2Painter::drawPoints(RmArrayView<RmPoint> points)
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i) cairo_rectangle(cr, points[i].X - 1, points[i].Y - 1, 2, 2);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
@@ -211,7 +215,7 @@ void SDL2Painter::drawPolygon(RmArrayView<RmPoint> points)
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush && 2 <= points.size())
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
 		{
 			if (i == 0) cairo_move_to(cr, points[i].X, points[i].Y);
@@ -223,7 +227,7 @@ void SDL2Painter::drawPolygon(RmArrayView<RmPoint> points)
 	}
 	if (m_Pen.Style != RmPen::NoPen && 2 <= points.size())
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
 		{
 			if (i == 0) cairo_move_to(cr, points[i].X, points[i].Y);
@@ -242,7 +246,7 @@ void SDL2Painter::drawPolyline(RmArrayView<RmPoint> points)
 	auto cr = m_NativeContext;
 	if (m_Pen.Style != RmPen::NoPen && 2 <= points.size())
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
 		{
 			if (i == 0) cairo_move_to(cr, points[i].X, points[i].Y);
@@ -260,7 +264,7 @@ void SDL2Painter::drawRect(int x, int y, int width, int height)
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush && 0 <= width && 0 <= height)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x, y, width, height);
 		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
 		cairo_fill(cr);
@@ -268,7 +272,7 @@ void SDL2Painter::drawRect(int x, int y, int width, int height)
 	}
 	if (m_Pen.Style != RmPen::NoPen && 0 <= width && 0 <= height)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x, y, width, height);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
@@ -282,7 +286,7 @@ void SDL2Painter::drawRects(RmArrayView<RmRect> rects)
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < rects.size(); ++i)
 		{
 			if (0 < rects[i].W && 0 < rects[i].H) cairo_rectangle(cr, rects[i].X, rects[i].Y, rects[i].W, rects[i].H);
@@ -293,7 +297,7 @@ void SDL2Painter::drawRects(RmArrayView<RmRect> rects)
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < rects.size(); ++i)
 		{
 			if (0 < rects[i].W && 0 < rects[i].H) cairo_rectangle(cr, rects[i].X, rects[i].Y, rects[i].W, rects[i].H);
@@ -315,7 +319,7 @@ void SDL2Painter::drawRoundedRect(int x, int y, int width, int height, float xRa
 		auto to_radius = (M_PI / 180.0);
 		auto scale_factor = 1.0 * yRadius / xRadius;
 		auto scale_inverse = 1.0 / scale_factor;
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_new_sub_path(cr);
 		cairo_arc(cr, x + width - xRadius, (y + yRadius) * scale_inverse, xRadius, -90 * to_radius, 0);
@@ -333,7 +337,7 @@ void SDL2Painter::drawRoundedRect(int x, int y, int width, int height, float xRa
 		auto to_radius = (M_PI / 180.0);
 		auto scale_factor = 1.0 * yRadius / xRadius;
 		auto scale_inverse = 1.0 / scale_factor;
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_new_sub_path(cr);
 		cairo_arc(cr, x + width - xRadius, (y + yRadius) * scale_inverse, xRadius, -90 * to_radius, 0);
@@ -355,7 +359,7 @@ void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& 
 	auto& font = m_Font;
 	if (m_Brush.Style != RmBrush::NoBrush)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		pango_layout_set_text(layout, text.c_str(), -1);
 		pango_layout_set_width(layout, width * PANGO_SCALE);
 		pango_layout_set_height(layout, height * PANGO_SCALE);
@@ -376,7 +380,7 @@ void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& 
 	}
 	if (m_Pen.Style != RmPen::NoPen)
 	{
-		cairo_save(cr);
+		cairo_save(cr); setClipping(true);
 		pango_layout_set_width(layout, width * PANGO_SCALE);
 		pango_layout_set_height(layout, height * PANGO_SCALE);
 
@@ -478,8 +482,6 @@ void SDL2Painter::setClipRect(int x, int y, int width, int height)
 {
 	auto cr = m_NativeContext;
 	m_CilpRect = RmRect{ (float)x, (float)y, (float)width, (float)height };
-	cairo_rectangle(cr, x, y, width, height);
-	cairo_clip(cr);
 }
 
 void SDL2Painter::setViewport(int x, int y, int width, int height)

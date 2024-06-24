@@ -32,6 +32,7 @@ RmGUILabel::~RmGUILabel()
 
 void RmGUILabel::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
+	RmGUIWidget::paint(painter, client);
 	if (PRIVATE()->Text.empty() == false)
 	{
 		painter->setPen(PRIVATE()->TextStyle.Pen);
@@ -74,8 +75,11 @@ void RmGUILabel::setAlignment(RmFontAligns value)
 void RmGUILabel::mousePressEvent(IRmGUIMouseEventRaw event)
 {
 	auto client = getRect();
+	auto viewport = getViewport();
 	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H)
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		if (event->Button == 1)
 		{
@@ -87,8 +91,11 @@ void RmGUILabel::mousePressEvent(IRmGUIMouseEventRaw event)
 void RmGUILabel::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
 	auto client = getRect();
+	auto viewport = getViewport();
 	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H)
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		PRIVATE()->LinkHovered.emit(PRIVATE()->Text);
 	}

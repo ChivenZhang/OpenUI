@@ -63,6 +63,7 @@ void RmGUIFlow::layout(RmRectRaw client)
 		auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
 		auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
 		setRect({ client->X + left, client->Y + top, width, height });
+		setViewport(getRect());
 	}
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
@@ -70,6 +71,7 @@ void RmGUIFlow::layout(RmRectRaw client)
 		auto left = flex::GetLeft(node); auto top = flex::GetTop(node);
 		auto width = flex::GetWidth(node); auto height = flex::GetHeight(node);
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
+		childList[i]->setViewport(childList[i]->getRect());
 	}
 
 	flex::NodeFreeRecursive(root);

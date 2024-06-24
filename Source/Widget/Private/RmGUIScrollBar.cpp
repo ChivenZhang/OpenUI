@@ -1,4 +1,6 @@
 #include "RmGUIScrollBar.h"
+#include "RmGUIScrollBar.h"
+#include "RmGUIScrollBar.h"
 #include "RmGUIButton.h"
 
 class RmGUIScrollBarPrivate : public RmGUIWidgetPrivate
@@ -8,11 +10,11 @@ public:
 	bool Horizontal = false, SliderDown = false, Tracking = false;
 	RmFloat2 MousePos;
 	RmGUIButtonRef Slider;
-	RmGUISignalAs<int32_t, int32_t> OnRangeChanged;
-	RmGUISignalAs<int32_t> OnSliderMoved;
 	RmGUISignalAs<> OnSliderPressed;
 	RmGUISignalAs<> OnSliderReleased;
+	RmGUISignalAs<int32_t> OnSliderMoved;
 	RmGUISignalAs<int32_t> OnValueChanged;
+	RmGUISignalAs<int32_t, int32_t> OnRangeChanged;
 };
 #define PRIVATE() ((RmGUIScrollBarPrivate*)m_PrivateScrollBar)
 
@@ -22,17 +24,17 @@ RmGUIScrollBar::RmGUIScrollBar(IRmGUIWidgetRaw parent)
 	m_PrivateScrollBar(nullptr)
 {
 	m_PrivateScrollBar = new RmGUIScrollBarPrivate;
-	rangeChanged = &PRIVATE()->OnRangeChanged;
 	sliderMoved = &PRIVATE()->OnSliderMoved;
 	sliderPressed = &PRIVATE()->OnSliderPressed;
 	sliderReleased = &PRIVATE()->OnSliderReleased;
 	valueChanged = &PRIVATE()->OnValueChanged;
+	rangeChanged = &PRIVATE()->OnRangeChanged;
 	PRIVATE()->Slider = RmNew<RmGUIButton>();
 	addWidget(PRIVATE()->Slider);
 
 	PRIVATE()->Slider->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.emit(); });
 	PRIVATE()->Slider->released->connect(this, [=]() {
-		if (PRIVATE()->Tracking == false) PRIVATE()->OnValueChanged.emit(PRIVATE()->Value);
+		if (PRIVATE()->Tracking == false) if (PRIVATE()->Value != PRIVATE()->SliderPosition) PRIVATE()->OnValueChanged.emit(PRIVATE()->Value);
 		PRIVATE()->OnSliderReleased.emit();
 		});
 }
@@ -50,6 +52,7 @@ void RmGUIScrollBar::layout(RmRectRaw client)
 		auto sliderWidth = getWidth() * getWidth() / range;
 		auto sliderPosition = (getWidth() - sliderWidth) * PRIVATE()->Value / range;
 		PRIVATE()->Slider->setRect({ client->X + sliderPosition + 1, client->Y + 1, sliderWidth - 2, client->H - 2 });
+		PRIVATE()->Slider->setViewport(PRIVATE()->Slider->getRect());
 	}
 	else
 	{
@@ -57,6 +60,7 @@ void RmGUIScrollBar::layout(RmRectRaw client)
 		auto sliderHeight = getHeight() * getHeight() / range;
 		auto sliderPosition = (getHeight() - sliderHeight) * PRIVATE()->Value / range;
 		PRIVATE()->Slider->setRect({ client->X + 1, client->Y + sliderPosition + 1, client->W - 2, sliderHeight - 2 });
+		PRIVATE()->Slider->setViewport(PRIVATE()->Slider->getRect());
 	}
 }
 
@@ -102,7 +106,7 @@ int32_t RmGUIScrollBar::getValue() const
 
 void RmGUIScrollBar::setValue(int32_t value)
 {
-	PRIVATE()->Value = value;
+	PRIVATE()->Value = std::clamp(value, PRIVATE()->Minimum, PRIVATE()->Maximum);
 }
 
 bool RmGUIScrollBar::getTracking() const
@@ -113,6 +117,16 @@ bool RmGUIScrollBar::getTracking() const
 void RmGUIScrollBar::setTracking(bool value)
 {
 	PRIVATE()->Tracking = value;
+}
+
+int32_t RmGUIScrollBar::getSingleStep() const
+{
+	return PRIVATE()->SingleStep;
+}
+
+void RmGUIScrollBar::setSingleStep(int32_t value)
+{
+	PRIVATE()->SingleStep = std::max(1, value);
 }
 
 void RmGUIScrollBar::mousePressEvent(IRmGUIMouseEventRaw event)
@@ -128,6 +142,7 @@ void RmGUIScrollBar::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
 	if (PRIVATE()->Slider->getDown())
 	{
+		auto oldValue = PRIVATE()->Value;
 		auto offset = RmFloat2(event->X - PRIVATE()->MousePos.X, event->Y - PRIVATE()->MousePos.Y);
 		if (PRIVATE()->Horizontal)
 		{
@@ -149,8 +164,8 @@ void RmGUIScrollBar::mouseMoveEvent(IRmGUIMouseEventRaw event)
 			if (std::isinf(newValue)) PRIVATE()->Value = 0;
 			else PRIVATE()->Value = newValue;
 		}
-		PRIVATE()->Value = std::clamp<int32_t>(PRIVATE()->Value, PRIVATE()->Minimum, PRIVATE()->Maximum);
-		PRIVATE()->OnSliderMoved.emit(PRIVATE()->SliderPosition);
-		if (PRIVATE()->Tracking) PRIVATE()->OnValueChanged.emit(PRIVATE()->Value);
+		PRIVATE()->Value = std::clamp<int32_t>(PRIVATE()->Value / PRIVATE()->SingleStep * PRIVATE()->SingleStep, PRIVATE()->Minimum, PRIVATE()->Maximum);
+		PRIVATE()->OnSliderMoved.emit(PRIVATE()->Value);
+		if (PRIVATE()->Tracking) if (PRIVATE()->Value != oldValue) PRIVATE()->OnValueChanged.emit(PRIVATE()->Value);
 	}
 }

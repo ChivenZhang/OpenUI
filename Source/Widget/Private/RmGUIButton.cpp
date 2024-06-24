@@ -122,6 +122,7 @@ void RmGUIButton::layout(RmRectRaw client)
 		auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
 		auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
 		setRect({ client->X + left, client->Y + top, width, height });
+		setViewport(getRect());
 	}
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
@@ -129,6 +130,7 @@ void RmGUIButton::layout(RmRectRaw client)
 		auto left = flex::GetLeft(node); auto top = flex::GetTop(node);
 		auto width = flex::GetWidth(node); auto height = flex::GetHeight(node);
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
+		childList[i]->setViewport(childList[i]->getRect());
 	}
 
 	flex::NodeFreeRecursive(root);
@@ -164,7 +166,7 @@ void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 		painter->setBrush(PRIVATE()->Normal.Brush);
 	}
 
-	painter->drawRoundedRect(client->X, client->Y, client->W, client->H, round.X, round.Y);
+	painter->drawRoundedRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2, round.X, round.Y);
 }
 
 RmString RmGUIButton::getText() const
@@ -226,8 +228,11 @@ bool RmGUIButton::getDown() const
 void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
 {
 	auto client = getRect();
+	auto viewport = getViewport();
 	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H)
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		if (event->Button == 1)
 		{
@@ -254,8 +259,11 @@ void RmGUIButton::mouseReleaseEvent(IRmGUIMouseEventRaw event)
 void RmGUIButton::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
 	auto client = getRect();
+	auto viewport = getViewport();
 	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H)
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		PRIVATE()->Hovered = true;
 	}

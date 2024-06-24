@@ -13,7 +13,7 @@
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
 #include "Widget/Private/RmGUIButton.h"
-#include "Widget/Private/RmGUIScrollBar.h"
+#include "Widget/Private/RmGUIScroll.h"
 
 
 static int count = 0;
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	// 创建SDL窗口  
-	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 600, 400, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (window == nullptr) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_Quit();
@@ -221,29 +221,14 @@ int main(int argc, char* argv[]) {
 			label->setText("计数:" + std::to_string(count = 0));
 			});
 
-		auto scrollbar = RmNew<RmGUIScrollBar>();
-		root->addWidget(scrollbar);
-		scrollbar->setMinWidth(35); scrollbar->setFixedHeight(20);
-		scrollbar->setMargin({ 5,5,5,5 });
-		scrollbar->setRange(0, 1000);
-		scrollbar->setTracking(true);
-		scrollbar->setOrientation(true);
-		scrollbar->setValue(200);
-		scrollbar->valueChanged->connect(nullptr, [=](int32_t value) {
-			printf("%d\n", value);
-			});
+		auto scroll = RmNew<RmGUIScroll>();
+		root->addWidget(scroll);
+		scroll->setMinWidth(50); scroll->setMinHeight(50);
+		scroll->setMargin({ 5,5,5,5 });
 
-		auto scrollbar2 = RmNew<RmGUIScrollBar>();
-		root->addWidget(scrollbar2);
-		scrollbar2->setFixedWidth(20); scrollbar2->setMinHeight(35);
-		scrollbar2->setMargin({ 5,5,5,5 });
-		scrollbar2->setRange(0, 1000);
-		scrollbar2->setTracking(true);
-		scrollbar2->setOrientation(false);
-		scrollbar2->setValue(600);
-		scrollbar2->valueChanged->connect(nullptr, [=](int32_t value) {
-			printf("%d\n", value);
-			});
+		auto panel = RmNew<RmGUIPanel>();
+		scroll->addWidget(panel);
+		panel->setRect({ 0, 0, 2000, 2000 });
 	}
 #endif
 
@@ -316,7 +301,7 @@ int main(int argc, char* argv[]) {
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
+				IRmGUIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.wheel.mouseX, event.wheel.mouseY, x + event.wheel.mouseX, y + event.wheel.mouseY, event.button.button, event.button.button, event.key.keysym.mod);
 				context->sendEvent(nullptr, &event2);
 			}
 			break;

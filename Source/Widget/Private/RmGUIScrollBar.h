@@ -1,6 +1,7 @@
 #pragma once
 #include "RmGUIControl.h"
 
+/// @brief Scroll Bar
 class RMGUI_API RmGUIScrollBar : public RmGUIControl
 {
 public:
@@ -17,18 +18,22 @@ public:
 	void setValue(int32_t value);
 	bool getTracking() const;
 	void setTracking(bool value);
+	int32_t getSingleStep() const;
+	void setSingleStep(int32_t value);
 
 protected:
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
 
 public:
-	IRmGUISignalAsRaw<int32_t, int32_t> rangeChanged;
-	IRmGUISignalAsRaw<int32_t> sliderMoved;
 	IRmGUISignalAsRaw<> sliderPressed;
 	IRmGUISignalAsRaw<> sliderReleased;
-	IRmGUISignalAsRaw<int32_t> valueChanged;
+	IRmGUISignalAsRaw<int32_t /*value*/> sliderMoved;
+	IRmGUISignalAsRaw<int32_t /*value*/> valueChanged;
+	IRmGUISignalAsRaw<int32_t /*min*/, int32_t /*max*/> rangeChanged;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateScrollBar;
 };
+using RmGUIScrollBarRef = RmRef<RmGUIScrollBar>;
+using RmGUIScrollBarRaw = RmRaw<RmGUIScrollBar>;

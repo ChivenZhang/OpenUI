@@ -65,6 +65,8 @@ public:
 
 	virtual RmRect getRect() const = 0;
 	virtual void setRect(RmRect client) = 0;
+	virtual RmRect getViewport() const = 0;
+	virtual void setViewport(RmRect value) = 0;
 	virtual RmRect getChildrenRect() const = 0;
 
 	virtual IRmGUIWidgetRaw getParent() const = 0;

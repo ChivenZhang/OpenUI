@@ -13,7 +13,7 @@ public:
 	float MaxWidth = RmNAN, MaxHeight = RmNAN;
 	float FixedWidth = RmNAN, FixedHeight = RmNAN;
 	bool Visible = true, Enable = true;
-	RmRect ClientRect, ChildrenRect;
+	RmRect ClientRect, Viewport, ChildrenRect;
 	RmFloat4 Margin = {}, Padding = {}, Border = {};
 };
 #define PRIVATE() ((RmGUIWidgetPrivateData*)m_PrivateData)
@@ -39,6 +39,16 @@ RmRect RmGUIWidget::getRect() const
 void RmGUIWidget::setRect(RmRect client)
 {
 	PRIVATE()->ClientRect = client;
+}
+
+RmRect RmGUIWidget::getViewport() const
+{
+	return PRIVATE()->Viewport;
+}
+
+void RmGUIWidget::setViewport(RmRect value)
+{
+	PRIVATE()->Viewport = value;
 }
 
 RmRect RmGUIWidget::getChildrenRect() const
@@ -187,10 +197,17 @@ void RmGUIWidget::handle(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 
 void RmGUIWidget::layout(RmRectRaw client)
 {
+	auto childList = getChildren();
+	for (size_t i = 0; i < childList.size(); ++i)
+	{
+		childList[i]->setViewport(childList[i]->getRect());
+	}
 }
 
 void RmGUIWidget::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
+	auto viewport = getViewport();
+	painter->setClipRect(viewport.X, viewport.Y, viewport.W, viewport.H);
 }
 
 RmString RmGUIWidget::getAttribute(uint32_t name) const
