@@ -1,7 +1,6 @@
-## 设计主旨
-To be more opened, more abstract, more tolerant, more powerful.
+# 设计主旨
+## To be more opened, more abstract, more tolerant, more powerful.
 
-## 设计模型
 ![image](Pattern.png)
 
 ## 需求列表
