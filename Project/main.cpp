@@ -9,6 +9,7 @@
 #include "Widget/Private/RmGUIHBox.h"
 #include "Widget/Private/RmGUIVBox.h"
 #include "Widget/Private/RmGUIFlow.h"
+#include "Widget/Private/RmGUIScroll.h"
 #include "Widget/Private/RmGUIPanel.h"
 #include "Widget/Private/RmGUILabel.h"
 #include "Widget/Private/RmGUIButton.h"
