@@ -1,4 +1,12 @@
 #include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
 #include <taitank.h>
 namespace flex = taitank;
 
@@ -12,9 +20,11 @@ public:
 	float MinWidth = RmNAN, MinHeight = RmNAN;
 	float MaxWidth = RmNAN, MaxHeight = RmNAN;
 	float FixedWidth = RmNAN, FixedHeight = RmNAN;
-	bool Visible = true, Enable = true;
+	bool Visible = true, Enable = true, Focus = false;
 	RmRect ClientRect, Viewport, ChildrenRect;
 	RmFloat4 Margin = {}, Padding = {}, Border = {};
+	IRmGUIWidget::policy_t SizePolicy = {};
+	IRmGUIWidget::focus_t FocusPolicy = IRmGUIWidget::FocusNoFocus;
 };
 #define PRIVATE() ((RmGUIWidgetPrivateData*)m_PrivateData)
 
@@ -397,6 +407,46 @@ RmFloat4 RmGUIWidget::getBorder() const
 void RmGUIWidget::setBorder(RmFloat4 value)
 {
 	PRIVATE()->Border = value;
+}
+
+IRmGUIWidget::policy_t RmGUIWidget::getSizePolicy() const
+{
+	return PRIVATE()->SizePolicy;
+}
+
+void RmGUIWidget::setSizePolicy(policy_t value)
+{
+	PRIVATE()->SizePolicy = value;
+}
+
+bool RmGUIWidget::getFocus() const
+{
+	return PRIVATE()->Focus;
+}
+
+void RmGUIWidget::setFocus(bool value)
+{
+	PRIVATE()->Focus = value;
+}
+
+IRmGUIWidget::focus_t RmGUIWidget::getFocusPolicy() const
+{
+	return PRIVATE()->FocusPolicy;
+}
+
+void RmGUIWidget::setFocusPolicy(focus_t value)
+{
+	PRIVATE()->FocusPolicy = value;
+}
+
+IRmGUIWidgetRaw RmGUIWidget::getLastFocus() const
+{
+	return IRmGUIWidgetRaw();
+}
+
+IRmGUIWidgetRaw RmGUIWidget::getNextFocus() const
+{
+	return IRmGUIWidgetRaw();
 }
 
 void RmGUIWidget::closeEvent(IRmGUICloseEventRaw event)

@@ -8,7 +8,7 @@ class SDL2Painter : public IRmGUIPainter
 public:
 	SDL2Painter(cairo_t* native);
 	~SDL2Painter();
-	virtual RmRect boundingRect(int x, int y, int w, int h, RmString const& text) override;
+	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text) override;
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawEllipse(int x, int y, int width, int height) override;

@@ -63,6 +63,14 @@ public:
 	virtual void setPadding(RmFloat4 value) override;
 	virtual RmFloat4 getBorder() const override;
 	virtual void setBorder(RmFloat4 value) override;
+	virtual policy_t getSizePolicy() const override;
+	virtual void setSizePolicy(policy_t value) override;
+	virtual bool getFocus() const override;
+	virtual void setFocus(bool value) override;
+	virtual focus_t getFocusPolicy() const override;
+	virtual void setFocusPolicy(focus_t value) override;
+	virtual IRmGUIWidgetRaw getLastFocus() const override;
+	virtual IRmGUIWidgetRaw getNextFocus() const override;
 
 protected:
 	virtual void closeEvent(IRmGUICloseEventRaw event) override;

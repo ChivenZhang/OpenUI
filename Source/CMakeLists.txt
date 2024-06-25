@@ -38,7 +38,8 @@ add_library (RmGUI SHARED
 	Widget/Private/RmGUIButton.cpp
 	Widget/Private/RmGUIFlow.h 
 	Widget/Private/RmGUIFlow.cpp
-)
+	Widget/Private/RmGUIGrid.h
+	Widget/Private/RmGUIGrid.cpp)
 
 target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

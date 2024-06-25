@@ -26,11 +26,28 @@ SDL2Painter::~SDL2Painter()
 	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
 }
 
-RmRect SDL2Painter::boundingRect(int x, int y, int w, int h, RmString const& text)
+RmRect SDL2Painter::boundingRect(int x, int y, int width, int height, RmString const& text)
 {
-	auto cr = m_NativeContext;
+	RmRect result;
+	auto layout = m_NativeLayout;
+	auto& font = m_Font;
 
-	return RmRect();
+	pango_layout_set_text(layout, text.c_str(), -1);
+	pango_layout_set_width(layout, width * PANGO_SCALE);
+	pango_layout_set_height(layout, height * PANGO_SCALE);
+
+	int text_width, text_height;
+	int baseline = pango_layout_get_baseline(layout);
+	pango_layout_get_pixel_size(layout, &text_width, &text_height);
+	result.W = text_width; result.H = text_height;
+
+	if (font.Align & RmFont::AlignTop) { result.X = x; result.Y = y; }
+	else if (font.Align & RmFont::AlignBottom) { result.X = x; result.Y = y + height - text_height; }
+	else if (font.Align & RmFont::AlignVCenter) { result.X = x; result.Y = y + (height - text_height) * 0.5; }
+	else if (font.Align & RmFont::AlignBaseline) { result.X = x; result.Y = y + baseline; }
+	else { result.X = x; result.Y = y; }
+
+	return result;
 }
 
 void SDL2Painter::drawArc(int x, int y, int width, int height, int startAngle, int spanAngle)

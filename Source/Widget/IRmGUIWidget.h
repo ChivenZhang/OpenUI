@@ -12,6 +12,35 @@ using IRmGUIWidgetRaw = RmRaw<IRmGUIWidget>;
 class RMGUI_API IRmGUIWidget : public IRmGUIHandler
 {
 public:
+	using resize_t = enum
+	{
+		SizeFixed = 0,
+		SizeMinimum = 1,
+		SizeMaximum = 2,
+		SizePreferred = 3,
+		SizeExpanding = 4,
+		SizeMinimumExpanding = 5,
+		SizeIgnored = 6,
+	};
+
+	using policy_t = struct policy_t
+	{
+		resize_t HorizontalPolicy = SizeFixed;
+		uint32_t HorizontalStretch = 1;
+		resize_t VerticalPolicy = SizeFixed;
+		uint32_t VerticalStretch = 1;
+	};
+
+	using focus_t = enum
+	{
+		FocusNoFocus = 0,
+		FocusTabFocus = 0x0001,
+		FocusClickFocus = 0x0002,
+		FocusStrongFocus = FocusTabFocus | FocusClickFocus | 0x0004,
+		FocusWheelFocus = FocusStrongFocus | 0x0008,
+	};
+
+public:
 	virtual bool getVisible() const = 0;
 	virtual void  setVisible(bool value) = 0;
 
@@ -62,6 +91,18 @@ public:
 
 	virtual RmFloat4 getBorder() const = 0;
 	virtual void setBorder(RmFloat4 value) = 0;
+
+	virtual policy_t getSizePolicy() const = 0;
+	virtual void setSizePolicy(policy_t value) = 0;
+
+	virtual bool getFocus() const = 0;
+	virtual void setFocus(bool value) = 0;
+
+	virtual focus_t getFocusPolicy() const = 0;
+	virtual void setFocusPolicy(focus_t value) = 0;
+
+	virtual IRmGUIWidgetRaw getLastFocus() const = 0;
+	virtual IRmGUIWidgetRaw getNextFocus() const = 0;
 
 	virtual RmRect getRect() const = 0;
 	virtual void setRect(RmRect client) = 0;
