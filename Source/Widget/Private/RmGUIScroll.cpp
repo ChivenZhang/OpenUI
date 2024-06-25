@@ -18,15 +18,15 @@ RmGUIScroll::RmGUIScroll(IRmGUIWidgetRaw parent)
 	m_PrivateScroll = new RmGUIScrollPrivate;
 	PRIVATE()->HorizontalScrollBar = RmNew<RmGUIScrollBar>();
 	addWidget(PRIVATE()->HorizontalScrollBar);
-	PRIVATE()->HorizontalScrollBar->setFixedHeight(14);
-	PRIVATE()->HorizontalScrollBar->setMinWidth(14);
+	PRIVATE()->HorizontalScrollBar->setFixedHeight(16);
+	PRIVATE()->HorizontalScrollBar->setMinWidth(16);
 	PRIVATE()->HorizontalScrollBar->setOrientation(true);
 	PRIVATE()->HorizontalScrollBar->setSingleStep(80);
 
 	PRIVATE()->VerticalScrollBar = RmNew<RmGUIScrollBar>();
 	addWidget(PRIVATE()->VerticalScrollBar);
-	PRIVATE()->VerticalScrollBar->setFixedWidth(14);
-	PRIVATE()->VerticalScrollBar->setMinHeight(14);
+	PRIVATE()->VerticalScrollBar->setFixedWidth(16);
+	PRIVATE()->VerticalScrollBar->setMinHeight(16);
 	PRIVATE()->VerticalScrollBar->setOrientation(false);
 	PRIVATE()->VerticalScrollBar->setSingleStep(80);
 }
