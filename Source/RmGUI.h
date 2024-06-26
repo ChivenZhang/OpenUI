@@ -213,7 +213,7 @@ struct RmRect
 };
 using RmRectRaw = RmRaw<RmRect>;
 
-inline bool operator ==(RmRect a, RmRect b)
+inline bool operator ==(RmRect const& a, RmRect const& b)
 {
 	return a.X == b.X && a.Y == b.Y && a.W == b.W && a.H == b.H;
 }
@@ -224,7 +224,7 @@ struct RmPoint
 };
 using RmPointRaw = RmRaw<RmPoint>;
 
-inline bool operator ==(RmPoint a, RmPoint b)
+inline bool operator ==(RmPoint const& a, RmPoint const& b)
 {
 	return a.X == b.X && a.Y == b.Y;
 }
@@ -235,7 +235,7 @@ struct RmLine
 };
 using RmLineRaw = RmRaw<RmLine>;
 
-inline bool operator ==(RmLine a, RmLine b)
+inline bool operator ==(RmLine const& a, RmLine const& b)
 {
 	return a.P0 == b.P0 && a.P1 == b.P1;
 }
@@ -246,7 +246,7 @@ struct RmColor
 };
 using RmColorRaw = RmRaw<RmColor>;
 
-inline bool operator ==(RmColor a, RmColor b)
+inline bool operator ==(RmColor const& a, RmColor const& b)
 {
 	return a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A;
 }
@@ -360,7 +360,7 @@ struct RmFloat2
 	float X = 0, Y = 0;
 };
 
-inline bool operator ==(RmFloat2 a, RmFloat2 b)
+inline bool operator ==(RmFloat2 const& a, RmFloat2 const& b)
 {
 	return a.X == b.X && a.Y == b.Y;
 }
@@ -370,7 +370,7 @@ struct RmFloat3
 	float X = 0, Y = 0, Z = 0;
 };
 
-inline bool operator ==(RmFloat3 a, RmFloat3 b)
+inline bool operator ==(RmFloat3 const& a, RmFloat3 const& b)
 {
 	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
 }
@@ -380,7 +380,7 @@ struct RmFloat4
 	float X = 0, Y = 0, Z = 0, W = 0;
 };
 
-inline bool operator ==(RmFloat4 a, RmFloat4 b)
+inline bool operator ==(RmFloat4 const& a, RmFloat4 const& b)
 {
 	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
 }
@@ -390,7 +390,7 @@ struct RmFloat2x2
 	RmFloat2 X, Y;
 };
 
-inline bool operator ==(RmFloat2x2 a, RmFloat2x2 b)
+inline bool operator ==(RmFloat2x2 const& a, RmFloat2x2 const& b)
 {
 	return a.X == b.X && a.Y == b.Y;
 }
@@ -400,7 +400,7 @@ struct RmFloat3x3
 	RmFloat3 X, Y, Z;
 };
 
-inline bool operator ==(RmFloat3x3 a, RmFloat3x3 b)
+inline bool operator ==(RmFloat3x3 const& a, RmFloat3x3 const& b)
 {
 	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
 }
@@ -410,7 +410,7 @@ struct RmFloat4x4
 	RmFloat4 X, Y, Z, W;
 };
 
-inline bool operator ==(RmFloat4x4 a, RmFloat4x4 b)
+inline bool operator ==(RmFloat4x4 const& a, RmFloat4x4 const& b)
 {
 	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
 }

@@ -148,7 +148,7 @@ void RmGUIWidget::handle(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 	} break;
 	case RmHash("DoubleClick"):
 	{
-		mouseDoubleClickEvent(RmCast<IRmGUIMouseDblClickEvent>(event));
+		mouseDoubleEvent(RmCast<IRmGUIMouseDblClickEvent>(event));
 	} break;
 	case RmHash("MouseMove"):
 	{
@@ -469,7 +469,7 @@ void RmGUIWidget::dropEvent(IRmGUIDropEventRaw event)
 {
 }
 
-void RmGUIWidget::enterEvent(IRmGUIMouseEnterEventRaw event)
+void RmGUIWidget::enterEvent(IRmGUIMouseEventRaw event)
 {
 }
 
@@ -485,32 +485,59 @@ void RmGUIWidget::hideEvent(IRmGUIHideEventRaw event)
 {
 }
 
-void RmGUIWidget::inputEvent(IRmGUIKeyInputEventRaw event)
+void RmGUIWidget::inputEvent(IRmGUIKeyEventRaw event)
 {
 }
 
-void RmGUIWidget::keyPressEvent(IRmGUIKeyDownEventRaw event)
+void RmGUIWidget::keyPressEvent(IRmGUIKeyEventRaw event)
 {
 }
 
-void RmGUIWidget::keyReleaseEvent(IRmGUIKeyUpEventRaw event)
+void RmGUIWidget::keyReleaseEvent(IRmGUIKeyEventRaw event)
 {
 }
 
-void RmGUIWidget::leaveEvent(IRmGUIMouseLeaveEventRaw event)
+void RmGUIWidget::leaveEvent(IRmGUIMouseEventRaw event)
 {
 }
 
-void RmGUIWidget::mouseDoubleClickEvent(IRmGUIMouseEventRaw event)
+void RmGUIWidget::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 {
+	auto client = getRect();
+	auto viewport = getViewport();
+	if (client.X <= event->X && event->X <= client.X + client.W
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
+	{
+		event->Accept = true;
+	}
 }
 
 void RmGUIWidget::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
+	auto client = getRect();
+	auto viewport = getViewport();
+	if (client.X <= event->X && event->X <= client.X + client.W
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
+	{
+		event->Accept = true;
+	}
 }
 
 void RmGUIWidget::mousePressEvent(IRmGUIMouseEventRaw event)
 {
+	auto client = getRect();
+	auto viewport = getViewport();
+	if (client.X <= event->X && event->X <= client.X + client.W
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
+	{
+		event->Accept = true;
+	}
 }
 
 void RmGUIWidget::mouseReleaseEvent(IRmGUIMouseEventRaw event)
@@ -535,6 +562,15 @@ void RmGUIWidget::tabletEvent(IRmGUIMouseTabletEventRaw event)
 
 void RmGUIWidget::wheelEvent(IRmGUIMouseWheelEventRaw event)
 {
+	auto client = getRect();
+	auto viewport = getViewport();
+	if (client.X <= event->X && event->X <= client.X + client.W
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
+	{
+		event->Accept = true;
+	}
 }
 
 RmRaw<IRmGUIContext> RmGUIWidget::getContext() const

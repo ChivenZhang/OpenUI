@@ -1,14 +1,14 @@
-#include "RmGUIFlow.h"
+#include "RmGUILayer.h"
 #include <taitank.h>
 namespace flex = taitank;
 
-RmGUIFlow::RmGUIFlow(IRmGUIWidgetRaw parent)
+RmGUILayer::RmGUILayer(IRmGUIWidgetRaw parent)
 	:
 	RmGUILayout(parent)
 {
 }
 
-void RmGUIFlow::layout(RmRectRaw client)
+void RmGUILayer::layout(RmRectRaw client)
 {
 	auto layout_func = [](RmRaw<IRmGUIWidget> widget)->flex::TaitankNodeRef {
 		auto node = flex::NodeCreate();
@@ -36,15 +36,16 @@ void RmGUIFlow::layout(RmRectRaw client)
 	auto root = layout_func(this);
 	flex::SetWidth(root, client->W);
 	flex::SetHeight(root, client->H);
-	flex::SetFlexWrap(root, flex::FlexWrapMode::FLEX_WRAP);
+	flex::SetAlignItems(root, flex::FlexAlign::FLEX_ALIGN_CENTER);
 	flex::SetFlexDirection(root, flex::FlexDirection::FLEX_DIRECTION_ROW);
+	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_AROUND);
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
 		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
 		{
-			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_START);
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
 		}
 		if (std::isnan(childList[i]->getFixedWidth()))
 		{
@@ -70,10 +71,6 @@ void RmGUIFlow::layout(RmRectRaw client)
 	flex::NodeFreeRecursive(root);
 }
 
-void RmGUIFlow::paint(IRmGUIPainterRaw painter, RmRectRaw client)
+void RmGUILayer::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
-	RmGUIWidget::paint(painter, client);
-	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
-	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
-	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
 }

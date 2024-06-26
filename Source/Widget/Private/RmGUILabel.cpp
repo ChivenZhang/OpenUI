@@ -88,6 +88,14 @@ void RmGUILabel::mousePressEvent(IRmGUIMouseEventRaw event)
 	}
 }
 
+void RmGUILabel::mouseReleaseEvent(IRmGUIMouseEventRaw event)
+{
+}
+
+void RmGUILabel::mouseDoubleEvent(IRmGUIMouseEventRaw event)
+{
+}
+
 void RmGUILabel::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
 	auto client = getRect();

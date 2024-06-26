@@ -112,6 +112,7 @@ RmGUIScrollBarRaw RmGUIScroll::getVerticalBar() const
 
 void RmGUIScroll::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
+	event->Accept = true;
 }
 
 void RmGUIScroll::wheelEvent(IRmGUIMouseWheelEventRaw event)
@@ -125,5 +126,7 @@ void RmGUIScroll::wheelEvent(IRmGUIMouseWheelEventRaw event)
 	{
 		getHorizontalBar()->setValue(getHorizontalBar()->getValue() + event->AngleX * getHorizontalBar()->getSingleStep());
 		getVerticalBar()->setValue(getVerticalBar()->getValue() - event->AngleY * getVerticalBar()->getSingleStep());
+
+		event->Accept = true;
 	}
 }

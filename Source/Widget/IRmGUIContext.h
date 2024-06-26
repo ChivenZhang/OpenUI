@@ -16,7 +16,7 @@ public:
 
 	virtual void setSurface(IRmGUISurfaceRef value) = 0;
 
-	virtual bool addWidget(IRmGUIWidgetRef widget) = 0;
+	virtual bool addWidget(IRmGUIWidgetRef widget, int32_t zorder = 0) = 0;
 
 	virtual bool removeWidget(IRmGUIWidgetRef widget) = 0;
 

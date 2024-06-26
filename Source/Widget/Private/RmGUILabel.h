@@ -22,8 +22,10 @@ public:
 	void setAlignment(RmFontAligns value);
 
 protected:
-	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mouseDoubleEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
 
 public:
 	IRmGUISignalAsRaw<RmString> linkHovered;

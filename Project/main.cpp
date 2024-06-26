@@ -80,7 +80,6 @@ int main(int argc, char* argv[]) {
 
 	auto top = RmNew<RmGUIVBox>();
 	context->addWidget(top);
-	top->setBorder({ 5,5,5,5 });
 
 #if 0
 	{
@@ -188,11 +187,11 @@ int main(int argc, char* argv[]) {
 		button1->setFixedWidth(100); button1->setFixedHeight(35);
 		button1->setMargin({ 5,5,5,5 });
 		// button1->setCheckable(true);
-		style = button1->getStyle();
+		style = button1->getTextStyle();
 		style.Brush.Color = { 0.5,0,1,1 };
-		button1->setStyle(style);
+		button1->setTextStyle(style);
 		button1->clicked->connect(nullptr, [=](bool checked) {
-			label->setText("计数:" + std::to_string(count = std::clamp(--count, 0, 100)));
+			label->setText("计数:" + std::to_string(count = std::clamp(--count, 0, 10)));
 			});
 
 		root->addWidget(label);
@@ -202,11 +201,11 @@ int main(int argc, char* argv[]) {
 		button2->setText("自增 ");
 		button2->setFixedWidth(100); button2->setFixedHeight(35);
 		button2->setMargin({ 5,5,5,5 });
-		style = button2->getStyle();
+		style = button2->getTextStyle();
 		style.Brush.Color = { 0.5,0,1,1 };
-		button2->setStyle(style);
+		button2->setTextStyle(style);
 		button2->clicked->connect(nullptr, [=](bool checked) {
-			label->setText("计数:" + std::to_string(count = std::clamp(++count, 0, 100)));
+			label->setText("计数:" + std::to_string(count = std::clamp(++count, 0, 10)));
 			});
 
 		auto button3 = RmNew<RmGUIButton>();
@@ -214,9 +213,9 @@ int main(int argc, char* argv[]) {
 		button3->setText("重置");
 		button3->setFixedWidth(100); button3->setFixedHeight(35);
 		button3->setMargin({ 5,5,5,5 });
-		style = button3->getStyle();
+		style = button3->getTextStyle();
 		style.Brush.Color = { 0.5,0,1,1 };
-		button3->setStyle(style);
+		button3->setTextStyle(style);
 		button3->clicked->connect(nullptr, [=](bool checked) {
 			label->setText("计数:" + std::to_string(count = 0));
 			});
@@ -229,6 +228,21 @@ int main(int argc, char* argv[]) {
 		auto panel = RmNew<RmGUIPanel>();
 		scroll->addWidget(panel);
 		panel->setRect({ 0, 0, 2000, 2000 });
+	}
+
+	if (true)
+	{
+		auto button = RmNew<RmGUIButton>();
+		button->setText("Button");
+		auto style = button->getTextStyle();
+		style.Font.Size = 30;
+		button->setTextStyle(style);
+		auto style2 = button->getStyle();
+		style2.Normal.Brush.Color = { 1,1,1,0.2 };
+		style2.Hover.Brush.Color = { 1,1,1,0.5 };
+		style2.Press.Brush.Color = { 1,1,1,0.8 };
+		button->setStyle(style2);
+		context->addWidget(button, 1);
 	}
 #endif
 
@@ -284,8 +298,16 @@ int main(int argc, char* argv[]) {
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseDownEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
-				context->sendEvent(nullptr, &event2);
+				if (event.button.clicks == 1)
+				{
+					IRmGUIMouseDownEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod, event.button.clicks);
+					context->sendEvent(nullptr, &event2);
+				}
+				else
+				{
+					IRmGUIMouseDblClickEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod, event.button.clicks);
+					context->sendEvent(nullptr, &event2);
+				}
 			}
 			break;
 			case SDL_MOUSEBUTTONUP: // 鼠标按钮释放  

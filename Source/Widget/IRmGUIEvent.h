@@ -105,23 +105,23 @@ using IRmGUIResizeEventRaw = RmRaw<IRmGUIResizeEvent>;
 class IRmGUIMouseEvent : public IRmGUIEvent
 {
 protected:
-	IRmGUIMouseEvent(uint32_t type, int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
+	IRmGUIMouseEvent(uint32_t type, int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers, uint32_t clicks = 0)
 		:
 		IRmGUIEvent(type),
-		X(x), Y(y), GlobalX(globalX), GlobalY(globalY), Button(button), Buttons(buttons), Modifiers(modifiers) {}
+		X(x), Y(y), GlobalX(globalX), GlobalY(globalY), Button(button), Buttons(buttons), Modifiers(modifiers), Clicks(clicks) {}
 
 public:
 	const int32_t X, Y, GlobalX, GlobalY;
-	const uint32_t Button, Buttons, Modifiers;
+	const uint32_t Button, Buttons, Modifiers, Clicks;
 };
 using IRmGUIMouseEventRaw = RmRaw<IRmGUIMouseEvent>;
 
 class IRmGUIMouseDownEvent : public IRmGUIMouseEvent
 {
 public:
-	IRmGUIMouseDownEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
+	IRmGUIMouseDownEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers, uint32_t clicks)
 		:
-		IRmGUIMouseEvent(RmHash("MouseDown"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("MouseDown"), x, y, globalX, globalY, button, buttons, modifiers, clicks) {}
 };
 using IRmGUIMouseDownEventRaw = RmRaw<IRmGUIMouseDownEvent>;
 
@@ -137,9 +137,9 @@ using IRmGUIMouseUpEventRaw = RmRaw<IRmGUIMouseUpEvent>;
 class IRmGUIMouseDblClickEvent : public IRmGUIMouseEvent
 {
 public:
-	IRmGUIMouseDblClickEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers)
+	IRmGUIMouseDblClickEvent(int32_t x, int32_t y, int32_t globalX, int32_t globalY, uint32_t button, uint32_t buttons, uint32_t modifiers, uint32_t clicks)
 		:
-		IRmGUIMouseEvent(RmHash("DoubleClick"), x, y, globalX, globalY, button, buttons, modifiers) {}
+		IRmGUIMouseEvent(RmHash("DoubleClick"), x, y, globalX, globalY, button, buttons, modifiers, clicks) {}
 };
 using IRmGUIMouseDblClickEventRaw = RmRaw<IRmGUIMouseDblClickEvent>;
 

@@ -136,7 +136,7 @@ protected:
 
 	virtual void dropEvent(IRmGUIDropEventRaw event) = 0;
 
-	virtual void enterEvent(IRmGUIMouseEnterEventRaw event) = 0;
+	virtual void enterEvent(IRmGUIMouseEventRaw event) = 0;
 
 	virtual void focusInEvent(IRmGUIFocusEventRaw event) = 0;
 
@@ -144,15 +144,15 @@ protected:
 
 	virtual void hideEvent(IRmGUIHideEventRaw event) = 0;
 
-	virtual void inputEvent(IRmGUIKeyInputEventRaw event) = 0;
+	virtual void inputEvent(IRmGUIKeyEventRaw event) = 0;
 
-	virtual void keyPressEvent(IRmGUIKeyDownEventRaw event) = 0;
+	virtual void keyPressEvent(IRmGUIKeyEventRaw event) = 0;
 
-	virtual void keyReleaseEvent(IRmGUIKeyUpEventRaw event) = 0;
+	virtual void keyReleaseEvent(IRmGUIKeyEventRaw event) = 0;
 
-	virtual void leaveEvent(IRmGUIMouseLeaveEventRaw event) = 0;
+	virtual void leaveEvent(IRmGUIMouseEventRaw event) = 0;
 
-	virtual void mouseDoubleClickEvent(IRmGUIMouseEventRaw event) = 0;
+	virtual void mouseDoubleEvent(IRmGUIMouseEventRaw event) = 0;
 
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) = 0;
 

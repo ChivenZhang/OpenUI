@@ -8,24 +8,10 @@
 #include <taitank.h>
 namespace flex = taitank;
 
-static struct RmGUIButtonStyle
-{
-	RmPen Pen;
-	RmBrush Brush;
-	RmFloat2 Round = { 8, 8 };
-};
-
-static struct RmGUIButtonTextStyle
-{
-	RmPen Pen;
-	RmFont Font;
-	RmBrush Brush;
-};
-
 class RmGUIButtonPrivate : public RmGUIWidgetPrivate
 {
 public:
-	RmGUIButtonStyle Normal, Hover, Press, Disable;
+	RmGUIButtonStyle Style;
 	RmGUILabelRef Label;
 	RmGUISignalAs<bool> OnClicked;
 	RmGUISignalAs<> OnPressed;
@@ -45,12 +31,12 @@ RmGUIButton::RmGUIButton(IRmGUIWidgetRaw parent)
 {
 	m_PrivateButton = new RmGUIButtonPrivate;
 
-	PRIVATE()->Normal.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
-	PRIVATE()->Normal.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
-	PRIVATE()->Hover.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
-	PRIVATE()->Hover.Brush = { .Color = {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f} };
-	PRIVATE()->Press.Pen = { .Color = {0 / 255.0f, 84 / 255.0f, 153 / 255.0f, 1.0f} };
-	PRIVATE()->Press.Brush = { .Color = {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f} };
+	PRIVATE()->Style.Normal.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
+	PRIVATE()->Style.Normal.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
+	PRIVATE()->Style.Hover.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
+	PRIVATE()->Style.Hover.Brush = { .Color = {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f} };
+	PRIVATE()->Style.Press.Pen = { .Color = {0 / 255.0f, 84 / 255.0f, 153 / 255.0f, 1.0f} };
+	PRIVATE()->Style.Press.Brush = { .Color = {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f} };
 	clicked = &PRIVATE()->OnClicked;
 	pressed = &PRIVATE()->OnPressed;
 	released = &PRIVATE()->OnReleased;
@@ -117,13 +103,6 @@ void RmGUIButton::layout(RmRectRaw client)
 	}
 	flex::DoLayout(root, RmNAN, RmNAN);
 
-	if (getParent() == nullptr)
-	{
-		auto left = flex::GetLeft(root); auto top = flex::GetTop(root);
-		auto width = flex::GetWidth(root); auto height = flex::GetHeight(root);
-		setRect({ client->X + left, client->Y + top, width, height });
-		setViewport(getRect());
-	}
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = root->GetChild(i);
@@ -143,27 +122,27 @@ void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 	RmFloat2 round;
 	if (getEnable() == false)
 	{
-		round = PRIVATE()->Disable.Round;
-		painter->setPen(PRIVATE()->Disable.Pen);
-		painter->setBrush(PRIVATE()->Disable.Brush);
+		round = PRIVATE()->Style.Disable.Round;
+		painter->setPen(PRIVATE()->Style.Disable.Pen);
+		painter->setBrush(PRIVATE()->Style.Disable.Brush);
 	}
 	else if (PRIVATE()->Checkable && PRIVATE()->Checked || PRIVATE()->Checkable == false && PRIVATE()->Pressed)
 	{
-		round = PRIVATE()->Press.Round;
-		painter->setPen(PRIVATE()->Press.Pen);
-		painter->setBrush(PRIVATE()->Press.Brush);
+		round = PRIVATE()->Style.Press.Round;
+		painter->setPen(PRIVATE()->Style.Press.Pen);
+		painter->setBrush(PRIVATE()->Style.Press.Brush);
 	}
 	else if (PRIVATE()->Hovered)
 	{
-		round = PRIVATE()->Hover.Round;
-		painter->setPen(PRIVATE()->Hover.Pen);
-		painter->setBrush(PRIVATE()->Hover.Brush);
+		round = PRIVATE()->Style.Hover.Round;
+		painter->setPen(PRIVATE()->Style.Hover.Pen);
+		painter->setBrush(PRIVATE()->Style.Hover.Brush);
 	}
 	else
 	{
-		round = PRIVATE()->Normal.Round;
-		painter->setPen(PRIVATE()->Normal.Pen);
-		painter->setBrush(PRIVATE()->Normal.Brush);
+		round = PRIVATE()->Style.Normal.Round;
+		painter->setPen(PRIVATE()->Style.Normal.Pen);
+		painter->setBrush(PRIVATE()->Style.Normal.Brush);
 	}
 
 	painter->drawRoundedRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2, round.X, round.Y);
@@ -179,12 +158,22 @@ void RmGUIButton::setText(RmString const& text)
 	PRIVATE()->Label->setText(text);
 }
 
-RmGUILabelTextStyle RmGUIButton::getStyle() const
+RmGUIButtonStyle RmGUIButton::getStyle() const
+{
+	return PRIVATE()->Style;
+}
+
+void RmGUIButton::setStyle(RmGUIButtonStyle const& style)
+{
+	PRIVATE()->Style = style;
+}
+
+RmGUILabelTextStyle RmGUIButton::getTextStyle() const
 {
 	return PRIVATE()->Label->getStyle();
 }
 
-void RmGUIButton::setStyle(RmGUILabelTextStyle const& style)
+void RmGUIButton::setTextStyle(RmGUILabelTextStyle const& style)
 {
 	PRIVATE()->Label->setStyle(style);
 }
@@ -225,6 +214,27 @@ bool RmGUIButton::getDown() const
 	return PRIVATE()->Pressed;
 }
 
+void RmGUIButton::mouseDoubleEvent(IRmGUIMouseEventRaw event)
+{
+	auto client = getRect();
+	auto viewport = getViewport();
+	if (client.X <= event->X && event->X <= client.X + client.W
+		&& client.Y <= event->Y && event->Y <= client.Y + client.H
+		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
+	{
+		if (event->Button == 1)
+		{
+			PRIVATE()->Pressed = true;
+			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
+			PRIVATE()->OnPressed.emit();
+			PRIVATE()->OnClicked.emit(PRIVATE()->Checked);
+
+			event->Accept = true;
+		}
+	}
+}
+
 void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
 {
 	auto client = getRect();
@@ -240,6 +250,8 @@ void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
 			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
 			PRIVATE()->OnPressed.emit();
 			PRIVATE()->OnClicked.emit(PRIVATE()->Checked);
+
+			event->Accept = true;
 		}
 	}
 }
@@ -252,6 +264,8 @@ void RmGUIButton::mouseReleaseEvent(IRmGUIMouseEventRaw event)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.emit();
+
+			event->Accept = true;
 		}
 	}
 }
@@ -266,9 +280,20 @@ void RmGUIButton::mouseMoveEvent(IRmGUIMouseEventRaw event)
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		PRIVATE()->Hovered = true;
+
+		event->Accept = true;
 	}
 	else
 	{
 		PRIVATE()->Hovered = false;
 	}
+}
+
+void RmGUIButton::enterEvent(IRmGUIMouseEventRaw event)
+{
+}
+
+void RmGUIButton::leaveEvent(IRmGUIMouseEventRaw event)
+{
+	PRIVATE()->Hovered = false;
 }

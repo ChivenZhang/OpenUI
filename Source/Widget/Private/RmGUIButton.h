@@ -2,6 +2,17 @@
 #include "RmGUIControl.h"
 #include "RmGUILabel.h"
 
+struct RmGUIButtonStyle
+{
+	struct Mode
+	{
+		RmPen Pen;
+		RmBrush Brush;
+		RmFloat2 Round = { 8, 8 };
+	};
+	Mode Normal, Hover, Press, Disable;
+};
+
 /// @brief Slider Control
 class RMGUI_API RmGUIButton : public RmGUIControl
 {
@@ -12,8 +23,10 @@ public:
 	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
 	RmString getText() const;
 	void setText(RmString const& text);
-	RmGUILabelTextStyle getStyle() const;
-	void setStyle(RmGUILabelTextStyle const& style);
+	RmGUIButtonStyle getStyle() const;
+	void setStyle(RmGUIButtonStyle const& style);
+	RmGUILabelTextStyle getTextStyle() const;
+	void setTextStyle(RmGUILabelTextStyle const& style);
 	RmFontAligns getAlignment() const;
 	void setAlignment(RmFontAligns value);
 	bool getChecked() const;
@@ -23,9 +36,12 @@ public:
 	bool getDown() const;
 
 protected:
+	virtual void mouseDoubleEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
+	virtual void enterEvent(IRmGUIMouseEventRaw event) override;
+	virtual void leaveEvent(IRmGUIMouseEventRaw event) override;
 
 public:
 	IRmGUISignalAsRaw<bool> clicked;
