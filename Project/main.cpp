@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-#if 1
+#if 0
 	{
 		auto root = RmNew<RmGUIFlow>();
 		top->addWidget(root);
@@ -229,10 +229,13 @@ int main(int argc, char* argv[]) {
 		scroll->addWidget(panel);
 		panel->setRect({ 0, 0, 2000, 2000 });
 	}
+#endif
 
+#if 1
 	if (true)
 	{
 		auto button = RmNew<RmGUIButton>();
+		button->setFixedWidth(100);
 		button->setText("Button");
 		auto style = button->getTextStyle();
 		style.Font.Size = 30;
@@ -242,7 +245,7 @@ int main(int argc, char* argv[]) {
 		style2.Hover.Brush.Color = { 1,1,1,0.5 };
 		style2.Press.Brush.Color = { 1,1,1,0.8 };
 		button->setStyle(style2);
-		context->addWidget(button, 1);
+		context->addWidget(button);
 	}
 #endif
 

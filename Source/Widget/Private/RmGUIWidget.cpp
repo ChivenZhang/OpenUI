@@ -1,12 +1,4 @@
 #include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
-#include "RmGUIWidget.h"
 #include <taitank.h>
 namespace flex = taitank;
 
@@ -21,7 +13,7 @@ public:
 	float MaxWidth = RmNAN, MaxHeight = RmNAN;
 	float FixedWidth = RmNAN, FixedHeight = RmNAN;
 	bool Visible = true, Enable = true, Focus = false;
-	RmRect ClientRect, Viewport, ChildrenRect;
+	RmRect ClientRect, Viewport;
 	RmFloat4 Margin = {}, Padding = {}, Border = {};
 	IRmGUIWidget::policy_t SizePolicy = {};
 	IRmGUIWidget::focus_t FocusPolicy = IRmGUIWidget::FocusNoFocus;
@@ -59,11 +51,6 @@ RmRect RmGUIWidget::getViewport() const
 void RmGUIWidget::setViewport(RmRect value)
 {
 	PRIVATE()->Viewport = value;
-}
-
-RmRect RmGUIWidget::getChildrenRect() const
-{
-	return PRIVATE()->ChildrenRect;
 }
 
 RmRaw<IRmGUIWidget> RmGUIWidget::getParent() const

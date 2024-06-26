@@ -14,7 +14,6 @@ public:
 	virtual void setRect(RmRect client) override;
 	virtual RmRect getViewport() const override;
 	virtual void setViewport(RmRect value) override;
-	virtual RmRect getChildrenRect() const override;
 	virtual IRmGUIWidgetRaw getParent() const override;
 	virtual void setParent(IRmGUIWidgetRaw parent) override;
 	virtual RmArrayView<IRmGUIWidgetRef> getChildren() override;

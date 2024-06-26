@@ -71,9 +71,30 @@ void RmGUIContext::layoutWidget(RmRect client)
 		};
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i)
 	{
-		m_TopLevelList[i].Widget->setRect(client);
-		m_TopLevelList[i].Widget->setViewport(client);
-		foreach_func(m_TopLevelList[i].Widget.get(), client);
+		RmRect viewport;
+		if (std::isnan(m_TopLevelList[i].Widget->getFixedWidth()))
+		{
+			viewport.X = 0;
+			viewport.W = client.W;
+		}
+		else
+		{
+			viewport.X = m_TopLevelList[i].Widget->getPositionX();
+			viewport.W = m_TopLevelList[i].Widget->getFixedWidth();
+		}
+		if (std::isnan(m_TopLevelList[i].Widget->getFixedHeight()))
+		{
+			viewport.Y = 0;
+			viewport.H = client.H;
+		}
+		else
+		{
+			viewport.Y = m_TopLevelList[i].Widget->getPositionY();
+			viewport.H = m_TopLevelList[i].Widget->getFixedHeight();
+		}
+		m_TopLevelList[i].Widget->setRect(viewport);
+		m_TopLevelList[i].Widget->setViewport(viewport);
+		foreach_func(m_TopLevelList[i].Widget.get(), m_TopLevelList[i].Widget->getRect());
 	}
 }
 
