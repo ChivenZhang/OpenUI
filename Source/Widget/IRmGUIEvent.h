@@ -1,7 +1,7 @@
 #pragma once
 #include "RmGUI.h"
 
-/// @brief Base interface of all events.
+/// @brief Base interface of event.
 class RMGUI_API IRmGUIEvent
 {
 public:
@@ -17,7 +17,7 @@ public:
 using IRmGUIEventRef = RmRef<IRmGUIEvent>;
 using IRmGUIEventRaw = RmRaw<IRmGUIEvent>;
 
-/// @brief Base interface of all event reactors.
+/// @brief Base interface of event reactor.
 class RMGUI_API IRmGUIReactor
 {
 public:
@@ -26,13 +26,22 @@ public:
 using IRmGUIReactorRef = RmRef<IRmGUIReactor>;
 using IRmGUIReactorRaw = RmRaw<IRmGUIReactor>;
 
-/// @brief Base interface of all event handlers.
+/// @brief Base interface of event filter.
+class RMGUI_API IRmGUIFilter
+{
+public:
+	virtual ~IRmGUIFilter() = default;
+
+	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) = 0;
+};
+using IRmGUIFilterRef = RmRef<IRmGUIFilter>;
+using IRmGUIFilterRaw = RmRaw<IRmGUIFilter>;
+
+/// @brief Base interface of event handler.
 class RMGUI_API IRmGUIHandler
 {
 public:
 	virtual ~IRmGUIHandler() = default;
-
-	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) = 0;
 
 	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) = 0;
 };

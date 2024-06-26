@@ -20,6 +20,8 @@ public:
 	virtual RmArrayView<const IRmGUIWidgetRef> getChildren() const override;
 	virtual bool addWidget(IRmGUIWidgetRef widget) override;
 	virtual bool removeWidget(IRmGUIWidgetRef widget) override;
+	virtual IRmGUIFilterRaw getEventFilter() const override;
+	virtual void setEventFilter(IRmGUIFilterRaw value) override;
 	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
 	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) final override;
 	virtual void layout(RmRectRaw client) override;
@@ -103,3 +105,5 @@ private:
 	friend class RmGUIContext;
 	RmGUIWidgetPrivateRaw m_PrivateData;
 };
+using RmGUIWidgetRef = RmRef<RmGUIWidget>;
+using RmGUIWidgetRaw = RmRaw<RmGUIWidget>;

@@ -26,7 +26,6 @@ public:
 	RmGUIScrollBarRaw getVerticalBar() const;
 
 protected:
-	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
 	virtual void wheelEvent(IRmGUIMouseWheelEventRaw event) override;
 
 private:

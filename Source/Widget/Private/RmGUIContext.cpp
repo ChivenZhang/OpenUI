@@ -45,6 +45,7 @@ void RmGUIContext::sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 {
 	RmLambda<void(IRmGUIWidgetRaw)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget) {
+		if (widget->getEventFilter() && widget->getEventFilter()->filter(source, event) == true) return;
 		if (widget->filter(source, event) == true) return;
 		auto childList = widget->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get());
@@ -53,7 +54,7 @@ void RmGUIContext::sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 	for (size_t i = 0; i < m_TopLevelList.size(); ++i)
 	{
 		foreach_func(m_TopLevelList[m_TopLevelList.size() - 1 - i].Widget.get());
-		if (event->Accept == true) break;
+		break;
 	}
 }
 

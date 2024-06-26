@@ -14,7 +14,7 @@
 #include "Widget/Private/RmGUILabel.h"
 #include "Widget/Private/RmGUIButton.h"
 #include "Widget/Private/RmGUIScroll.h"
-
+#include "Widget/Private/RmGUICombo.h"
 
 static int count = 0;
 
@@ -231,11 +231,11 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-#if 1
+#if 0
 	if (true)
 	{
 		auto button = RmNew<RmGUIButton>();
-		button->setFixedWidth(100);
+		button->setFixedHeight(100);
 		button->setText("Button");
 		auto style = button->getTextStyle();
 		style.Font.Size = 30;
@@ -246,6 +246,16 @@ int main(int argc, char* argv[]) {
 		style2.Press.Brush.Color = { 1,1,1,0.8 };
 		button->setStyle(style2);
 		context->addWidget(button);
+	}
+#endif
+
+#if 1
+	if (true)
+	{
+		auto combo = RmNew<RmGUICombo>();
+		context->addWidget(combo);
+		combo->setFixedSize(100, 35);
+		combo->setPosition(100, 100);
 	}
 #endif
 

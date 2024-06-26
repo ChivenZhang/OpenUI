@@ -9,7 +9,7 @@ using IRmGUIWidgetRef = RmRef<IRmGUIWidget>;
 using IRmGUIWidgetRaw = RmRaw<IRmGUIWidget>;
 
 /// @brief Base interface of all widgets.
-class RMGUI_API IRmGUIWidget : public IRmGUIHandler
+class RMGUI_API IRmGUIWidget : public IRmGUIHandler, public IRmGUIFilter
 {
 public:
 	using resize_t = enum
@@ -117,6 +117,9 @@ public:
 
 	virtual bool addWidget(IRmGUIWidgetRef widget) = 0;
 	virtual bool removeWidget(IRmGUIWidgetRef widget) = 0;
+
+	virtual IRmGUIFilterRaw getEventFilter() const = 0;
+	virtual void setEventFilter(IRmGUIFilterRaw value) = 0;
 
 	virtual RmString getAttribute(uint32_t name) const = 0;
 	virtual void setAttribute(uint32_t name, RmString const& value) = 0;

@@ -1,12 +1,14 @@
 #include "RmGUIWidget.h"
+#include "RmGUIContext.h"
 #include <taitank.h>
 namespace flex = taitank;
 
 class RmGUIWidgetPrivateData : public RmGUIWidgetPrivate
 {
 public:
-	RmRaw<IRmGUIContext> Context = nullptr;
-	RmRaw<IRmGUIWidget> Parent = nullptr;
+	IRmGUIContextRaw Context = nullptr;
+	IRmGUIWidgetRaw Parent = nullptr;
+	IRmGUIFilterRaw Filter = nullptr;
 	RmVector<IRmGUIWidgetRef> ChildrenList;
 
 	float MinWidth = RmNAN, MinHeight = RmNAN;
@@ -94,6 +96,16 @@ bool RmGUIWidget::removeWidget(IRmGUIWidgetRef value)
 	widget->setContext(nullptr);
 	widget->setParent(nullptr);
 	return true;
+}
+
+IRmGUIFilterRaw RmGUIWidget::getEventFilter() const
+{
+	return PRIVATE()->Filter;
+}
+
+void RmGUIWidget::setEventFilter(IRmGUIFilterRaw value)
+{
+	PRIVATE()->Filter = value;
 }
 
 bool RmGUIWidget::filter(IRmGUIReactorRaw source, IRmGUIEventRaw event)
@@ -503,15 +515,6 @@ void RmGUIWidget::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 
 void RmGUIWidget::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
-		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
-	{
-		event->Accept = true;
-	}
 }
 
 void RmGUIWidget::mousePressEvent(IRmGUIMouseEventRaw event)
@@ -549,15 +552,6 @@ void RmGUIWidget::tabletEvent(IRmGUIMouseTabletEventRaw event)
 
 void RmGUIWidget::wheelEvent(IRmGUIMouseWheelEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
-		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
-	{
-		event->Accept = true;
-	}
 }
 
 RmRaw<IRmGUIContext> RmGUIWidget::getContext() const

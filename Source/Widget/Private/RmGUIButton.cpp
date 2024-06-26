@@ -229,8 +229,6 @@ void RmGUIButton::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
 			PRIVATE()->OnPressed.emit();
 			PRIVATE()->OnClicked.emit(PRIVATE()->Checked);
-
-			event->Accept = true;
 		}
 	}
 }
@@ -250,8 +248,6 @@ void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
 			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
 			PRIVATE()->OnPressed.emit();
 			PRIVATE()->OnClicked.emit(PRIVATE()->Checked);
-
-			event->Accept = true;
 		}
 	}
 }
@@ -264,8 +260,6 @@ void RmGUIButton::mouseReleaseEvent(IRmGUIMouseEventRaw event)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.emit();
-
-			event->Accept = true;
 		}
 	}
 }
@@ -280,8 +274,6 @@ void RmGUIButton::mouseMoveEvent(IRmGUIMouseEventRaw event)
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		PRIVATE()->Hovered = true;
-
-		event->Accept = true;
 	}
 	else
 	{

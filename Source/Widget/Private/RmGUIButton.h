@@ -44,10 +44,10 @@ protected:
 	virtual void leaveEvent(IRmGUIMouseEventRaw event) override;
 
 public:
-	IRmGUISignalAsRaw<bool> clicked;
+	IRmGUISignalAsRaw<bool /*checked*/> clicked;
 	IRmGUISignalAsRaw<> pressed;
 	IRmGUISignalAsRaw<> released;
-	IRmGUISignalAsRaw<bool> toggled;
+	IRmGUISignalAsRaw<bool /*checked*/> toggled;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateButton;
