@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 	auto context = IRmGUIContext::GetInstance();
 	context->setSurface(surface);
 
-	auto top = RmNew<RmGUIVBox>();
+	auto top = RmNew<RmGUIFlow>();
 	context->addWidget(top);
 
 #if 0
@@ -253,10 +253,25 @@ int main(int argc, char* argv[]) {
 	if (true)
 	{
 		auto combo = RmNew<RmGUICombo>();
-		context->addWidget(combo);
-		combo->setFixedSize(100, 35);
+		top->addWidget(combo);
 		combo->setPosition(100, 100);
-		combo->setItems({ "AAA", "BBB", "CCC" });
+		combo->setFixedSize(100, 35);
+		combo->setMaxCount(4);
+		combo->setItems({ "AAA", "BBB", "CCC", "DDD", "EEE" });
+		combo->setCurrentIndex(0);
+		combo->currentTextChanged->connect(nullptr, [](RmString text) {
+			printf("combo %s\n", text.c_str());
+			});
+
+		auto combo2 = RmNew<RmGUICombo>();
+		top->addWidget(combo2);
+		combo2->setPosition(200, 100);
+		combo2->setFixedSize(100, 35);
+		combo2->setItems({ "111", "222", "333", "444", "555", "666" });
+		combo2->setCurrentText("666");
+		combo2->currentTextChanged->connect(nullptr, [](RmString text) {
+			printf("combo2 %s\n", text.c_str());
+			});
 	}
 #endif
 

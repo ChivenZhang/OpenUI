@@ -63,12 +63,15 @@ void RmGUIScrollBar::layout(RmRectRaw client)
 	}
 	auto rect = PRIVATE()->Slider->getRect();
 	auto viewport = getViewport();
-	PRIVATE()->Slider->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X+rect.W, viewport.X+viewport.W), std::min(rect.Y+rect.H, viewport.Y+viewport.H) });
+	PRIVATE()->Slider->setViewport(RmOverlap(viewport, rect));
 }
 
 void RmGUIScrollBar::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	RmGUIWidget::paint(painter, client);
+	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
+	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
+	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
 }
 
 void RmGUIScrollBar::removeWidget()
@@ -170,7 +173,7 @@ void RmGUIScrollBar::mouseMoveEvent(IRmGUIMouseEventRaw event)
 			if (std::isinf(newValue)) PRIVATE()->Value = 0;
 			else PRIVATE()->Value = newValue;
 		}
-		PRIVATE()->Value = std::clamp<int32_t>(PRIVATE()->Value / PRIVATE()->SingleStep * PRIVATE()->SingleStep, PRIVATE()->Minimum, PRIVATE()->Maximum);
+		PRIVATE()->Value = std::clamp<int32_t>(PRIVATE()->Value, PRIVATE()->Minimum, PRIVATE()->Maximum);
 		PRIVATE()->OnSliderMoved.emit(PRIVATE()->Value);
 		if (PRIVATE()->Tracking) if (PRIVATE()->Value != oldValue) PRIVATE()->OnValueChanged.emit(PRIVATE()->Value);
 	}

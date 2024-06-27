@@ -417,3 +417,34 @@ inline bool operator ==(RmFloat4x4 const& a, RmFloat4x4 const& b)
 
 class RmImage;
 using RmImageRaw = RmRaw<RmImage>;
+
+inline RmRect RmOverlap(RmRect const& viewport, RmRect const& client)
+{
+	// 计算两个矩形的右下角坐标  
+	float xA1 = viewport.X;
+	float yA1 = viewport.Y;
+	float xA2 = viewport.X + viewport.W;
+	float yA2 = viewport.Y + viewport.H;
+	float xB1 = client.X;
+	float yB1 = client.Y;
+	float xB2 = client.X + client.W;
+	float yB2 = client.Y + client.H;
+
+	// 检查是否有重叠  
+	if (xA2 <= xB1 || xB2 <= xA1 || yA2 <= yB1 || yB2 <= yA1) return viewport;
+
+	// 计算重叠区域的左上角坐标  
+	float overlapX1 = std::max(xA1, xB1);
+	float overlapY1 = std::max(yA1, yB1);
+
+	// 计算重叠区域的右下角坐标  
+	float overlapX2 = std::min(xA2, xB2);
+	float overlapY2 = std::min(yA2, yB2);
+
+	// 计算重叠区域的宽度和高度  
+	float overlapWidth = overlapX2 - overlapX1;
+	float overlapHeight = overlapY2 - overlapY1;
+
+	// 创建一个表示重叠区域的矩形（如果有的话）  
+	return RmRect{ overlapX1, overlapY1, overlapWidth, overlapHeight };
+}

@@ -47,6 +47,7 @@ public:
 	IRmGUISignalAsRaw<bool /*checked*/> clicked;
 	IRmGUISignalAsRaw<> pressed;
 	IRmGUISignalAsRaw<> released;
+	IRmGUISignalAsRaw<> hovered;
 	IRmGUISignalAsRaw<bool /*checked*/> toggled;
 
 private:

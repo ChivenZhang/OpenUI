@@ -11,6 +11,8 @@ public:
 	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
 	RmStringList const& getItems() const;
 	void setItems(RmStringList const& texts);
+	int32_t getMaxCount() const;
+	void setMaxCount(int32_t value);
 	int32_t getCurrentIndex() const;
 	void setCurrentIndex(int32_t index);
 	RmString getCurrentText() const;

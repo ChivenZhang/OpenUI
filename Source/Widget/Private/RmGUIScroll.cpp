@@ -40,79 +40,188 @@ RmGUIScroll::~RmGUIScroll()
 
 void RmGUIScroll::layout(RmRectRaw client)
 {
-	auto scrollBarX = client->X;
-	auto scrollBarY = client->Y + client->H - PRIVATE()->HorizontalScrollBar->getFixedHeight();
-	auto scrollBarW = client->W - PRIVATE()->VerticalScrollBar->getFixedWidth();
-	auto scrollBarH = PRIVATE()->HorizontalScrollBar->getFixedHeight();
-	PRIVATE()->HorizontalScrollBar->setRect({ scrollBarX, scrollBarY, scrollBarW, scrollBarH });
-	auto rect = PRIVATE()->HorizontalScrollBar->getRect();
 	auto viewport = getViewport();
-	PRIVATE()->HorizontalScrollBar->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
-
-	scrollBarX = client->X + client->W - PRIVATE()->VerticalScrollBar->getFixedWidth();
-	scrollBarY = client->Y;
-	scrollBarW = PRIVATE()->VerticalScrollBar->getFixedWidth();
-	scrollBarH = client->H - PRIVATE()->HorizontalScrollBar->getFixedHeight();
-	PRIVATE()->VerticalScrollBar->setRect({ scrollBarX, scrollBarY, scrollBarW, scrollBarH });
-	rect = PRIVATE()->VerticalScrollBar->getRect();
-	PRIVATE()->VerticalScrollBar->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
 
 	if (2 < getChildren().size())
 	{
 		auto contentWidget = getChildren()[2];
-		RmRect rect;
-		rect.X = client->X - PRIVATE()->HorizontalScrollBar->getValue();
-		rect.Y = client->Y - PRIVATE()->VerticalScrollBar->getValue();
-		rect.W = std::isnan(contentWidget->getFixedWidth()) ? PRIVATE()->HorizontalScrollBar->getWidth() : contentWidget->getFixedWidth();
-		rect.H = std::isnan(contentWidget->getFixedHeight()) ? PRIVATE()->VerticalScrollBar->getHeight() : contentWidget->getFixedHeight();
-		contentWidget->setRect(rect);
-		RmRect  viewport;
-		viewport.X = client->X;
-		viewport.Y = client->Y;
-		viewport.W = client->W - PRIVATE()->VerticalScrollBar->getFixedWidth();
-		viewport.H = client->H - PRIVATE()->HorizontalScrollBar->getFixedHeight();
-		contentWidget->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
+		auto contentFixedW = contentWidget->getFixedWidth();
+		auto contentFixedH = contentWidget->getFixedHeight();
+		auto scrollHFixedH = PRIVATE()->HorizontalScrollBar->getFixedHeight();
+		auto scrollVFixedW = PRIVATE()->VerticalScrollBar->getFixedWidth();
 
-		PRIVATE()->HorizontalScrollBar->setRange(0, std::max<int32_t>(0, contentWidget->getWidth() - contentWidget->getViewport().W));
-		PRIVATE()->VerticalScrollBar->setRange(0, std::max<int32_t>(0, contentWidget->getHeight() - contentWidget->getViewport().H));
+		auto ShowHShowV = [=]()->bool {
+			auto HScrollX = client->X;
+			auto HScrollY = client->Y + client->H - scrollHFixedH;
+			auto HScrollW = client->W - scrollVFixedW;
+			auto HScrollH = scrollHFixedH;
+
+			auto VScrollX = client->X + client->W - scrollVFixedW;
+			auto VScrollY = client->Y;
+			auto VScrollW = scrollVFixedW;
+			auto VScrollH = client->H - scrollHFixedH;
+
+			auto ContentX = client->X;
+			auto ContentY = client->Y;
+			auto ContentW = HScrollW;
+			auto ContentH = VScrollH;
+
+			auto RealContentW = std::isnan(contentFixedW) ? ContentW : contentFixedW;
+			auto RealContentH = std::isnan(contentFixedH) ? ContentH : contentFixedH;
+			auto RealContentX = client->X - (PRIVATE()->HorizontalScrollBar->getValue() / RealContentW * (RealContentH - ContentH));
+			auto RealContentY = client->Y - (PRIVATE()->VerticalScrollBar->getValue() / RealContentH * (RealContentH - ContentH));
+
+			auto result = ContentW < RealContentW && ContentH < RealContentH;
+			if (result)
+			{
+				PRIVATE()->HorizontalScrollBar->setVisible(true);
+				PRIVATE()->VerticalScrollBar->setVisible(true);
+
+				PRIVATE()->HorizontalScrollBar->setRect({ HScrollX, HScrollY, HScrollW, HScrollH });
+				PRIVATE()->HorizontalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->HorizontalScrollBar->getRect()));
+				PRIVATE()->HorizontalScrollBar->setRange(0, RealContentW);
+
+				PRIVATE()->VerticalScrollBar->setRect({ VScrollX, VScrollY, VScrollW, VScrollH });
+				PRIVATE()->VerticalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->VerticalScrollBar->getRect()));
+				PRIVATE()->VerticalScrollBar->setRange(0, RealContentH);
+
+				contentWidget->setRect({ RealContentX, RealContentY, RealContentW, RealContentH });
+				contentWidget->setViewport(RmOverlap(viewport, contentWidget->getRect()));
+			}
+			return result;
+			};
+		auto ShowHHideV = [=]()->bool {
+			auto HScrollX = client->X;
+			auto HScrollY = client->Y + client->H - scrollHFixedH;
+			auto HScrollW = client->W;
+			auto HScrollH = scrollHFixedH;
+
+			auto VScrollX = client->X + client->W;
+			auto VScrollY = client->Y;
+			auto VScrollW = 0.0f;
+			auto VScrollH = client->H - scrollHFixedH;
+
+			auto ContentX = client->X;
+			auto ContentY = client->Y;
+			auto ContentW = HScrollW;
+			auto ContentH = VScrollH;
+
+			auto RealContentW = std::isnan(contentFixedW) ? ContentW : contentFixedW;
+			auto RealContentH = std::isnan(contentFixedH) ? ContentH : contentFixedH;
+			auto RealContentX = client->X - (PRIVATE()->HorizontalScrollBar->getValue() / RealContentW * (RealContentH - ContentH));
+			auto RealContentY = client->Y - (PRIVATE()->VerticalScrollBar->getValue() / RealContentH * (RealContentH - ContentH));
+
+			auto result = ContentW < RealContentW && ContentH >= RealContentH;
+			if (result)
+			{
+				PRIVATE()->HorizontalScrollBar->setVisible(true);
+				PRIVATE()->VerticalScrollBar->setVisible(false);
+
+				PRIVATE()->HorizontalScrollBar->setRect({ HScrollX, HScrollY, HScrollW, HScrollH });
+				PRIVATE()->HorizontalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->HorizontalScrollBar->getRect()));
+				PRIVATE()->HorizontalScrollBar->setRange(0, RealContentW);
+
+				PRIVATE()->VerticalScrollBar->setRect({ VScrollX, VScrollY, VScrollW, VScrollH });
+				PRIVATE()->VerticalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->VerticalScrollBar->getRect()));
+				PRIVATE()->VerticalScrollBar->setRange(0, RealContentH);
+
+				contentWidget->setRect({ RealContentX, RealContentY, RealContentW, RealContentH });
+				contentWidget->setViewport(RmOverlap(viewport, contentWidget->getRect()));
+			}
+			return result;
+			};
+		auto HideHShowV = [=]()->bool {
+			auto HScrollX = client->X;
+			auto HScrollY = client->Y + client->H;
+			auto HScrollW = client->W - scrollVFixedW;
+			auto HScrollH = 0.0f;
+
+			auto VScrollX = client->X + client->W - scrollVFixedW;
+			auto VScrollY = client->Y;
+			auto VScrollW = scrollVFixedW;
+			auto VScrollH = client->H;
+
+			auto ContentX = client->X;
+			auto ContentY = client->Y;
+			auto ContentW = HScrollW;
+			auto ContentH = VScrollH;
+
+			auto RealContentW = std::isnan(contentFixedW) ? ContentW : contentFixedW;
+			auto RealContentH = std::isnan(contentFixedH) ? ContentH : contentFixedH;
+			auto RealContentX = client->X - (PRIVATE()->HorizontalScrollBar->getValue() / RealContentW * (RealContentH - ContentH));
+			auto RealContentY = client->Y - (PRIVATE()->VerticalScrollBar->getValue() / RealContentH * (RealContentH - ContentH));
+
+			auto result = ContentW >= RealContentW && ContentH < RealContentH;
+			if (result)
+			{
+				PRIVATE()->HorizontalScrollBar->setVisible(false);
+				PRIVATE()->VerticalScrollBar->setVisible(true);
+
+				PRIVATE()->HorizontalScrollBar->setRect({ HScrollX, HScrollY, HScrollW, HScrollH });
+				PRIVATE()->HorizontalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->HorizontalScrollBar->getRect()));
+				PRIVATE()->HorizontalScrollBar->setRange(0, RealContentW);
+
+				PRIVATE()->VerticalScrollBar->setRect({ VScrollX, VScrollY, VScrollW, VScrollH });
+				PRIVATE()->VerticalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->VerticalScrollBar->getRect()));
+				PRIVATE()->VerticalScrollBar->setRange(0, RealContentH);
+
+				contentWidget->setRect({ RealContentX, RealContentY, RealContentW, RealContentH });
+				contentWidget->setViewport(RmOverlap(viewport, contentWidget->getRect()));
+			}
+			return result;
+			};
+		auto HideHHideV = [=]()->bool {
+			auto HScrollX = client->X;
+			auto HScrollY = client->Y + client->H;
+			auto HScrollW = client->W;
+			auto HScrollH = 0.0f;
+
+			auto VScrollX = client->X + client->W;
+			auto VScrollY = client->Y;
+			auto VScrollW = 0.0f;
+			auto VScrollH = client->H;
+
+			auto ContentX = client->X;
+			auto ContentY = client->Y;
+			auto ContentW = HScrollW;
+			auto ContentH = VScrollH;
+
+			auto RealContentW = std::isnan(contentFixedW) ? ContentW : contentFixedW;
+			auto RealContentH = std::isnan(contentFixedH) ? ContentH : contentFixedH;
+			auto RealContentX = client->X - (PRIVATE()->HorizontalScrollBar->getValue() / RealContentW * (RealContentH - ContentH));
+			auto RealContentY = client->Y - (PRIVATE()->VerticalScrollBar->getValue() / RealContentH * (RealContentH - ContentH));
+
+			auto result = ContentW >= RealContentW && ContentH >= RealContentH;
+			if (result)
+			{
+				PRIVATE()->HorizontalScrollBar->setVisible(false);
+				PRIVATE()->VerticalScrollBar->setVisible(false);
+
+				PRIVATE()->HorizontalScrollBar->setRect({ HScrollX, HScrollY, HScrollW, HScrollH });
+				PRIVATE()->HorizontalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->HorizontalScrollBar->getRect()));
+				PRIVATE()->HorizontalScrollBar->setRange(0, RealContentW);
+
+				PRIVATE()->VerticalScrollBar->setRect({ VScrollX, VScrollY, VScrollW, VScrollH });
+				PRIVATE()->VerticalScrollBar->setViewport(RmOverlap(viewport, PRIVATE()->VerticalScrollBar->getRect()));
+				PRIVATE()->VerticalScrollBar->setRange(0, RealContentH);
+
+				contentWidget->setRect({ RealContentX, RealContentY, RealContentW, RealContentH });
+				contentWidget->setViewport(RmOverlap(viewport, contentWidget->getRect()));
+			}
+			return result;
+			};
+
+		if (ShowHShowV());
+		else if (ShowHHideV());
+		else if (HideHShowV());
+		else if (HideHHideV());
 	}
-
-	if (PRIVATE()->HorizontalPolicy == policy_t::PolicyAlwaysOff)
+	else
+	{
 		PRIVATE()->HorizontalScrollBar->setVisible(false);
-	else if (PRIVATE()->HorizontalPolicy == policy_t::PolicyAlwaysOn)
-		PRIVATE()->HorizontalScrollBar->setVisible(true);
-	else
-	{
-		if (2 < getChildren().size())
-		{
-			auto contentWidget = getChildren()[2];
-			auto range = std::abs(PRIVATE()->HorizontalScrollBar->getMaximum() - PRIVATE()->HorizontalScrollBar->getMinimum());
-			PRIVATE()->HorizontalScrollBar->setVisible(contentWidget->getViewport().W < range);
-			printf("%f %d\n", contentWidget->getViewport().W, range);
-		}
-		else
-		{
-			PRIVATE()->HorizontalScrollBar->setVisible(false);
-		}
+		PRIVATE()->VerticalScrollBar->setVisible(false);
 	}
 
-	if (PRIVATE()->VerticalPolicy == policy_t::PolicyAlwaysOff)
-		PRIVATE()->VerticalScrollBar->setVisible(false);
-	else if (PRIVATE()->VerticalPolicy == policy_t::PolicyAlwaysOn)
-		PRIVATE()->VerticalScrollBar->setVisible(true);
-	else
-	{
-		if (2 < getChildren().size())
-		{
-			auto contentWidget = getChildren()[2];
-			auto range = std::abs(PRIVATE()->VerticalScrollBar->getMaximum() - PRIVATE()->VerticalScrollBar->getMinimum());
-			PRIVATE()->VerticalScrollBar->setVisible(contentWidget->getViewport().H < range);
-		}
-		else
-		{
-			PRIVATE()->VerticalScrollBar->setVisible(false);
-		}
-	}
 }
 
 void RmGUIScroll::paint(IRmGUIPainterRaw painter, RmRectRaw client)

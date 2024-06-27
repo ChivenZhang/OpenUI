@@ -16,6 +16,7 @@ public:
 	RmGUISignalAs<bool> OnClicked;
 	RmGUISignalAs<> OnPressed;
 	RmGUISignalAs<> OnReleased;
+	RmGUISignalAs<> OnHovered;
 	RmGUISignalAs<bool> OnToggled;
 	bool Pressed = false;
 	bool Hovered = false;
@@ -40,6 +41,7 @@ RmGUIButton::RmGUIButton(IRmGUIWidgetRaw parent)
 	clicked = &PRIVATE()->OnClicked;
 	pressed = &PRIVATE()->OnPressed;
 	released = &PRIVATE()->OnReleased;
+	hovered = &PRIVATE()->OnHovered;
 	toggled = &PRIVATE()->OnToggled;
 	PRIVATE()->Label = RmNew<RmGUILabel>();
 	PRIVATE()->Label->setAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
@@ -111,7 +113,7 @@ void RmGUIButton::layout(RmRectRaw client)
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
 		auto rect = childList[i]->getRect();
 		auto viewport = getViewport();
-		childList[i]->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
+		childList[i]->setViewport(RmOverlap(viewport, rect));
 	}
 
 	flex::NodeFreeRecursive(root);
@@ -147,7 +149,10 @@ void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 		painter->setBrush(PRIVATE()->Style.Normal.Brush);
 	}
 
-	painter->drawRoundedRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2, round.X, round.Y);
+	if (round.X < 0.5f || round.Y < 0.5f)
+		painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
+	else
+		painter->drawRoundedRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2, round.X, round.Y);
 }
 
 RmString RmGUIButton::getText() const
@@ -276,6 +281,8 @@ void RmGUIButton::mouseMoveEvent(IRmGUIMouseEventRaw event)
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		PRIVATE()->Hovered = true;
+
+		PRIVATE()->OnHovered.emit();
 	}
 	else
 	{

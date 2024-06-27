@@ -34,3 +34,5 @@ protected:
 private:
 	RmGUIWidgetPrivateRaw m_PrivateScroll;
 };
+using RmGUIScrollRef = RmRef<RmGUIScroll>;
+using RmGUIScrollRaw = RmRaw<RmGUIScroll>();

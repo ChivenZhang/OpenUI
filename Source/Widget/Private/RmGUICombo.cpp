@@ -1,4 +1,6 @@
 #include "RmGUICombo.h"
+#include "RmGUICombo.h"
+#include "RmGUICombo.h"
 #include "RmGUIButton.h"
 #include "RmGUIScroll.h"
 #include "RmGUIVBox.h"
@@ -8,9 +10,10 @@ class RmGUIComboPrivate : public RmGUIWidgetPrivate
 {
 public:
 	int32_t Index = -1;
+	int32_t MaxCount = -1;
 	RmStringList Items;
 	RmGUIButtonRef Button;
-	RmGUIWidgetRef Popup;
+	RmGUIScrollRef Popup;
 
 	RmGUISignalAs<int /*index*/> OnActivated;
 	RmGUISignalAs<int /*index*/> OnCurrentIndexChanged;
@@ -43,16 +46,17 @@ RmGUICombo::RmGUICombo(IRmGUIWidgetRaw parent)
 	textHighlighted = &PRIVATE()->OnTextHighlighted;
 	PRIVATE()->Button = RmNew<RmGUIButton>();
 	addWidget(PRIVATE()->Button);
-	PRIVATE()->Popup = RmNew<RmGUIScroll>();
-	PRIVATE()->Popup->setFixedSize(200, 100);
-	PRIVATE()->Popup->setEventFilter(this);
-
 	PRIVATE()->Button->clicked->connect(this, [=](bool checked) {
 		auto posX = PRIVATE()->Button->getPositionX();
 		auto posY = PRIVATE()->Button->getPositionY() + PRIVATE()->Button->getHeight();
 		PRIVATE()->Popup->setPosition(posX, posY);
+		PRIVATE()->Popup->getHorizontalBar()->setValue(0);
+		PRIVATE()->Popup->getVerticalBar()->setValue(0);
 		getContext()->addWidget(PRIVATE()->Popup, 1);
 		});
+
+	PRIVATE()->Popup = RmNew<RmGUIScroll>();
+	PRIVATE()->Popup->setEventFilter(this);
 }
 
 RmGUICombo::~RmGUICombo()
@@ -68,6 +72,7 @@ void RmGUICombo::layout(RmRectRaw client)
 
 void RmGUICombo::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
+	RmGUIWidget::paint(painter, client);
 }
 
 RmStringList const& RmGUICombo::getItems() const
@@ -80,18 +85,55 @@ void RmGUICombo::setItems(RmStringList const& texts)
 	PRIVATE()->Items = texts;
 	PRIVATE()->Popup->removeWidget();
 	auto itemsWidget = RmNew<RmGUIVBox>();
-	itemsWidget->setFixedSize(RmNAN, 500);
 	PRIVATE()->Popup->addWidget(itemsWidget);
+	PRIVATE()->Popup->setFixedWidth(getFixedWidth() * 1.2f);
 
+	itemsWidget->setFixedHeight(0);
 	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
 	{
 		auto text = PRIVATE()->Items[i];
 		auto button = RmNew<RmGUIButton>();
 		itemsWidget->addWidget(button);
 		button->setText(text);
+		auto style = button->getStyle();
+		style.Press.Round = style.Hover.Round = style.Normal.Round = style.Disable.Round = { 0, 0 };
+		style.Press.Pen.Style = style.Hover.Pen.Style = style.Normal.Pen.Style = style.Disable.Pen.Style = RmPen::NoPen;
+		button->setStyle(style);
 		auto textRect = getContext()->getSurface()->getPainter()->boundingRect(0, 0, INT_MAX, INT_MAX, text);
 		button->setFixedHeight(textRect.H);
+		itemsWidget->setFixedHeight(itemsWidget->getFixedHeight() + textRect.H);
+		if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight(itemsWidget->getFixedHeight());
+		PRIVATE()->Popup->setFixedWidth(std::max(PRIVATE()->Popup->getFixedWidth(), textRect.W));
+
+		button->hovered->connect(this, [=]() {
+			PRIVATE()->OnHighlighted.emit(i);
+			PRIVATE()->OnTextHighlighted.emit(text);
+			});
+
+		button->clicked->connect(this, [=](bool clicked) {
+			auto oldIndex = PRIVATE()->Index;
+			PRIVATE()->Index = (int32_t)i;
+			PRIVATE()->Button->setText(text);
+			getContext()->removeWidget(PRIVATE()->Popup);
+			PRIVATE()->OnTextActivated.emit(text);
+			if (PRIVATE()->Index != oldIndex)
+			{
+				PRIVATE()->OnCurrentIndexChanged.emit(i);
+				PRIVATE()->OnCurrentTextChanged.emit(text);
+			}
+			});
 	}
+}
+
+int32_t RmGUICombo::getMaxCount() const
+{
+	return PRIVATE()->MaxCount;
+}
+
+void RmGUICombo::setMaxCount(int32_t value)
+{
+	PRIVATE()->MaxCount = value;
+	setItems(PRIVATE()->Items);
 }
 
 int32_t RmGUICombo::getCurrentIndex() const
@@ -102,6 +144,15 @@ int32_t RmGUICombo::getCurrentIndex() const
 void RmGUICombo::setCurrentIndex(int32_t index)
 {
 	PRIVATE()->Index = index;
+	if (0 <= PRIVATE()->Index && PRIVATE()->Index < PRIVATE()->Items.size())
+	{
+		PRIVATE()->Button->setText(getCurrentText());
+	}
+	else
+	{
+		PRIVATE()->Index = -1;
+		PRIVATE()->Button->setText(RmString());
+	}
 }
 
 RmString RmGUICombo::getCurrentText() const
@@ -120,7 +171,7 @@ void RmGUICombo::setCurrentText(RmString const& text)
 	{
 		if (PRIVATE()->Items[i] == text)
 		{
-			PRIVATE()->Index = (int32_t)i;
+			setCurrentIndex(i);
 			break;
 		}
 	}
