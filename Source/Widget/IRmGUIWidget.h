@@ -110,13 +110,12 @@ public:
 	virtual void setViewport(RmRect value) = 0;
 
 	virtual IRmGUIWidgetRaw getParent() const = 0;
-	virtual void setParent(IRmGUIWidgetRaw parent) = 0;
-
 	virtual RmArrayView<IRmGUIWidgetRef> getChildren() = 0;
 	virtual RmArrayView<const IRmGUIWidgetRef> getChildren() const = 0;
 
 	virtual bool addWidget(IRmGUIWidgetRef widget) = 0;
 	virtual bool removeWidget(IRmGUIWidgetRef widget) = 0;
+	virtual void removeWidget() = 0;
 
 	virtual IRmGUIFilterRaw getEventFilter() const = 0;
 	virtual void setEventFilter(IRmGUIFilterRaw value) = 0;

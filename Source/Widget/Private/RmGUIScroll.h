@@ -8,9 +8,9 @@ class RMGUI_API RmGUIScroll : public RmGUILayout
 public:
 	using policy_t = enum
 	{
-		ScrollBarAsNeeded = 0,
-		ScrollBarAlwaysOff = 1,
-		ScrollBarAlwaysOn = 2,
+		PolicyAsNeeded = 0,
+		PolicyAlwaysOff = 1,
+		PolicyAlwaysOn = 2,
 	};
 
 public:
@@ -18,6 +18,8 @@ public:
 	~RmGUIScroll();
 	virtual void layout(RmRectRaw client) override;
 	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
+	using RmGUILayout::removeWidget;
+	virtual void removeWidget() override;
 	policy_t getHorizontalPolicy() const;
 	void setHorizontalPolicy(policy_t value);
 	RmGUIScrollBarRaw getHorizontalBar() const;
@@ -26,6 +28,7 @@ public:
 	RmGUIScrollBarRaw getVerticalBar() const;
 
 protected:
+	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
 	virtual void wheelEvent(IRmGUIMouseWheelEventRaw event) override;
 
 private:

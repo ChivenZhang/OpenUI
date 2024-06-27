@@ -1,6 +1,7 @@
 #include "RmGUICombo.h"
 #include "RmGUIButton.h"
 #include "RmGUIScroll.h"
+#include "RmGUIVBox.h"
 #include "RmGUIContext.h"
 
 class RmGUIComboPrivate : public RmGUIWidgetPrivate
@@ -77,6 +78,20 @@ RmStringList const& RmGUICombo::getItems() const
 void RmGUICombo::setItems(RmStringList const& texts)
 {
 	PRIVATE()->Items = texts;
+	PRIVATE()->Popup->removeWidget();
+	auto itemsWidget = RmNew<RmGUIVBox>();
+	itemsWidget->setFixedSize(RmNAN, 500);
+	PRIVATE()->Popup->addWidget(itemsWidget);
+
+	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
+	{
+		auto text = PRIVATE()->Items[i];
+		auto button = RmNew<RmGUIButton>();
+		itemsWidget->addWidget(button);
+		button->setText(text);
+		auto textRect = getContext()->getSurface()->getPainter()->boundingRect(0, 0, INT_MAX, INT_MAX, text);
+		button->setFixedHeight(textRect.H);
+	}
 }
 
 int32_t RmGUICombo::getCurrentIndex() const

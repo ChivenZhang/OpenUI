@@ -9,6 +9,8 @@ public:
 	~RmGUIScrollBar();
 	virtual void layout(RmRectRaw client) override;
 	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
+	using RmGUIControl::removeWidget;
+	virtual void removeWidget() override;
 	bool getOrientation() const;
 	void setOrientation(bool horizontal);
 	int32_t getMinimum() const;

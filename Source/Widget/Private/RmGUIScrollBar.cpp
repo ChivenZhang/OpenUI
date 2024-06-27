@@ -1,6 +1,7 @@
 #include "RmGUIScrollBar.h"
 #include "RmGUIScrollBar.h"
 #include "RmGUIScrollBar.h"
+#include "RmGUIScrollBar.h"
 #include "RmGUIButton.h"
 
 class RmGUIScrollBarPrivate : public RmGUIWidgetPrivate
@@ -52,7 +53,6 @@ void RmGUIScrollBar::layout(RmRectRaw client)
 		auto sliderWidth = getWidth() * getWidth() / range;
 		auto sliderPosition = (getWidth() - sliderWidth) * PRIVATE()->Value / range;
 		PRIVATE()->Slider->setRect({ client->X + sliderPosition + 1, client->Y + 1, sliderWidth - 2, client->H - 2 });
-		PRIVATE()->Slider->setViewport(PRIVATE()->Slider->getRect());
 	}
 	else
 	{
@@ -60,16 +60,22 @@ void RmGUIScrollBar::layout(RmRectRaw client)
 		auto sliderHeight = getHeight() * getHeight() / range;
 		auto sliderPosition = (getHeight() - sliderHeight) * PRIVATE()->Value / range;
 		PRIVATE()->Slider->setRect({ client->X + 1, client->Y + sliderPosition + 1, client->W - 2, sliderHeight - 2 });
-		PRIVATE()->Slider->setViewport(PRIVATE()->Slider->getRect());
 	}
+	auto rect = PRIVATE()->Slider->getRect();
+	auto viewport = getViewport();
+	PRIVATE()->Slider->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.W, viewport.W), std::min(rect.H, viewport.H) });
 }
 
 void RmGUIScrollBar::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	RmGUIWidget::paint(painter, client);
-	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
-	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
-	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
+}
+
+void RmGUIScrollBar::removeWidget()
+{
+	RmVector<IRmGUIWidgetRef> result;
+	for (size_t i = 1; i < getChildren().size(); ++i) result.push_back(getChildren()[i]);
+	for (size_t i = 0; i < result.size(); ++i) removeWidget(result[i]);
 }
 
 bool RmGUIScrollBar::getOrientation() const

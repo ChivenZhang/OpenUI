@@ -15,11 +15,12 @@ public:
 	virtual RmRect getViewport() const override;
 	virtual void setViewport(RmRect value) override;
 	virtual IRmGUIWidgetRaw getParent() const override;
-	virtual void setParent(IRmGUIWidgetRaw parent) override;
+	virtual void setParent(IRmGUIWidgetRaw parent);
 	virtual RmArrayView<IRmGUIWidgetRef> getChildren() override;
 	virtual RmArrayView<const IRmGUIWidgetRef> getChildren() const override;
 	virtual bool addWidget(IRmGUIWidgetRef widget) override;
 	virtual bool removeWidget(IRmGUIWidgetRef widget) override;
+	virtual void removeWidget() override;
 	virtual IRmGUIFilterRaw getEventFilter() const override;
 	virtual void setEventFilter(IRmGUIFilterRaw value) override;
 	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;

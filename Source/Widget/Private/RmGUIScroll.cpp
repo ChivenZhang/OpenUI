@@ -1,10 +1,12 @@
 #include "RmGUIScroll.h"
+#include "RmGUIScroll.h"
+#include "RmGUIScroll.h"
 
 class RmGUIScrollPrivate : public RmGUIWidgetPrivate
 {
 public:
-	RmGUIScroll::policy_t HorizontalPolicy = RmGUIScroll::ScrollBarAsNeeded;
-	RmGUIScroll::policy_t VerticalPolicy = RmGUIScroll::ScrollBarAsNeeded;
+	RmGUIScroll::policy_t HorizontalPolicy = RmGUIScroll::PolicyAsNeeded;
+	RmGUIScroll::policy_t VerticalPolicy = RmGUIScroll::PolicyAsNeeded;
 	RmGUIScrollBarRef HorizontalScrollBar;
 	RmGUIScrollBarRef VerticalScrollBar;
 };
@@ -58,8 +60,8 @@ void RmGUIScroll::layout(RmRectRaw client)
 
 		auto contentX = client->X - PRIVATE()->HorizontalScrollBar->getValue();
 		auto contentY = client->Y - PRIVATE()->VerticalScrollBar->getValue();
-		auto contentW = contentWidget->getRect().W;
-		auto contentH = contentWidget->getRect().H;
+		auto contentW = std::isnan(contentWidget->getFixedWidth()) ? PRIVATE()->HorizontalScrollBar->getWidth() : contentWidget->getFixedWidth();
+		auto contentH = std::isnan(contentWidget->getFixedHeight()) ? PRIVATE()->VerticalScrollBar->getHeight() : contentWidget->getFixedHeight();
 		contentWidget->setRect({ contentX, contentY, contentW, contentH });
 		contentX = client->X;
 		contentY = client->Y;
@@ -67,8 +69,45 @@ void RmGUIScroll::layout(RmRectRaw client)
 		contentH = client->H - PRIVATE()->HorizontalScrollBar->getFixedHeight();
 		contentWidget->setViewport({ contentX, contentY, contentW, contentH });
 
-		PRIVATE()->HorizontalScrollBar->setRange(0, contentWidget->getRect().W - contentWidget->getViewport().W);
-		PRIVATE()->VerticalScrollBar->setRange(0, contentWidget->getRect().H - contentWidget->getViewport().H);
+		PRIVATE()->HorizontalScrollBar->setRange(0, std::max<int32_t>(0, contentWidget->getWidth() - contentWidget->getViewport().W));
+		PRIVATE()->VerticalScrollBar->setRange(0, std::max<int32_t>(0, contentWidget->getHeight() - contentWidget->getViewport().H));
+	}
+
+	if (PRIVATE()->HorizontalPolicy == policy_t::PolicyAlwaysOff)
+		PRIVATE()->HorizontalScrollBar->setVisible(false);
+	else if (PRIVATE()->HorizontalPolicy == policy_t::PolicyAlwaysOn)
+		PRIVATE()->HorizontalScrollBar->setVisible(true);
+	else
+	{
+		if (2 < getChildren().size())
+		{
+			auto contentWidget = getChildren()[2];
+			auto range = std::abs(PRIVATE()->HorizontalScrollBar->getMaximum() - PRIVATE()->HorizontalScrollBar->getMinimum());
+			PRIVATE()->HorizontalScrollBar->setVisible(contentWidget->getViewport().W < range);
+			printf("%f %d\n", contentWidget->getViewport().W, range);
+		}
+		else
+		{
+			PRIVATE()->HorizontalScrollBar->setVisible(false);
+		}
+	}
+
+	if (PRIVATE()->VerticalPolicy == policy_t::PolicyAlwaysOff)
+		PRIVATE()->VerticalScrollBar->setVisible(false);
+	else if (PRIVATE()->VerticalPolicy == policy_t::PolicyAlwaysOn)
+		PRIVATE()->VerticalScrollBar->setVisible(true);
+	else
+	{
+		if (2 < getChildren().size())
+		{
+			auto contentWidget = getChildren()[2];
+			auto range = std::abs(PRIVATE()->VerticalScrollBar->getMaximum() - PRIVATE()->VerticalScrollBar->getMinimum());
+			PRIVATE()->VerticalScrollBar->setVisible(contentWidget->getViewport().H < range);
+		}
+		else
+		{
+			PRIVATE()->VerticalScrollBar->setVisible(false);
+		}
 	}
 }
 
@@ -78,6 +117,13 @@ void RmGUIScroll::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
 	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
 	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
+}
+
+void RmGUIScroll::removeWidget()
+{
+	RmVector<IRmGUIWidgetRef> result;
+	for (size_t i = 2; i < getChildren().size(); ++i) result.push_back(getChildren()[i]);
+	for (size_t i = 0; i < result.size(); ++i) removeWidget(result[i]);
 }
 
 RmGUIScroll::policy_t RmGUIScroll::getHorizontalPolicy() const
@@ -108,6 +154,10 @@ void RmGUIScroll::setVerticalPolicy(policy_t value)
 RmGUIScrollBarRaw RmGUIScroll::getVerticalBar() const
 {
 	return PRIVATE()->VerticalScrollBar.get();
+}
+
+void RmGUIScroll::mouseMoveEvent(IRmGUIMouseEventRaw event)
+{
 }
 
 void RmGUIScroll::wheelEvent(IRmGUIMouseWheelEventRaw event)

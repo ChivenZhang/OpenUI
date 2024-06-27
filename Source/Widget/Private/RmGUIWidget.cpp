@@ -1,4 +1,5 @@
 #include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
 #include "RmGUIContext.h"
 #include <taitank.h>
 namespace flex = taitank;
@@ -96,6 +97,18 @@ bool RmGUIWidget::removeWidget(IRmGUIWidgetRef value)
 	widget->setContext(nullptr);
 	widget->setParent(nullptr);
 	return true;
+}
+
+void RmGUIWidget::removeWidget()
+{
+	for (size_t i = 0; i < PRIVATE()->ChildrenList.size(); ++i)
+	{
+		auto widget = RmCast<RmGUIWidget>(PRIVATE()->ChildrenList[i]);
+		if (widget == nullptr) continue;
+		widget->setContext(nullptr);
+		widget->setParent(nullptr);
+	}
+	PRIVATE()->ChildrenList.clear();
 }
 
 IRmGUIFilterRaw RmGUIWidget::getEventFilter() const

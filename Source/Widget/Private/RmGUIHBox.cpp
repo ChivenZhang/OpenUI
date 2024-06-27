@@ -65,7 +65,9 @@ void RmGUIHBox::layout(RmRectRaw client)
 		auto left = flex::GetLeft(node); auto top = flex::GetTop(node);
 		auto width = flex::GetWidth(node); auto height = flex::GetHeight(node);
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
-		childList[i]->setViewport(childList[i]->getRect());
+		auto rect = childList[i]->getRect();
+		auto viewport = getViewport();
+		childList[i]->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.W, viewport.W), std::min(rect.H, viewport.H) });
 	}
 
 	flex::NodeFreeRecursive(root);

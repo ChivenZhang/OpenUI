@@ -256,6 +256,7 @@ int main(int argc, char* argv[]) {
 		context->addWidget(combo);
 		combo->setFixedSize(100, 35);
 		combo->setPosition(100, 100);
+		combo->setItems({ "AAA", "BBB", "CCC" });
 	}
 #endif
 

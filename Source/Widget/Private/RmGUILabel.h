@@ -1,7 +1,7 @@
 #pragma once
 #include "RmGUIControl.h"
 
-static struct RmGUILabelTextStyle
+struct RmGUILabelTextStyle
 {
 	RmPen Pen;
 	RmFont Font;

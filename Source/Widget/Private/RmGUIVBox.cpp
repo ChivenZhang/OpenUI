@@ -38,7 +38,7 @@ void RmGUIVBox::layout(RmRectRaw client)
 	flex::SetHeight(root, client->H);
 	flex::SetAlignItems(root, flex::FlexAlign::FLEX_ALIGN_CENTER);
 	flex::SetFlexDirection(root, flex::FlexDirection::FLEX_DIRECTION_COLUMN);
-	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_EVENLY);
+	flex::SetJustifyContent(root, flex::FlexAlign::FLEX_ALIGN_SPACE_AROUND);
 	auto childList = getChildren();
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
@@ -65,7 +65,9 @@ void RmGUIVBox::layout(RmRectRaw client)
 		auto left = flex::GetLeft(node); auto top = flex::GetTop(node);
 		auto width = flex::GetWidth(node); auto height = flex::GetHeight(node);
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
-		childList[i]->setViewport(childList[i]->getRect());
+		auto rect = childList[i]->getRect();
+		auto viewport = getViewport();
+		childList[i]->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.W, viewport.W), std::min(rect.H, viewport.H) });
 	}
 
 	flex::NodeFreeRecursive(root);
