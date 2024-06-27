@@ -45,29 +45,33 @@ void RmGUIScroll::layout(RmRectRaw client)
 	auto scrollBarW = client->W - PRIVATE()->VerticalScrollBar->getFixedWidth();
 	auto scrollBarH = PRIVATE()->HorizontalScrollBar->getFixedHeight();
 	PRIVATE()->HorizontalScrollBar->setRect({ scrollBarX, scrollBarY, scrollBarW, scrollBarH });
-	PRIVATE()->HorizontalScrollBar->setViewport(PRIVATE()->HorizontalScrollBar->getRect());
+	auto rect = PRIVATE()->HorizontalScrollBar->getRect();
+	auto viewport = getViewport();
+	PRIVATE()->HorizontalScrollBar->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
 
 	scrollBarX = client->X + client->W - PRIVATE()->VerticalScrollBar->getFixedWidth();
 	scrollBarY = client->Y;
 	scrollBarW = PRIVATE()->VerticalScrollBar->getFixedWidth();
 	scrollBarH = client->H - PRIVATE()->HorizontalScrollBar->getFixedHeight();
 	PRIVATE()->VerticalScrollBar->setRect({ scrollBarX, scrollBarY, scrollBarW, scrollBarH });
-	PRIVATE()->VerticalScrollBar->setViewport(PRIVATE()->VerticalScrollBar->getRect());
+	rect = PRIVATE()->VerticalScrollBar->getRect();
+	PRIVATE()->VerticalScrollBar->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
 
 	if (2 < getChildren().size())
 	{
 		auto contentWidget = getChildren()[2];
-
-		auto contentX = client->X - PRIVATE()->HorizontalScrollBar->getValue();
-		auto contentY = client->Y - PRIVATE()->VerticalScrollBar->getValue();
-		auto contentW = std::isnan(contentWidget->getFixedWidth()) ? PRIVATE()->HorizontalScrollBar->getWidth() : contentWidget->getFixedWidth();
-		auto contentH = std::isnan(contentWidget->getFixedHeight()) ? PRIVATE()->VerticalScrollBar->getHeight() : contentWidget->getFixedHeight();
-		contentWidget->setRect({ contentX, contentY, contentW, contentH });
-		contentX = client->X;
-		contentY = client->Y;
-		contentW = client->W - PRIVATE()->VerticalScrollBar->getFixedWidth();
-		contentH = client->H - PRIVATE()->HorizontalScrollBar->getFixedHeight();
-		contentWidget->setViewport({ contentX, contentY, contentW, contentH });
+		RmRect rect;
+		rect.X = client->X - PRIVATE()->HorizontalScrollBar->getValue();
+		rect.Y = client->Y - PRIVATE()->VerticalScrollBar->getValue();
+		rect.W = std::isnan(contentWidget->getFixedWidth()) ? PRIVATE()->HorizontalScrollBar->getWidth() : contentWidget->getFixedWidth();
+		rect.H = std::isnan(contentWidget->getFixedHeight()) ? PRIVATE()->VerticalScrollBar->getHeight() : contentWidget->getFixedHeight();
+		contentWidget->setRect(rect);
+		RmRect  viewport;
+		viewport.X = client->X;
+		viewport.Y = client->Y;
+		viewport.W = client->W - PRIVATE()->VerticalScrollBar->getFixedWidth();
+		viewport.H = client->H - PRIVATE()->HorizontalScrollBar->getFixedHeight();
+		contentWidget->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
 
 		PRIVATE()->HorizontalScrollBar->setRange(0, std::max<int32_t>(0, contentWidget->getWidth() - contentWidget->getViewport().W));
 		PRIVATE()->VerticalScrollBar->setRange(0, std::max<int32_t>(0, contentWidget->getHeight() - contentWidget->getViewport().H));

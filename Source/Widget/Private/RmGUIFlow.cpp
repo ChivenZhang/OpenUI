@@ -66,7 +66,7 @@ void RmGUIFlow::layout(RmRectRaw client)
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
 		auto rect = childList[i]->getRect();
 		auto viewport = getViewport();
-		childList[i]->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.W, viewport.W), std::min(rect.H, viewport.H) });
+		childList[i]->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X+rect.W, viewport.X+viewport.W), std::min(rect.Y+rect.H, viewport.Y+viewport.H) });
 	}
 
 	flex::NodeFreeRecursive(root);
