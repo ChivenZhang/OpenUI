@@ -15,6 +15,8 @@
 #include "Widget/Private/RmGUIButton.h"
 #include "Widget/Private/RmGUIScroll.h"
 #include "Widget/Private/RmGUICombo.h"
+#include "Widget/Private/RmGUIText.h"
+#include "Widget/Private/RmGUIEdit.h"
 
 static int count = 0;
 
@@ -257,7 +259,7 @@ int main(int argc, char* argv[]) {
 		combo->setPosition(100, 100);
 		combo->setFixedSize(100, 35);
 		combo->setMaxCount(4);
-		combo->setItems({ "AAA", "BBB", "CCC", "DDD", "EEE" });
+		combo->setItems({ "White", "Red", "Green", "Blue", "Black" });
 		combo->setCurrentIndex(0);
 		combo->currentTextChanged->connect(nullptr, [](RmString text) {
 			printf("combo %s\n", text.c_str());
@@ -272,6 +274,14 @@ int main(int argc, char* argv[]) {
 		combo2->currentTextChanged->connect(nullptr, [](RmString text) {
 			printf("combo2 %s\n", text.c_str());
 			});
+	}
+#endif
+
+#if 0
+	if (true)
+	{
+		auto text = RmNew<RmGUIText>();
+		context->addWidget(text);
 	}
 #endif
 
