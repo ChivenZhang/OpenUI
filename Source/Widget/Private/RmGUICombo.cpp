@@ -1,6 +1,10 @@
 #include "RmGUICombo.h"
 #include "RmGUICombo.h"
 #include "RmGUICombo.h"
+#include "RmGUICombo.h"
+#include "RmGUICombo.h"
+#include "RmGUICombo.h"
+#include "RmGUICombo.h"
 #include "RmGUIButton.h"
 #include "RmGUIScroll.h"
 #include "RmGUIVBox.h"
@@ -14,6 +18,7 @@ public:
 	RmStringList Items;
 	RmGUIButtonRef Button;
 	RmGUIScrollRef Popup;
+	RmGUIButtonStyle ItemStyle;
 
 	RmGUISignalAs<int /*index*/> OnActivated;
 	RmGUISignalAs<int /*index*/> OnCurrentIndexChanged;
@@ -44,6 +49,14 @@ RmGUICombo::RmGUICombo(IRmGUIWidgetRaw parent)
 	highlighted = &PRIVATE()->OnHighlighted;
 	textActivated = &PRIVATE()->OnTextActivated;
 	textHighlighted = &PRIVATE()->OnTextHighlighted;
+
+	PRIVATE()->ItemStyle.Normal.Pen = { .Style = RmPen::NoPen, .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
+	PRIVATE()->ItemStyle.Normal.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
+	PRIVATE()->ItemStyle.Hover.Pen = { .Style = RmPen::NoPen, .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
+	PRIVATE()->ItemStyle.Hover.Brush = { .Color = {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f} };
+	PRIVATE()->ItemStyle.Press.Pen = { .Style = RmPen::NoPen,.Color = {0 / 255.0f, 84 / 255.0f, 153 / 255.0f, 1.0f} };
+	PRIVATE()->ItemStyle.Press.Brush = { .Color = {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f} };
+
 	PRIVATE()->Button = RmNew<RmGUIButton>();
 	addWidget(PRIVATE()->Button);
 	PRIVATE()->Button->clicked->connect(this, [=](bool checked) {
@@ -95,11 +108,9 @@ void RmGUICombo::setItems(RmStringList const& texts)
 		auto button = RmNew<RmGUIButton>();
 		itemsWidget->addWidget(button);
 		button->setText(text);
-		auto style = button->getStyle();
-		style.Press.Round = style.Hover.Round = style.Normal.Round = style.Disable.Round = { 0, 0 };
-		style.Press.Pen.Style = style.Hover.Pen.Style = style.Normal.Pen.Style = style.Disable.Pen.Style = RmPen::NoPen;
-		button->setStyle(style);
+		button->setStyle(PRIVATE()->ItemStyle);
 		auto textRect = getContext()->getSurface()->getPainter()->boundingRect(0, 0, INT_MAX, INT_MAX, text);
+
 		button->setFixedHeight(textRect.H);
 		itemsWidget->setFixedHeight(itemsWidget->getFixedHeight() + textRect.H);
 		if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight(itemsWidget->getFixedHeight());
@@ -174,6 +185,33 @@ void RmGUICombo::setCurrentText(RmString const& text)
 			setCurrentIndex(i);
 			break;
 		}
+	}
+}
+
+RmGUIButtonStyle RmGUICombo::getStyle() const
+{
+	return PRIVATE()->Button->getStyle();
+}
+
+void RmGUICombo::setStyle(RmGUIButtonStyle value)
+{
+	PRIVATE()->Button->setStyle(value);
+}
+
+RmGUIButtonStyle RmGUICombo::getItemStyle() const
+{
+	return PRIVATE()->ItemStyle;
+}
+
+void RmGUICombo::setItemStyle(RmGUIButtonStyle value)
+{
+	PRIVATE()->ItemStyle = value;
+	auto contentWidget = PRIVATE()->Popup->getChildren()[0];
+	for (size_t i = 0; contentWidget && i < contentWidget->getChildren().size(); ++i)
+	{
+		auto itemWidget = RmCast<RmGUIButton>(contentWidget->getChildren()[i]);
+		if (itemWidget == nullptr) continue;
+		itemWidget->setStyle(value);
 	}
 }
 

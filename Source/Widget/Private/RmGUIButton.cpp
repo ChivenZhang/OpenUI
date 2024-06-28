@@ -123,32 +123,28 @@ void RmGUIButton::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	RmGUIWidget::paint(painter, client);
 
-	RmFloat2 round;
 	if (getEnable() == false)
 	{
-		round = PRIVATE()->Style.Disable.Round;
 		painter->setPen(PRIVATE()->Style.Disable.Pen);
 		painter->setBrush(PRIVATE()->Style.Disable.Brush);
 	}
 	else if (PRIVATE()->Checkable && PRIVATE()->Checked || PRIVATE()->Checkable == false && PRIVATE()->Pressed)
 	{
-		round = PRIVATE()->Style.Press.Round;
 		painter->setPen(PRIVATE()->Style.Press.Pen);
 		painter->setBrush(PRIVATE()->Style.Press.Brush);
 	}
 	else if (PRIVATE()->Hovered)
 	{
-		round = PRIVATE()->Style.Hover.Round;
 		painter->setPen(PRIVATE()->Style.Hover.Pen);
 		painter->setBrush(PRIVATE()->Style.Hover.Brush);
 	}
 	else
 	{
-		round = PRIVATE()->Style.Normal.Round;
 		painter->setPen(PRIVATE()->Style.Normal.Pen);
 		painter->setBrush(PRIVATE()->Style.Normal.Brush);
 	}
 
+	auto round = PRIVATE()->Style.Round;
 	if (round.X < 0.5f || round.Y < 0.5f)
 		painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
 	else
@@ -175,12 +171,12 @@ void RmGUIButton::setStyle(RmGUIButtonStyle const& style)
 	PRIVATE()->Style = style;
 }
 
-RmGUILabelTextStyle RmGUIButton::getTextStyle() const
+RmGUILabelStyle RmGUIButton::getTextStyle() const
 {
 	return PRIVATE()->Label->getStyle();
 }
 
-void RmGUIButton::setTextStyle(RmGUILabelTextStyle const& style)
+void RmGUIButton::setTextStyle(RmGUILabelStyle const& style)
 {
 	PRIVATE()->Label->setStyle(style);
 }

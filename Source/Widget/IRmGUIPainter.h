@@ -5,9 +5,7 @@
 class RMGUI_API IRmGUIPainter
 {
 public:
-	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text) = 0;
-
-	virtual RmRect boundingRect(int x, int y, int width, int height, int cursor, RmString const& text, RmRectRaw cursorRect = nullptr) = 0;
+	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int cursor = 0, RmRectRaw cursorRect = nullptr) = 0;
 
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) = 0;
 
@@ -37,9 +35,7 @@ public:
 
 	virtual void drawRoundedRect(int x, int y, int w, int h, float xRadius, float yRadius) = 0;
 
-	virtual void drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect = nullptr) = 0;
-
-	virtual void drawText(int x, int y, int width, int height, int cursor, const RmString& text, RmRectRaw boundingRect = nullptr, RmRectRaw cursorRect = nullptr) = 0;
+	virtual void drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect = nullptr, int cursor = 0, RmRectRaw cursorRect = nullptr) = 0;
 
 	virtual void setPen(const RmPen& pen) = 0;
 

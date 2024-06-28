@@ -3,7 +3,7 @@
 class RmGUILabelPrivate : public RmGUIWidgetPrivate
 {
 public:
-	RmGUILabelTextStyle TextStyle;
+	RmGUILabelStyle TextStyle;
 	RmString Text;
 	RmGUISignalAs<RmString> LinkHovered;
 	RmGUISignalAs<RmString> LinkActivated;
@@ -52,12 +52,12 @@ void RmGUILabel::setText(RmString const& text)
 	PRIVATE()->Text = text;
 }
 
-RmGUILabelTextStyle RmGUILabel::getStyle() const
+RmGUILabelStyle RmGUILabel::getStyle() const
 {
 	return PRIVATE()->TextStyle;
 }
 
-void RmGUILabel::setStyle(RmGUILabelTextStyle const& style)
+void RmGUILabel::setStyle(RmGUILabelStyle const& style)
 {
 	PRIVATE()->TextStyle = style;
 }

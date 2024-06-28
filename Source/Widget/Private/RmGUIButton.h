@@ -8,8 +8,8 @@ struct RmGUIButtonStyle
 	{
 		RmPen Pen;
 		RmBrush Brush;
-		RmFloat2 Round = { 8, 8 };
 	};
+	RmFloat2 Round;
 	Mode Normal, Hover, Press, Disable;
 };
 
@@ -25,8 +25,8 @@ public:
 	void setText(RmString const& text);
 	RmGUIButtonStyle getStyle() const;
 	void setStyle(RmGUIButtonStyle const& style);
-	RmGUILabelTextStyle getTextStyle() const;
-	void setTextStyle(RmGUILabelTextStyle const& style);
+	RmGUILabelStyle getTextStyle() const;
+	void setTextStyle(RmGUILabelStyle const& style);
 	RmFontAligns getAlignment() const;
 	void setAlignment(RmFontAligns value);
 	bool getChecked() const;

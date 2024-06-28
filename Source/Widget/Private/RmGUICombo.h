@@ -1,5 +1,6 @@
 #pragma once
 #include "RmGUIWidget.h"
+#include "RmGUIButton.h"
 
 /// @brief Combo Box
 class RMGUI_API RmGUICombo : public RmGUIWidget
@@ -17,6 +18,10 @@ public:
 	void setCurrentIndex(int32_t index);
 	RmString getCurrentText() const;
 	void setCurrentText(RmString const& text);
+	RmGUIButtonStyle getStyle() const;
+	void setStyle(RmGUIButtonStyle value);
+	RmGUIButtonStyle getItemStyle() const;
+	void setItemStyle(RmGUIButtonStyle value);
 
 protected:
 	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;

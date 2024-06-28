@@ -8,8 +8,7 @@ class SDL2Painter : public IRmGUIPainter
 public:
 	SDL2Painter(cairo_t* native);
 	~SDL2Painter();
-	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text) override;
-	virtual RmRect boundingRect(int x, int y, int width, int height, int cursor, RmString const& text, RmRectRaw cursorRect = nullptr) override;
+	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect) override;
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawEllipse(int x, int y, int width, int height) override;
@@ -24,8 +23,7 @@ public:
 	virtual void drawRect(int x, int y, int width, int height) override;
 	virtual void drawRects(RmArrayView<RmRect> rects) override;
 	virtual void drawRoundedRect(int x, int y, int width, int height, float xRadius, float yRadius) override;
-	virtual void drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect) override;
-	virtual void drawText(int x, int y, int width, int height, int cursor, const RmString& text, RmRectRaw boundingRect, RmRectRaw cursorRect) override;
+	virtual void drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect, int cursor, RmRectRaw cursorRect) override;
 	virtual void setPen(const RmPen& pen) override;
 	virtual void setBrush(const RmBrush& brush) override;
 	virtual void setFont(const RmFont& font) override;

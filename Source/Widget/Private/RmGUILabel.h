@@ -1,7 +1,7 @@
 #pragma once
 #include "RmGUIControl.h"
 
-struct RmGUILabelTextStyle
+struct RmGUILabelStyle
 {
 	RmPen Pen;
 	RmFont Font;
@@ -16,8 +16,8 @@ public:
 	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
 	RmString getText() const;
 	void setText(RmString const& text);
-	RmGUILabelTextStyle getStyle() const;
-	void setStyle(RmGUILabelTextStyle const& style);
+	RmGUILabelStyle getStyle() const;
+	void setStyle(RmGUILabelStyle const& style);
 	RmFontAligns getAlignment() const;
 	void setAlignment(RmFontAligns value);
 

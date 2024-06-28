@@ -26,9 +26,8 @@ SDL2Painter::~SDL2Painter()
 	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
 }
 
-RmRect SDL2Painter::boundingRect(int x, int y, int width, int height, RmString const& text)
+RmRect SDL2Painter::boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect)
 {
-	RmRect result;
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
 
@@ -36,18 +35,26 @@ RmRect SDL2Painter::boundingRect(int x, int y, int width, int height, RmString c
 	pango_layout_set_width(layout, width * PANGO_SCALE);
 	pango_layout_set_height(layout, height * PANGO_SCALE);
 
+	RmRect text_rect;
 	int text_width, text_height;
 	int baseline = pango_layout_get_baseline(layout);
 	pango_layout_get_pixel_size(layout, &text_width, &text_height);
-	result.W = text_width; result.H = text_height;
+	text_rect.W = text_width; text_rect.H = text_height;
 
-	if (font.Align & RmFont::AlignTop) { result.X = x; result.Y = y; }
-	else if (font.Align & RmFont::AlignBottom) { result.X = x; result.Y = y + height - text_height; }
-	else if (font.Align & RmFont::AlignVCenter) { result.X = x; result.Y = y + (height - text_height) * 0.5; }
-	else if (font.Align & RmFont::AlignBaseline) { result.X = x; result.Y = y + baseline; }
-	else { result.X = x; result.Y = y; }
+	if (cursorRect)
+	{
+		PangoRectangle strong_pos, weak_pos;
+		pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
+		(*cursorRect) = RmRect{ (float)strong_pos.x / PANGO_SCALE, (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+	}
 
-	return result;
+	if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+	else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+	else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+	else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+	else { text_rect.X = x; text_rect.Y = y; }
+
+	return text_rect;
 }
 
 void SDL2Painter::drawArc(int x, int y, int width, int height, int startAngle, int spanAngle)
@@ -369,7 +376,7 @@ void SDL2Painter::drawRoundedRect(int x, int y, int width, int height, float xRa
 	}
 }
 
-void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect)
+void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect, int cursor, RmRectRaw cursorRect)
 {
 	auto cr = m_NativeContext;
 	auto layout = m_NativeLayout;
@@ -381,81 +388,27 @@ void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& 
 		pango_layout_set_width(layout, width * PANGO_SCALE);
 		pango_layout_set_height(layout, height * PANGO_SCALE);
 
-		RmRect result;
+		RmRect text_rect;
 		int text_width, text_height;
 		int baseline = pango_layout_get_baseline(layout);
 		pango_layout_get_pixel_size(layout, &text_width, &text_height);
-		result.W = text_width; result.H = text_height;
+		text_rect.W = text_width; text_rect.H = text_height;
 
-		if (font.Align & RmFont::AlignTop) { result.X = x; result.Y = y; }
-		else if (font.Align & RmFont::AlignBottom) { result.X = x; result.Y = y + height - text_height; }
-		else if (font.Align & RmFont::AlignVCenter) { result.X = x; result.Y = y + (height - text_height) * 0.5; }
-		else if (font.Align & RmFont::AlignBaseline) { result.X = x; result.Y = y + baseline; }
-		else { result.X = x; result.Y = y; }
-		if (boundingRect) (*boundingRect) = result;
+		if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+		else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+		else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+		else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+		else { text_rect.X = x; text_rect.Y = y; }
+		if (boundingRect) (*boundingRect) = text_rect;
 
-		cairo_move_to(cr, result.X, result.Y);
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
-		pango_cairo_show_layout(cr, layout);
-		cairo_restore(cr);
-	}
-	if (m_Pen.Style != RmPen::NoPen)
-	{
-		cairo_save(cr); setClipping(true);
-		pango_layout_set_width(layout, width * PANGO_SCALE);
-		pango_layout_set_height(layout, height * PANGO_SCALE);
+		cairo_move_to(cr, text_rect.X, text_rect.Y);
 
-		RmRect result;
-		int text_width, text_height;
-		int baseline = pango_layout_get_baseline(layout);
-		pango_layout_get_pixel_size(layout, &text_width, &text_height);
-		result.W = text_width; result.H = text_height;
-
-		if (font.Align & RmFont::AlignTop) { result.X = x; result.Y = y; }
-		else if (font.Align & RmFont::AlignBottom) { result.X = x; result.Y = y + height - text_height; }
-		else if (font.Align & RmFont::AlignVCenter) { result.X = x; result.Y = y + (height - text_height) * 0.5; }
-		else if (font.Align & RmFont::AlignBaseline) { result.X = x; result.Y = y + baseline; }
-		else { result.X = x; result.Y = y; }
-		if (boundingRect) (*boundingRect) = result;
-
-		cairo_move_to(cr, result.X, result.Y);
-		pango_cairo_layout_path(cr, layout);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
-		cairo_stroke(cr);
-		cairo_restore(cr);
-	}
-}
-
-void SDL2Painter::drawText(int x, int y, int width, int height, int cursor, const RmString& text, RmRectRaw boundingRect, RmRectRaw cursorRect)
-{
-	auto cr = m_NativeContext;
-	auto layout = m_NativeLayout;
-	auto& font = m_Font;
-	if (m_Brush.Style != RmBrush::NoBrush)
-	{
-		cairo_save(cr); setClipping(true);
-		pango_layout_set_text(layout, text.c_str(), -1);
-		pango_layout_set_width(layout, width * PANGO_SCALE);
-		pango_layout_set_height(layout, height * PANGO_SCALE);
-
-		RmRect result;
-		int text_width, text_height;
-		int baseline = pango_layout_get_baseline(layout);
-		pango_layout_get_pixel_size(layout, &text_width, &text_height);
-		result.W = text_width; result.H = text_height;
-
-		if (font.Align & RmFont::AlignTop) { result.X = x; result.Y = y; }
-		else if (font.Align & RmFont::AlignBottom) { result.X = x; result.Y = y + height - text_height; }
-		else if (font.Align & RmFont::AlignVCenter) { result.X = x; result.Y = y + (height - text_height) * 0.5; }
-		else if (font.Align & RmFont::AlignBaseline) { result.X = x; result.Y = y + baseline; }
-		else { result.X = x; result.Y = y; }
-		if (boundingRect) (*boundingRect) = result;
-
-		cairo_move_to(cr, result.X, result.Y);
-
-		PangoRectangle strong_pos, weak_pos;
-		pango_layout_get_caret_pos(layout, cursor, &strong_pos, &weak_pos);
+		if (cursorRect)
+		{
+			PangoRectangle strong_pos, weak_pos;
+			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
+			(*cursorRect) = RmRect{ (float)strong_pos.x / PANGO_SCALE, (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+		}
 
 		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
 		pango_cairo_show_layout(cr, layout);
@@ -467,20 +420,28 @@ void SDL2Painter::drawText(int x, int y, int width, int height, int cursor, cons
 		pango_layout_set_width(layout, width * PANGO_SCALE);
 		pango_layout_set_height(layout, height * PANGO_SCALE);
 
-		RmRect result;
+		RmRect text_rect;
 		int text_width, text_height;
 		int baseline = pango_layout_get_baseline(layout);
 		pango_layout_get_pixel_size(layout, &text_width, &text_height);
-		result.W = text_width; result.H = text_height;
+		text_rect.W = text_width; text_rect.H = text_height;
 
-		if (font.Align & RmFont::AlignTop) { result.X = x; result.Y = y; }
-		else if (font.Align & RmFont::AlignBottom) { result.X = x; result.Y = y + height - text_height; }
-		else if (font.Align & RmFont::AlignVCenter) { result.X = x; result.Y = y + (height - text_height) * 0.5; }
-		else if (font.Align & RmFont::AlignBaseline) { result.X = x; result.Y = y + baseline; }
-		else { result.X = x; result.Y = y; }
-		if (boundingRect) (*boundingRect) = result;
+		if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+		else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+		else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+		else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+		else { text_rect.X = x; text_rect.Y = y; }
+		if (boundingRect) (*boundingRect) = text_rect;
 
-		cairo_move_to(cr, result.X, result.Y);
+		cairo_move_to(cr, text_rect.X, text_rect.Y);
+
+		if (cursorRect)
+		{
+			PangoRectangle strong_pos, weak_pos;
+			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
+			(*cursorRect) = RmRect{ (float)strong_pos.x / PANGO_SCALE, (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+		}
+
 		pango_cairo_layout_path(cr, layout);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
