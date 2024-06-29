@@ -115,11 +115,11 @@ OpenGLRender::~OpenGLRender()
 
 void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 {
-	int32_t maxTextureUnits = 16;
-	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
 	glUseProgram(m_NativeProgram);
 	glBindVertexArray(m_NativePrimitive);
 
+	int32_t maxTextureUnits = 16;
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
 	for (size_t i = 0; i < data.size(); i += maxTextureUnits)
 	{
 		for (size_t k = 0; k < maxTextureUnits && i + k < data.size(); ++k)
@@ -149,10 +149,9 @@ void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 		glBindBuffer(GL_ARRAY_BUFFER, m_NativeBuffer);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(primitive_t) * m_PrimitiveList.size(), m_PrimitiveList.data());
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		// ... 绘制调用
 		glDrawArrays(GL_TRIANGLES, 0, m_PrimitiveList.size());
 	}
+
 	glBindVertexArray(0);
 	glUseProgram(0);
 }
