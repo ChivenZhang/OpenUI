@@ -617,6 +617,10 @@ void OpenGLPainter::resize(uint32_t width, uint32_t height)
 	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_description_free(font_desc);
+
+	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 uint32_t OpenGLPainter::getTexture() const

@@ -466,12 +466,9 @@ int main(int argc, char* argv[]) {
 
 		// 更新屏幕内容  
 		SDL_GL_MakeCurrent(window, context);
+		glDisable(GL_DEPTH_TEST);
 		glClearColor(0.8, 0.8, 0.8, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-		glFrontFace(GL_CCW);
 		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
 		openui->renderWidget(client);
 		SDL_GL_SwapWindow(window);
