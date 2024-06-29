@@ -1,9 +1,6 @@
 #define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>  
-#include <SDL2/SDL_surface.h>
 #include <GL/glew.h>
-#include <iostream>  
-#include <cairo/cairo.h>
+#include <SDL2/SDL.h>
 #include "OpenGLPainter.h"
 #include "OpenGLRender.h"
 #include "Widget/Private/RmGUIContext.h"
@@ -51,6 +48,7 @@ int main(int argc, char* argv[]) {
 		SDL_Quit();
 		return -1;
 	}
+	SDL_GL_SetSwapInterval(1);
 
 	// 初始化GLEW  
 	GLenum glewInitResult = glewInit();
@@ -65,9 +63,6 @@ int main(int argc, char* argv[]) {
 	//// 检查OpenGL版本信息  
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
-	// 这里可以添加OpenGL的初始化和渲染代码  
-	SDL_GL_SetSwapInterval(1);
-
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	auto openui = RmNew<RmGUIContext>();
@@ -75,14 +70,6 @@ int main(int argc, char* argv[]) {
 	auto render = RmNew<OpenGLRender>();
 	openui->setPainter(painter);
 	openui->setRender(render);
-
-	//SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	//if (renderer == NULL) {
-	//	// 处理错误  
-	//	SDL_Log("Could not create renderer: %s", SDL_GetError());
-	//	exit(1);
-	//}
-	//auto texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
 
 	auto top = RmNew<RmGUIFlow>();
 	openui->addWidget(top);
@@ -277,6 +264,16 @@ int main(int argc, char* argv[]) {
 		combo2->setCurrentText("666");
 		combo2->currentTextChanged->connect(nullptr, [](RmString text) {
 			printf("combo2 %s\n", text.c_str());
+			});
+
+		auto combo3 = RmNew<RmGUICombo>();
+		top->addWidget(combo3);
+		combo3->setPosition(200, 100);
+		combo3->setFixedSize(100, 35);
+		combo3->setItems({ "壹个", "贰个", "叁个", "肆个", "伍个", "陆个" });
+		combo3->setCurrentIndex(0);
+		combo3->currentTextChanged->connect(nullptr, [](RmString text) {
+			printf("combo3 %s\n", text.c_str());
 			});
 	}
 #endif

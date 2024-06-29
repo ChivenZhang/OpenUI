@@ -33,6 +33,7 @@ OpenGLRender::OpenGLRender()
 		}
 	)";
 
+	// 检查编译错误 
 	auto vshader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vshader, 1, &vsource, NULL);
 	glCompileShader(vshader);
@@ -47,6 +48,7 @@ OpenGLRender::OpenGLRender()
 		::exit(-1);
 	}
 
+	// 检查编译错误 
 	auto fshader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fshader, 1, &fsource, NULL);
 	glCompileShader(fshader);
@@ -60,33 +62,29 @@ OpenGLRender::OpenGLRender()
 		::exit(-1);
 	}
 
+	// 检查链接错误  
 	auto shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vshader);
 	glAttachShader(shaderProgram, fshader);
 	glLinkProgram(shaderProgram);
-
-	// 检查链接错误  
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
+	if (!success)
+	{
 		GLchar infoLog[512];
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
 		std::cerr << "Shader program linking failed: " << infoLog << std::endl;
 		glDeleteProgram(shaderProgram); // 删除程序，防止内存泄漏  
 		::exit(-1);
 	}
-
-	// 删除着色器对象
 	glDeleteShader(vshader);
 	glDeleteShader(fshader);
 
 	m_NativeProgram = shaderProgram;
 
-	// 1. 生成VAO  
+	// 3. 配置顶点缓冲区
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-
-	// 3. 配置顶点缓冲区（假设你已经有了一个VBO和顶点数据）  
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -128,6 +126,7 @@ void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 			auto primitive = data[i].Primitive;
 			if (painter == nullptr || primitive.size() == 0) continue;
 
+			// 绑定到纹理数组
 			auto texture = painter->getTextureUpdated();
 			glActiveTexture(GL_TEXTURE0 + k);
 			glBindTexture(GL_TEXTURE_2D, texture);
@@ -146,9 +145,12 @@ void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 			}
 		}
 
+		// 更新顶点缓冲区
 		glBindBuffer(GL_ARRAY_BUFFER, m_NativeBuffer);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(primitive_t) * m_PrimitiveList.size(), m_PrimitiveList.data());
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// 渲染控件视图
 		glDrawArrays(GL_TRIANGLES, 0, m_PrimitiveList.size());
 	}
 
