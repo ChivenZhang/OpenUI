@@ -1,31 +1,64 @@
 #include "RmGUIContext.h"
 #include "RmGUIWidget.h"
 
-RmRef<IRmGUIContext> IRmGUIContext::GetInstance()
+struct RmGUIContextWidget
 {
-	return RmNew<RmGUIContext>();
+	RmRef<IRmGUIWidget> Widget;
+	int32_t ZOrder;
+};
+
+class RmGUIContextPrivateData : public RmGUIContextPrivate
+{
+public:
+	RmRef<IRmGUIPainter> Painter;
+	RmRef<IRmGUIRender> Render;
+	RmRef<IRmGUIWidget> FocusWidget;
+	RmVector<RmGUIContextWidget> TopLevelList;
+};
+#define PRIVATE() ((RmGUIContextPrivateData*)m_Private)
+
+RmGUIContext::RmGUIContext()
+	:
+	m_Private(nullptr)
+{
+	m_Private = new RmGUIContextPrivateData;
 }
 
-IRmGUISurfaceRaw RmGUIContext::getSurface() const
+RmGUIContext::~RmGUIContext()
 {
-	return m_Surface.get();
+	delete m_Private; m_Private = nullptr;
 }
 
-void RmGUIContext::setSurface(IRmGUISurfaceRef value)
+IRmGUIPainterRaw RmGUIContext::getPainter() const
 {
-	m_Surface = value;
+	return PRIVATE()->Painter.get();
+}
+
+void RmGUIContext::setPainter(IRmGUIPainterRef value)
+{
+	PRIVATE()->Painter = value;
+}
+
+IRmGUIRenderRaw RmGUIContext::getRender() const
+{
+	return PRIVATE()->Render.get();
+}
+
+void RmGUIContext::setRender(IRmGUIRenderRef value)
+{
+	PRIVATE()->Render = value;
 }
 
 bool RmGUIContext::addWidget(IRmGUIWidgetRef value, int32_t zorder)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
 	if (widget == nullptr) return false;
-	auto result = std::find_if(m_TopLevelList.begin(), m_TopLevelList.end(), [=](widget_t const& a)->bool { return a.Widget == widget; });
-	if (result == m_TopLevelList.end()) m_TopLevelList.push_back({ .Widget = value, .ZOrder = zorder, });
+	auto result = std::find_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](RmGUIContextWidget const& a)->bool { return a.Widget == widget; });
+	if (result == PRIVATE()->TopLevelList.end()) PRIVATE()->TopLevelList.push_back({ .Widget = value, .ZOrder = zorder, });
 	else result->ZOrder = zorder;
 	widget->setContext(this);
 
-	std::sort(m_TopLevelList.begin(), m_TopLevelList.end(), [](widget_t const& a, widget_t const& b)->bool {
+	std::sort(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [](RmGUIContextWidget const& a, RmGUIContextWidget const& b)->bool {
 		return a.ZOrder < b.ZOrder;
 		});
 	return true;
@@ -34,9 +67,9 @@ bool RmGUIContext::addWidget(IRmGUIWidgetRef value, int32_t zorder)
 bool RmGUIContext::removeWidget(IRmGUIWidgetRef value)
 {
 	auto widget = RmCast<RmGUIWidget>(value);
-	auto result = std::remove_if(m_TopLevelList.begin(), m_TopLevelList.end(), [=](widget_t const& a)->bool { return a.Widget == widget; });
-	if (result == m_TopLevelList.end()) return false;
-	m_TopLevelList.erase(result, m_TopLevelList.end());
+	auto result = std::remove_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](RmGUIContextWidget const& a)->bool { return a.Widget == widget; });
+	if (result == PRIVATE()->TopLevelList.end()) return false;
+	PRIVATE()->TopLevelList.erase(result, PRIVATE()->TopLevelList.end());
 	widget->setContext(nullptr);
 	return true;
 }
@@ -52,9 +85,9 @@ void RmGUIContext::sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get());
 		if (event->Accept == false) widget->handle(source, event);
 		};
-	for (size_t i = 0; i < m_TopLevelList.size(); ++i)
+	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		auto widget = m_TopLevelList[m_TopLevelList.size() - 1 - i].Widget.get();
+		auto widget = PRIVATE()->TopLevelList[PRIVATE()->TopLevelList.size() - 1 - i].Widget.get();
 		if (widget->getVisible() == false) continue;
 		foreach_func(widget);
 		break;
@@ -73,48 +106,88 @@ void RmGUIContext::layoutWidget(RmRect client)
 		auto childList = widget->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
 		};
-	for (size_t i = 0; i < m_TopLevelList.size(); ++i)
+	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
 		RmRect viewport;
-		if (std::isnan(m_TopLevelList[i].Widget->getFixedWidth()))
+		if (std::isnan(PRIVATE()->TopLevelList[i].Widget->getFixedWidth()))
 		{
 			viewport.X = 0;
 			viewport.W = client.W;
 		}
 		else
 		{
-			viewport.X = m_TopLevelList[i].Widget->getPositionX();
-			viewport.W = m_TopLevelList[i].Widget->getFixedWidth();
+			viewport.X = PRIVATE()->TopLevelList[i].Widget->getPositionX();
+			viewport.W = PRIVATE()->TopLevelList[i].Widget->getFixedWidth();
 		}
-		if (std::isnan(m_TopLevelList[i].Widget->getFixedHeight()))
+		if (std::isnan(PRIVATE()->TopLevelList[i].Widget->getFixedHeight()))
 		{
 			viewport.Y = 0;
 			viewport.H = client.H;
 		}
 		else
 		{
-			viewport.Y = m_TopLevelList[i].Widget->getPositionY();
-			viewport.H = m_TopLevelList[i].Widget->getFixedHeight();
+			viewport.Y = PRIVATE()->TopLevelList[i].Widget->getPositionY();
+			viewport.H = PRIVATE()->TopLevelList[i].Widget->getFixedHeight();
 		}
-		m_TopLevelList[i].Widget->setRect(viewport);
-		m_TopLevelList[i].Widget->setViewport(viewport);
-		foreach_func(m_TopLevelList[i].Widget.get(), m_TopLevelList[i].Widget->getRect());
+		PRIVATE()->TopLevelList[i].Widget->setRect(viewport);
+		PRIVATE()->TopLevelList[i].Widget->setViewport(viewport);
+		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getRect());
 	}
 }
 
 void RmGUIContext::paintWidget(RmRect client)
 {
-	if (m_Surface == nullptr || m_Surface->getPainter() == nullptr) return;
+	if (getPainter() == nullptr) return;
+
 	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
 		if (widget->getVisible() == false) return;
 		if (widget->getPainter()) widget->paint(widget->getPainter(), &client);
-		else widget->paint(m_Surface->getPainter(), &client);
+		else widget->paint(getPainter(), &client);
 		auto childList = widget->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
 		};
-	for (size_t i = 0; i < m_TopLevelList.size(); ++i)
+	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		foreach_func(m_TopLevelList[i].Widget.get(), m_TopLevelList[i].Widget->getRect());
+		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getRect());
 	}
+}
+
+void RmGUIContext::renderWidget(RmRect client)
+{
+	if (getRender() == nullptr) return;
+
+	RmVector<RmMeshUV> primitiveList;
+	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
+	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
+		if (widget->getVisible() == false) return;
+		if (widget->getPainter())
+		{
+			auto& mesh = primitiveList.emplace_back();
+			mesh.Texture = getPainter()->getPixelData();
+			mesh.Primitive = widget->getPrimitive();
+		}
+		auto childList = widget->getChildren();
+		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
+		};
+
+	if (getPainter())
+	{
+		auto& mesh = primitiveList.emplace_back();
+		RmPointUV3 primitive[2];
+		primitive[0].P0 = { client.X, client.Y, 0, 0 };
+		primitive[0].P1 = { client.X + client.W, client.Y, 0, 0 };
+		primitive[0].P2 = { client.X + client.W, client.Y + client.H, 0, 0 };
+		primitive[1].P0 = { client.X, client.Y, 0, 0 };
+		primitive[1].P1 = { client.X + client.W, client.Y + client.H, 0, 0 };
+		primitive[1].P2 = { client.X, client.Y + client.H, 0, 0 };
+		mesh.Texture = getPainter()->getPixelData();
+		mesh.Primitive = RmArrayView<RmPointUV3>(primitive, 2);
+	}
+
+	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
+	{
+		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getRect());
+	}
+	getRender()->render(primitiveList);
 }

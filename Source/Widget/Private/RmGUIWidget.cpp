@@ -14,6 +14,7 @@ public:
 	IRmGUIFilterRaw Filter = nullptr;
 	IRmGUIPainterRef Painter;
 	RmVector<IRmGUIWidgetRef> ChildrenList;
+	RmPointUV3 Primitive[2];
 
 	float MinWidth = RmNAN, MinHeight = RmNAN;
 	float MaxWidth = RmNAN, MaxHeight = RmNAN;
@@ -132,6 +133,11 @@ IRmGUIPainterRaw RmGUIWidget::getPainter() const
 void RmGUIWidget::setPainter(IRmGUIPainterRef value)
 {
 	PRIVATE()->Painter = value;
+}
+
+RmArrayView<const RmPointUV3> RmGUIWidget::getPrimitive() const
+{
+	return PRIVATE()->Primitive;
 }
 
 bool RmGUIWidget::filter(IRmGUIReactorRaw source, IRmGUIEventRaw event)

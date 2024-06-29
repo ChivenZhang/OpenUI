@@ -10,7 +10,6 @@ add_library (RmGUI SHARED
 	Widget/IRmGUIPainter.h
 	Widget/IRmGUIRender.h
 	Widget/IRmGUISignal.h
-	Widget/IRmGUISurface.h
 	Widget/IRmGUIWidget.h
 	Widget/Private/RmGUIButton.cpp
 	Widget/Private/RmGUIButton.h

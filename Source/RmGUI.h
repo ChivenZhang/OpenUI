@@ -251,6 +251,22 @@ inline bool operator ==(RmColor const& a, RmColor const& b)
 	return a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A;
 }
 
+struct RmPointUV
+{
+	float X, Y, U, V;
+};
+
+struct RmPointUV3
+{
+	RmPointUV P0, P1, P2;
+};
+
+struct RmMeshUV
+{
+	RmArrayView<const uint8_t> Texture;
+	RmArrayView<const RmPointUV3> Primitive;
+};
+
 struct RmPen
 {
 	using style_t = enum

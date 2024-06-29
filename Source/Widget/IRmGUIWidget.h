@@ -123,6 +123,8 @@ public:
 	virtual IRmGUIPainterRaw getPainter() const = 0;
 	virtual void setPainter(IRmGUIPainterRef value) = 0;
 
+	virtual RmArrayView<const RmPointUV3> getPrimitive() const = 0;
+
 	virtual RmString getAttribute(uint32_t name) const = 0;
 	virtual void setAttribute(uint32_t name, RmString const& value) = 0;
 

@@ -25,6 +25,7 @@ public:
 	virtual void setEventFilter(IRmGUIFilterRaw value) override;
 	virtual IRmGUIPainterRaw getPainter() const override;
 	virtual void setPainter(IRmGUIPainterRef value) override;
+	virtual RmArrayView<const RmPointUV3> getPrimitive() const override;
 	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
 	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) final override;
 	virtual void layout(RmRectRaw client) override;

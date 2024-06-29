@@ -100,7 +100,7 @@ inline void RmGUISignalAs<T...>::disconnect(IRmGUIWidgetRaw owner)
 template<class... T>
 inline void RmGUISignalAs<T...>::emit(T... args)
 {
-	// Call slot list in this signal
+	// Call slots in this signal.
 
 	bool hasDirty = false;
 	auto& connectList = PRIVATE_SIGNAL()->ConnectList;
@@ -113,7 +113,7 @@ inline void RmGUISignalAs<T...>::emit(T... args)
 		}
 	}
 
-	// Check slots in dirty mark
+	// Check dirty slots and remove them.
 
 	if (hasDirty)
 	{
@@ -218,7 +218,7 @@ inline void RmGUISignalAs<void>::disconnect(IRmGUIWidgetRaw owner)
 
 inline void RmGUISignalAs<void>::emit()
 {
-	// Call slot list in this signal
+	// Call slots in this signal.
 
 	bool hasDirty = false;
 	auto& connectList = PRIVATE_SIGNAL_VOID()->ConnectList;
@@ -231,7 +231,7 @@ inline void RmGUISignalAs<void>::emit()
 		}
 	}
 
-	// Check slots in dirty mark
+	// Check dirty slots and remove them.
 
 	if (hasDirty)
 	{

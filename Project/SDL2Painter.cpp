@@ -1,10 +1,10 @@
 #include "SDL2Painter.h"
 
-SDL2Painter::SDL2Painter(cairo_t* native)
-	:
-	m_NativeContext(native)
+SDL2Painter::SDL2Painter(uint32_t width, uint32_t height)
 {
-	auto cr = native;
+	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
+	m_NativeContext = cairo_create(m_NativeSurface);
+	auto cr = m_NativeContext;
 	cairo_set_source_rgba(cr, 0, 0, 0, 1);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
 	cairo_paint(cr);
@@ -24,6 +24,53 @@ SDL2Painter::SDL2Painter(cairo_t* native)
 SDL2Painter::~SDL2Painter()
 {
 	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
+	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
+	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+}
+
+uint32_t SDL2Painter::getWidth() const
+{
+	return cairo_image_surface_get_width(m_NativeSurface);
+}
+
+uint32_t SDL2Painter::getHeight() const
+{
+	return cairo_image_surface_get_height(m_NativeSurface);
+}
+
+uint32_t SDL2Painter::getStride() const
+{
+	return cairo_image_surface_get_stride(m_NativeSurface);
+}
+
+RmArrayView<const uint8_t> SDL2Painter::getPixelData() const
+{
+	return RmArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getWidth() * getHeight() * getStride());
+}
+
+void SDL2Painter::resize(uint32_t width, uint32_t height)
+{
+	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
+	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
+	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+
+	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
+	m_NativeContext = cairo_create(m_NativeSurface);
+	auto cr = m_NativeContext;
+	cairo_set_source_rgba(cr, 0, 0, 0, 1);
+	cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
+	cairo_paint(cr);
+
+	m_NativeLayout = pango_cairo_create_layout(cr);
+	auto& font = m_Font;
+	auto layout = m_NativeLayout;
+	auto font_desc = pango_font_description_new();
+	pango_font_description_set_family(font_desc, font.Family.c_str());
+	pango_font_description_set_style(font_desc, (PangoStyle)font.Style);
+	pango_font_description_set_size(font_desc, font.Size * PANGO_SCALE);
+	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
+	pango_layout_set_font_description(layout, font_desc);
+	pango_font_description_free(font_desc);
 }
 
 RmRect SDL2Painter::boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect)

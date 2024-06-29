@@ -109,7 +109,7 @@ void RmGUICombo::setItems(RmStringList const& texts)
 		itemsWidget->addWidget(button);
 		button->setText(text);
 		button->setStyle(PRIVATE()->ItemStyle);
-		auto textRect = getContext()->getSurface()->getPainter()->boundingRect(0, 0, INT_MAX, INT_MAX, text);
+		auto textRect = getContext()->getPainter()->boundingRect(0, 0, INT_MAX, INT_MAX, text);
 
 		button->setFixedHeight(textRect.H);
 		itemsWidget->setFixedHeight(itemsWidget->getFixedHeight() + textRect.H);

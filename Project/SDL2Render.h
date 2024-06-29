@@ -6,5 +6,5 @@ class SDL2Render : public IRmGUIRender
 public:
 	SDL2Render();
 	~SDL2Render();
-	virtual void render(RmArrayView<mesh_t> data) override;
+	virtual void render(RmArrayView<const RmMeshUV> primitive) override;
 };

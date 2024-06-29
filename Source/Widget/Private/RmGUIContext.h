@@ -1,28 +1,27 @@
 #pragma once
 #include "Widget/IRmGUIContext.h"
-#include "Widget/IRmGUIWidget.h"
-#include "Widget/IRmGUISurface.h"
+
+class RmGUIContextPrivate {};
+using RmGUIContextPrivateRaw = RmRaw<RmGUIContextPrivate>;
 
 /// @brief 
-class RmGUIContext : public IRmGUIContext
+class RMGUI_API RmGUIContext : public IRmGUIContext
 {
 public:
-	virtual RmRaw<IRmGUISurface> getSurface() const override;
-	virtual void setSurface(IRmGUISurfaceRef value) override;
+	RmGUIContext();
+	~RmGUIContext();
+	virtual IRmGUIPainterRaw getPainter() const override;
+	virtual void setPainter(IRmGUIPainterRef value) override;
+	virtual IRmGUIRenderRaw getRender() const override;
+	virtual void setRender(IRmGUIRenderRef value) override;
 	virtual bool addWidget(IRmGUIWidgetRef widget, int32_t zorder = 0) override;
 	virtual bool removeWidget(IRmGUIWidgetRef widget) override;
 	virtual void sendEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
 	virtual void postEvent(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
 	virtual void layoutWidget(RmRect client) override;
 	virtual void paintWidget(RmRect client) override;
+	virtual void renderWidget(RmRect client) override;
 
-	using widget_t = struct widget_t
-	{
-		RmRef<IRmGUIWidget> Widget;
-		int32_t ZOrder;
-	};
-protected:
-	RmRef<IRmGUISurface> m_Surface;
-	RmRef<IRmGUIWidget> m_FocusWidget;
-	RmVector<widget_t> m_TopLevelList;
+private:
+	RmGUIContextPrivateRaw m_Private;
 };

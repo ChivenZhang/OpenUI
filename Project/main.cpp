@@ -4,8 +4,9 @@
 #include <GL/glew.h>
 #include <iostream>  
 #include <cairo/cairo.h>
-#include "Widget/IRmGUIContext.h"
-#include "SDL2Surface.h"
+#include "SDL2Painter.h"
+#include "SDL2Render.h"
+#include "Widget/Private/RmGUIContext.h"
 #include "Widget/Private/RmGUIHBox.h"
 #include "Widget/Private/RmGUIVBox.h"
 #include "Widget/Private/RmGUIFlow.h"
@@ -75,10 +76,12 @@ int main(int argc, char* argv[]) {
 
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
-	auto surface = RmNew<SDL2Surface>(w, h);
-	auto texture = SDL_CreateTextureFromSurface(renderer, surface->getNativeSurface());
-	auto context = IRmGUIContext::GetInstance();
-	context->setSurface(surface);
+	auto context = RmNew<RmGUIContext>();
+	auto painter = RmNew<SDL2Painter>(w, h);
+	auto render = RmNew<SDL2Render>();
+	context->setPainter(painter);
+	context->setRender(render);
+	auto texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
 
 	auto top = RmNew<RmGUIFlow>();
 	context->addWidget(top);
@@ -396,9 +399,9 @@ int main(int argc, char* argv[]) {
 					// event.window.data2 是新的高度  
 					// printf("Window resized to %dx%d\n", event.window.data1, event.window.data2);
 				{
-					surface->resize(event.window.data1, event.window.data2);
+					painter->resize(event.window.data1, event.window.data2);
 					SDL_DestroyTexture(texture);
-					texture = SDL_CreateTextureFromSurface(renderer, surface->getNativeSurface());
+					texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
 
 					IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
 					context->sendEvent(nullptr, &event2);
@@ -458,9 +461,10 @@ int main(int argc, char* argv[]) {
 		SDL_GetWindowSize(window, &w, &h);
 		context->layoutWidget(RmRect{ 0, 0, (float)w, (float)h });
 		context->paintWidget(RmRect{ 0, 0, (float)w, (float)h });
+		context->renderWidget(RmRect{ 0, 0, (float)w, (float)h });
 
 		// 更新屏幕内容  
-		SDL_UpdateTexture(texture, nullptr, surface->getPixelData().data(), surface->getStride());
+		SDL_UpdateTexture(texture, nullptr, painter->getPixelData().data(), painter->getStride());
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);
 	}
