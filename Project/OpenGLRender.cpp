@@ -8,11 +8,14 @@ OpenGLRender::OpenGLRender()
 		#version 450 core
 		layout (location = 0) in vec2 _point;
 		layout (location = 1) in vec2 _uv;
+		layout (location = 2) in uint _index;
 		out vec2 uv;
+		flat out uint index;
 
 		void main()
 		{
 			uv = _uv;
+			index = _index;
 			gl_Position = vec4(_point, 0.0, 1.0);
 		}
 	)";
@@ -20,12 +23,13 @@ OpenGLRender::OpenGLRender()
 	auto fsource = R"(
 		#version 450 core
 		in vec2 uv;
+		flat in uint index;
 		layout (location = 0) out vec4 color;
-		layout (binding = 0) uniform sampler2D texture0;
+		layout (binding = 0) uniform sampler2D textureList[32];
 
 		void main()
 		{
-			color = vec4(texture(texture0, uv).rgb,1);
+			color = texture(textureList[index], uv);
 		}
 	)";
 
@@ -90,13 +94,13 @@ OpenGLRender::OpenGLRender()
 
 	m_NativeBuffer = vbo;
 
-	// 4. 设置顶点属性指针（例如，位置属性）  
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	// 4. 设置顶点属性指针 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(primitive_t), (void*)offsetof(primitive_t, XY));
 	glEnableVertexAttribArray(1);
-
-	// 5. 解绑VAO  
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(primitive_t), (void*)offsetof(primitive_t, UV));
+	glEnableVertexAttribArray(2);
+	glVertexAttribIPointer(2, 1, GL_INT, sizeof(primitive_t), (void*)offsetof(primitive_t, Index));
 	glBindVertexArray(0);
 
 	m_NativePrimitive = vao;
@@ -111,37 +115,42 @@ OpenGLRender::~OpenGLRender()
 
 void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 {
+	int32_t maxTextureUnits = 16;
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
 	glUseProgram(m_NativeProgram);
 	glBindVertexArray(m_NativePrimitive);
 
-	m_PrimitiveList.clear();
-	for (size_t i = 0; i < data.size(); ++i)
+	for (size_t i = 0; i < data.size(); i += maxTextureUnits)
 	{
-		auto painter = RmCast<OpenGLPainter>(data[i].Painter);
-		auto primitive = data[i].Primitive;
-		if (painter == nullptr || primitive.size() == 0) continue;
-
-		auto texture = painter->getTextureUpdated();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
-
-		for (size_t n = 0; n < primitive.size(); ++n)
+		for (size_t k = 0; k < maxTextureUnits && i + k < data.size(); ++k)
 		{
-			m_PrimitiveList.emplace_back(primitive_t{
-				2 * (primitive[n].P0.X / client.W) - 1.0f,2 * (primitive[n].P0.Y / client.H) - 1.0f,primitive[n].P0.U,primitive[n].P0.V,
-				});
-			m_PrimitiveList.emplace_back(primitive_t{
-				2 * (primitive[n].P1.X / client.W) - 1.0f,2 * (primitive[n].P1.Y / client.H) - 1.0f,primitive[n].P1.U,primitive[n].P1.V,
-				});
-			m_PrimitiveList.emplace_back(primitive_t{
-				2 * (primitive[n].P2.X / client.W) - 1.0f,2 * (primitive[n].P2.Y / client.H) - 1.0f,primitive[n].P2.U,primitive[n].P2.V,
-				});
+			auto painter = RmCast<OpenGLPainter>(data[i + k].Painter);
+			auto primitive = data[i].Primitive;
+			if (painter == nullptr || primitive.size() == 0) continue;
+
+			auto texture = painter->getTextureUpdated();
+			glActiveTexture(GL_TEXTURE0 + k);
+			glBindTexture(GL_TEXTURE_2D, texture);
+
+			for (size_t n = 0; n < primitive.size(); ++n)
+			{
+				m_PrimitiveList.emplace_back(primitive_t{
+					2 * (primitive[n].P0.X / client.W) - 1.0f, 2 * (primitive[n].P0.Y / client.H) - 1.0f, primitive[n].P0.U, primitive[n].P0.V, (uint32_t)k,
+					});
+				m_PrimitiveList.emplace_back(primitive_t{
+					2 * (primitive[n].P1.X / client.W) - 1.0f, 2 * (primitive[n].P1.Y / client.H) - 1.0f, primitive[n].P1.U, primitive[n].P1.V, (uint32_t)k,
+					});
+				m_PrimitiveList.emplace_back(primitive_t{
+					2 * (primitive[n].P2.X / client.W) - 1.0f, 2 * (primitive[n].P2.Y / client.H) - 1.0f, primitive[n].P2.U, primitive[n].P2.V, (uint32_t)k,
+					});
+			}
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_NativeBuffer);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(primitive_t) * m_PrimitiveList.size(), m_PrimitiveList.data());
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+		// ... 绘制调用
 		glDrawArrays(GL_TRIANGLES, 0, m_PrimitiveList.size());
 	}
 	glBindVertexArray(0);
