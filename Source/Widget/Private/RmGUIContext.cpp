@@ -108,7 +108,8 @@ void RmGUIContext::paintWidget(RmRect client)
 	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
 		if (widget->getVisible() == false) return;
-		widget->paint(m_Surface->getPainter(), &client);
+		if (widget->getPainter()) widget->paint(widget->getPainter(), &client);
+		else widget->paint(m_Surface->getPainter(), &client);
 		auto childList = widget->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
 		};

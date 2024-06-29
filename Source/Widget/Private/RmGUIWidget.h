@@ -23,6 +23,8 @@ public:
 	virtual void removeWidget() override;
 	virtual IRmGUIFilterRaw getEventFilter() const override;
 	virtual void setEventFilter(IRmGUIFilterRaw value) override;
+	virtual IRmGUIPainterRaw getPainter() const override;
+	virtual void setPainter(IRmGUIPainterRef value) override;
 	virtual bool filter(IRmGUIReactorRaw source, IRmGUIEventRaw event) override;
 	virtual void handle(IRmGUIReactorRaw source, IRmGUIEventRaw event) final override;
 	virtual void layout(RmRectRaw client) override;

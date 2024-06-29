@@ -1,5 +1,7 @@
 #include "RmGUIWidget.h"
 #include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
+#include "RmGUIWidget.h"
 #include "RmGUIContext.h"
 #include <taitank.h>
 namespace flex = taitank;
@@ -10,6 +12,7 @@ public:
 	IRmGUIContextRaw Context = nullptr;
 	IRmGUIWidgetRaw Parent = nullptr;
 	IRmGUIFilterRaw Filter = nullptr;
+	IRmGUIPainterRef Painter;
 	RmVector<IRmGUIWidgetRef> ChildrenList;
 
 	float MinWidth = RmNAN, MinHeight = RmNAN;
@@ -119,6 +122,16 @@ IRmGUIFilterRaw RmGUIWidget::getEventFilter() const
 void RmGUIWidget::setEventFilter(IRmGUIFilterRaw value)
 {
 	PRIVATE()->Filter = value;
+}
+
+IRmGUIPainterRaw RmGUIWidget::getPainter() const
+{
+	return PRIVATE()->Painter.get();
+}
+
+void RmGUIWidget::setPainter(IRmGUIPainterRef value)
+{
+	PRIVATE()->Painter = value;
 }
 
 bool RmGUIWidget::filter(IRmGUIReactorRaw source, IRmGUIEventRaw event)
