@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
 	// 这里可以添加OpenGL的初始化和渲染代码  
+	SDL_GL_SetSwapInterval(1);
 
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
@@ -467,6 +468,10 @@ int main(int argc, char* argv[]) {
 		SDL_GL_MakeCurrent(window, context);
 		glClearColor(0.8, 0.8, 0.8, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CCW);
 		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
 		openui->renderWidget(client);
 		SDL_GL_SwapWindow(window);

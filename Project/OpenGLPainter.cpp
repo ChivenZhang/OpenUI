@@ -9,9 +9,10 @@ OpenGLPainter::OpenGLPainter(uint32_t width, uint32_t height)
 	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
 	m_NativeContext = cairo_create(m_NativeSurface);
@@ -628,5 +629,5 @@ uint32_t OpenGLPainter::getTextureUpdated() const
 	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, getWidth(), getHeight(), GL_BGRA, GL_UNSIGNED_BYTE, getPixelData().data());
 	glBindTexture(GL_TEXTURE_2D, 0);
-	return getTexture();
+	return m_NativeTexture;
 }
