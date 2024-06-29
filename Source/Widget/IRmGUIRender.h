@@ -7,7 +7,7 @@ class RMGUI_API IRmGUIRender
 public:
 	virtual ~IRmGUIRender() = default;
 
-	virtual void render(RmArrayView<const RmMeshUV> primitive) = 0;
+	virtual void render(RmArrayView<RmPrimitive> widgets) = 0;
 };
 using IRmGUIRenderRef = RmRef<IRmGUIRender>;
 using IRmGUIRenderRaw = RmRaw<IRmGUIRender>;

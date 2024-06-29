@@ -157,15 +157,13 @@ void RmGUIContext::renderWidget(RmRect client)
 {
 	if (getRender() == nullptr) return;
 
-	RmVector<RmMeshUV> primitiveList;
+	RmVector<RmPrimitive> renderList;
 	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
 	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
 		if (widget->getVisible() == false) return;
 		if (widget->getPainter())
 		{
-			auto& mesh = primitiveList.emplace_back();
-			mesh.Texture = getPainter()->getPixelData();
-			mesh.Primitive = widget->getPrimitive();
+			renderList.emplace_back(RmPrimitive{ widget->getPainter(), widget->getPrimitive() });
 		}
 		auto childList = widget->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
@@ -173,7 +171,6 @@ void RmGUIContext::renderWidget(RmRect client)
 
 	if (getPainter())
 	{
-		auto& mesh = primitiveList.emplace_back();
 		RmPointUV3 primitive[2];
 		primitive[0].P0 = { client.X, client.Y, 0, 0 };
 		primitive[0].P1 = { client.X + client.W, client.Y, 0, 0 };
@@ -181,13 +178,12 @@ void RmGUIContext::renderWidget(RmRect client)
 		primitive[1].P0 = { client.X, client.Y, 0, 0 };
 		primitive[1].P1 = { client.X + client.W, client.Y + client.H, 0, 0 };
 		primitive[1].P2 = { client.X, client.Y + client.H, 0, 0 };
-		mesh.Texture = getPainter()->getPixelData();
-		mesh.Primitive = RmArrayView<RmPointUV3>(primitive, 2);
+		renderList.emplace_back(RmPrimitive{ getPainter(), primitive });
 	}
 
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
 		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getRect());
 	}
-	getRender()->render(primitiveList);
+	getRender()->render(renderList);
 }

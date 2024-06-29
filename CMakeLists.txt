@@ -15,6 +15,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
 include_directories(Source)
 include_directories(External/x64-windows/include)
+include_directories(External/earcut.hpp/include)
 include_directories(External/x64-windows/include/pango-1.0)
 include_directories(External/x64-windows/include/glib-2.0)
 include_directories(External/x64-windows/include/harfbuzz)

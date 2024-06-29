@@ -1,58 +1,17 @@
-#include "SDL2Painter.h"
+#include "OpenGLPainter.h"
+#include <GL/glew.h>
 
-SDL2Painter::SDL2Painter(uint32_t width, uint32_t height)
+OpenGLPainter::OpenGLPainter(uint32_t width, uint32_t height)
 {
-	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
-	m_NativeContext = cairo_create(m_NativeSurface);
-	auto cr = m_NativeContext;
-	cairo_set_source_rgba(cr, 0, 0, 0, 1);
-	cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
-	cairo_paint(cr);
-
-	m_NativeLayout = pango_cairo_create_layout(cr);
-	auto& font = m_Font;
-	auto layout = m_NativeLayout;
-	auto font_desc = pango_font_description_new();
-	pango_font_description_set_family(font_desc, font.Family.c_str());
-	pango_font_description_set_style(font_desc, (PangoStyle)font.Style);
-	pango_font_description_set_size(font_desc, font.Size * PANGO_SCALE);
-	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
-	pango_layout_set_font_description(layout, font_desc);
-	pango_font_description_free(font_desc);
-}
-
-SDL2Painter::~SDL2Painter()
-{
-	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
-	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
-	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
-}
-
-uint32_t SDL2Painter::getWidth() const
-{
-	return cairo_image_surface_get_width(m_NativeSurface);
-}
-
-uint32_t SDL2Painter::getHeight() const
-{
-	return cairo_image_surface_get_height(m_NativeSurface);
-}
-
-uint32_t SDL2Painter::getStride() const
-{
-	return cairo_image_surface_get_stride(m_NativeSurface);
-}
-
-RmArrayView<const uint8_t> SDL2Painter::getPixelData() const
-{
-	return RmArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getWidth() * getHeight() * getStride());
-}
-
-void SDL2Painter::resize(uint32_t width, uint32_t height)
-{
-	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
-	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
-	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+	m_NativeTexture = 0;
+	glGenTextures(1, &m_NativeTexture);
+	if (m_NativeTexture == 0) ::exit(-1);
+	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
 
 	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
 	m_NativeContext = cairo_create(m_NativeSurface);
@@ -73,7 +32,14 @@ void SDL2Painter::resize(uint32_t width, uint32_t height)
 	pango_font_description_free(font_desc);
 }
 
-RmRect SDL2Painter::boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect)
+OpenGLPainter::~OpenGLPainter()
+{
+	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
+	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
+	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+}
+
+RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
@@ -104,7 +70,7 @@ RmRect SDL2Painter::boundingRect(int x, int y, int width, int height, RmString c
 	return text_rect;
 }
 
-void SDL2Painter::drawArc(int x, int y, int width, int height, int startAngle, int spanAngle)
+void OpenGLPainter::drawArc(int x, int y, int width, int height, int startAngle, int spanAngle)
 {
 	if (width <= 0 || height <= 0) return;
 	auto cr = m_NativeContext;
@@ -133,7 +99,7 @@ void SDL2Painter::drawArc(int x, int y, int width, int height, int startAngle, i
 	}
 }
 
-void SDL2Painter::drawChord(int x, int y, int width, int height, int startAngle, int spanAngle)
+void OpenGLPainter::drawChord(int x, int y, int width, int height, int startAngle, int spanAngle)
 {
 	if (width <= 0 || height <= 0) return;
 	auto cr = m_NativeContext;
@@ -163,16 +129,16 @@ void SDL2Painter::drawChord(int x, int y, int width, int height, int startAngle,
 	}
 }
 
-void SDL2Painter::drawEllipse(int x, int y, int width, int height)
+void OpenGLPainter::drawEllipse(int x, int y, int width, int height)
 {
 	drawArc(x, y, width, height, 0, 360);
 }
 
-void SDL2Painter::drawImage(int x, int y, RmImageRaw image, int sx, int sy, int sw, int sh)
+void OpenGLPainter::drawImage(int x, int y, RmImageRaw image, int sx, int sy, int sw, int sh)
 {
 }
 
-void SDL2Painter::drawLine(int x1, int y1, int x2, int y2)
+void OpenGLPainter::drawLine(int x1, int y1, int x2, int y2)
 {
 	auto cr = m_NativeContext;
 	if (m_Pen.Style != RmPen::NoPen)
@@ -187,7 +153,7 @@ void SDL2Painter::drawLine(int x1, int y1, int x2, int y2)
 	}
 }
 
-void SDL2Painter::drawLines(RmArrayView<RmLine> lines)
+void OpenGLPainter::drawLines(RmArrayView<RmLine> lines)
 {
 	auto cr = m_NativeContext;
 	if (m_Pen.Style != RmPen::NoPen && 2 <= lines.size())
@@ -205,7 +171,7 @@ void SDL2Painter::drawLines(RmArrayView<RmLine> lines)
 	}
 }
 
-void SDL2Painter::drawPie(int x, int y, int width, int height, int startAngle, int spanAngle)
+void OpenGLPainter::drawPie(int x, int y, int width, int height, int startAngle, int spanAngle)
 {
 	if (width <= 0 || height <= 0) return;
 	auto cr = m_NativeContext;
@@ -237,7 +203,7 @@ void SDL2Painter::drawPie(int x, int y, int width, int height, int startAngle, i
 	}
 }
 
-void SDL2Painter::drawPoint(int x, int y)
+void OpenGLPainter::drawPoint(int x, int y)
 {
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
@@ -259,7 +225,7 @@ void SDL2Painter::drawPoint(int x, int y)
 	}
 }
 
-void SDL2Painter::drawPoints(RmArrayView<RmPoint> points)
+void OpenGLPainter::drawPoints(RmArrayView<RmPoint> points)
 {
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
@@ -281,7 +247,7 @@ void SDL2Painter::drawPoints(RmArrayView<RmPoint> points)
 	}
 }
 
-void SDL2Painter::drawPolygon(RmArrayView<RmPoint> points)
+void OpenGLPainter::drawPolygon(RmArrayView<RmPoint> points)
 {
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush && 2 <= points.size())
@@ -312,7 +278,7 @@ void SDL2Painter::drawPolygon(RmArrayView<RmPoint> points)
 	}
 }
 
-void SDL2Painter::drawPolyline(RmArrayView<RmPoint> points)
+void OpenGLPainter::drawPolyline(RmArrayView<RmPoint> points)
 {
 	auto cr = m_NativeContext;
 	if (m_Pen.Style != RmPen::NoPen && 2 <= points.size())
@@ -330,7 +296,7 @@ void SDL2Painter::drawPolyline(RmArrayView<RmPoint> points)
 	}
 }
 
-void SDL2Painter::drawRect(int x, int y, int width, int height)
+void OpenGLPainter::drawRect(int x, int y, int width, int height)
 {
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush && 0 <= width && 0 <= height)
@@ -352,7 +318,7 @@ void SDL2Painter::drawRect(int x, int y, int width, int height)
 	}
 }
 
-void SDL2Painter::drawRects(RmArrayView<RmRect> rects)
+void OpenGLPainter::drawRects(RmArrayView<RmRect> rects)
 {
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush)
@@ -380,7 +346,7 @@ void SDL2Painter::drawRects(RmArrayView<RmRect> rects)
 	}
 }
 
-void SDL2Painter::drawRoundedRect(int x, int y, int width, int height, float xRadius, float yRadius)
+void OpenGLPainter::drawRoundedRect(int x, int y, int width, int height, float xRadius, float yRadius)
 {
 	auto cr = m_NativeContext;
 	if (m_Brush.Style != RmBrush::NoBrush && 0 < width && 0 < height)
@@ -423,7 +389,7 @@ void SDL2Painter::drawRoundedRect(int x, int y, int width, int height, float xRa
 	}
 }
 
-void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect, int cursor, RmRectRaw cursorRect)
+void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect, int cursor, RmRectRaw cursorRect)
 {
 	auto cr = m_NativeContext;
 	auto layout = m_NativeLayout;
@@ -497,17 +463,17 @@ void SDL2Painter::drawText(int x, int y, int width, int height, const RmString& 
 	}
 }
 
-void SDL2Painter::setPen(const RmPen& pen)
+void OpenGLPainter::setPen(const RmPen& pen)
 {
 	m_Pen = pen;
 }
 
-void SDL2Painter::setBrush(const RmBrush& brush)
+void OpenGLPainter::setBrush(const RmBrush& brush)
 {
 	m_Brush = brush;
 }
 
-void SDL2Painter::setFont(const RmFont& font)
+void OpenGLPainter::setFont(const RmFont& font)
 {
 	auto layout = m_NativeLayout;
 	auto font_desc = pango_layout_get_font_description(layout);
@@ -559,7 +525,7 @@ void SDL2Painter::setFont(const RmFont& font)
 	m_Font = font;
 }
 
-void SDL2Painter::setClipping(bool enable)
+void OpenGLPainter::setClipping(bool enable)
 {
 	auto cr = m_NativeContext;
 	if (enable)
@@ -573,36 +539,98 @@ void SDL2Painter::setClipping(bool enable)
 	}
 }
 
-void SDL2Painter::setClipRect(int x, int y, int width, int height)
+void OpenGLPainter::setClipRect(int x, int y, int width, int height)
 {
 	auto cr = m_NativeContext;
 	m_CilpRect = RmRect{ (float)x, (float)y, (float)width, (float)height };
 }
 
-void SDL2Painter::setViewport(int x, int y, int width, int height)
+void OpenGLPainter::setViewport(int x, int y, int width, int height)
 {
 	// TODO
 }
 
-void SDL2Painter::shear(float sh, float sv)
+void OpenGLPainter::shear(float sh, float sv)
 {
 	// TODO
 }
 
-void SDL2Painter::rotate(float angle)
+void OpenGLPainter::rotate(float angle)
 {
 	auto cr = m_NativeContext;
 	cairo_rotate(cr, angle * (M_PI / 180.0));
 }
 
-void SDL2Painter::scale(float dx, float dy)
+void OpenGLPainter::scale(float dx, float dy)
 {
 	auto cr = m_NativeContext;
 	cairo_scale(cr, dx, dy);
 }
 
-void SDL2Painter::translate(float dx, float dy)
+void OpenGLPainter::translate(float dx, float dy)
 {
 	auto cr = m_NativeContext;
 	cairo_translate(cr, dx, dy);
+}
+
+uint32_t OpenGLPainter::getWidth() const
+{
+	return cairo_image_surface_get_width(m_NativeSurface);
+}
+
+uint32_t OpenGLPainter::getHeight() const
+{
+	return cairo_image_surface_get_height(m_NativeSurface);
+}
+
+uint32_t OpenGLPainter::getStride() const
+{
+	return cairo_image_surface_get_stride(m_NativeSurface);
+}
+
+RmArrayView<const uint8_t> OpenGLPainter::getPixelData() const
+{
+	return RmArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getWidth() * getHeight() * getStride());
+}
+
+void OpenGLPainter::resize(uint32_t width, uint32_t height)
+{
+	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
+	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
+	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+
+	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
+	m_NativeContext = cairo_create(m_NativeSurface);
+	auto cr = m_NativeContext;
+	cairo_set_source_rgba(cr, 0, 0, 0, 1);
+	cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
+	cairo_paint(cr);
+
+	m_NativeLayout = pango_cairo_create_layout(cr);
+	auto& font = m_Font;
+	auto layout = m_NativeLayout;
+	auto font_desc = pango_font_description_new();
+	pango_font_description_set_family(font_desc, font.Family.c_str());
+	pango_font_description_set_style(font_desc, (PangoStyle)font.Style);
+	pango_font_description_set_size(font_desc, font.Size * PANGO_SCALE);
+	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
+	pango_layout_set_font_description(layout, font_desc);
+	pango_font_description_free(font_desc);
+}
+
+uint32_t OpenGLPainter::getTexture() const
+{
+	return m_NativeTexture;
+}
+
+uint32_t OpenGLPainter::getTextureUpdated() const
+{
+	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, getWidth(), getHeight(), 0, GL_BGRA, GL_UNSIGNED_BYTE, getPixelData().data());
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return getTexture();
 }

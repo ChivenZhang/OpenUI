@@ -3,16 +3,11 @@
 #include <cairo/cairo.h>
 #include <pango/pangocairo.h>
 
-class SDL2Painter : public IRmGUIPainter
+class OpenGLPainter : public IRmGUIPainter
 {
 public:
-	SDL2Painter(uint32_t width, uint32_t height);
-	~SDL2Painter();
-	virtual uint32_t getWidth() const override;
-	virtual uint32_t getHeight() const override;
-	virtual uint32_t getStride() const override;
-	virtual RmArrayView<const uint8_t> getPixelData() const override;
-	virtual void resize(uint32_t width, uint32_t height) override;
+	OpenGLPainter(uint32_t width, uint32_t height);
+	~OpenGLPainter();
 	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect) override;
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
@@ -39,14 +34,22 @@ public:
 	virtual void rotate(float angle) override;
 	virtual void scale(float dx, float dy) override;
 	virtual void translate(float dx, float dy) override;
+	virtual uint32_t getWidth() const override;
+	virtual uint32_t getHeight() const override;
+	virtual uint32_t getStride() const override;
+	virtual RmArrayView<const uint8_t> getPixelData() const override;
+	virtual void resize(uint32_t width, uint32_t height) override;
+	uint32_t getTexture() const;
+	uint32_t getTextureUpdated() const;
 
 protected:
+	uint32_t m_NativeTexture;
 	cairo_t* m_NativeContext;
 	PangoLayout* m_NativeLayout;
 	cairo_surface_t* m_NativeSurface;
 	RmPen m_Pen;
-	RmBrush m_Brush;
 	RmFont m_Font;
+	RmBrush m_Brush;
 	RmRect m_CilpRect;
 	bool m_EnableCilp = false;
 };

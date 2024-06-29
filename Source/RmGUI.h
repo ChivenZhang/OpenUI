@@ -253,7 +253,7 @@ inline bool operator ==(RmColor const& a, RmColor const& b)
 
 struct RmPointUV
 {
-	float X, Y, U, V;
+	float X = 0, Y = 0, U = 0, V = 0;
 };
 
 struct RmPointUV3
@@ -261,9 +261,11 @@ struct RmPointUV3
 	RmPointUV P0, P1, P2;
 };
 
-struct RmMeshUV
+class IRmGUIPainter;
+using IRmGUIPainterRaw = RmRaw<IRmGUIPainter>;
+struct RmPrimitive
 {
-	RmArrayView<const uint8_t> Texture;
+	IRmGUIPainterRaw Painter;
 	RmArrayView<const RmPointUV3> Primitive;
 };
 

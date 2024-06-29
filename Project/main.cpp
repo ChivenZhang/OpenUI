@@ -4,8 +4,8 @@
 #include <GL/glew.h>
 #include <iostream>  
 #include <cairo/cairo.h>
-#include "SDL2Painter.h"
-#include "SDL2Render.h"
+#include "OpenGLPainter.h"
+#include "OpenGLRender.h"
 #include "Widget/Private/RmGUIContext.h"
 #include "Widget/Private/RmGUIHBox.h"
 #include "Widget/Private/RmGUIVBox.h"
@@ -23,7 +23,7 @@ static int count = 0;
 
 int main(int argc, char* argv[]) {
 	SDL_Window* window;
-	SDL_GLContext glContext;
+	SDL_GLContext context;
 
 	// 初始化SDL  
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -44,8 +44,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	// 创建OpenGL上下文  
-	glContext = SDL_GL_CreateContext(window);
-	if (glContext == nullptr) {
+	context = SDL_GL_CreateContext(window);
+	if (context == nullptr) {
 		std::cerr << "OpenGL context could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_DestroyWindow(window);
 		SDL_Quit();
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 	GLenum glewInitResult = glewInit();
 	if (GLEW_OK != glewInitResult) {
 		std::cerr << "GLEW could not be initialized! " << glewGetErrorString(glewInitResult) << std::endl;
-		SDL_GL_DeleteContext(glContext);
+		SDL_GL_DeleteContext(context);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
 		return -1;
@@ -65,26 +65,26 @@ int main(int argc, char* argv[]) {
 	//// 检查OpenGL版本信息  
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (renderer == NULL) {
-		// 处理错误  
-		SDL_Log("Could not create renderer: %s", SDL_GetError());
-		exit(1);
-	}
-
 	// 这里可以添加OpenGL的初始化和渲染代码  
 
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
-	auto context = RmNew<RmGUIContext>();
-	auto painter = RmNew<SDL2Painter>(w, h);
-	auto render = RmNew<SDL2Render>();
-	context->setPainter(painter);
-	context->setRender(render);
-	auto texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
+	auto openui = RmNew<RmGUIContext>();
+	auto painter = RmNew<OpenGLPainter>(w, h);
+	auto render = RmNew<OpenGLRender>();
+	openui->setPainter(painter);
+	openui->setRender(render);
+
+	//SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	//if (renderer == NULL) {
+	//	// 处理错误  
+	//	SDL_Log("Could not create renderer: %s", SDL_GetError());
+	//	exit(1);
+	//}
+	//auto texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
 
 	auto top = RmNew<RmGUIFlow>();
-	context->addWidget(top);
+	openui->addWidget(top);
 
 #if 0
 	{
@@ -250,7 +250,7 @@ int main(int argc, char* argv[]) {
 		style2.Hover.Brush.Color = { 1,1,1,0.5 };
 		style2.Press.Brush.Color = { 1,1,1,0.8 };
 		button->setStyle(style2);
-		context->addWidget(button);
+		openui->addWidget(button);
 	}
 #endif
 
@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
 	if (true)
 	{
 		auto text = RmNew<RmGUIText>();
-		context->addWidget(text);
+		openui->addWidget(text);
 	}
 #endif
 
@@ -308,20 +308,20 @@ int main(int argc, char* argv[]) {
 				// 可以使用 event.key.keysym.sym 来获取按下的键的标识符
 			{
 				IRmGUIKeyDownEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, RmString(), event.key.repeat);
-				context->sendEvent(nullptr, &event2);
+				openui->sendEvent(nullptr, &event2);
 			}
 			break;
 			case SDL_KEYUP: // 键盘按键释放  
 				// 处理键盘按键释放事件...  
 			{
 				IRmGUIKeyUpEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, RmString(), event.key.repeat);
-				context->sendEvent(nullptr, &event2);
+				openui->sendEvent(nullptr, &event2);
 			}
 			break;
 			case SDL_TEXTINPUT:
 			{
 				IRmGUIKeyInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
-				context->sendEvent(nullptr, &event2);
+				openui->sendEvent(nullptr, &event2);
 			}
 			break;
 			case SDL_MOUSEMOTION: // 鼠标移动  
@@ -331,7 +331,7 @@ int main(int argc, char* argv[]) {
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
 				IRmGUIMouseMoveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
-				context->sendEvent(nullptr, &event2);
+				openui->sendEvent(nullptr, &event2);
 			}
 			break;
 			case SDL_MOUSEBUTTONDOWN: // 鼠标点击  
@@ -343,12 +343,12 @@ int main(int argc, char* argv[]) {
 				if (event.button.clicks == 1)
 				{
 					IRmGUIMouseDownEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod, event.button.clicks);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				}
 				else
 				{
 					IRmGUIMouseDblClickEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod, event.button.clicks);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				}
 			}
 			break;
@@ -358,7 +358,7 @@ int main(int argc, char* argv[]) {
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
 				IRmGUIMouseUpEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
-				context->sendEvent(nullptr, &event2);
+				openui->sendEvent(nullptr, &event2);
 			}
 			break;
 			case SDL_MOUSEWHEEL: // 鼠标滚轮
@@ -366,7 +366,7 @@ int main(int argc, char* argv[]) {
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
 				IRmGUIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.wheel.mouseX, event.wheel.mouseY, x + event.wheel.mouseX, y + event.wheel.mouseY, event.button.button, event.button.button, event.key.keysym.mod);
-				context->sendEvent(nullptr, &event2);
+				openui->sendEvent(nullptr, &event2);
 			}
 			break;
 			case SDL_WINDOWEVENT:
@@ -376,22 +376,22 @@ int main(int argc, char* argv[]) {
 				case SDL_WINDOWEVENT_SHOWN:
 				{
 					IRmGUIShowEvent event2;
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_HIDDEN:
 				{
 					IRmGUIHideEvent event2;
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_CLOSE:
 				{
 					IRmGUICloseEvent event2;
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_MOVED:
 				{
 					IRmGUIMoveEvent event2(event.window.data1, event.window.data2);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_RESIZED:
 					// 窗口大小改变  
@@ -400,11 +400,11 @@ int main(int argc, char* argv[]) {
 					// printf("Window resized to %dx%d\n", event.window.data1, event.window.data2);
 				{
 					painter->resize(event.window.data1, event.window.data2);
-					SDL_DestroyTexture(texture);
-					texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
+					//SDL_DestroyTexture(texture);
+					//texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
 
 					IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				}
 				break;
 				case SDL_WINDOWEVENT_MINIMIZED:
@@ -424,24 +424,24 @@ int main(int argc, char* argv[]) {
 					int x, y;
 					SDL_GetWindowPosition(window, &x, &y);
 					IRmGUIMouseEnterEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_LEAVE:
 				{
 					int x, y;
 					SDL_GetWindowPosition(window, &x, &y);
 					IRmGUIMouseLeaveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_GAINED:
 				{
 					IRmGUIFocusEvent event2(true);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_LOST:
 				{
 					IRmGUIFocusEvent event2(false);
-					context->sendEvent(nullptr, &event2);
+					openui->sendEvent(nullptr, &event2);
 				} break;
 				// ... 其他窗体事件  
 				default:
@@ -455,24 +455,35 @@ int main(int argc, char* argv[]) {
 		}
 
 		// 渲染所有控件
-		SDL_SetRenderDrawColor(renderer, 238, 238, 242, 255);
-		SDL_RenderClear(renderer);
+		// SDL_SetRenderDrawColor(renderer, 238, 238, 242, 255);
+		// SDL_RenderClear(renderer);
 		int w, h;
 		SDL_GetWindowSize(window, &w, &h);
-		context->layoutWidget(RmRect{ 0, 0, (float)w, (float)h });
-		context->paintWidget(RmRect{ 0, 0, (float)w, (float)h });
-		context->renderWidget(RmRect{ 0, 0, (float)w, (float)h });
+		RmRect client{ 0, 0, (float)w, (float)h };
+		openui->layoutWidget(client);
+		openui->paintWidget(client);
 
 		// 更新屏幕内容  
-		SDL_UpdateTexture(texture, nullptr, painter->getPixelData().data(), painter->getStride());
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		SDL_RenderPresent(renderer);
+		SDL_GL_MakeCurrent(window, context);
+		glClearColor(0.8, 0.8, 0.8, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
+		openui->renderWidget(client);
+		SDL_GL_SwapWindow(window);
+
+		//SDL_UpdateTexture(texture, nullptr, painter->getPixelData().data(), painter->getStride());
+		//SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		//SDL_RenderPresent(renderer);
 	}
 
+	render = nullptr;
+	painter = nullptr;
+	context = nullptr;
+
 	// 清理并退出SDL  
-	SDL_DestroyTexture(texture);
-	SDL_DestroyRenderer(renderer);
-	SDL_GL_DeleteContext(glContext);
+	//SDL_DestroyTexture(texture);
+	//SDL_DestroyRenderer(renderer);
+	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
