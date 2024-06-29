@@ -173,11 +173,11 @@ void RmGUIContext::renderWidget(RmRect client)
 	{
 		RmPointUV3 primitive[2];
 		primitive[0].P0 = { client.X, client.Y, 0, 0 };
-		primitive[0].P1 = { client.X + client.W, client.Y, 0, 0 };
-		primitive[0].P2 = { client.X + client.W, client.Y + client.H, 0, 0 };
+		primitive[0].P1 = { client.X + client.W, client.Y + client.H, 1, 1 };
+		primitive[0].P2 = { client.X + client.W, client.Y, 1, 0 };
 		primitive[1].P0 = { client.X, client.Y, 0, 0 };
-		primitive[1].P1 = { client.X + client.W, client.Y + client.H, 0, 0 };
-		primitive[1].P2 = { client.X, client.Y + client.H, 0, 0 };
+		primitive[1].P1 = { client.X, client.Y + client.H, 0, 1 };
+		primitive[1].P2 = { client.X + client.W, client.Y + client.H, 1, 1 };
 		renderList.emplace_back(RmPrimitive{ getPainter(), primitive });
 	}
 
@@ -185,5 +185,5 @@ void RmGUIContext::renderWidget(RmRect client)
 	{
 		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getRect());
 	}
-	getRender()->render(renderList);
+	getRender()->render(client, renderList);
 }

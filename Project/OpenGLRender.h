@@ -13,7 +13,7 @@ public:
 public:
 	OpenGLRender();
 	~OpenGLRender();
-	virtual void render(RmArrayView<RmPrimitive> data) override;
+	virtual void render(RmRect client, RmArrayView<RmPrimitive> data) override;
 
 protected:
 	uint32_t m_NativeProgram;
