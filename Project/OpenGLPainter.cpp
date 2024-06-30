@@ -138,8 +138,9 @@ void OpenGLPainter::drawEllipse(int x, int y, int width, int height)
 void OpenGLPainter::drawImage(int x, int y, RmImage image, int sx, int sy, int sw, int sh)
 {
 	auto cr = m_NativeContext;
-	if (image.Height * image.Stride == image.Data.size())
+	if (image.Data.size() == image.Height * image.Stride)
 	{
+		if (image.Width * 4 != image.Stride) return;
 		auto surface = cairo_image_surface_create_for_data((uint8_t*)image.Data.data(), CAIRO_FORMAT_ARGB32, image.Width, image.Height, image.Stride);
 		cairo_save(cr); setClipping(true);
 		cairo_set_source_surface(cr, surface, x - sx, y - sy);

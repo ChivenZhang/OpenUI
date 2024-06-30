@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// 创建SDL窗口  
 	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
@@ -128,17 +129,23 @@ int main(int argc, char* argv[]) {
 		child0->addWidget(child1);
 		child1->setBorder({ 5,5,5,5 });
 		child1->setText("Label");
+		child1->setScaledContents(RmGUILabel::ScaleKeepRatio);
 
 		int img_width, img_height, channels;
-		auto img_data = stbi_load("../../../pattern.png", &img_width, &img_height, &channels, 4);
-		if (img_data) child1->setPixmap({
+		auto image_data = stbi_load("../../../OpenGL.png", &img_width, &img_height, &channels, 4);
+		if (image_data) child1->setPixmap({
 			(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * channels),
-			RmArrayView<const uint8_t>(img_data, img_height * img_width * channels) });
-		stbi_image_free(img_data);
+			RmArrayView<const uint8_t>(image_data, img_height * img_width * channels) });
 
-		auto child11 = RmNew<RmGUIPanel>();
+		auto child11 = RmNew<RmGUILabel>();
 		child0->addWidget(child11);
 		child11->setBorder({ 5,5,5,5 });
+		child11->setText("标签");
+		child11->setScaledContents(RmGUILabel::ScaleNoRatio);
+		if (image_data) child11->setPixmap({
+			(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * channels),
+			RmArrayView<const uint8_t>(image_data, img_height * img_width * channels) });
+		stbi_image_free(image_data);
 
 		auto child2 = RmNew<RmGUIVBox>();
 		top->addWidget(child2);
@@ -397,8 +404,6 @@ int main(int argc, char* argv[]) {
 					// printf("Window resized to %dx%d\n", event.window.data1, event.window.data2);
 				{
 					painter->resize(event.window.data1, event.window.data2);
-					//SDL_DestroyTexture(texture);
-					//texture = SDL_CreateTexture(renderer, SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA32, SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING, painter->getWidth(), painter->getHeight());
 
 					IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
 					openui->sendEvent(nullptr, &event2);
@@ -452,8 +457,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		// 渲染所有控件
-		// SDL_SetRenderDrawColor(renderer, 238, 238, 242, 255);
-		// SDL_RenderClear(renderer);
+
 		int w, h;
 		SDL_GetWindowSize(window, &w, &h);
 		RmRect client{ 0, 0, (float)w, (float)h };
@@ -469,10 +473,6 @@ int main(int argc, char* argv[]) {
 		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
 		openui->renderWidget(client);
 		SDL_GL_SwapWindow(window);
-
-		//SDL_UpdateTexture(texture, nullptr, painter->getPixelData().data(), painter->getStride());
-		//SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		//SDL_RenderPresent(renderer);
 	}
 
 	render = nullptr;
@@ -486,4 +486,4 @@ int main(int argc, char* argv[]) {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
-}
+			}
