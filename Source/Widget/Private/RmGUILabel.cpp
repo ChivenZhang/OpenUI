@@ -5,6 +5,8 @@ class RmGUILabelPrivate : public RmGUIWidgetPrivate
 public:
 	RmGUILabelStyle TextStyle;
 	RmString Text;
+	RmImage Image;
+	RmVector<uint8_t> ImageData;
 	RmGUISignalAs<RmString> LinkHovered;
 	RmGUISignalAs<RmString> LinkActivated;
 };
@@ -33,6 +35,10 @@ RmGUILabel::~RmGUILabel()
 void RmGUILabel::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	RmGUIWidget::paint(painter, client);
+	if (PRIVATE()->Image.Data.size())
+	{
+		painter->drawImage(client->X, client->Y, PRIVATE()->Image);
+	}
 	if (PRIVATE()->Text.empty() == false)
 	{
 		painter->setPen(PRIVATE()->TextStyle.Pen);
@@ -70,6 +76,26 @@ RmFontAligns RmGUILabel::getAlignment() const
 void RmGUILabel::setAlignment(RmFontAligns value)
 {
 	PRIVATE()->TextStyle.Font.Align = value;
+}
+
+RmImage RmGUILabel::getPixmap() const
+{
+	return PRIVATE()->Image;
+}
+
+void RmGUILabel::setPixmap(RmImage image)
+{
+	if (image.Height * image.Stride == image.Data.size())
+	{
+		PRIVATE()->ImageData.resize(image.Data.size());
+		::memcpy(PRIVATE()->ImageData.data(), image.Data.data(), image.Data.size());
+		PRIVATE()->Image = RmImage{ image.Width, image.Height, image.Stride, PRIVATE()->ImageData };
+	}
+	else
+	{
+		PRIVATE()->ImageData.clear();
+		PRIVATE()->Image = RmImage{};
+	}
 }
 
 void RmGUILabel::mousePressEvent(IRmGUIMouseEventRaw event)

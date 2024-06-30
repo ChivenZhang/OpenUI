@@ -13,7 +13,7 @@ public:
 
 	virtual void drawEllipse(int x, int y, int width, int height) = 0;
 
-	virtual void drawImage(int x, int y, RmImageRaw image, int sx = 0, int sy = 0, int sw = -1, int sh = -1) = 0;
+	virtual void drawImage(int x, int y, RmImage image, int sx = 0, int sy = 0, int sw = -1, int sh = -1) = 0;
 
 	virtual void drawLine(int x1, int y1, int x2, int y2) = 0;
 

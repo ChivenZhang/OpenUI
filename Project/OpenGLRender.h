@@ -6,7 +6,7 @@ class OpenGLRender : public IRmGUIRender
 public:
 	using primitive_t = struct primitive_t
 	{
-		RmFloat2 XY, UV;
+		float X = 0, Y = 0;
 		uint32_t Index = 0;
 	};
 

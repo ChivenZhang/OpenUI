@@ -137,19 +137,18 @@ void RmGUIContext::layoutWidget(RmRect client)
 
 void RmGUIContext::paintWidget(RmRect client)
 {
-	if (getPainter() == nullptr) return;
-
-	RmLambda<void(IRmGUIWidgetRaw, RmRect client)> foreach_func;
-	foreach_func = [&](IRmGUIWidgetRaw widget, RmRect client) {
+	RmLambda<void(IRmGUIWidgetRaw, IRmGUIPainterRaw, RmRect client)> foreach_func;
+	foreach_func = [&](IRmGUIWidgetRaw widget, IRmGUIPainterRaw painter, RmRect client) {
 		if (widget->getVisible() == false) return;
-		if (widget->getPainter()) widget->paint(widget->getPainter(), &client);
-		else widget->paint(getPainter(), &client);
+		if (widget->getPainter()) painter = widget->getPainter();
+		if (painter == nullptr) return;
+		widget->paint(painter, &client);
 		auto childList = widget->getChildren();
-		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
+		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), painter, childList[i]->getRect());
 		};
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getRect());
+		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), getPainter(), PRIVATE()->TopLevelList[i].Widget->getRect());
 	}
 }
 
@@ -163,7 +162,7 @@ void RmGUIContext::renderWidget(RmRect client)
 		if (widget->getVisible() == false) return;
 		if (widget->getPainter())
 		{
-			renderList.emplace_back(RmPrimitive{ widget->getPainter(), widget->getPrimitive() });
+			renderList.emplace_back(widget->getPainter(), widget->getPrimitive());
 		}
 		auto childList = widget->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getRect());
@@ -171,14 +170,15 @@ void RmGUIContext::renderWidget(RmRect client)
 
 	if (getPainter())
 	{
+		auto viewport = client;
 		RmPointUV3 primitive[2];
-		primitive[0].P0 = { client.X, client.Y, 0, 1 };
-		primitive[0].P1 = { client.X + client.W, client.Y, 1, 1 };
-		primitive[0].P2 = { client.X + client.W, client.Y + client.H, 1, 0 };
-		primitive[1].P0 = { client.X, client.Y, 0, 1 };
-		primitive[1].P1 = { client.X + client.W, client.Y + client.H, 1, 0 };
-		primitive[1].P2 = { client.X, client.Y + client.H, 0, 0 };
-		renderList.emplace_back(RmPrimitive{ getPainter(), primitive });
+		primitive[0].P0 = { viewport.X, viewport.Y };
+		primitive[0].P1 = { viewport.X + viewport.W, viewport.Y };
+		primitive[0].P2 = { viewport.X + viewport.W, viewport.Y + viewport.H };
+		primitive[1].P0 = { viewport.X, viewport.Y };
+		primitive[1].P1 = { viewport.X + viewport.W, viewport.Y + viewport.H };
+		primitive[1].P2 = { viewport.X, viewport.Y + viewport.H };
+		renderList.emplace_back(getPainter(), primitive);
 	}
 
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)

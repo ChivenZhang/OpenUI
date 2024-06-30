@@ -1,9 +1,4 @@
 #include "RmGUIButton.h"
-#include "RmGUIButton.h"
-#include "RmGUIButton.h"
-#include "RmGUIButton.h"
-#include "RmGUIButton.h"
-#include "RmGUIButton.h"
 #include "RmGUILabel.h"
 #include <taitank.h>
 namespace flex = taitank;

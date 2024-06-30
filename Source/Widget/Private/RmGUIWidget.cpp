@@ -137,6 +137,13 @@ void RmGUIWidget::setPainter(IRmGUIPainterRef value)
 
 RmArrayView<const RmPointUV3> RmGUIWidget::getPrimitive() const
 {
+	auto viewport = RmOverlap(getViewport(), getRect());
+	PRIVATE()->Primitive[0].P0 = { viewport.X, viewport.Y };
+	PRIVATE()->Primitive[0].P1 = { viewport.X + viewport.W, viewport.Y };
+	PRIVATE()->Primitive[0].P2 = { viewport.X + viewport.W, viewport.Y + viewport.H };
+	PRIVATE()->Primitive[1].P0 = { viewport.X, viewport.Y };
+	PRIVATE()->Primitive[1].P1 = { viewport.X + viewport.W, viewport.Y + viewport.H };
+	PRIVATE()->Primitive[1].P2 = { viewport.X, viewport.Y + viewport.H };
 	return PRIVATE()->Primitive;
 }
 
@@ -238,11 +245,6 @@ void RmGUIWidget::handle(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 
 void RmGUIWidget::layout(RmRectRaw client)
 {
-	auto childList = getChildren();
-	for (size_t i = 0; i < childList.size(); ++i)
-	{
-		childList[i]->setViewport(childList[i]->getRect());
-	}
 }
 
 void RmGUIWidget::paint(IRmGUIPainterRaw painter, RmRectRaw client)

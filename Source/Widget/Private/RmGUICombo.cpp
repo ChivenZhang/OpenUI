@@ -1,10 +1,4 @@
 #include "RmGUICombo.h"
-#include "RmGUICombo.h"
-#include "RmGUICombo.h"
-#include "RmGUICombo.h"
-#include "RmGUICombo.h"
-#include "RmGUICombo.h"
-#include "RmGUICombo.h"
 #include "RmGUIButton.h"
 #include "RmGUIScroll.h"
 #include "RmGUIVBox.h"
@@ -81,6 +75,24 @@ void RmGUICombo::layout(RmRectRaw client)
 {
 	PRIVATE()->Button->setRect(*client);
 	PRIVATE()->Button->setViewport(getViewport());
+
+	auto painter = getPainter();
+	if (painter == nullptr) painter = getContext()->getPainter();
+	if (painter == nullptr) return;
+
+	auto itemsWidget = PRIVATE()->Popup->getChildren()[2];
+	itemsWidget->setFixedHeight(0);
+	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
+	{
+		auto text = PRIVATE()->Items[i];
+		auto button = itemsWidget->getChildren()[i];
+		auto textRect = painter->boundingRect(0, 0, INT_MAX, INT_MAX, text);
+
+		button->setFixedHeight(textRect.H);
+		itemsWidget->setFixedHeight(itemsWidget->getFixedHeight() + textRect.H);
+		if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight(itemsWidget->getFixedHeight());
+		PRIVATE()->Popup->setFixedWidth(std::max(PRIVATE()->Popup->getFixedWidth(), textRect.W));
+	}
 }
 
 void RmGUICombo::paint(IRmGUIPainterRaw painter, RmRectRaw client)
@@ -100,8 +112,9 @@ void RmGUICombo::setItems(RmStringList const& texts)
 	auto itemsWidget = RmNew<RmGUIVBox>();
 	PRIVATE()->Popup->addWidget(itemsWidget);
 	PRIVATE()->Popup->setFixedWidth(getFixedWidth() * 1.2f);
+	itemsWidget->setFixedHeight(200);
+	PRIVATE()->Popup->setFixedHeight(200);
 
-	itemsWidget->setFixedHeight(0);
 	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
 	{
 		auto text = PRIVATE()->Items[i];
@@ -109,12 +122,7 @@ void RmGUICombo::setItems(RmStringList const& texts)
 		itemsWidget->addWidget(button);
 		button->setText(text);
 		button->setStyle(PRIVATE()->ItemStyle);
-		auto textRect = getContext()->getPainter()->boundingRect(0, 0, INT_MAX, INT_MAX, text);
-
-		button->setFixedHeight(textRect.H);
-		itemsWidget->setFixedHeight(itemsWidget->getFixedHeight() + textRect.H);
-		if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight(itemsWidget->getFixedHeight());
-		PRIVATE()->Popup->setFixedWidth(std::max(PRIVATE()->Popup->getFixedWidth(), textRect.W));
+		button->setFixedHeight(35);
 
 		button->hovered->connect(this, [=]() {
 			PRIVATE()->OnHighlighted.emit(i);

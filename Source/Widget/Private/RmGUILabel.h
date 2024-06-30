@@ -20,6 +20,8 @@ public:
 	void setStyle(RmGUILabelStyle const& style);
 	RmFontAligns getAlignment() const;
 	void setAlignment(RmFontAligns value);
+	RmImage getPixmap() const;
+	void setPixmap(RmImage image);
 
 protected:
 	virtual void mouseDoubleEvent(IRmGUIMouseEventRaw event) override;

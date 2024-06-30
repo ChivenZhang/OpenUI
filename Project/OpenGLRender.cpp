@@ -7,16 +7,15 @@ OpenGLRender::OpenGLRender()
 	auto vsource = R"(
 		#version 450 core
 		layout (location = 0) in vec2 _point;
-		layout (location = 1) in vec2 _uv;
-		layout (location = 2) in uint _index;
+		layout (location = 1) in uint _index;
 		out vec2 uv;
 		flat out uint index;
 
 		void main()
 		{
-			uv = _uv;
 			index = _index;
-			gl_Position = vec4(_point, 0.0, 1.0);
+			uv = vec2(_point.x, 1.0-_point.y);
+			gl_Position = vec4(2*_point-1, 0.0, 1.0);
 		}
 	)";
 
@@ -93,12 +92,10 @@ OpenGLRender::OpenGLRender()
 	m_NativeBuffer = vbo;
 
 	// 4. 设置顶点属性指针 
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(primitive_t), (void*)offsetof(primitive_t, X));
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(primitive_t), (void*)offsetof(primitive_t, XY));
+	glVertexAttribPointer(1, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(primitive_t), (void*)offsetof(primitive_t, Index));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(primitive_t), (void*)offsetof(primitive_t, UV));
-	glEnableVertexAttribArray(2);
-	glVertexAttribIPointer(2, 1, GL_INT, sizeof(primitive_t), (void*)offsetof(primitive_t, Index));
 	glBindVertexArray(0);
 
 	m_NativePrimitive = vao;
@@ -115,16 +112,16 @@ void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 {
 	glUseProgram(m_NativeProgram);
 	glBindVertexArray(m_NativePrimitive);
-
+	m_PrimitiveList.clear();
 	int32_t maxTextureUnits = 16;
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
 	for (size_t i = 0; i < data.size(); i += maxTextureUnits)
 	{
 		for (size_t k = 0; k < maxTextureUnits && i + k < data.size(); ++k)
 		{
-			auto painter = RmCast<OpenGLPainter>(data[i + k].Painter);
 			auto primitive = data[i].Primitive;
-			if (painter == nullptr || primitive.size() == 0) continue;
+			auto painter = RmCast<OpenGLPainter>(data[i + k].Painter);
+			if (primitive.empty() || painter == nullptr) continue;
 
 			// 绑定到纹理数组
 			auto texture = painter->getTextureUpdated();
@@ -133,15 +130,9 @@ void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 
 			for (size_t n = 0; n < primitive.size(); ++n)
 			{
-				m_PrimitiveList.emplace_back(primitive_t{
-					2 * (primitive[n].P0.X / client.W) - 1.0f, 2 * (primitive[n].P0.Y / client.H) - 1.0f, primitive[n].P0.U, primitive[n].P0.V, (uint32_t)k,
-					});
-				m_PrimitiveList.emplace_back(primitive_t{
-					2 * (primitive[n].P1.X / client.W) - 1.0f, 2 * (primitive[n].P1.Y / client.H) - 1.0f, primitive[n].P1.U, primitive[n].P1.V, (uint32_t)k,
-					});
-				m_PrimitiveList.emplace_back(primitive_t{
-					2 * (primitive[n].P2.X / client.W) - 1.0f, 2 * (primitive[n].P2.Y / client.H) - 1.0f, primitive[n].P2.U, primitive[n].P2.V, (uint32_t)k,
-					});
+				m_PrimitiveList.emplace_back(primitive[n].P0.X, primitive[n].P0.Y, (uint32_t)k);
+				m_PrimitiveList.emplace_back(primitive[n].P1.X, primitive[n].P1.Y, (uint32_t)k);
+				m_PrimitiveList.emplace_back(primitive[n].P2.X, primitive[n].P2.Y, (uint32_t)k);
 			}
 		}
 

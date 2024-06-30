@@ -433,7 +433,11 @@ inline bool operator ==(RmFloat4x4 const& a, RmFloat4x4 const& b)
 	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
 }
 
-class RmImage;
+struct RmImage
+{
+	uint32_t Width = 0, Height = 0, Stride = 0;
+	RmArrayView<const uint8_t> Data;
+};
 using RmImageRaw = RmRaw<RmImage>;
 
 inline RmRect RmOverlap(RmRect const& viewport, RmRect const& client)

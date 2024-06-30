@@ -135,8 +135,19 @@ void OpenGLPainter::drawEllipse(int x, int y, int width, int height)
 	drawArc(x, y, width, height, 0, 360);
 }
 
-void OpenGLPainter::drawImage(int x, int y, RmImageRaw image, int sx, int sy, int sw, int sh)
+void OpenGLPainter::drawImage(int x, int y, RmImage image, int sx, int sy, int sw, int sh)
 {
+	auto cr = m_NativeContext;
+	if (image.Height * image.Stride == image.Data.size())
+	{
+		auto surface = cairo_image_surface_create_for_data((uint8_t*)image.Data.data(), CAIRO_FORMAT_ARGB32, image.Width, image.Height, image.Stride);
+		cairo_save(cr); setClipping(true);
+		cairo_set_source_surface(cr, surface, x - sx, y - sy);
+		cairo_rectangle(cr, x, y, std::min<float>(uint32_t(sw), image.Width), std::min<float>(uint32_t(sh), image.Height));
+		cairo_fill(cr);
+		cairo_restore(cr);
+		cairo_surface_destroy(surface);
+	}
 }
 
 void OpenGLPainter::drawLine(int x1, int y1, int x2, int y2)
@@ -591,7 +602,7 @@ uint32_t OpenGLPainter::getStride() const
 
 RmArrayView<const uint8_t> OpenGLPainter::getPixelData() const
 {
-	return RmArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getWidth() * getHeight() * getStride());
+	return RmArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getHeight() * getStride());
 }
 
 void OpenGLPainter::resize(uint32_t width, uint32_t height)
@@ -599,6 +610,10 @@ void OpenGLPainter::resize(uint32_t width, uint32_t height)
 	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
 	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
 	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+
+	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
 	m_NativeContext = cairo_create(m_NativeSurface);
@@ -617,10 +632,6 @@ void OpenGLPainter::resize(uint32_t width, uint32_t height)
 	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_description_free(font_desc);
-
-	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 uint32_t OpenGLPainter::getTexture() const

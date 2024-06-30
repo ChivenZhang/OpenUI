@@ -1,6 +1,8 @@
 #define SDL_MAIN_HANDLED
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include "OpenGLPainter.h"
 #include "OpenGLRender.h"
 #include "Widget/Private/RmGUIContext.h"
@@ -71,8 +73,9 @@ int main(int argc, char* argv[]) {
 	openui->setPainter(painter);
 	openui->setRender(render);
 
-	auto top = RmNew<RmGUIFlow>();
+	auto top = RmNew<RmGUIHBox>();
 	openui->addWidget(top);
+	// top->setPainter(painter);
 
 #if 0
 	{
@@ -115,43 +118,38 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-#if 0
+#if 1
 	{
-		auto root = RmNew<RmGUIHBox>();
-		top->addWidget(root);
-		root->setBorder({ 5,5,5,5 });
-
-		auto child0 = RmNew<RmGUIPanel>();
-		root->addWidget(child0);
+		auto child0 = RmNew<RmGUIHBox>();
+		top->addWidget(child0);
 		child0->setBorder({ 5,5,5,5 });
 
-		auto child1 = RmNew<RmGUIPanel>();
+		auto child1 = RmNew<RmGUILabel>();
 		child0->addWidget(child1);
-		child1->setFixedWidth(100); child1->setFixedHeight(50);
 		child1->setBorder({ 5,5,5,5 });
+		child1->setText("Label");
+
+		int img_width, img_height, channels;
+		auto img_data = stbi_load("../../../pattern.png", &img_width, &img_height, &channels, 4);
+		if (img_data) child1->setPixmap({
+			(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * channels),
+			RmArrayView<const uint8_t>(img_data, img_height * img_width * channels) });
+		stbi_image_free(img_data);
 
 		auto child11 = RmNew<RmGUIPanel>();
 		child0->addWidget(child11);
-		child11->setFixedWidth(100); child11->setFixedHeight(50);
 		child11->setBorder({ 5,5,5,5 });
 
-		auto child111 = RmNew<RmGUIPanel>();
-		child0->addWidget(child111);
-		child111->setFixedWidth(100); child111->setFixedHeight(50);
-		child111->setBorder({ 5,5,5,5 });
-
 		auto child2 = RmNew<RmGUIVBox>();
-		root->addWidget(child2);
+		top->addWidget(child2);
 		child2->setBorder({ 5,5,5,5 });
 
 		auto child3 = RmNew<RmGUIPanel>();
 		child2->addWidget(child3);
-		child3->setFixedWidth(100); child3->setFixedHeight(50);
 		child3->setBorder({ 5,5,5,5 });
 
 		auto child33 = RmNew<RmGUIPanel>();
 		child2->addWidget(child33);
-		child33->setFixedWidth(100); child33->setFixedHeight(50);
 		child33->setBorder({ 5,5,5,5 });
 	}
 #endif
@@ -242,14 +240,14 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-#if 1
+#if 0
 	if (true)
 	{
 		auto combo = RmNew<RmGUICombo>();
 		top->addWidget(combo);
 		combo->setPosition(100, 100);
 		combo->setFixedSize(100, 35);
-		combo->setMaxCount(4);
+		combo->setMaxCount(3);
 		combo->setItems({ "White", "Red", "Green", "Blue", "Black" });
 		combo->setCurrentIndex(0);
 		combo->currentTextChanged->connect(nullptr, [](RmString text) {
@@ -260,6 +258,7 @@ int main(int argc, char* argv[]) {
 		top->addWidget(combo2);
 		combo2->setPosition(200, 100);
 		combo2->setFixedSize(100, 35);
+		combo2->setMaxCount(5);
 		combo2->setItems({ "111", "222", "333", "444", "555", "666" });
 		combo2->setCurrentText("666");
 		combo2->currentTextChanged->connect(nullptr, [](RmString text) {
@@ -464,6 +463,7 @@ int main(int argc, char* argv[]) {
 		// 更新屏幕内容  
 		SDL_GL_MakeCurrent(window, context);
 		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_SCISSOR_TEST);
 		glClearColor(0.8, 0.8, 0.8, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
