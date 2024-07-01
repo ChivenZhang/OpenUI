@@ -37,14 +37,16 @@ add_library (RmGUI SHARED
 	Widget/Private/RmGUIScrollBar.cpp
 	Widget/Private/RmGUIScrollBar.h
 	Widget/Private/RmGUISignal.h
-	
+	Widget/Private/RmGUIText.cpp
 	Widget/Private/RmGUIText.h
 	Widget/Private/RmGUIVBox.cpp
 	Widget/Private/RmGUIVBox.h
 	Widget/Private/RmGUIWidget.cpp
 	Widget/Private/RmGUIWidget.h
 	Widget/Private/RmGUIEdit.h
-	Widget/Private/RmGUIEdit.cpp "Widget/Private/RmGUIText.cpp")
+	Widget/Private/RmGUIEdit.cpp
+	Widget/Private/RmPieceTable.h
+	Widget/Private/RmPieceTable.cpp)
 
 target_include_directories(RmGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

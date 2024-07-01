@@ -1,4 +1,5 @@
 #include "RmGUIText.h"
+#include "RmPieceTable.h"
 
 class RmGUITextPrivateData : public RmGUIWidgetPrivate
 {
