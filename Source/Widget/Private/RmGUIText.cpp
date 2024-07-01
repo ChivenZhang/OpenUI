@@ -1,23 +1,12 @@
 #include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
 
 class RmGUITextPrivateData : public RmGUIWidgetPrivate
 {
 public:
+	RmGUITextStyle Style;
+	RmString Text;
+	uint32_t CursorStart = 0, Cursor = 0;
+	RmPieceTable UndoRedo;
 	RmGUISignalAs<int32_t /*oldPos*/, int32_t /*newPos*/> OnCursorPositionChanged;
 	RmGUISignalAs<> OnEditingFinished;
 	RmGUISignalAs<> OnInputRejected;
