@@ -11,7 +11,7 @@
 
 #include "RmPieceTable.h"
 #include <assert.h>
-#define LINE_WRAP '\n'
+#define RM_LINE_WRAP '\n'
 
 static int GetU8ByteCount(char ch)
 {
@@ -30,13 +30,13 @@ static int GetU8ByteCount(char ch)
 	return 0;
 }
 
-size_t UTF8ByteNum(const RmArray<char, 5>& u8Ch)
+static size_t UTF8ByteNum(const RmArray<char, 5>& u8Ch)
 {
 	return GetU8ByteCount(u8Ch[0]);
 }
 
 using utf8_foreach_t = RmLambda<bool(size_t index, size_t offset, size_t length)>;
-void UTF8Foreach(const RmString& u8Str, size_t start, size_t end, utf8_foreach_t func)
+static void UTF8Foreach(const RmString& u8Str, size_t start, size_t end, utf8_foreach_t func)
 {
 	if (func == nullptr || end <= start) return;
 	size_t index = 0;
@@ -103,7 +103,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 	// 添加记录
 	size_t lastUtf8 = 0, lastIndex = 0, nextUtf8 = 0, nextIndex = 0;
 	::UTF8Foreach(utf8, 0, utf8.length(), [&](auto index, auto offset, auto length)->bool {
-		if (utf8[offset] == LINE_WRAP)
+		if (utf8[offset] == RM_LINE_WRAP)
 		{
 			// 记录换行符之前的文本
 			if (lastIndex < offset)
@@ -327,7 +327,7 @@ bool RmPieceTable::undo(size_t& row, size_t& col)
 				insert_line(record);
 				row = record.Row;
 				col = record.Column;
-				if (m_TextList[record.File].Text[record.Left.Index] == LINE_WRAP)
+				if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
 				{
 					++row;
 					col = 0;
@@ -360,7 +360,7 @@ bool RmPieceTable::redo(size_t& row, size_t& col)
 				insert_line(record);
 				row = record.Row;
 				col = record.Column;
-				if (m_TextList[record.File].Text[record.Left.Index] == LINE_WRAP)
+				if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
 				{
 					++row;
 					col = 0;
@@ -426,7 +426,7 @@ void RmPieceTable::text(RmString& buffer)
 		}
 		if (i + 1 < m_PieceList.size())
 		{
-			buffer += LINE_WRAP;
+			buffer += RM_LINE_WRAP;
 		}
 	}
 }
@@ -462,7 +462,7 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 					});
 
 				// 行中间插入换行
-				if (m_TextList[record.File].Text[record.Left.Index] == LINE_WRAP)
+				if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
 				{
 					std::list<RmPieceNode> nextLine;
 					if (itr != line.end())
@@ -485,7 +485,7 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 			}
 			icol += num;
 		}
-		if (m_TextList[record.File].Text[record.Left.Index] == LINE_WRAP)
+		if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
 		{
 			m_PieceList.emplace(m_PieceList.begin() + record.Row + 1);
 		}
@@ -502,7 +502,7 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 	else if (record.Row == m_PieceList.size())
 	{
 		m_PieceList.emplace_back();
-		if (m_TextList[record.File].Text[record.Left.Index] == LINE_WRAP);
+		if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP);
 		else
 		{
 			auto& line = m_PieceList.back();
@@ -615,7 +615,7 @@ bool RmPieceTable::remove_line(const RmPieceRecord& record)
 				icol += num;
 				++itr;
 			}
-			if (m_TextList[record.File].Text[record.Left.Index] == LINE_WRAP)
+			if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
 			{
 				auto& nextLine = m_PieceList[record.Row + 1];
 				line.splice(line.end(), nextLine, nextLine.begin(), nextLine.end());

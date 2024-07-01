@@ -503,7 +503,6 @@ void OpenGLPainter::setFont(const RmFont& font)
 		pango_layout_set_font_description(layout, font_desc);
 		pango_font_description_free(font_desc);
 	}
-
 	if (font.Align & RmFont::AlignLeft)
 	{
 		pango_layout_set_justify(layout, false);
@@ -535,6 +534,7 @@ void OpenGLPainter::setFont(const RmFont& font)
 	}
 	pango_layout_set_spacing(layout, font.Spacing);
 	pango_layout_set_line_spacing(layout, font.LineSpacing);
+	pango_layout_set_single_paragraph_mode(layout, font.NoWrap);
 	m_Font = font;
 }
 

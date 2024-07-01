@@ -7,7 +7,7 @@
 class RmGUILabelPrivate : public RmGUIWidgetPrivate
 {
 public:
-	RmGUILabelStyle TextStyle;
+	RmGUILabelStyle Style;
 	RmString Text;
 	RmImage Image, ImageScaled;
 	RmVector<uint8_t> ImageData, ImageDataScaled;
@@ -24,9 +24,9 @@ RmGUILabel::RmGUILabel(IRmGUIWidgetRaw parent)
 	linkActivated(nullptr)
 {
 	m_PrivateLabel = new RmGUILabelPrivate;
-	PRIVATE()->TextStyle.Pen = { .Style = RmPen::NoPen, };
-	PRIVATE()->TextStyle.Font = { .Align = RmFont::AlignLeft | RmFont::AlignVCenter, };
-	PRIVATE()->TextStyle.Brush = {};
+	PRIVATE()->Style.Pen = { .Style = RmPen::NoPen, };
+	PRIVATE()->Style.Font = { .Align = RmFont::AlignLeft | RmFont::AlignVCenter, };
+	PRIVATE()->Style.Brush = {};
 	linkHovered = &PRIVATE()->LinkHovered;
 	linkActivated = &PRIVATE()->LinkActivated;
 }
@@ -156,9 +156,9 @@ void RmGUILabel::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 	}
 	if (PRIVATE()->Text.empty() == false)
 	{
-		painter->setPen(PRIVATE()->TextStyle.Pen);
-		painter->setFont(PRIVATE()->TextStyle.Font);
-		painter->setBrush(PRIVATE()->TextStyle.Brush);
+		painter->setPen(PRIVATE()->Style.Pen);
+		painter->setFont(PRIVATE()->Style.Font);
+		painter->setBrush(PRIVATE()->Style.Brush);
 		painter->drawText(client->X, client->Y, client->W, client->H, PRIVATE()->Text);
 	}
 }
@@ -175,22 +175,22 @@ void RmGUILabel::setText(RmString const& text)
 
 RmGUILabelStyle RmGUILabel::getStyle() const
 {
-	return PRIVATE()->TextStyle;
+	return PRIVATE()->Style;
 }
 
 void RmGUILabel::setStyle(RmGUILabelStyle const& style)
 {
-	PRIVATE()->TextStyle = style;
+	PRIVATE()->Style = style;
 }
 
 RmFontAligns RmGUILabel::getAlignment() const
 {
-	return PRIVATE()->TextStyle.Font.Align;
+	return PRIVATE()->Style.Font.Align;
 }
 
 void RmGUILabel::setAlignment(RmFontAligns value)
 {
-	PRIVATE()->TextStyle.Font.Align = value;
+	PRIVATE()->Style.Font.Align = value;
 }
 
 RmImage RmGUILabel::getPixmap() const

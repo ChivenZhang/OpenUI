@@ -151,9 +151,10 @@ int main(int argc, char* argv[]) {
 		top->addWidget(child2);
 		child2->setBorder({ 5,5,5,5 });
 
-		auto child3 = RmNew<RmGUIPanel>();
+		auto child3 = RmNew<RmGUIText>();
 		child2->addWidget(child3);
 		child3->setBorder({ 5,5,5,5 });
+		child3->setText("Text");
 
 		auto child33 = RmNew<RmGUIPanel>();
 		child2->addWidget(child33);
@@ -226,7 +227,7 @@ int main(int argc, char* argv[]) {
 		auto panel = RmNew<RmGUIPanel>();
 		scroll->addWidget(panel);
 		panel->setRect({ 0, 0, 2000, 2000 });
-	}
+}
 #endif
 
 #if 0

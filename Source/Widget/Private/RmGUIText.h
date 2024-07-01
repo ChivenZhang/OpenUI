@@ -23,6 +23,8 @@ public:
 public:
 	RmGUIText(IRmGUIWidgetRaw parent = nullptr);
 	~RmGUIText();
+	virtual void layout(RmRectRaw client) override;
+	virtual void paint(IRmGUIPainterRaw painter, RmRectRaw client) override;
 
 	RmGUITextStyle getStyle() const;
 	void setStyle(RmGUITextStyle value);
@@ -47,8 +49,6 @@ public:
 	void setCursorPosition(int32_t value);
 
 	RmString getSelectedText() const;
-	void setSelectedText(RmString const value);
-
 	void getSelection(int32_t& start, int32_t& length) const;
 	void setSelection(int32_t start, int32_t& length);
 

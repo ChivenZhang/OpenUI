@@ -358,6 +358,7 @@ struct RmFont
 		WeightExtraBold = 800,
 		WeightBlack = 900,
 	};
+	bool NoWrap = false;
 	RmString Family = "Sans";
 	uint32_t Align = align_t::AlignLeft;
 	style_t Style = style_t::StyleNormal;
