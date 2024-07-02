@@ -212,9 +212,13 @@ void RmGUIWidget::handle(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 	{
 		keyReleaseEvent(RmCast<IRmGUIKeyUpEvent>(event));
 	} break;
-	case RmHash("KeyInput"):
+	case RmHash("TextEdit"):
 	{
-		inputEvent(RmCast<IRmGUIKeyInputEvent>(event));
+		inputEvent(RmCast<IRmGUITextEditEvent>(event));
+	} break;
+	case RmHash("TextInput"):
+	{
+		inputEvent(RmCast<IRmGUITextInputEvent>(event));
 	} break;
 	case RmHash("Drop"):
 	{

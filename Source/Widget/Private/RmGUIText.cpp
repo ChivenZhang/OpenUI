@@ -60,6 +60,11 @@ void RmGUIText::layout(RmRectRaw client)
 
 void RmGUIText::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
+	RmGUIWidget::paint(painter, client);
+	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
+	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
+	painter->drawRect(client->X, client->Y, client->W, client->H);
+
 	if (PRIVATE()->Text.empty() == false)
 	{
 		PRIVATE()->Style.Font.NoWrap = true;
@@ -208,10 +213,16 @@ void RmGUIText::inputEvent(IRmGUIKeyEventRaw event)
 {
 	if (getContext()->getFocus() == this)
 	{
-		PRIVATE()->OnImeRequest.emit(getRect().X, getRect().Y + getRect().H);
-		PRIVATE()->UndoRedo.insert(PRIVATE()->Row, PRIVATE()->Column, event->Text);
-		PRIVATE()->Text.clear();
-		PRIVATE()->UndoRedo.text(PRIVATE()->Text);
+		if (event->Type == RmHash("TextEdit"))
+		{
+			PRIVATE()->OnImeRequest.emit(getRect().X, getRect().Y + getRect().H);
+		}
+		else
+		{
+			PRIVATE()->UndoRedo.insert(PRIVATE()->Row, PRIVATE()->Column, event->Text);
+			PRIVATE()->Text.clear();
+			PRIVATE()->UndoRedo.text(PRIVATE()->Text);
+		}
 	}
 }
 

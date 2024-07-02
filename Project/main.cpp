@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 		auto child3 = RmNew<RmGUIText>();
 		child2->addWidget(child3);
 		child3->setBorder({ 5,5,5,5 });
-		child3->setText("Text");
+		child3->setFixedSize(200, 35);
 		child3->imeRequest->connect(nullptr, [=](int32_t posX, int32_t posY) {
 			SDL_Rect rect{ posX, posY, 0, 0 };
 			SDL_SetTextInputRect(&rect);
@@ -328,12 +328,12 @@ int main(int argc, char* argv[]) {
 			} break;
 			case SDL_TEXTEDITING:
 			{
-				IRmGUIKeyInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
+				IRmGUITextEditEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
 				openui->sendEvent(nullptr, &event2);
 			} break;
 			case SDL_TEXTINPUT:
 			{
-				IRmGUIKeyInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
+				IRmGUITextInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
 				openui->sendEvent(nullptr, &event2);
 			} break;
 			case SDL_MOUSEMOTION: // 鼠标移动  
