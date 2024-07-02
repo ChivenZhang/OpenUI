@@ -87,7 +87,7 @@ protected:
 	virtual void focusInEvent(IRmGUIFocusEventRaw event) override;
 	virtual void focusOutEvent(IRmGUIFocusEventRaw event) override;
 	virtual void hideEvent(IRmGUIHideEventRaw event) override;
-	virtual void inputEvent(IRmGUIKeyEventRaw event) override;
+	virtual void inputEvent(IRmGUITextInputEventRaw event) override;
 	virtual void keyPressEvent(IRmGUIKeyEventRaw event) override;
 	virtual void keyReleaseEvent(IRmGUIKeyEventRaw event) override;
 	virtual void leaveEvent(IRmGUIMouseEventRaw event) override;

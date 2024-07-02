@@ -212,10 +212,6 @@ void RmGUIWidget::handle(IRmGUIReactorRaw source, IRmGUIEventRaw event)
 	{
 		keyReleaseEvent(RmCast<IRmGUIKeyUpEvent>(event));
 	} break;
-	case RmHash("TextEdit"):
-	{
-		inputEvent(RmCast<IRmGUITextEditEvent>(event));
-	} break;
 	case RmHash("TextInput"):
 	{
 		inputEvent(RmCast<IRmGUITextInputEvent>(event));
@@ -522,7 +518,7 @@ void RmGUIWidget::hideEvent(IRmGUIHideEventRaw event)
 {
 }
 
-void RmGUIWidget::inputEvent(IRmGUIKeyEventRaw event)
+void RmGUIWidget::inputEvent(IRmGUITextInputEventRaw event)
 {
 }
 

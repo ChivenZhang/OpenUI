@@ -19,7 +19,7 @@ public:
 	RmGUISignalAs<> OnSelectionChanged;
 	RmGUISignalAs<RmString const& /*text*/> OnTextChanged;
 	RmGUISignalAs<RmString const& /*text*/> OnTextEdited;
-	RmGUISignalAs<int32_t /*posX*/, int32_t /*posY*/> OnImeRequest;
+	RmGUISignalAs<RmRect /*rect*/> OnIMEShown;
 };
 #define PRIVATE() ((RmGUITextPrivateData*) m_PrivateText)
 
@@ -34,7 +34,7 @@ RmGUIText::RmGUIText(IRmGUIWidgetRaw parent)
 	selectionChanged(nullptr),
 	textChanged(nullptr),
 	textEdited(nullptr),
-	imeRequest(nullptr)
+	imeShown(nullptr)
 {
 	m_PrivateText = new RmGUITextPrivateData;
 	cursorPositionChanged = &PRIVATE()->OnCursorPositionChanged;
@@ -44,7 +44,7 @@ RmGUIText::RmGUIText(IRmGUIWidgetRaw parent)
 	selectionChanged = &PRIVATE()->OnSelectionChanged;
 	textChanged = &PRIVATE()->OnTextChanged;
 	textEdited = &PRIVATE()->OnTextEdited;
-	imeRequest = &PRIVATE()->OnImeRequest;
+	imeShown = &PRIVATE()->OnIMEShown;
 
 	PRIVATE()->Style.Font.Align = RmFontAlign::AlignVCenter;
 }
@@ -209,13 +209,13 @@ void RmGUIText::keyPressEvent(IRmGUIKeyEventRaw event)
 {
 }
 
-void RmGUIText::inputEvent(IRmGUIKeyEventRaw event)
+void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 {
 	if (getContext()->getFocus() == this)
 	{
-		if (event->Type == RmHash("TextEdit"))
+		if (event->Done == false)
 		{
-			PRIVATE()->OnImeRequest.emit(getRect().X, getRect().Y + getRect().H);
+			if (event->Text.empty()) PRIVATE()->OnIMEShown.emit(RmRect { getRect().X, getRect().Y, 0, 2 * (float)PRIVATE()->Style.Font.Size });
 		}
 		else
 		{

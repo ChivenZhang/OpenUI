@@ -67,7 +67,7 @@ public:
 
 protected:
 	virtual void keyPressEvent(IRmGUIKeyEventRaw event) override;
-	virtual void inputEvent(IRmGUIKeyEventRaw event) override;
+	virtual void inputEvent(IRmGUITextInputEventRaw event) override;
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
@@ -80,7 +80,7 @@ public:
 	IRmGUISignalAsRaw<> selectionChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textEdited;
-	IRmGUISignalAsRaw<int32_t /*posX*/, int32_t /*posY*/> imeRequest;
+	IRmGUISignalAsRaw<RmRect /*rect*/> imeShown;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateText;

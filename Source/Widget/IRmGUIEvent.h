@@ -237,21 +237,14 @@ public:
 };
 using IRmGUIKeyUpEventRaw = RmRaw<IRmGUIKeyUpEvent>;
 
-class IRmGUITextEditEvent : public IRmGUIKeyEvent
-{
-public:
-	IRmGUITextEditEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1)
-		:
-		IRmGUIKeyEvent(RmHash("TextEdit"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
-};
-using IRmGUITextEditEventRaw = RmRaw<IRmGUITextEditEvent>;
-
 class IRmGUITextInputEvent : public IRmGUIKeyEvent
 {
 public:
-	IRmGUITextInputEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1)
+	IRmGUITextInputEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1, bool done = false)
 		:
-		IRmGUIKeyEvent(RmHash("TextInput"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count) {}
+		IRmGUIKeyEvent(RmHash("TextInput"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count), Done(done) {}
+
+	const bool Done;
 };
 using IRmGUITextInputEventRaw = RmRaw<IRmGUITextInputEvent>;
 

@@ -129,7 +129,7 @@ int main(int argc, char* argv[]) {
 		child0->addWidget(child1);
 		child1->setBorder({ 5,5,5,5 });
 		child1->setText("Label");
-		child1->setScaledContents(RmGUILabel::ScaleKeepRatio);
+		child1->setScaledContents(RmGUILabel::ScaleNoRatio);
 
 		int img_width, img_height, channels;
 		auto image_data = stbi_load("../../../OpenGL.png", &img_width, &img_height, &channels, 4);
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
 		child0->addWidget(child11);
 		child11->setBorder({ 5,5,5,5 });
 		child11->setText("标签");
-		child11->setScaledContents(RmGUILabel::ScaleNoRatio);
+		child11->setScaledContents(RmGUILabel::ScaleKeepRatio);
 		if (image_data) child11->setPixmap({
 			(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * channels),
 			RmArrayView<const uint8_t>(image_data, img_height * img_width * channels) });
@@ -155,9 +155,9 @@ int main(int argc, char* argv[]) {
 		child2->addWidget(child3);
 		child3->setBorder({ 5,5,5,5 });
 		child3->setFixedSize(200, 35);
-		child3->imeRequest->connect(nullptr, [=](int32_t posX, int32_t posY) {
-			SDL_Rect rect{ posX, posY, 0, 0 };
-			SDL_SetTextInputRect(&rect);
+		child3->imeShown->connect(nullptr, [=](RmRect rect) {
+			SDL_Rect sdlRect{ rect.X, rect.Y, rect.W, rect.H };
+			SDL_SetTextInputRect(&sdlRect);
 			SDL_StartTextInput();
 			});
 
@@ -328,12 +328,12 @@ int main(int argc, char* argv[]) {
 			} break;
 			case SDL_TEXTEDITING:
 			{
-				IRmGUITextEditEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
+				IRmGUITextInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat, false);
 				openui->sendEvent(nullptr, &event2);
 			} break;
 			case SDL_TEXTINPUT:
 			{
-				IRmGUITextInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
+				IRmGUITextInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat, true);
 				openui->sendEvent(nullptr, &event2);
 			} break;
 			case SDL_MOUSEMOTION: // 鼠标移动  

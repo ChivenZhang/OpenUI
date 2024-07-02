@@ -150,7 +150,7 @@ protected:
 
 	virtual void hideEvent(IRmGUIHideEventRaw event) = 0;
 
-	virtual void inputEvent(IRmGUIKeyEventRaw event) = 0;
+	virtual void inputEvent(IRmGUITextInputEventRaw event) = 0;
 
 	virtual void keyPressEvent(IRmGUIKeyEventRaw event) = 0;
 
