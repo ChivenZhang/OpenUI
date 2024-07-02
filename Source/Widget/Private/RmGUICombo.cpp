@@ -86,7 +86,7 @@ void RmGUICombo::layout(RmRectRaw client)
 	{
 		auto text = PRIVATE()->Items[i];
 		auto button = itemsWidget->getChildren()[i];
-		auto textRect = painter->boundingRect(0, 0, INT_MAX, INT_MAX, text);
+		auto textRect = painter->boundingRect(0, 0, INT_MAX, INT_MAX, text, 0);
 
 		button->setFixedHeight(textRect.H);
 		itemsWidget->setFixedHeight(itemsWidget->getFixedHeight() + textRect.H);

@@ -71,7 +71,12 @@ void RmGUIText::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 		painter->setPen(PRIVATE()->Style.Pen);
 		painter->setFont(PRIVATE()->Style.Font);
 		painter->setBrush(PRIVATE()->Style.Brush);
-		painter->drawText(client->X, client->Y, client->W, client->H, PRIVATE()->Text);
+
+		RmRect cursorRect;
+		painter->drawText(client->X, client->Y, client->W, client->H, PRIVATE()->Text, nullptr, PRIVATE()->Cursor, &cursorRect);
+		painter->setPen({ .Color = {1, 0, 0, 1}, .Width = 1.0f });
+		painter->setBrush({ .Style = RmBrush::NoBrush });
+		painter->drawLine(cursorRect.X, cursorRect.Y - 2, cursorRect.X, cursorRect.Y + cursorRect.H + 2);
 	}
 }
 
@@ -215,7 +220,7 @@ void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 	{
 		if (event->Done == false)
 		{
-			if (event->Text.empty()) PRIVATE()->OnIMEShown.emit(RmRect { getRect().X, getRect().Y, 0, 2 * (float)PRIVATE()->Style.Font.Size });
+			if (event->Text.empty()) PRIVATE()->OnIMEShown.emit(RmRect { getRect().X, getRect().Y, 0, 0 });
 		}
 		else
 		{
@@ -226,6 +231,29 @@ void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 	}
 }
 
+void RmGUIText::mouseDoubleEvent(IRmGUIMouseEventRaw event)
+{
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
+	{
+		getContext()->setFocus(this);
+
+		auto painter = getPainter();
+		if (painter == nullptr) painter = getContext()->getPainter();
+		if (painter == nullptr) return;
+		int cursor = -1, row, column;
+		painter->setFont(PRIVATE()->Style.Font);
+		painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, event->X, event->Y, row, column, cursor);
+		if (cursor == -1) PRIVATE()->Cursor = 0;
+		else PRIVATE()->Cursor = cursor;
+	}
+	else
+	{
+		getContext()->setFocus(nullptr);
+	}
+}
+
 void RmGUIText::mousePressEvent(IRmGUIMouseEventRaw event)
 {
 	auto viewport = RmOverlap(getViewport(), getRect());
@@ -233,6 +261,15 @@ void RmGUIText::mousePressEvent(IRmGUIMouseEventRaw event)
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		getContext()->setFocus(this);
+
+		auto painter = getPainter();
+		if (painter == nullptr) painter = getContext()->getPainter();
+		if (painter == nullptr) return;
+		int cursor = -1, row = -1, column = -1;
+		painter->setFont(PRIVATE()->Style.Font);
+		painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, event->X, event->Y, row, column, cursor);
+		if (cursor == -1) PRIVATE()->Cursor = 0;
+		else PRIVATE()->Cursor = cursor;
 	}
 	else
 	{

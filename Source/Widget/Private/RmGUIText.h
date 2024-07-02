@@ -68,6 +68,7 @@ public:
 protected:
 	virtual void keyPressEvent(IRmGUIKeyEventRaw event) override;
 	virtual void inputEvent(IRmGUITextInputEventRaw event) override;
+	virtual void mouseDoubleEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
 	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
