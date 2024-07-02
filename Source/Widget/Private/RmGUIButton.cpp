@@ -214,11 +214,8 @@ bool RmGUIButton::getDown() const
 
 void RmGUIButton::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		if (event->Button == 1)
@@ -233,11 +230,8 @@ void RmGUIButton::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 
 void RmGUIButton::mousePressEvent(IRmGUIMouseEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		if (event->Button == 1)
@@ -264,11 +258,8 @@ void RmGUIButton::mouseReleaseEvent(IRmGUIMouseEventRaw event)
 
 void RmGUIButton::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		PRIVATE()->Hovered = true;

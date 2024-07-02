@@ -65,6 +65,13 @@ public:
 	void redo();
 	void undo();
 
+protected:
+	virtual void keyPressEvent(IRmGUIKeyEventRaw event) override;
+	virtual void inputEvent(IRmGUIKeyEventRaw event) override;
+	virtual void mousePressEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mouseReleaseEvent(IRmGUIMouseEventRaw event) override;
+	virtual void mouseMoveEvent(IRmGUIMouseEventRaw event) override;
+
 public:
 	IRmGUISignalAsRaw<int32_t /*oldPos*/, int32_t /*newPos*/> cursorPositionChanged;
 	IRmGUISignalAsRaw<> editingFinished;
@@ -73,6 +80,7 @@ public:
 	IRmGUISignalAsRaw<> selectionChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textEdited;
+	IRmGUISignalAsRaw<int32_t /*posX*/, int32_t /*posY*/> imeRequest;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateText;

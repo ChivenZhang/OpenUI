@@ -536,11 +536,8 @@ void RmGUIWidget::leaveEvent(IRmGUIMouseEventRaw event)
 
 void RmGUIWidget::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		event->Accept = true;
@@ -553,11 +550,8 @@ void RmGUIWidget::mouseMoveEvent(IRmGUIMouseEventRaw event)
 
 void RmGUIWidget::mousePressEvent(IRmGUIMouseEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		event->Accept = true;

@@ -17,6 +17,10 @@ public:
 
 	virtual void setRender(IRmGUIRenderRef value) = 0;
 
+	virtual IRmGUIWidgetRaw getFocus() const = 0;
+
+	virtual void setFocus(IRmGUIWidgetRaw widget) = 0;
+
 	virtual bool addWidget(IRmGUIWidgetRef widget, int32_t zorder = 0) = 0;
 
 	virtual bool removeWidget(IRmGUIWidgetRef widget) = 0;

@@ -1,4 +1,6 @@
 #include "RmGUIContext.h"
+#include "RmGUIContext.h"
+#include "RmGUIContext.h"
 #include "RmGUIWidget.h"
 
 struct RmGUIContextWidget
@@ -12,7 +14,7 @@ class RmGUIContextPrivateData : public RmGUIContextPrivate
 public:
 	RmRef<IRmGUIPainter> Painter;
 	RmRef<IRmGUIRender> Render;
-	RmRef<IRmGUIWidget> FocusWidget;
+	RmRaw<IRmGUIWidget> FocusWidget;
 	RmVector<RmGUIContextWidget> TopLevelList;
 };
 #define PRIVATE() ((RmGUIContextPrivateData*)m_Private)
@@ -47,6 +49,16 @@ IRmGUIRenderRaw RmGUIContext::getRender() const
 void RmGUIContext::setRender(IRmGUIRenderRef value)
 {
 	PRIVATE()->Render = value;
+}
+
+IRmGUIWidgetRaw RmGUIContext::getFocus() const
+{
+	return PRIVATE()->FocusWidget;
+}
+
+void RmGUIContext::setFocus(IRmGUIWidgetRaw widget)
+{
+	PRIVATE()->FocusWidget = widget;
 }
 
 bool RmGUIContext::addWidget(IRmGUIWidgetRef value, int32_t zorder)

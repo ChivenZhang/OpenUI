@@ -1,6 +1,5 @@
 #include "RmGUIText.h"
-#include "RmGUIText.h"
-#include "RmGUIText.h"
+#include "RmGUIContext.h"
 #include "RmPieceTable.h"
 
 class RmGUITextPrivateData : public RmGUIWidgetPrivate
@@ -9,6 +8,7 @@ public:
 	RmGUITextStyle Style;
 	RmString Text, SelectedText, PlaceholderText;
 	uint32_t CursorStart = 0, Cursor = 0, MaxLength = -1;
+	size_t Row = 0, Column = 0;
 	RmGUITextEchoMode EchoMode = RmGUITextEchoMode::EchoModeNoEcho;
 	bool ReadOnly;
 	RmPieceTable UndoRedo;
@@ -19,6 +19,7 @@ public:
 	RmGUISignalAs<> OnSelectionChanged;
 	RmGUISignalAs<RmString const& /*text*/> OnTextChanged;
 	RmGUISignalAs<RmString const& /*text*/> OnTextEdited;
+	RmGUISignalAs<int32_t /*posX*/, int32_t /*posY*/> OnImeRequest;
 };
 #define PRIVATE() ((RmGUITextPrivateData*) m_PrivateText)
 
@@ -32,7 +33,8 @@ RmGUIText::RmGUIText(IRmGUIWidgetRaw parent)
 	returnPressed(nullptr),
 	selectionChanged(nullptr),
 	textChanged(nullptr),
-	textEdited(nullptr)
+	textEdited(nullptr),
+	imeRequest(nullptr)
 {
 	m_PrivateText = new RmGUITextPrivateData;
 	cursorPositionChanged = &PRIVATE()->OnCursorPositionChanged;
@@ -42,6 +44,9 @@ RmGUIText::RmGUIText(IRmGUIWidgetRaw parent)
 	selectionChanged = &PRIVATE()->OnSelectionChanged;
 	textChanged = &PRIVATE()->OnTextChanged;
 	textEdited = &PRIVATE()->OnTextEdited;
+	imeRequest = &PRIVATE()->OnImeRequest;
+
+	PRIVATE()->Style.Font.Align = RmFontAlign::AlignVCenter;
 }
 
 RmGUIText::~RmGUIText()
@@ -192,5 +197,42 @@ void RmGUIText::redo()
 }
 
 void RmGUIText::undo()
+{
+}
+
+void RmGUIText::keyPressEvent(IRmGUIKeyEventRaw event)
+{
+}
+
+void RmGUIText::inputEvent(IRmGUIKeyEventRaw event)
+{
+	if (getContext()->getFocus() == this)
+	{
+		PRIVATE()->OnImeRequest.emit(getRect().X, getRect().Y + getRect().H);
+		PRIVATE()->UndoRedo.insert(PRIVATE()->Row, PRIVATE()->Column, event->Text);
+		PRIVATE()->Text.clear();
+		PRIVATE()->UndoRedo.text(PRIVATE()->Text);
+	}
+}
+
+void RmGUIText::mousePressEvent(IRmGUIMouseEventRaw event)
+{
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
+		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
+	{
+		getContext()->setFocus(this);
+	}
+	else
+	{
+		getContext()->setFocus(nullptr);
+	}
+}
+
+void RmGUIText::mouseReleaseEvent(IRmGUIMouseEventRaw event)
+{
+}
+
+void RmGUIText::mouseMoveEvent(IRmGUIMouseEventRaw event)
 {
 }

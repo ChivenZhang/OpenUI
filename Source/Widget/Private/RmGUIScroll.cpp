@@ -275,11 +275,8 @@ void RmGUIScroll::mouseMoveEvent(IRmGUIMouseEventRaw event)
 
 void RmGUIScroll::wheelEvent(IRmGUIMouseWheelEventRaw event)
 {
-	auto client = getRect();
-	auto viewport = getViewport();
-	if (client.X <= event->X && event->X <= client.X + client.W
-		&& client.Y <= event->Y && event->Y <= client.Y + client.H
-		&& viewport.X <= event->X && event->X <= viewport.X + viewport.W
+	auto viewport = RmOverlap(getViewport(), getRect());
+	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
 		getHorizontalBar()->setValue(getHorizontalBar()->getValue() + event->AngleX * getHorizontalBar()->getSingleStep());

@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
 		return -1;
 	}
-
+	SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -155,6 +155,11 @@ int main(int argc, char* argv[]) {
 		child2->addWidget(child3);
 		child3->setBorder({ 5,5,5,5 });
 		child3->setText("Text");
+		child3->imeRequest->connect(nullptr, [=](int32_t posX, int32_t posY) {
+			SDL_Rect rect{ posX, posY, 0, 0 };
+			SDL_SetTextInputRect(&rect);
+			SDL_StartTextInput();
+			});
 
 		auto child33 = RmNew<RmGUIPanel>();
 		child2->addWidget(child33);
@@ -227,7 +232,7 @@ int main(int argc, char* argv[]) {
 		auto panel = RmNew<RmGUIPanel>();
 		scroll->addWidget(panel);
 		panel->setRect({ 0, 0, 2000, 2000 });
-}
+	}
 #endif
 
 #if 0
@@ -314,21 +319,23 @@ int main(int argc, char* argv[]) {
 			{
 				IRmGUIKeyDownEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, RmString(), event.key.repeat);
 				openui->sendEvent(nullptr, &event2);
-			}
-			break;
+			} break;
 			case SDL_KEYUP: // 键盘按键释放  
 				// 处理键盘按键释放事件...  
 			{
 				IRmGUIKeyUpEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, RmString(), event.key.repeat);
 				openui->sendEvent(nullptr, &event2);
-			}
-			break;
+			} break;
+			case SDL_TEXTEDITING:
+			{
+				IRmGUIKeyInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
+				openui->sendEvent(nullptr, &event2);
+			} break;
 			case SDL_TEXTINPUT:
 			{
 				IRmGUIKeyInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat);
 				openui->sendEvent(nullptr, &event2);
-			}
-			break;
+			} break;
 			case SDL_MOUSEMOTION: // 鼠标移动  
 				// 处理鼠标移动事件...  
 				// 可以使用 event.motion.x 和 event.motion.y 来获取鼠标的当前位置  
@@ -337,8 +344,7 @@ int main(int argc, char* argv[]) {
 				SDL_GetWindowPosition(window, &x, &y);
 				IRmGUIMouseMoveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
 				openui->sendEvent(nullptr, &event2);
-			}
-			break;
+			} break;
 			case SDL_MOUSEBUTTONDOWN: // 鼠标点击  
 				// 处理鼠标点击事件...  
 				// 可以使用 event.button1.button1 来获取被点击的鼠标按钮的编号  
@@ -355,8 +361,7 @@ int main(int argc, char* argv[]) {
 					IRmGUIMouseDblClickEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod, event.button.clicks);
 					openui->sendEvent(nullptr, &event2);
 				}
-			}
-			break;
+			} break;
 			case SDL_MOUSEBUTTONUP: // 鼠标按钮释放  
 				// 处理鼠标按钮释放事件...  
 			{
@@ -364,16 +369,14 @@ int main(int argc, char* argv[]) {
 				SDL_GetWindowPosition(window, &x, &y);
 				IRmGUIMouseUpEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
 				openui->sendEvent(nullptr, &event2);
-			}
-			break;
+			} break;
 			case SDL_MOUSEWHEEL: // 鼠标滚轮
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
 				IRmGUIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.wheel.mouseX, event.wheel.mouseY, x + event.wheel.mouseX, y + event.wheel.mouseY, event.button.button, event.button.button, event.key.keysym.mod);
 				openui->sendEvent(nullptr, &event2);
-			}
-			break;
+			} break;
 			case SDL_WINDOWEVENT:
 				// 窗体事件  
 				switch (event.window.event)
@@ -408,8 +411,7 @@ int main(int argc, char* argv[]) {
 
 					IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
 					openui->sendEvent(nullptr, &event2);
-				}
-				break;
+				} break;
 				case SDL_WINDOWEVENT_MINIMIZED:
 					// 窗口最小化  
 					// printf("Window minimized\n");
@@ -487,4 +489,4 @@ int main(int argc, char* argv[]) {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
-			}
+}

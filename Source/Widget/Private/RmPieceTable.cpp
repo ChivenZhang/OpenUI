@@ -61,24 +61,6 @@ RmPieceTable::~RmPieceTable()
 {
 }
 
-void RmPieceTable::reset()
-{
-	m_TextList.clear();
-	m_RecordList.clear();
-	m_PieceList.clear();
-	m_RecordIndex = -1;
-	m_BatchNum = 0;
-	m_TextList.push_back({ "\n", 1 });
-}
-
-void RmPieceTable::commit()
-{
-	m_RecordList.clear();
-	m_RecordIndex = -1;
-	m_BatchNum = 0;
-	for (size_t i = 0; i < m_PieceList.size(); ++i) purify_line(i);
-}
-
 bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 {
 	// 规范行列
@@ -95,8 +77,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 	m_RecordList.resize(m_RecordIndex + 1);
 
 	// 缓存文本
-	m_TextList.emplace_back();
-	auto& text = m_TextList.back();
+	auto& text = m_TextList.emplace_back();
 	text.Text = utf8;
 	text.Utf8 = utf8.length();
 
@@ -108,8 +89,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 			// 记录换行符之前的文本
 			if (lastIndex < offset)
 			{
-				m_RecordList.emplace_back();
-				auto& record = m_RecordList.back();
+				auto& record = m_RecordList.emplace_back();
 				record.Batch = m_BatchNum;
 				record.File = m_TextList.size() - 1;
 				record.Left.Utf8 = lastUtf8;
@@ -123,8 +103,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 				col += index - lastUtf8;
 			}
 
-			m_RecordList.emplace_back();
-			auto& record = m_RecordList.back();
+			auto& record = m_RecordList.emplace_back();
 			record.Batch = m_BatchNum;
 			record.File = 0;
 			record.Left = { 0,0 };
@@ -145,8 +124,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 		});
 	if (lastIndex < nextIndex)
 	{
-		m_RecordList.emplace_back();
-		auto& record = m_RecordList.back();
+		auto& record = m_RecordList.emplace_back();
 		record.Batch = m_BatchNum;
 		record.File = m_TextList.size() - 1;
 		record.Left.Utf8 = lastUtf8;
@@ -238,8 +216,7 @@ bool RmPieceTable::remove(size_t& row, size_t& col, size_t count)
 		if (xleft == xright);
 		else
 		{
-			m_RecordList.emplace_back();
-			auto& record = m_RecordList.back();
+			auto& record = m_RecordList.emplace_back();
 			record.Batch = m_BatchNum;
 			record.File = e.File;
 			record.Row = row;
@@ -277,8 +254,7 @@ bool RmPieceTable::remove(size_t& row, size_t& col, size_t count)
 		// 删除下一行
 		if (row + 1 < m_PieceList.size())
 		{
-			m_RecordList.emplace_back();
-			auto& record = m_RecordList.back();
+			auto& record = m_RecordList.emplace_back();
 			record.Batch = m_BatchNum;
 			record.File = 0;
 			record.Left = { 0,0 };
@@ -431,6 +407,24 @@ void RmPieceTable::text(RmString& buffer)
 	}
 }
 
+void RmPieceTable::commit()
+{
+	m_RecordList.clear();
+	m_RecordIndex = -1;
+	m_BatchNum = 0;
+	for (size_t i = 0; i < m_PieceList.size(); ++i) purify_line(i);
+}
+
+void RmPieceTable::reset()
+{
+	m_TextList.clear();
+	m_RecordList.clear();
+	m_PieceList.clear();
+	m_RecordIndex = -1;
+	m_BatchNum = 0;
+	m_TextList.push_back({ "\n", 1 });
+}
+
 bool RmPieceTable::insert_line(const RmPieceRecord& record)
 {
 	//printf("insert %d %d %d %d\n", record.Row, record.Column, record.Left.Utf8, record.Right.Utf8);
@@ -491,26 +485,23 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 		}
 		else
 		{
-			RmPieceNode one;
+			auto& one = line.emplace_back();
 			one.File = record.File;
 			one.Left = record.Left;
 			one.Right = record.Right;
-			line.emplace_back(one);
 		}
 		return true;
 	}
 	else if (record.Row == m_PieceList.size())
 	{
-		m_PieceList.emplace_back();
+		auto& line = m_PieceList.emplace_back();
 		if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP);
 		else
 		{
-			auto& line = m_PieceList.back();
-			RmPieceNode one;
+			auto& one = line.emplace_back();
 			one.File = record.File;
 			one.Left = record.Left;
 			one.Right = record.Right;
-			line.emplace_back(one);
 		}
 		return true;
 	}
