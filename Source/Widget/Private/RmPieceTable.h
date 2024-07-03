@@ -36,7 +36,7 @@ struct RmPieceBuffer
 struct RmPieceNode
 {
 	/// @brief 文本索引
-	size_t File = 0;
+	size_t Text = 0;
 	/// @brief 起始位置
 	RmPiecePosition Left;
 	/// @brief 结束位置（不包含）
@@ -49,7 +49,7 @@ struct RmPieceRecord
 	/// @brief 批处理号
 	size_t Batch = 0;
 	/// @brief 文本索引
-	size_t File = 0;
+	size_t Text = 0;
 	/// @brief 起始位置
 	RmPiecePosition Left;
 	/// @brief 结束位置（不包含）

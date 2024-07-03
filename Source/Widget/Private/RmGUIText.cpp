@@ -220,7 +220,10 @@ void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 	{
 		if (event->Done == false)
 		{
-			if (event->Text.empty()) PRIVATE()->OnIMEShown.emit(RmRect { getRect().X, getRect().Y, 0, 0 });
+			if (event->Text.empty())
+			{
+				PRIVATE()->OnIMEShown.emit(getRect());
+			}
 		}
 		else
 		{

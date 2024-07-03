@@ -160,6 +160,9 @@ int main(int argc, char* argv[]) {
 			SDL_SetTextInputRect(&sdlRect);
 			SDL_StartTextInput();
 			});
+		child3->textChanged->connect(nullptr, [=](RmString const& text) {
+			SDL_StopTextInput();
+			});
 
 		auto child33 = RmNew<RmGUIPanel>();
 		child2->addWidget(child33);
@@ -286,7 +289,7 @@ int main(int argc, char* argv[]) {
 		combo3->setCurrentIndex(0);
 		combo3->currentTextChanged->connect(nullptr, [](RmString text) {
 			printf("combo3 %s\n", text.c_str());
-			});
+	});
 	}
 #endif
 
@@ -295,7 +298,7 @@ int main(int argc, char* argv[]) {
 	{
 		auto text = RmNew<RmGUIText>();
 		openui->addWidget(text);
-	}
+}
 #endif
 
 	// 主循环  

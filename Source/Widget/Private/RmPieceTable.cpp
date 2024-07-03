@@ -91,7 +91,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 			{
 				auto& record = m_RecordList.emplace_back();
 				record.Batch = m_BatchNum;
-				record.File = m_TextList.size() - 1;
+				record.Text = m_TextList.size() - 1;
 				record.Left.Utf8 = lastUtf8;
 				record.Left.Index = lastIndex;
 				record.Right.Utf8 = index;
@@ -105,7 +105,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 
 			auto& record = m_RecordList.emplace_back();
 			record.Batch = m_BatchNum;
-			record.File = 0;
+			record.Text = 0;
 			record.Left = { 0,0 };
 			record.Right = { 1,1 };
 			record.Row = row;
@@ -126,7 +126,7 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 	{
 		auto& record = m_RecordList.emplace_back();
 		record.Batch = m_BatchNum;
-		record.File = m_TextList.size() - 1;
+		record.Text = m_TextList.size() - 1;
 		record.Left.Utf8 = lastUtf8;
 		record.Left.Index = lastIndex;
 		record.Right.Utf8 = nextUtf8;
@@ -172,7 +172,7 @@ bool RmPieceTable::remove(size_t& row, size_t& col, size_t count)
 	for (auto itr = line.begin(); itr != line.end(); ++itr)
 	{
 		auto& e = *itr;
-		auto& text = m_TextList[e.File];
+		auto& text = m_TextList[e.Text];
 		auto num = e.Right.Utf8 - e.Left.Utf8;
 
 		size_t xleft = 0, xright = 0;
@@ -218,7 +218,7 @@ bool RmPieceTable::remove(size_t& row, size_t& col, size_t count)
 		{
 			auto& record = m_RecordList.emplace_back();
 			record.Batch = m_BatchNum;
-			record.File = e.File;
+			record.Text = e.Text;
 			record.Row = row;
 			record.Column = col;
 			record.Insert = false;
@@ -256,7 +256,7 @@ bool RmPieceTable::remove(size_t& row, size_t& col, size_t count)
 		{
 			auto& record = m_RecordList.emplace_back();
 			record.Batch = m_BatchNum;
-			record.File = 0;
+			record.Text = 0;
 			record.Left = { 0,0 };
 			record.Right = { 1,1 };
 			record.Row = row;
@@ -283,10 +283,8 @@ bool RmPieceTable::undo(size_t& row, size_t& col)
 {
 	if (0 <= m_RecordIndex && m_RecordIndex < m_RecordList.size())
 	{
-		const auto LAST_BATCH = m_RecordList[m_RecordIndex].Batch;
-		while (0 <= m_RecordIndex
-			&& m_RecordIndex < m_RecordList.size()
-			&& m_RecordList[m_RecordIndex].Batch == LAST_BATCH)
+		const auto lastBatch = m_RecordList[m_RecordIndex].Batch;
+		while (m_RecordIndex < m_RecordList.size() && m_RecordList[m_RecordIndex].Batch == lastBatch)
 		{
 			auto& record = m_RecordList[m_RecordIndex];
 			// 撤销插入操作
@@ -303,7 +301,7 @@ bool RmPieceTable::undo(size_t& row, size_t& col)
 				insert_line(record);
 				row = record.Row;
 				col = record.Column;
-				if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
+				if (m_TextList[record.Text].Text[record.Left.Index] == RM_LINE_WRAP)
 				{
 					++row;
 					col = 0;
@@ -322,12 +320,10 @@ bool RmPieceTable::undo(size_t& row, size_t& col)
 
 bool RmPieceTable::redo(size_t& row, size_t& col)
 {
-	if (0 <= m_RecordIndex && m_RecordIndex + 1 < m_RecordList.size())
+	if (m_RecordIndex + 1 < m_RecordList.size())
 	{
-		const auto LAST_BATCH = m_RecordList[m_RecordIndex + 1].Batch;
-		while (0 <= m_RecordIndex
-			&& m_RecordIndex + 1 < m_RecordList.size()
-			&& m_RecordList[m_RecordIndex + 1].Batch == LAST_BATCH)
+		const auto lastBatch = m_RecordList[m_RecordIndex + 1].Batch;
+		while (m_RecordIndex + 1 < m_RecordList.size() && m_RecordList[m_RecordIndex + 1].Batch == lastBatch)
 		{
 			auto& record = m_RecordList[m_RecordIndex + 1];
 			// 执行插入操作
@@ -336,7 +332,7 @@ bool RmPieceTable::redo(size_t& row, size_t& col)
 				insert_line(record);
 				row = record.Row;
 				col = record.Column;
-				if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
+				if (m_TextList[record.Text].Text[record.Left.Index] == RM_LINE_WRAP)
 				{
 					++row;
 					col = 0;
@@ -369,7 +365,7 @@ bool RmPieceTable::text(size_t row, size_t col, size_t count, RmString& buffer)
 		auto& line = m_PieceList[row];
 		for (auto& e : line)
 		{
-			auto& text = m_TextList[e.File];
+			auto& text = m_TextList[e.Text];
 			auto num = e.Right.Utf8 - e.Left.Utf8;
 			if (col < icol + num)
 			{
@@ -397,7 +393,7 @@ void RmPieceTable::text(RmString& buffer)
 	{
 		for (auto& e : m_PieceList[i])
 		{
-			auto& text = m_TextList[e.File];
+			auto& text = m_TextList[e.Text];
 			buffer += text.Text.substr(e.Left.Index, e.Right.Index - e.Left.Index);
 		}
 		if (i + 1 < m_PieceList.size())
@@ -440,11 +436,11 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 			if (icol <= record.Column && record.Column < icol + num)
 			{
 				// 分割结点
-				::UTF8Foreach(m_TextList[e.File].Text, e.Left.Index, e.Right.Index, [&](auto index, auto offset, auto length)->bool {
+				::UTF8Foreach(m_TextList[e.Text].Text, e.Left.Index, e.Right.Index, [&](auto index, auto offset, auto length)->bool {
 					if (icol + index == record.Column)
 					{
 						RmPieceNode two;
-						two.File = e.File;
+						two.Text = e.Text;
 						two.Left = e.Left;
 						two.Right.Utf8 = two.Left.Utf8 + index;
 						two.Right.Index = two.Left.Index + offset;
@@ -456,7 +452,7 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 					});
 
 				// 行中间插入换行
-				if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
+				if (m_TextList[record.Text].Text[record.Left.Index] == RM_LINE_WRAP)
 				{
 					std::list<RmPieceNode> nextLine;
 					if (itr != line.end())
@@ -469,7 +465,7 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 				else
 				{
 					RmPieceNode one;
-					one.File = record.File;
+					one.Text = record.Text;
 					one.Left = record.Left;
 					one.Right = record.Right;
 					itr = line.insert(++itr, one);
@@ -479,14 +475,14 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 			}
 			icol += num;
 		}
-		if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
+		if (m_TextList[record.Text].Text[record.Left.Index] == RM_LINE_WRAP)
 		{
 			m_PieceList.emplace(m_PieceList.begin() + record.Row + 1);
 		}
 		else
 		{
 			auto& one = line.emplace_back();
-			one.File = record.File;
+			one.Text = record.Text;
 			one.Left = record.Left;
 			one.Right = record.Right;
 		}
@@ -495,11 +491,11 @@ bool RmPieceTable::insert_line(const RmPieceRecord& record)
 	else if (record.Row == m_PieceList.size())
 	{
 		auto& line = m_PieceList.emplace_back();
-		if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP);
+		if (m_TextList[record.Text].Text[record.Left.Index] == RM_LINE_WRAP);
 		else
 		{
 			auto& one = line.emplace_back();
-			one.File = record.File;
+			one.Text = record.Text;
 			one.Left = record.Left;
 			one.Right = record.Right;
 		}
@@ -528,7 +524,7 @@ bool RmPieceTable::remove_line(const RmPieceRecord& record)
 			for (auto itr = line.begin(); itr != line.end(); )
 			{
 				auto& e = *itr;
-				auto& text = m_TextList[e.File];
+				auto& text = m_TextList[e.Text];
 				auto num = e.Right.Utf8 - e.Left.Utf8;
 
 				size_t xleft = 0, xright = 0;
@@ -594,7 +590,7 @@ bool RmPieceTable::remove_line(const RmPieceRecord& record)
 					else
 					{
 						RmPieceNode one;
-						one.File = record.File;
+						one.Text = record.Text;
 						one.Left = record.Right;
 						one.Right = e.Right;
 						e.Right = record.Left;
@@ -606,7 +602,7 @@ bool RmPieceTable::remove_line(const RmPieceRecord& record)
 				icol += num;
 				++itr;
 			}
-			if (m_TextList[record.File].Text[record.Left.Index] == RM_LINE_WRAP)
+			if (m_TextList[record.Text].Text[record.Left.Index] == RM_LINE_WRAP)
 			{
 				auto& nextLine = m_PieceList[record.Row + 1];
 				line.splice(line.end(), nextLine, nextLine.begin(), nextLine.end());
@@ -627,12 +623,8 @@ bool RmPieceTable::purify_line(size_t row)
 		for (auto itr = line.begin(); itr != line.end(); )
 		{
 			auto& e = *itr;
-			if (e.Left.Utf8 == e.Right.Utf8)
-			{
-				itr = line.erase(itr);
-				continue;
-			}
-			++itr;
+			if (e.Left.Utf8 == e.Right.Utf8) itr = line.erase(itr);
+			else ++itr;
 		}
 		return true;
 	}

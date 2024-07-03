@@ -104,14 +104,13 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 		int column_number = cursor - line_start_index;
 		row = line_number;
 		column = column_number;
-		pango_layout_line
 
-			if (cursorRect)
-			{
-				PangoRectangle strong_pos, weak_pos;
-				pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-				(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
-			}
+		if (cursorRect)
+		{
+			PangoRectangle strong_pos, weak_pos;
+			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
+			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+		}
 	}
 
 	return text_rect;
