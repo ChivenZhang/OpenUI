@@ -43,8 +43,12 @@ static void UTF8Foreach(const RmString& u8Str, size_t start, size_t end, utf8_fo
 	size_t offset = 0;
 	for (size_t i = 0; i + start < end; i += offset, ++index)
 	{
+#ifdef RMGUI_ENABLE_UTF8
 		offset = ::UTF8ByteNum({ u8Str[i + start] });
-		if (offset == 0)break;
+#else
+		offset = 1;
+#endif
+		if (offset == 0) break;
 		if (func(index, i, offset) == false) break;
 	}
 }

@@ -7,6 +7,8 @@ class RMGUI_API IRmGUIPainter
 public:
 	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect = nullptr) = 0;
 
+	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int row, int column, int& cursor, RmRectRaw cursorRect = nullptr) = 0;
+
 	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int posX, int posY, int& row, int& column, int& cursor, RmRectRaw cursorRect = nullptr) = 0;
 
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) = 0;

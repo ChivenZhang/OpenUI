@@ -155,6 +155,7 @@ int main(int argc, char* argv[]) {
 		child2->addWidget(child3);
 		child3->setBorder({ 5,5,5,5 });
 		child3->setFixedSize(200, 35);
+		child3->setText("Hello");
 		child3->imeShown->connect(nullptr, [=](RmRect rect) {
 			SDL_Rect sdlRect{ rect.X, rect.Y, rect.W, rect.H };
 			SDL_SetTextInputRect(&sdlRect);
@@ -235,7 +236,7 @@ int main(int argc, char* argv[]) {
 		auto panel = RmNew<RmGUIPanel>();
 		scroll->addWidget(panel);
 		panel->setRect({ 0, 0, 2000, 2000 });
-	}
+}
 #endif
 
 #if 0
@@ -289,7 +290,7 @@ int main(int argc, char* argv[]) {
 		combo3->setCurrentIndex(0);
 		combo3->currentTextChanged->connect(nullptr, [](RmString text) {
 			printf("combo3 %s\n", text.c_str());
-	});
+			});
 	}
 #endif
 

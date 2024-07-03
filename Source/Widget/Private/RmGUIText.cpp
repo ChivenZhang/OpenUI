@@ -7,7 +7,7 @@ class RmGUITextPrivateData : public RmGUIWidgetPrivate
 public:
 	RmGUITextStyle Style;
 	RmString Text, SelectedText, PlaceholderText;
-	uint32_t CursorStart = 0, Cursor = 0, MaxLength = -1;
+	int32_t CursorStart = 0, Cursor = 0, MaxLength = -1;
 	size_t Row = 0, Column = 0;
 	RmGUITextEchoMode EchoMode = RmGUITextEchoMode::EchoModeNoEcho;
 	bool ReadOnly;
@@ -175,7 +175,13 @@ RmString RmGUIText::getText() const
 
 void RmGUIText::setText(RmString const& value)
 {
-	PRIVATE()->Text = value;
+	PRIVATE()->UndoRedo.reset();
+	PRIVATE()->Row = 0;
+	PRIVATE()->Column = 0;
+	PRIVATE()->Cursor = 0;
+	PRIVATE()->UndoRedo.insert(PRIVATE()->Row, PRIVATE()->Column, value);
+	PRIVATE()->Text.clear();
+	PRIVATE()->UndoRedo.text(PRIVATE()->Text);
 }
 
 void RmGUIText::backspace()
@@ -230,6 +236,11 @@ void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 			PRIVATE()->UndoRedo.insert(PRIVATE()->Row, PRIVATE()->Column, event->Text);
 			PRIVATE()->Text.clear();
 			PRIVATE()->UndoRedo.text(PRIVATE()->Text);
+
+			auto painter = getPainter();
+			if (painter == nullptr) painter = getContext()->getPainter();
+			if (painter == nullptr) return;
+			painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, PRIVATE()->Row, PRIVATE()->Column, PRIVATE()->Cursor);
 		}
 	}
 }
@@ -248,8 +259,12 @@ void RmGUIText::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 		int cursor = -1, row, column;
 		painter->setFont(PRIVATE()->Style.Font);
 		painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, event->X, event->Y, row, column, cursor);
-		if (cursor == -1) PRIVATE()->Cursor = 0;
-		else PRIVATE()->Cursor = cursor;
+		if (cursor != -1)
+		{
+			PRIVATE()->Cursor = cursor;
+			PRIVATE()->Row = row;
+			PRIVATE()->Column = column;
+		}
 	}
 	else
 	{
@@ -273,6 +288,12 @@ void RmGUIText::mousePressEvent(IRmGUIMouseEventRaw event)
 		painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, event->X, event->Y, row, column, cursor);
 		if (cursor == -1) PRIVATE()->Cursor = 0;
 		else PRIVATE()->Cursor = cursor;
+		if (cursor != -1)
+		{
+			PRIVATE()->Cursor = cursor;
+			PRIVATE()->Row = row;
+			PRIVATE()->Column = column;
+		}
 	}
 	else
 	{

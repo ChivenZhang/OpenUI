@@ -71,6 +71,43 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	return text_rect;
 }
 
+RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int row, int column, int& cursor, RmRectRaw cursorRect)
+{
+	auto layout = m_NativeLayout;
+	auto& font = m_Font;
+
+	pango_layout_set_text(layout, text.c_str(), -1);
+	pango_layout_set_width(layout, width * PANGO_SCALE);
+	pango_layout_set_height(layout, height * PANGO_SCALE);
+
+	RmRect text_rect;
+	int text_width, text_height;
+	int baseline = pango_layout_get_baseline(layout);
+	pango_layout_get_pixel_size(layout, &text_width, &text_height);
+	text_rect.W = text_width; text_rect.H = text_height;
+
+	if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+	else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+	else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+	else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+	else { text_rect.X = x; text_rect.Y = y; }
+
+	auto line = pango_layout_get_line_readonly(layout, row);
+	if (line)
+	{
+		cursor = line->start_index + column;
+		if (cursorRect)
+		{
+			PangoRectangle strong_pos, weak_pos;
+			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
+			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+		}
+	}
+	else cursor = -1;
+
+	return text_rect;
+}
+
 RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int posX, int posY, int& row, int& column, int& cursor, RmRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
@@ -94,7 +131,7 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 
 	cursor = -1;
 	int32_t text_index, text_trailing;
-	if (pango_layout_xy_to_index(layout, (posX - x) * PANGO_SCALE, (posY - y) * PANGO_SCALE, &text_index, nullptr))
+	if (pango_layout_xy_to_index(layout, (posX - text_rect.X) * PANGO_SCALE, (posY - text_rect.Y) * PANGO_SCALE, &text_index, nullptr))
 	{
 		cursor = text_index;
 		int line_number, x_pos;

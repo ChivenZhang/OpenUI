@@ -14,6 +14,8 @@
 
 #include "RmGUI.h"
 
+// #define RMGUI_ENABLE_UTF8
+
 /// @brief 位置
 struct RmPiecePosition
 {
