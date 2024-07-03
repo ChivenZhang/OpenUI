@@ -240,11 +240,12 @@ using IRmGUIKeyUpEventRaw = RmRaw<IRmGUIKeyUpEvent>;
 class IRmGUITextInputEvent : public IRmGUIKeyEvent
 {
 public:
-	IRmGUITextInputEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1, bool done = false)
+	IRmGUITextInputEvent(uint32_t key, uint32_t modifiers, uint32_t nativeScanCode, uint32_t nativeVirtualKey, uint32_t nativeModifiers, RmString text = RmString(), uint16_t count = 1, bool done = false, uint32_t start = 0, uint32_t length = 0)
 		:
-		IRmGUIKeyEvent(RmHash("TextInput"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count), Done(done) {}
+		IRmGUIKeyEvent(RmHash("TextInput"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count), Done(done), Start(start), Length(length) {}
 
 	const bool Done;
+	const uint32_t Start, Length;
 };
 using IRmGUITextInputEventRaw = RmRaw<IRmGUITextInputEvent>;
 
