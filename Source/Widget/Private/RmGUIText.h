@@ -50,7 +50,7 @@ public:
 
 	RmString getSelectedText() const;
 	void getSelection(int32_t& start, int32_t& length) const;
-	void setSelection(int32_t start, int32_t& length);
+	void setSelection(int32_t start, int32_t length);
 
 	RmString getText() const;
 	void setText(RmString const& value);

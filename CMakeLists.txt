@@ -8,11 +8,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
-# Please copy x64-windows to External folder after install library below by vcpkg.
-# vcpkg.exe install sdl2:x64-windows
-# vcpkg.exe install glew:x64-windows
-# vcpkg.exe install pango::x64-windows
-
 include_directories(Source)
 include_directories(External/x64-windows/include)
 include_directories(External/earcut.hpp/include)

@@ -139,6 +139,61 @@ bool RmPieceTable::insert(size_t& row, size_t& col, const RmString& utf8)
 	return true;
 }
 
+bool RmPieceTable::locate(size_t& row, size_t& col, bool ascii)
+{
+	// 规范行列
+	if (row < m_PieceList.size())
+	{
+		if (ascii)
+		{
+			size_t ascii = 0;
+			size_t utf8 = 0;
+			for (auto& e : m_PieceList[row])
+			{
+				bool found = false;
+				::UTF8Foreach(m_TextList[e.Text].Text, e.Left.Utf8, e.Right.Utf8, [&](size_t index, size_t offset, size_t length)->bool {
+					if (ascii <= col && col < ascii + length)
+					{
+						col = utf8;
+						found = true;
+						return false;
+					}
+					ascii += length;
+					++utf8;
+					return true;
+					});
+				if (found) return true;
+			}
+			col = utf8;
+			return true;
+		}
+		else
+		{
+			size_t ascii = 0;
+			size_t utf8 = 0;
+			for (auto& e : m_PieceList[row])
+			{
+				bool found = false;
+				::UTF8Foreach(m_TextList[e.Text].Text, e.Left.Utf8, e.Right.Utf8, [&](size_t index, size_t offset, size_t length)->bool {
+					if (col == utf8)
+					{
+						col = ascii;
+						found = true;
+						return false;
+					}
+					ascii += length;
+					++utf8;
+					return true;
+					});
+				if (found) return true;
+			}
+			col = ascii;
+			return true;
+		}
+	}
+	return false;
+}
+
 bool RmPieceTable::remove(size_t& row, size_t& col, size_t count)
 {
 	// 规范行列

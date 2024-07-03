@@ -33,7 +33,6 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// 创建SDL窗口  
 	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
@@ -160,10 +159,16 @@ int main(int argc, char* argv[]) {
 			SDL_Rect sdlRect{ rect.X, rect.Y, rect.W, rect.H };
 			SDL_SetTextInputArea(window, &sdlRect, 0);
 			});
+		child3->setText("Hello, World!");
+		child3->setSelection(2, 5);
 
-		auto child33 = RmNew<RmGUIPanel>();
+		auto child33 = RmNew<RmGUICombo>();
 		child2->addWidget(child33);
 		child33->setBorder({ 5,5,5,5 });
+		child33->setFixedSize(100, 35);
+		child33->setItems({ "一月", "二月", "三月", "四月", "五月","六月", "七月", "八月", "九月", "十月", "十一月", "十二月", });
+		child33->setMaxCount(5);
+		child33->setCurrentIndex(6);
 	}
 #endif
 
@@ -286,7 +291,7 @@ int main(int argc, char* argv[]) {
 		combo3->setCurrentIndex(0);
 		combo3->currentTextChanged->connect(nullptr, [](RmString text) {
 			printf("combo3 %s\n", text.c_str());
-			});
+	});
 	}
 #endif
 
@@ -295,7 +300,7 @@ int main(int argc, char* argv[]) {
 	{
 		auto text = RmNew<RmGUIText>();
 		openui->addWidget(text);
-	}
+}
 #endif
 
 	// 主循环  

@@ -14,7 +14,7 @@
 
 #include "RmGUI.h"
 
-// #define RMGUI_ENABLE_UTF8
+#define RMGUI_ENABLE_UTF8
 
 /// @brief 位置
 struct RmPiecePosition
@@ -78,6 +78,13 @@ public:
 	/// @param utf8 文本
 	/// @return 操作结果
 	bool insert(size_t& row, size_t& col, const RmString& utf8);
+
+	/// @brief 定位文本
+	/// @param row 
+	/// @param col 
+	/// @param ascii 
+	/// @return 
+	bool locate(size_t& row, size_t& col, bool ascii = false);
 
 	/// @brief 删除文本
 	/// @param row 行数，返回新行

@@ -40,7 +40,7 @@ OpenGLPainter::~OpenGLPainter()
 	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
 }
 
-RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect)
+RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, int* row, int* column, RmRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
@@ -61,17 +61,25 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 	else { text_rect.X = x; text_rect.Y = y; }
 
+	int line_number, x_pos;
+	pango_layout_index_to_line_x(layout, cursor, 0, &line_number, &x_pos);
+	auto line = pango_layout_get_line_readonly(layout, line_number);
+	int line_start_index = line->start_index;
+	int column_number = cursor - line_start_index;
+	if (row) (*row) = line_number;
+	if (column) (*column) = column_number;
+
 	if (cursorRect)
 	{
 		PangoRectangle strong_pos, weak_pos;
 		pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-		(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+		(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 	}
 
 	return text_rect;
 }
 
-RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int row, int column, int& cursor, RmRectRaw cursorRect)
+RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int row, int column, int* cursor, RmRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
@@ -95,20 +103,20 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	auto line = pango_layout_get_line_readonly(layout, row);
 	if (line)
 	{
-		cursor = line->start_index + column;
+		auto _cursor = line->start_index + column;
+		if (cursor) (*cursor) = _cursor;
 		if (cursorRect)
 		{
 			PangoRectangle strong_pos, weak_pos;
-			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+			pango_layout_get_cursor_pos(layout, _cursor, &strong_pos, &weak_pos);
+			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 		}
 	}
-	else cursor = -1;
 
 	return text_rect;
 }
 
-RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int posX, int posY, int& row, int& column, int& cursor, RmRectRaw cursorRect)
+RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int posX, int posY, int* row, int* column, int* cursor, RmRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
@@ -131,20 +139,21 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 
 	int32_t text_index, text_trailing;
 	pango_layout_xy_to_index(layout, (posX - text_rect.X) * PANGO_SCALE, (posY - text_rect.Y) * PANGO_SCALE, &text_index, &text_trailing);
-	cursor = text_index + ((text_trailing) ? RmUTF8Num(text[text_index]) : 0);
+	auto _cursor = text_index + ((text_trailing) ? RmUTF8Num(text[text_index]) : 0);
 	int line_number, x_pos;
-	pango_layout_index_to_line_x(layout, cursor, 0, &line_number, &x_pos);
+	pango_layout_index_to_line_x(layout, _cursor, 0, &line_number, &x_pos);
 	auto line = pango_layout_get_line_readonly(layout, line_number);
 	int line_start_index = line->start_index;
-	int column_number = cursor - line_start_index;
-	row = line_number;
-	column = column_number;
+	int column_number = _cursor - line_start_index;
+	if (row) (*row) = line_number;
+	if (column) (*column) = column_number;
 
+	if (cursor) (*cursor) = _cursor;
 	if (cursorRect)
 	{
 		PangoRectangle strong_pos, weak_pos;
-		pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-		(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+		pango_layout_get_cursor_pos(layout, _cursor, &strong_pos, &weak_pos);
+		(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 	}
 
 	return text_rect;
@@ -506,15 +515,14 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 		else { text_rect.X = x; text_rect.Y = y; }
 		if (boundingRect) (*boundingRect) = text_rect;
 
-		cairo_move_to(cr, text_rect.X, text_rect.Y);
-
 		if (cursorRect)
 		{
 			PangoRectangle strong_pos, weak_pos;
 			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 		}
 
+		cairo_move_to(cr, text_rect.X, text_rect.Y);
 		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
 		pango_cairo_show_layout(cr, layout);
 		cairo_restore(cr);
@@ -544,7 +552,7 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 		{
 			PangoRectangle strong_pos, weak_pos;
 			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
+			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 		}
 
 		pango_cairo_layout_path(cr, layout);

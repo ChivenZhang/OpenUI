@@ -8,9 +8,9 @@ class OpenGLPainter : public IRmGUIPainter
 public:
 	OpenGLPainter(uint32_t width, uint32_t height);
 	~OpenGLPainter();
-	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, RmRectRaw cursorRect) override;
-	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int row, int column, int& cursor, RmRectRaw cursorRect) override;
-	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int posX, int posY, int& row, int& column, int& cursor, RmRectRaw cursorRect) override;
+	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, int* row, int* column, RmRectRaw cursorRect) override;
+	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int row, int column, int* cursor, RmRectRaw cursorRect) override;
+	virtual RmRect boundingRect(int x, int y, int width, int height, RmString const& text, int posX, int posY, int* row, int* column, int* cursor, RmRectRaw cursorRect) override;
 	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) override;
 	virtual void drawEllipse(int x, int y, int width, int height) override;
