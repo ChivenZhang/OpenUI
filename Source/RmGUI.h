@@ -471,3 +471,12 @@ inline RmRect RmOverlap(RmRect const& viewport, RmRect const& client)
 	// 创建一个表示重叠区域的矩形（如果有的话）  
 	return RmRect{ overlapX1, overlapY1, overlapWidth, overlapHeight };
 }
+
+inline int32_t RmUTF8Num(char prefix)
+{
+	if (0 <= uint8_t(prefix) && uint8_t(prefix) < 0x80) return 1;
+	if (0xC2 <= uint8_t(prefix) && uint8_t(prefix) < 0xE0) return 2;
+	if (0xE0 <= uint8_t(prefix) && uint8_t(prefix) < 0xF0) return 3;
+	if (0xF0 <= uint8_t(prefix) && uint8_t(prefix) < 0xF8) return 4;
+	return 0;
+}

@@ -13,26 +13,9 @@
 #include <assert.h>
 #define RM_LINE_WRAP '\n'
 
-static int GetU8ByteCount(char ch)
-{
-	if (0 <= uint8_t(ch) && uint8_t(ch) < 0x80) {
-		return 1;
-	}
-	if (0xC2 <= uint8_t(ch) && uint8_t(ch) < 0xE0) {
-		return 2;
-	}
-	if (0xE0 <= uint8_t(ch) && uint8_t(ch) < 0xF0) {
-		return 3;
-	}
-	if (0xF0 <= uint8_t(ch) && uint8_t(ch) < 0xF8) {
-		return 4;
-	}
-	return 0;
-}
-
 static size_t UTF8ByteNum(const RmArray<char, 5>& u8Ch)
 {
-	return GetU8ByteCount(u8Ch[0]);
+	return RmUTF8Num(u8Ch[0]);
 }
 
 using utf8_foreach_t = RmLambda<bool(size_t index, size_t offset, size_t length)>;

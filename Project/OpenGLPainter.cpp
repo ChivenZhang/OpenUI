@@ -129,25 +129,22 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 	else { text_rect.X = x; text_rect.Y = y; }
 
-	cursor = -1;
 	int32_t text_index, text_trailing;
-	if (pango_layout_xy_to_index(layout, (posX - text_rect.X) * PANGO_SCALE, (posY - text_rect.Y) * PANGO_SCALE, &text_index, nullptr))
-	{
-		cursor = text_index;
-		int line_number, x_pos;
-		pango_layout_index_to_line_x(layout, cursor, 0, &line_number, &x_pos);
-		auto line = pango_layout_get_line_readonly(layout, line_number);
-		int line_start_index = line->start_index;
-		int column_number = cursor - line_start_index;
-		row = line_number;
-		column = column_number;
+	pango_layout_xy_to_index(layout, (posX - text_rect.X) * PANGO_SCALE, (posY - text_rect.Y) * PANGO_SCALE, &text_index, &text_trailing);
+	cursor = text_index + ((text_trailing) ? RmUTF8Num(text[text_index]) : 0);
+	int line_number, x_pos;
+	pango_layout_index_to_line_x(layout, cursor, 0, &line_number, &x_pos);
+	auto line = pango_layout_get_line_readonly(layout, line_number);
+	int line_start_index = line->start_index;
+	int column_number = cursor - line_start_index;
+	row = line_number;
+	column = column_number;
 
-		if (cursorRect)
-		{
-			PangoRectangle strong_pos, weak_pos;
-			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
-		}
+	if (cursorRect)
+	{
+		PangoRectangle strong_pos, weak_pos;
+		pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
+		(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, (float)(weak_pos.x - strong_pos.x) / PANGO_SCALE, (float)strong_pos.height / PANGO_SCALE };
 	}
 
 	return text_rect;

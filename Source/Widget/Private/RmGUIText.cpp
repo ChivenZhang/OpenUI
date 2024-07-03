@@ -233,7 +233,9 @@ void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 			auto painter = getPainter();
 			if (painter == nullptr) painter = getContext()->getPainter();
 			if (painter == nullptr) return;
-			painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, PRIVATE()->Row, PRIVATE()->Column, PRIVATE()->Cursor);
+			RmRect cursorRect;
+			painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, PRIVATE()->Row, PRIVATE()->Column, PRIVATE()->Cursor, &cursorRect);
+			PRIVATE()->OnEditingStarted.emit(RmOverlap(getViewport(), cursorRect));
 		}
 	}
 }
