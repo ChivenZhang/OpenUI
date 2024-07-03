@@ -1,6 +1,6 @@
 #define SDL_MAIN_HANDLED
 #include <GL/glew.h>
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "OpenGLPainter.h"
@@ -29,14 +29,14 @@ int main(int argc, char* argv[]) {
 		std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
 		return -1;
 	}
-	SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// 创建SDL窗口  
-	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	if (window == nullptr) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_Quit();
@@ -155,14 +155,10 @@ int main(int argc, char* argv[]) {
 		child2->addWidget(child3);
 		child3->setBorder({ 5,5,5,5 });
 		child3->setFixedSize(200, 35);
-		child3->setText("Hello");
-		child3->imeShown->connect(nullptr, [=](RmRect rect) {
+		child3->editingStarted->connect(nullptr, [=](RmRect rect) {
+			SDL_StartTextInput(window);
 			SDL_Rect sdlRect{ rect.X, rect.Y, rect.W, rect.H };
-			SDL_SetTextInputRect(&sdlRect);
-			SDL_StartTextInput();
-			});
-		child3->textChanged->connect(nullptr, [=](RmString const& text) {
-			SDL_StopTextInput();
+			SDL_SetTextInputArea(window, &sdlRect, 0);
 			});
 
 		auto child33 = RmNew<RmGUIPanel>();
@@ -299,7 +295,7 @@ int main(int argc, char* argv[]) {
 	{
 		auto text = RmNew<RmGUIText>();
 		openui->addWidget(text);
-}
+	}
 #endif
 
 	// 主循环  
@@ -313,43 +309,43 @@ int main(int argc, char* argv[]) {
 			// 根据事件类型进行处理  
 			switch (event.type)
 			{
-			case SDL_QUIT: // 用户请求退出（如点击了窗口的关闭按钮）  
+			case SDL_EVENT_QUIT: // 用户请求退出（如点击了窗口的关闭按钮）  
 				// 执行退出操作（如关闭窗口、清理资源、结束程序）...  
 				SDL_Quit();
 				return 0;
-			case SDL_KEYDOWN: // 键盘按键按下  
+			case SDL_EVENT_KEY_DOWN: // 键盘按键按下  
 				// 处理键盘按键事件...  
-				// 可以使用 event.key.keysym.sym 来获取按下的键的标识符
+				// 可以使用 event.key.sym 来获取按下的键的标识符
 			{
-				IRmGUIKeyDownEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, RmString(), event.key.repeat);
+				IRmGUIKeyDownEvent event2(event.key.key, event.key.mod, event.key.scancode, event.key.key, event.key.mod, RmString(), event.key.repeat);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_KEYUP: // 键盘按键释放  
+			case SDL_EVENT_KEY_UP: // 键盘按键释放  
 				// 处理键盘按键释放事件...  
 			{
-				IRmGUIKeyUpEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, RmString(), event.key.repeat);
+				IRmGUIKeyUpEvent event2(event.key.key, event.key.mod, event.key.scancode, event.key.key, event.key.mod, RmString(), event.key.repeat);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_TEXTEDITING:
+			case SDL_EVENT_TEXT_EDITING:
 			{
-				IRmGUITextInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat, false);
+				IRmGUITextInputEvent event2(event.key.key, event.key.mod, event.key.scancode, event.key.key, event.key.mod, event.edit.text, event.key.repeat, false, event.edit.start, event.edit.length);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_TEXTINPUT:
+			case SDL_EVENT_TEXT_INPUT:
 			{
-				IRmGUITextInputEvent event2(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod, event.edit.text, event.key.repeat, true);
+				IRmGUITextInputEvent event2(event.key.key, event.key.mod, event.key.scancode, event.key.key, event.key.mod, event.edit.text, event.key.repeat, true);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_MOUSEMOTION: // 鼠标移动  
+			case SDL_EVENT_MOUSE_MOTION: // 鼠标移动  
 				// 处理鼠标移动事件...  
 				// 可以使用 event.motion.x 和 event.motion.y 来获取鼠标的当前位置  
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseMoveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
+				IRmGUIMouseMoveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.mod);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_MOUSEBUTTONDOWN: // 鼠标点击  
+			case SDL_EVENT_MOUSE_BUTTON_DOWN: // 鼠标点击  
 				// 处理鼠标点击事件...  
 				// 可以使用 event.button1.button1 来获取被点击的鼠标按钮的编号  
 			{
@@ -357,106 +353,97 @@ int main(int argc, char* argv[]) {
 				SDL_GetWindowPosition(window, &x, &y);
 				if (event.button.clicks == 1)
 				{
-					IRmGUIMouseDownEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod, event.button.clicks);
+					IRmGUIMouseDownEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.mod, event.button.clicks);
 					openui->sendEvent(nullptr, &event2);
 				}
 				else
 				{
-					IRmGUIMouseDblClickEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod, event.button.clicks);
+					IRmGUIMouseDblClickEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.mod, event.button.clicks);
 					openui->sendEvent(nullptr, &event2);
 				}
 			} break;
-			case SDL_MOUSEBUTTONUP: // 鼠标按钮释放  
+			case SDL_EVENT_MOUSE_BUTTON_UP: // 鼠标按钮释放  
 				// 处理鼠标按钮释放事件...  
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseUpEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
+				IRmGUIMouseUpEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.mod);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_MOUSEWHEEL: // 鼠标滚轮
+			case SDL_EVENT_MOUSE_WHEEL: // 鼠标滚轮
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
-				IRmGUIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.wheel.mouseX, event.wheel.mouseY, x + event.wheel.mouseX, y + event.wheel.mouseY, event.button.button, event.button.button, event.key.keysym.mod);
+				IRmGUIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.wheel.mouse_x, event.wheel.mouse_y, x + event.wheel.mouse_x, y + event.wheel.mouse_y, event.button.button, event.button.button, event.key.mod);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_WINDOWEVENT:
-				// 窗体事件  
-				switch (event.window.event)
-				{
-				case SDL_WINDOWEVENT_SHOWN:
-				{
-					IRmGUIShowEvent event2;
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_HIDDEN:
-				{
-					IRmGUIHideEvent event2;
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_CLOSE:
-				{
-					IRmGUICloseEvent event2;
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_MOVED:
-				{
-					IRmGUIMoveEvent event2(event.window.data1, event.window.data2);
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_RESIZED:
-					// 窗口大小改变  
-					// event.window.data1 是新的宽度  
-					// event.window.data2 是新的高度  
-					// printf("Window resized to %dx%d\n", event.window.data1, event.window.data2);
-				{
-					painter->resize(event.window.data1, event.window.data2);
+			case SDL_EVENT_WINDOW_MOUSE_ENTER:
+			{
+				int x, y;
+				SDL_GetWindowPosition(window, &x, &y);
+				IRmGUIMouseEnterEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.mod);
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+			{
+				int x, y;
+				SDL_GetWindowPosition(window, &x, &y);
+				IRmGUIMouseLeaveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.mod);
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_SHOWN:
+			{
+				IRmGUIShowEvent event2;
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_HIDDEN:
+			{
+				IRmGUIHideEvent event2;
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+			{
+				IRmGUICloseEvent event2;
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_MOVED:
+			{
+				IRmGUIMoveEvent event2(event.window.data1, event.window.data2);
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_RESIZED:
+				// 窗口大小改变  
+				// event.window.data1 是新的宽度  
+				// event.window.data2 是新的高度  
+				// printf("Window resized to %dx%d\n", event.window.data1, event.window.data2);
+			{
+				painter->resize(event.window.data1, event.window.data2);
 
-					IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_MINIMIZED:
-					// 窗口最小化  
-					// printf("Window minimized\n");
-					break;
-				case SDL_WINDOWEVENT_MAXIMIZED:
-					// 窗口最大化  
-					// printf("Window maximized\n");
-					break;
-				case SDL_WINDOWEVENT_RESTORED:
-					// 窗口从最小化或最大化状态恢复  
-					// printf("Window restored\n");
-					break;
-				case SDL_WINDOWEVENT_ENTER:
-				{
-					int x, y;
-					SDL_GetWindowPosition(window, &x, &y);
-					IRmGUIMouseEnterEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_LEAVE:
-				{
-					int x, y;
-					SDL_GetWindowPosition(window, &x, &y);
-					IRmGUIMouseLeaveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.keysym.mod);
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_FOCUS_GAINED:
-				{
-					IRmGUIFocusEvent event2(true);
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				case SDL_WINDOWEVENT_FOCUS_LOST:
-				{
-					IRmGUIFocusEvent event2(false);
-					openui->sendEvent(nullptr, &event2);
-				} break;
-				// ... 其他窗体事件  
-				default:
-					break;
-				}
+				IRmGUIResizeEvent event2(event.window.data1, event.window.data2);
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_MINIMIZED:
+				// 窗口最小化  
+				// printf("Window minimized\n");
 				break;
+			case SDL_EVENT_WINDOW_MAXIMIZED:
+				// 窗口最大化  
+				// printf("Window maximized\n");
+				break;
+			case SDL_EVENT_WINDOW_RESTORED:
+				// 窗口从最小化或最大化状态恢复  
+				// printf("Window restored\n");
+				break;
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
+			{
+				IRmGUIFocusEvent event2(true);
+				openui->sendEvent(nullptr, &event2);
+			} break;
+			case SDL_EVENT_WINDOW_FOCUS_LOST:
+			{
+				IRmGUIFocusEvent event2(false);
+				openui->sendEvent(nullptr, &event2);
+			} break;
 			default:
 				// 忽略未处理的事件  
 				break;

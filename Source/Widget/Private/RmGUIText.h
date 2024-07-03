@@ -75,13 +75,13 @@ protected:
 
 public:
 	IRmGUISignalAsRaw<int32_t /*oldPos*/, int32_t /*newPos*/> cursorPositionChanged;
+	IRmGUISignalAsRaw<RmRect /*area*/> editingStarted;
 	IRmGUISignalAsRaw<> editingFinished;
 	IRmGUISignalAsRaw<> inputRejected;
 	IRmGUISignalAsRaw<> returnPressed;
 	IRmGUISignalAsRaw<> selectionChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textEdited;
-	IRmGUISignalAsRaw<RmRect /*rect*/> imeShown;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateText;

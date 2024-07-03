@@ -11,15 +11,15 @@ public:
 	size_t Row = 0, Column = 0;
 	RmGUITextEchoMode EchoMode = RmGUITextEchoMode::EchoModeNoEcho;
 	bool ReadOnly;
-	RmPieceTable UndoRedo;
+	RmPieceTable RedoUndo;
 	RmGUISignalAs<int32_t /*oldPos*/, int32_t /*newPos*/> OnCursorPositionChanged;
+	RmGUISignalAs<RmRect /*area*/> OnEditingStarted;
 	RmGUISignalAs<> OnEditingFinished;
 	RmGUISignalAs<> OnInputRejected;
 	RmGUISignalAs<> OnReturnPressed;
 	RmGUISignalAs<> OnSelectionChanged;
 	RmGUISignalAs<RmString const& /*text*/> OnTextChanged;
 	RmGUISignalAs<RmString const& /*text*/> OnTextEdited;
-	RmGUISignalAs<RmRect /*rect*/> OnIMEShown;
 };
 #define PRIVATE() ((RmGUITextPrivateData*) m_PrivateText)
 
@@ -28,23 +28,23 @@ RmGUIText::RmGUIText(IRmGUIWidgetRaw parent)
 	RmGUIControl(parent),
 	m_PrivateText(nullptr),
 	cursorPositionChanged(nullptr),
+	editingStarted(nullptr),
 	editingFinished(nullptr),
 	inputRejected(nullptr),
 	returnPressed(nullptr),
 	selectionChanged(nullptr),
 	textChanged(nullptr),
-	textEdited(nullptr),
-	imeShown(nullptr)
+	textEdited(nullptr)
 {
 	m_PrivateText = new RmGUITextPrivateData;
 	cursorPositionChanged = &PRIVATE()->OnCursorPositionChanged;
+	editingStarted = &PRIVATE()->OnEditingStarted;
 	editingFinished = &PRIVATE()->OnEditingFinished;
 	inputRejected = &PRIVATE()->OnInputRejected;
 	returnPressed = &PRIVATE()->OnReturnPressed;
 	selectionChanged = &PRIVATE()->OnSelectionChanged;
 	textChanged = &PRIVATE()->OnTextChanged;
 	textEdited = &PRIVATE()->OnTextEdited;
-	imeShown = &PRIVATE()->OnIMEShown;
 
 	PRIVATE()->Style.Font.Align = RmFontAlign::AlignVCenter;
 }
@@ -224,16 +224,9 @@ void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 {
 	if (getContext()->getFocus() == this)
 	{
-		if (event->Done == false)
+		if (event->Done)
 		{
-			if (event->Text.empty())
-			{
-				PRIVATE()->OnIMEShown.emit(getRect());
-			}
-		}
-		else
-		{
-			PRIVATE()->UndoRedo.insert(PRIVATE()->Row, PRIVATE()->Column, event->Text);
+			PRIVATE()->RedoUndo.insert(PRIVATE()->Row, PRIVATE()->Column, event->Text);
 			PRIVATE()->Text.clear();
 			PRIVATE()->UndoRedo.text(PRIVATE()->Text);
 
@@ -251,11 +244,10 @@ void RmGUIText::mouseDoubleEvent(IRmGUIMouseEventRaw event)
 	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
-		getContext()->setFocus(this);
-
 		auto painter = getPainter();
 		if (painter == nullptr) painter = getContext()->getPainter();
 		if (painter == nullptr) return;
+		RmRect cursorRect;
 		int cursor = -1, row, column;
 		painter->setFont(PRIVATE()->Style.Font);
 		painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, event->X, event->Y, row, column, cursor);
@@ -278,14 +270,13 @@ void RmGUIText::mousePressEvent(IRmGUIMouseEventRaw event)
 	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
-		getContext()->setFocus(this);
-
 		auto painter = getPainter();
 		if (painter == nullptr) painter = getContext()->getPainter();
 		if (painter == nullptr) return;
-		int cursor = -1, row = -1, column = -1;
+		RmRect cursorRect;
+		int cursor = -1, row, column;
 		painter->setFont(PRIVATE()->Style.Font);
-		painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, event->X, event->Y, row, column, cursor);
+		painter->boundingRect(getRect().X, getRect().Y, getRect().W, getRect().H, PRIVATE()->Text, event->X, event->Y, row, column, cursor, &cursorRect);
 		if (cursor == -1) PRIVATE()->Cursor = 0;
 		else PRIVATE()->Cursor = cursor;
 		if (cursor != -1)

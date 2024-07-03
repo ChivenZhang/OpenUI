@@ -7,8 +7,8 @@ add_dependencies(OpenUI RmGUI)
 target_include_directories(OpenUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(OpenUI 
-	optimized SDL2 debug SDL2d
-	optimized glew32 debug glew32d
+	debug SDL3
+	debug glew32d
 	GlU32 
 	OpenGL32 
 	RmGUI
@@ -51,11 +51,12 @@ target_link_libraries(OpenUI
 	debug pthreadVC3d
 	debug pthreadVCE3d
 	debug pthreadVSE3d
-	debug SDL2d
 	debug zlibd
 )
 
 target_link_libraries(OpenUI 
+	optimized SDL3
+	optimized glew32 
 	optimized brotlicommon
 	optimized brotlidec
 	optimized brotlienc
@@ -95,6 +96,6 @@ target_link_libraries(OpenUI
 	optimized pthreadVC3
 	optimized pthreadVCE3
 	optimized pthreadVSE3
-	optimized SDL2
+	#optimized SDL3
 	optimized zlib
 )
