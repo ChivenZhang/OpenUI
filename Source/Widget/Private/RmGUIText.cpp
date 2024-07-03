@@ -261,7 +261,6 @@ void RmGUIText::backspace()
 	}
 	else
 	{
-		if (PRIVATE()->Column == 0) return;
 		auto row = PRIVATE()->Row, column = PRIVATE()->Column;
 		column = column - 1;
 		PRIVATE()->RedoUndo.locate(row, column, true);
@@ -425,6 +424,7 @@ void RmGUIText::inputEvent(IRmGUITextInputEventRaw event)
 			if (PRIVATE()->MaxLength <= PRIVATE()->Text.size()) return;
 
 			insert(event->Text);
+			deselect();
 
 			auto painter = getPainter();
 			if (painter == nullptr) painter = getContext()->getPainter();
