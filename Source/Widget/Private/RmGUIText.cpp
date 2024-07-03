@@ -359,10 +359,6 @@ void RmGUIText::keyPressEvent(IRmGUIKeyEventRaw event)
 	{
 		this->del();
 	}
-	// Enter
-	if (event->Key == 13)
-	{
-	}
 	// Left
 	if (event->Key == 1073741904)
 	{
