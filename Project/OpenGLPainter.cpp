@@ -546,8 +546,6 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 		else { text_rect.X = x; text_rect.Y = y; }
 		if (boundingRect) (*boundingRect) = text_rect;
 
-		cairo_move_to(cr, text_rect.X, text_rect.Y);
-
 		if (cursorRect)
 		{
 			PangoRectangle strong_pos, weak_pos;
@@ -555,6 +553,7 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 		}
 
+		cairo_move_to(cr, text_rect.X, text_rect.Y);
 		pango_cairo_layout_path(cr, layout);
 		cairo_set_line_width(cr, m_Pen.Width);
 		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);

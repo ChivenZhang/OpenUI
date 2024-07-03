@@ -61,7 +61,9 @@ public:
 	void insert(RmString const& text);
 
 	void clear();
+	RmString copy();
 	void cut();
+	void paste(RmString const& text);
 	void redo();
 	void undo();
 
@@ -82,6 +84,8 @@ public:
 	IRmGUISignalAsRaw<> selectionChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textChanged;
 	IRmGUISignalAsRaw<RmString const& /*text*/> textEdited;
+	IRmGUISignalAsRaw<RmString& /*text*/> textPasted;
+	IRmGUISignalAsRaw<RmString const& /*text*/> textCopied;
 
 private:
 	RmGUIWidgetPrivateRaw m_PrivateText;

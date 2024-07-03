@@ -154,18 +154,30 @@ int main(int argc, char* argv[]) {
 		child2->addWidget(child3);
 		child3->setBorder({ 5,5,5,5 });
 		child3->setFixedSize(200, 35);
+		child3->setText("Hello, World!");
+		child3->setSelection(2, 5);
 		child3->editingStarted->connect(nullptr, [=](RmRect rect) {
 			SDL_StartTextInput(window);
 			SDL_Rect sdlRect{ rect.X, rect.Y, rect.W, rect.H };
 			SDL_SetTextInputArea(window, &sdlRect, 0);
 			});
-		child3->setText("Hello, World!");
-		child3->setSelection(2, 5);
+		child3->textPasted->connect(nullptr, [=](RmString& value) {
+			if (SDL_HasClipboardText())
+			{
+				auto result = SDL_GetClipboardText();
+				value = RmString(result);
+				SDL_free(result);
+			}
+			});
+		child3->textCopied->connect(nullptr, [=](RmString const& value) {
+			SDL_ClearClipboardData();
+			SDL_SetClipboardText(value.c_str());
+			});
 
 		auto child33 = RmNew<RmGUICombo>();
 		child2->addWidget(child33);
 		child33->setBorder({ 5,5,5,5 });
-		child33->setFixedSize(100, 35);
+		child33->setFixedSize(100, 40);
 		child33->setItems({ "一月", "二月", "三月", "四月", "五月","六月", "七月", "八月", "九月", "十月", "十一月", "十二月", });
 		child33->setMaxCount(5);
 		child33->setCurrentIndex(6);
@@ -237,7 +249,7 @@ int main(int argc, char* argv[]) {
 		auto panel = RmNew<RmGUIPanel>();
 		scroll->addWidget(panel);
 		panel->setRect({ 0, 0, 2000, 2000 });
-}
+	}
 #endif
 
 #if 0
@@ -291,7 +303,7 @@ int main(int argc, char* argv[]) {
 		combo3->setCurrentIndex(0);
 		combo3->currentTextChanged->connect(nullptr, [](RmString text) {
 			printf("combo3 %s\n", text.c_str());
-	});
+			});
 	}
 #endif
 
@@ -300,7 +312,7 @@ int main(int argc, char* argv[]) {
 	{
 		auto text = RmNew<RmGUIText>();
 		openui->addWidget(text);
-}
+	}
 #endif
 
 	// 主循环  

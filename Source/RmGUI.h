@@ -359,7 +359,7 @@ struct RmFont
 		WeightBlack = 900,
 	};
 	bool NoWrap = false;
-	RmString Family = "Sans";
+	RmString Family = "Segoe UI";
 	uint32_t Align = align_t::AlignLeft;
 	style_t Style = style_t::StyleNormal;
 	weight_t Weight = weight_t::WeightNormal;
@@ -454,7 +454,7 @@ inline RmRect RmOverlap(RmRect const& viewport, RmRect const& client)
 	float yB2 = client.Y + client.H;
 
 	// 检查是否有重叠  
-	if (xA2 <= xB1 || xB2 <= xA1 || yA2 <= yB1 || yB2 <= yA1) return viewport;
+	if (xA2 <= xB1 || xB2 <= xA1 || yA2 <= yB1 || yB2 <= yA1) return RmRect{};
 
 	// 计算重叠区域的左上角坐标  
 	float overlapX1 = std::max(xA1, xB1);
