@@ -28,6 +28,5 @@ link_directories(External/x64-windows/lib)
 endif()
 
 add_subdirectory(External/Taitank)
-add_subdirectory(External/SDL)
 add_subdirectory(Source)
 add_subdirectory(Project)
