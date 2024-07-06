@@ -398,7 +398,7 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 		auto left = RmNew<RmGUIButton>();
 		menu->addWidget(left);
 		left->setMargin({ 10,10,10,10 });
-		left->setFixedSize(64, 100);
+		left->setFixedWidth(100);
 		auto style = left->getStyle();
 		style.Round = { 8, 8 };
 		style.Normal.Pen = style.Disable.Pen = { .Style = RmPen::NoPen };
@@ -429,7 +429,7 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 		auto right = RmNew<RmGUIButton>();
 		menu->addWidget(right);
 		right->setMargin({ 10,10,10,10 });
-		right->setFixedSize(64, 100);
+		right->setFixedWidth(100);
 		auto style = right->getStyle();
 		style.Round = { 8, 8 };
 		style.Normal.Pen = style.Disable.Pen = { .Style = RmPen::NoPen };
