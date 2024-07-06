@@ -198,19 +198,60 @@ RmImage RmGUILabel::getPixmap() const
 	return PRIVATE()->Image;
 }
 
+void convertToRGBA(unsigned char* img, int width, int height, int* channels) {
+	if (*channels == 4) {
+		// 如果已经是RGBA，则无需转换  
+		return;
+	}
+
+	// 分配新的内存来存储RGBA数据  
+	unsigned char* rgbaImg = (unsigned char*)malloc(width * height * 4);
+	if (!rgbaImg) {
+		// 内存分配失败处理  
+		return;
+	}
+
+	// 复制像素数据，并添加alpha通道  
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			int index = y * width * *channels + x * *channels;
+			int rgbaIndex = y * width * 4 + x * 4;
+
+			// 复制RGB  
+			for (int c = 0; c < *channels; c++) {
+				rgbaImg[rgbaIndex + c] = img[index + c];
+			}
+
+			// 设置alpha为255（完全不透明）  
+			rgbaImg[rgbaIndex + 3] = 255;
+		}
+	}
+
+	// 释放原始图片内存（如果你不再需要它）  
+	free(img);
+
+	// 更新指针和通道数  
+	img = rgbaImg;
+	*channels = 4;
+}
+
 void RmGUILabel::setPixmap(RmImage image)
 {
 	if (image.Height * image.Stride == image.Data.size())
 	{
-		PRIVATE()->ImageData.resize(image.Data.size());
-		::memcpy(PRIVATE()->ImageData.data(), image.Data.data(), image.Data.size());
-		PRIVATE()->Image = RmImage{ image.Width, image.Height, image.Stride, PRIVATE()->ImageData };
+		auto channel = image.Stride / image.Width;
+		PRIVATE()->ImageData.resize(image.Width * image.Height * 4);
+		PRIVATE()->Image = RmImage{ image.Width, image.Height, image.Width * 4, PRIVATE()->ImageData };
 		auto pixels = PRIVATE()->ImageData.data();
-		int num_pixels = image.Width * image.Height;
-		for (int i = 0; i < num_pixels; ++i)
+		auto numPixels = image.Width * image.Height;
+		for (int i = 0; i < numPixels; ++i)
 		{
-			auto pixel = pixels + i * 4;
-			std::swap(pixel[0], pixel[2]);
+			auto toIndex = 4 * i;
+			auto fromIndex = channel * i;
+			pixels[toIndex + 2] = (0 < channel) ? image.Data[fromIndex] : 0;
+			pixels[toIndex + 1] = (1 < channel) ? image.Data[fromIndex + 1] : 0;
+			pixels[toIndex + 0] = (2 < channel) ? image.Data[fromIndex + 2] : 0;
+			pixels[toIndex + 3] = 255;// (3 < channel) ? image.Data[fromIndex + 3] : 255;
 		}
 	}
 	else

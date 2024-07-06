@@ -84,10 +84,6 @@ void RmGUIButton::layout(RmRectRaw client)
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
-		{
-			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
-		}
 		if (std::isnan(childList[i]->getFixedWidth()))
 		{
 			flex::SetFlexGrow(node, 1.0f);
@@ -95,6 +91,10 @@ void RmGUIButton::layout(RmRectRaw client)
 		if (std::isnan(childList[i]->getFixedHeight()))
 		{
 			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
+		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
 		}
 		root->AddChild(node);
 	}
@@ -166,26 +166,6 @@ void RmGUIButton::setStyle(RmGUIButtonStyle const& style)
 	PRIVATE()->Style = style;
 }
 
-RmGUILabelStyle RmGUIButton::getTextStyle() const
-{
-	return PRIVATE()->Label->getStyle();
-}
-
-void RmGUIButton::setTextStyle(RmGUILabelStyle const& style)
-{
-	PRIVATE()->Label->setStyle(style);
-}
-
-RmFontAligns RmGUIButton::getAlignment() const
-{
-	return PRIVATE()->Label->getAlignment();
-}
-
-void RmGUIButton::setAlignment(RmFontAligns value)
-{
-	PRIVATE()->Label->setAlignment(value);
-}
-
 bool RmGUIButton::getChecked() const
 {
 	return PRIVATE()->Checked;
@@ -210,6 +190,11 @@ void RmGUIButton::setCheckable(bool value)
 bool RmGUIButton::getDown() const
 {
 	return PRIVATE()->Pressed;
+}
+
+RmGUILabelRaw RmGUIButton::getLabel() const
+{
+	return PRIVATE()->Label.get();
 }
 
 void RmGUIButton::mouseDoubleEvent(IRmGUIMouseEventRaw event)

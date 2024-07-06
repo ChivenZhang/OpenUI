@@ -28,9 +28,4 @@ RmGUIPanel::~RmGUIPanel()
 void RmGUIPanel::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	RmGUIWidget::paint(painter, client);
-
-	/*painter->setFont({ .Size = 25 });
-	painter->setPen({ .Color = { 1,0,0, 1.0f }, });
-	painter->setBrush({ .Color = { 0,1,0, 1.0f }, });
-	painter->drawText(client->X, client->Y, client->W, client->H, "Hello مرحبا world!");*/
 }

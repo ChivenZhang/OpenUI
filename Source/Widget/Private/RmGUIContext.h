@@ -27,3 +27,5 @@ public:
 private:
 	RmGUIContextPrivateRaw m_Private;
 };
+using RmGUIContextRef = RmRef<RmGUIContext>;
+using RmGUIContextRaw = RmRaw<RmGUIContext>;

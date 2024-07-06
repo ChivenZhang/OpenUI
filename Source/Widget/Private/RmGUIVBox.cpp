@@ -2,10 +2,26 @@
 #include <taitank.h>
 namespace flex = taitank;
 
+class RmGUIVboxPrivateData : public RmGUIWidgetPrivate
+{
+public:
+	RmGUIVBoxStyle Style;
+};
+#define PRIVATE() ((RmGUIVboxPrivateData*) m_PrivateHbox)
+
 RmGUIVBox::RmGUIVBox(IRmGUIWidgetRaw parent)
 	:
-	RmGUILayout(parent)
+	RmGUILayout(parent),
+	m_PrivateHbox(nullptr)
 {
+	m_PrivateHbox = new RmGUIVboxPrivateData;
+	PRIVATE()->Style.Pen = { .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, };
+	PRIVATE()->Style.Brush = { .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, };
+}
+
+RmGUIVBox::~RmGUIVBox()
+{
+	delete m_PrivateHbox; m_PrivateHbox = nullptr;
 }
 
 void RmGUIVBox::layout(RmRectRaw client)
@@ -43,10 +59,6 @@ void RmGUIVBox::layout(RmRectRaw client)
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
-		{
-			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
-		}
 		if (std::isnan(childList[i]->getFixedWidth()))
 		{
 			flex::SetFlexGrow(node, 1.0f);
@@ -54,6 +66,10 @@ void RmGUIVBox::layout(RmRectRaw client)
 		if (std::isnan(childList[i]->getFixedHeight()))
 		{
 			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
+		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
 		}
 		root->AddChild(node);
 	}
@@ -79,4 +95,14 @@ void RmGUIVBox::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
 	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
 	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
+}
+
+RmGUIVBoxStyle RmGUIVBox::getStyle() const
+{
+	return PRIVATE()->Style;
+}
+
+void RmGUIVBox::setStyle(RmGUIVBoxStyle value)
+{
+	PRIVATE()->Style = value;
 }

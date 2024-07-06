@@ -42,10 +42,6 @@ void RmGUIFlow::layout(RmRectRaw client)
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
-		{
-			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_START);
-		}
 		if (std::isnan(childList[i]->getFixedWidth()))
 		{
 			flex::SetFlexGrow(node, 1.0f);
@@ -53,6 +49,10 @@ void RmGUIFlow::layout(RmRectRaw client)
 		if (std::isnan(childList[i]->getFixedHeight()))
 		{
 			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
+		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_START);
 		}
 		root->AddChild(node);
 	}
@@ -66,7 +66,7 @@ void RmGUIFlow::layout(RmRectRaw client)
 		childList[i]->setRect({ client->X + left, client->Y + top, width, height });
 		auto rect = childList[i]->getRect();
 		auto viewport = getViewport();
-		childList[i]->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X+rect.W, viewport.X+viewport.W), std::min(rect.Y+rect.H, viewport.Y+viewport.H) });
+		childList[i]->setViewport(RmRect{ std::max(rect.X, viewport.X), std::max(rect.Y, viewport.Y), std::min(rect.X + rect.W, viewport.X + viewport.W), std::min(rect.Y + rect.H, viewport.Y + viewport.H) });
 	}
 
 	flex::NodeFreeRecursive(root);

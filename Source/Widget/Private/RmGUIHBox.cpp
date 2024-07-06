@@ -2,10 +2,26 @@
 #include <taitank.h>
 namespace flex = taitank;
 
+class RmGUIHboxPrivateData : public RmGUIWidgetPrivate
+{
+public:
+	RmGUIHBoxStyle Style;
+};
+#define PRIVATE() ((RmGUIHboxPrivateData*) m_PrivateHbox)
+
 RmGUIHBox::RmGUIHBox(IRmGUIWidgetRaw parent)
 	:
-	RmGUILayout(parent)
+	RmGUILayout(parent),
+	m_PrivateHbox(nullptr)
 {
+	m_PrivateHbox = new RmGUIHboxPrivateData;
+	PRIVATE()->Style.Pen = { .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, };
+	PRIVATE()->Style.Brush = { .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, };
+}
+
+RmGUIHBox::~RmGUIHBox()
+{
+	delete m_PrivateHbox; m_PrivateHbox = nullptr;
 }
 
 void RmGUIHBox::layout(RmRectRaw client)
@@ -43,10 +59,6 @@ void RmGUIHBox::layout(RmRectRaw client)
 	for (size_t i = 0; i < childList.size(); ++i)
 	{
 		auto node = layout_func(childList[i].get());
-		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
-		{
-			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
-		}
 		if (std::isnan(childList[i]->getFixedWidth()))
 		{
 			flex::SetFlexGrow(node, 1.0f);
@@ -54,6 +66,10 @@ void RmGUIHBox::layout(RmRectRaw client)
 		if (std::isnan(childList[i]->getFixedHeight()))
 		{
 			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_STRETCH);
+		}
+		if (std::isnan(childList[i]->getFixedWidth()) == false && std::isnan(childList[i]->getFixedHeight()) == false)
+		{
+			flex::SetAlignSelf(node, flex::FlexAlign::FLEX_ALIGN_CENTER);
 		}
 		root->AddChild(node);
 	}
@@ -76,7 +92,17 @@ void RmGUIHBox::layout(RmRectRaw client)
 void RmGUIHBox::paint(IRmGUIPainterRaw painter, RmRectRaw client)
 {
 	RmGUIWidget::paint(painter, client);
-	painter->setPen({ .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, });
-	painter->setBrush({ .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, });
+	painter->setPen(PRIVATE()->Style.Pen);
+	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client->X + 1, client->Y + 1, client->W - 2, client->H - 2);
+}
+
+RmGUIHBoxStyle RmGUIHBox::getStyle() const
+{
+	return PRIVATE()->Style;
+}
+
+void RmGUIHBox::setStyle(RmGUIHBoxStyle value)
+{
+	PRIVATE()->Style = value;
 }

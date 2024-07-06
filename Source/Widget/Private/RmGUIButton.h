@@ -25,15 +25,12 @@ public:
 	void setText(RmString const& text);
 	RmGUIButtonStyle getStyle() const;
 	void setStyle(RmGUIButtonStyle const& style);
-	RmGUILabelStyle getTextStyle() const;
-	void setTextStyle(RmGUILabelStyle const& style);
-	RmFontAligns getAlignment() const;
-	void setAlignment(RmFontAligns value);
 	bool getChecked() const;
 	void  setChecked(bool value);
 	bool getCheckable() const;
 	void  setCheckable(bool value);
 	bool getDown() const;
+	RmGUILabelRaw getLabel() const;
 
 protected:
 	virtual void mouseDoubleEvent(IRmGUIMouseEventRaw event) override;
