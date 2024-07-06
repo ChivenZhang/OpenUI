@@ -22,6 +22,7 @@ static int count = 0;
 void sample0(RmGUIContextRef openui, SDL_Window* window);
 void sample1(RmGUIContextRef openui, SDL_Window* window);
 void sample2(RmGUIContextRef openui, SDL_Window* window);
+void sample3(RmGUIContextRef openui, SDL_Window* window);
 
 int main(int argc, char* argv[])
 {
@@ -71,6 +72,7 @@ int main(int argc, char* argv[])
 	//sample0(openui, window);
 	//sample1(openui, window);
 	sample2(openui, window);
+	//sample3(openui, window);
 
 	SDL_Event event;
 	bool quit = false;
@@ -364,6 +366,7 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 {
 	auto toplevel = RmNew<RmGUIVBox>();
 	openui->addWidget(toplevel);
+
 	auto image = RmNew<RmGUILabel>();
 	toplevel->addWidget(image);
 	image->setBorder({ 5,5,5,5 });
@@ -394,7 +397,13 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 	{
 		auto left = RmNew<RmGUIButton>();
 		menu->addWidget(left);
-		left->setFixedSize(48, 100);
+		left->setMargin({ 10,10,10,10 });
+		left->setFixedSize(64, 100);
+		auto style = left->getStyle();
+		style.Round = { 8, 8 };
+		style.Normal.Pen = style.Disable.Pen = { .Style = RmPen::NoPen };
+		style.Normal.Brush = style.Disable.Brush = { .Style = RmBrush::NoBrush };
+		left->setStyle(style);
 		left->getLabel()->setScaledContents(RmGUILabel::ScaleKeepRatio);
 		image_data = stbi_load("../../../Content/sort-left.png", &img_width, &img_height, &channels, 4);
 		if (image_data) left->getLabel()->setPixmap({
@@ -419,7 +428,13 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 	{
 		auto right = RmNew<RmGUIButton>();
 		menu->addWidget(right);
-		right->setFixedSize(48, 100);
+		right->setMargin({ 10,10,10,10 });
+		right->setFixedSize(64, 100);
+		auto style = right->getStyle();
+		style.Round = { 8, 8 };
+		style.Normal.Pen = style.Disable.Pen = { .Style = RmPen::NoPen };
+		style.Normal.Brush = style.Disable.Brush = { .Style = RmBrush::NoBrush };
+		right->setStyle(style);
 		right->getLabel()->setScaledContents(RmGUILabel::ScaleKeepRatio);
 		image_data = stbi_load("../../../Content/sort-right.png", &img_width, &img_height, &channels, 4);
 		if (image_data) right->getLabel()->setPixmap({
@@ -437,4 +452,9 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 			stbi_image_free(image_data);
 			});
 	}
+}
+
+void sample3(RmGUIContextRef openui, SDL_Window* window)
+{
+	// TODO
 }

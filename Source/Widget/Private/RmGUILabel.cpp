@@ -251,7 +251,7 @@ void RmGUILabel::setPixmap(RmImage image)
 			pixels[toIndex + 2] = (0 < channel) ? image.Data[fromIndex] : 0;
 			pixels[toIndex + 1] = (1 < channel) ? image.Data[fromIndex + 1] : 0;
 			pixels[toIndex + 0] = (2 < channel) ? image.Data[fromIndex + 2] : 0;
-			pixels[toIndex + 3] = 255;// (3 < channel) ? image.Data[fromIndex + 3] : 255;
+			pixels[toIndex + 3] = (3 < channel) ? image.Data[fromIndex + 3] : 255;
 		}
 	}
 	else
