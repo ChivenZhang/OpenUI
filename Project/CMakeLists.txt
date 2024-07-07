@@ -8,10 +8,9 @@ target_include_directories(OpenUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(OpenUI 
 	debug SDL3
-	debug glew32d
-	GlU32 
-	OpenGL32 
-	RmGUI
+	debug GlU32 
+	debug OpenGL32 
+	debug RmGUI
 	debug brotlicommon
 	debug brotlidec
 	debug brotlienc
@@ -56,7 +55,9 @@ target_link_libraries(OpenUI
 
 target_link_libraries(OpenUI 
 	optimized SDL3
-	optimized glew32 
+	optimized GlU32 
+	optimized OpenGL32 
+	optimized RmGUI
 	optimized brotlicommon
 	optimized brotlidec
 	optimized brotlienc
@@ -96,6 +97,5 @@ target_link_libraries(OpenUI
 	optimized pthreadVC3
 	optimized pthreadVCE3
 	optimized pthreadVSE3
-	#optimized SDL3
 	optimized zlib
 )
