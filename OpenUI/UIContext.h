@@ -1,5 +1,6 @@
 #pragma once
-#include "UI.h"
+#include "UIEvent.h"
+#include "UIElement.h"
 
 class UIContextPrivate {};
 using UIContextPrivateRaw = UIRaw<UIContextPrivate>;
@@ -10,6 +11,9 @@ class OPENUI_API UIContext
 public:
 	UIContext();
 	virtual ~UIContext();
+	virtual bool addElement(UIElementRef value);
+	virtual bool removeElement(UIElementRef value);
+	bool sendEvent()
 
 private:
 	UIContextPrivateRaw m_Private;

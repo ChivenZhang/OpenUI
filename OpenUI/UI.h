@@ -261,11 +261,11 @@ struct UIPointUV3
 	UIPointUV P0, P1, P2;
 };
 
-class IUIGUIPainter;
-using IUIGUIPainterRaw = UIRaw<IUIGUIPainter>;
+class UIPainter;
+using UIPainterRaw = UIRaw<UIPainter>;
 struct UIPrimitive
 {
-	IUIGUIPainterRaw Painter;
+	UIPainterRaw Painter;
 	UIArrayView<const UIPointUV3> Primitive;
 };
 
