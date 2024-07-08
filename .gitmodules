@@ -11,3 +11,6 @@
 	path = External/SDL
 	url = https://github.com/libsdl-org/SDL.git
 	branch = main
+[submodule "External/yoga"]
+	path = External/yoga
+	url = https://github.com/facebook/yoga.git
