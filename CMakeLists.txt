@@ -1,7 +1,5 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-project(OpenUI VERSION 0.1 LANGUAGES CXX)
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})  
@@ -9,6 +7,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
 include_directories(Source)
+#include_directories(OpenUI)
 include_directories(External/x64-windows/include)
 include_directories(External/earcut.hpp/include)
 include_directories(External/stb)
@@ -22,6 +21,7 @@ else()
 link_directories(External/x64-windows/lib)
 endif()
 
+add_subdirectory(OpenUI)
 add_subdirectory(External/Taitank)
 add_subdirectory(Source)
 add_subdirectory(Project)

@@ -1,12 +1,12 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-add_executable (OpenUI main.cpp "OpenGLPainter.h" "OpenGLPainter.cpp"   "OpenGLRender.h" "OpenGLRender.cpp")
+add_executable (Sample main.cpp "OpenGLPainter.h" "OpenGLPainter.cpp"   "OpenGLRender.h" "OpenGLRender.cpp")
 
-add_dependencies(OpenUI RmGUI)
+add_dependencies(Sample RmGUI)
 
-target_include_directories(OpenUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Sample PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(OpenUI 
+target_link_libraries(Sample 
 	debug SDL3
 	debug GlU32 
 	debug OpenGL32 
@@ -53,7 +53,7 @@ target_link_libraries(OpenUI
 	debug zlibd
 )
 
-target_link_libraries(OpenUI 
+target_link_libraries(Sample 
 	optimized SDL3
 	optimized GlU32 
 	optimized OpenGL32 
