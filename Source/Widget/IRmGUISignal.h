@@ -23,7 +23,7 @@ public:
 
 	virtual void disconnect(IRmGUIWidgetRaw owner) = 0;
 
-	virtual void emit(T... args) = 0;
+	virtual void signal(T... args) = 0;
 };
 
 /// @brief Base interface of signals without argument.
@@ -37,7 +37,7 @@ public:
 
 	virtual void disconnect(IRmGUIWidgetRaw owner) = 0;
 
-	virtual void emit() = 0;
+	virtual void signal() = 0;
 };
 
 template <class... T>
