@@ -1,5 +1,6 @@
 #include "UIElement.h"
 #include "UIPainter.h"
+#include <yoga/Yoga.h>
 
 class UIElementPrivateData : public UIElementPrivate
 {
@@ -13,6 +14,8 @@ public:
 
 	UIRect ClientRect, ViewRect;
 	bool Enable = true, Visible = true;
+
+
 };
 #define PRIVATE() ((UIElementPrivateData*) m_Private)
 
@@ -118,6 +121,10 @@ void UIElement::removeElement()
 
 void UIElement::layout(UIRect client)
 {
+
+	auto root = YGNodeNew();
+
+	YGNodeFreeRecursive(root);
 }
 
 void UIElement::paint(UIRect client, UIPainterRaw painter)

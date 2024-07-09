@@ -7,4 +7,4 @@ add_library (OpenUI SHARED
 
 target_include_directories(OpenUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(OpenUI  )
+target_link_libraries(OpenUI  yogacore)
