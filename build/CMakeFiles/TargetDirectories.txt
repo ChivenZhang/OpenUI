@@ -1,6 +1,0 @@
-D:/GitProject/OpenUI/build/CMakeFiles/ALL_BUILD.dir
-D:/GitProject/OpenUI/build/CMakeFiles/ZERO_CHECK.dir
-D:/GitProject/OpenUI/build/External/Taitank/CMakeFiles/taitank.dir
-D:/GitProject/OpenUI/build/External/Taitank/CMakeFiles/ALL_BUILD.dir
-D:/GitProject/OpenUI/build/Source/CMakeFiles/RmGUI.dir
-D:/GitProject/OpenUI/build/Project/CMakeFiles/OpenUI.dir
