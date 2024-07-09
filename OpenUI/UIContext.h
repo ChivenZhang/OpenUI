@@ -1,9 +1,9 @@
 #pragma once
-#include "UIEvent.h"
 #include "UIElement.h"
 #include "UIPainter.h"
 #include "UIRender.h"
 
+/// @brief 
 class UIContextPrivate {};
 using UIContextPrivateRaw = UIRaw<UIContextPrivate>;
 
@@ -19,11 +19,11 @@ public:
 	virtual void setRender(UIRenderRef value);
 	virtual UIElementRaw getFocus() const;
 	virtual void setFocus(UIElementRaw value);
+	virtual bool sendEvent(UIReactorRaw sender, UIEventRaw event);
+	virtual void postEvent(UIReactorRef sender, UIEventRef event);
 	virtual bool addElement(UIElementRef value, int32_t zorder = 0);
 	virtual bool removeElement(UIElementRef value);
 	virtual void removeElement();
-	virtual bool sendEvent(UIReactorRaw sender, UIEventRaw event);
-	virtual void postEvent(UIReactorRef sender, UIEventRef event);
 	virtual void layoutElement(UIRect client);
 	virtual void paintElement(UIRect client);
 	virtual void renderElement(UIRect client);
