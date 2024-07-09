@@ -5,18 +5,18 @@
 #include <stb_image.h>
 #include "OpenGLPainter.h"
 #include "OpenGLRender.h"
-#include "Widget/Private/RmGUIContext.h"
-#include "Widget/Private/RmGUIHBox.h"
-#include "Widget/Private/RmGUIVBox.h"
-#include "Widget/Private/RmGUIFlow.h"
-#include "Widget/Private/RmGUIScroll.h"
-#include "Widget/Private/RmGUIPanel.h"
-#include "Widget/Private/RmGUILabel.h"
-#include "Widget/Private/RmGUIButton.h"
-#include "Widget/Private/RmGUIScroll.h"
-#include "Widget/Private/RmGUICombo.h"
-#include "Widget/Private/RmGUIText.h"
-#include "Widget/Private/RmGUIEdit.h"
+#include "Widget/RmGUIContext.h"
+#include "Widget/RmGUIHBox.h"
+#include "Widget/RmGUIVBox.h"
+#include "Widget/RmGUIFlow.h"
+#include "Widget/RmGUIScroll.h"
+#include "Widget/RmGUIPanel.h"
+#include "Widget/RmGUILabel.h"
+#include "Widget/RmGUIButton.h"
+#include "Widget/RmGUIScroll.h"
+#include "Widget/RmGUICombo.h"
+#include "Widget/RmGUIText.h"
+#include "Widget/RmGUIEdit.h"
 static int count = 0;
 
 void sample0(RmGUIContextRef openui, SDL_Window* window);
@@ -105,14 +105,14 @@ int main(int argc, char* argv[])
 				IRmGUITextInputEvent event2(event.key.key, event.key.mod, event.key.scancode, event.key.key, event.key.mod, event.edit.text, event.key.repeat, true);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_EVENT_MOUSE_MOTION: // 鼠标移动  
+			case SDL_EVENT_MOUSE_MOTION:
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
 				IRmGUIMouseMoveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, event.button.button, event.button.button, event.key.mod);
 				openui->sendEvent(nullptr, &event2);
 			} break;
-			case SDL_EVENT_MOUSE_BUTTON_DOWN: // 鼠标点击  
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:
 			{
 				int x, y;
 				SDL_GetWindowPosition(window, &x, &y);
@@ -239,7 +239,7 @@ void sample0(RmGUIContextRef openui, SDL_Window* window)
 		auto combo = RmNew<RmGUICombo>();
 		child0->addWidget(combo);
 		combo->setPosition(100, 100);
-		combo->setFixedSize(100, 35);
+		combo->setFixedSize(100, 30);
 		combo->setMaxCount(3);
 		combo->setItems({ "White", "Red", "Green", "Blue", "Black" });
 		combo->setCurrentIndex(0);
@@ -248,7 +248,7 @@ void sample0(RmGUIContextRef openui, SDL_Window* window)
 		auto combo2 = RmNew<RmGUICombo>();
 		child0->addWidget(combo2);
 		combo2->setPosition(200, 100);
-		combo2->setFixedSize(100, 35);
+		combo2->setFixedSize(100, 30);
 		combo2->setItems({ "壹个", "贰个", "叁个", "肆个", "伍个", "陆个" });
 		combo2->setCurrentIndex(0);
 		combo2->currentTextChanged->connect(nullptr, [](RmString text) { printf("combo2 %s\n", text.c_str()); });
@@ -256,7 +256,7 @@ void sample0(RmGUIContextRef openui, SDL_Window* window)
 		auto combo3 = RmNew<RmGUICombo>();
 		child0->addWidget(combo3);
 		combo3->setPosition(200, 100);
-		combo3->setFixedSize(100, 35);
+		combo3->setFixedSize(100, 30);
 		combo3->setItems({ "一月", "二月", "三月", "四月", "五月","六月", "七月", "八月", "九月", "十月", "十一月", "十二月", });
 		combo3->setCurrentIndex(0);
 		combo3->currentTextChanged->connect(nullptr, [](RmString text) { printf("combo3 %s\n", text.c_str()); });
@@ -270,7 +270,7 @@ void sample0(RmGUIContextRef openui, SDL_Window* window)
 		auto combo = RmNew<RmGUICombo>();
 		child1->addWidget(combo);
 		combo->setPosition(100, 100);
-		combo->setFixedSize(100, 35);
+		combo->setFixedSize(100, 30);
 		combo->setMaxCount(3);
 		combo->setItems({ "White", "Red", "Green", "Blue", "Black" });
 		combo->setCurrentIndex(0);
@@ -279,7 +279,7 @@ void sample0(RmGUIContextRef openui, SDL_Window* window)
 		auto combo2 = RmNew<RmGUICombo>();
 		child1->addWidget(combo2);
 		combo2->setPosition(200, 100);
-		combo2->setFixedSize(100, 35);
+		combo2->setFixedSize(100, 30);
 		combo2->setItems({ "壹个", "贰个", "叁个", "肆个", "伍个", "陆个" });
 		combo2->setCurrentIndex(0);
 		combo2->currentTextChanged->connect(nullptr, [](RmString text) { printf("combo2 %s\n", text.c_str()); });
@@ -287,7 +287,7 @@ void sample0(RmGUIContextRef openui, SDL_Window* window)
 		auto combo3 = RmNew<RmGUICombo>();
 		child1->addWidget(combo3);
 		combo3->setPosition(200, 100);
-		combo3->setFixedSize(100, 35);
+		combo3->setFixedSize(100, 30);
 		combo3->setItems({ "一月", "二月", "三月", "四月", "五月","六月", "七月", "八月", "九月", "十月", "十一月", "十二月", });
 		combo3->setCurrentIndex(0);
 		combo3->currentTextChanged->connect(nullptr, [](RmString text) { printf("combo3 %s\n", text.c_str()); });
@@ -305,7 +305,7 @@ void sample1(RmGUIContextRef openui, SDL_Window* window)
 
 	auto label = RmNew<RmGUILabel>();
 	label->setText("计数:0");
-	label->setFixedWidth(100); label->setFixedHeight(35);
+	label->setFixedWidth(100); label->setFixedHeight(30);
 	label->setAlignment(RmFont::AlignCenter | RmFont::AlignVCenter);
 	label->setMargin({ 5,5,5,5 });
 	auto style = label->getStyle();
@@ -317,7 +317,7 @@ void sample1(RmGUIContextRef openui, SDL_Window* window)
 	auto button1 = RmNew<RmGUIButton>();
 	layout->addWidget(button1);
 	button1->setText("自减");
-	button1->setFixedWidth(100); button1->setFixedHeight(35);
+	button1->setFixedWidth(100); button1->setFixedHeight(30);
 	button1->setMargin({ 5,5,5,5 });
 	style = button1->getLabel()->getStyle();
 	style.Brush.Color = { 0.5,0,1,1 };
@@ -331,7 +331,7 @@ void sample1(RmGUIContextRef openui, SDL_Window* window)
 	auto button2 = RmNew<RmGUIButton>();
 	layout->addWidget(button2);
 	button2->setText("自增 ");
-	button2->setFixedWidth(100); button2->setFixedHeight(35);
+	button2->setFixedWidth(100); button2->setFixedHeight(30);
 	button2->setMargin({ 5,5,5,5 });
 	style = button2->getLabel()->getStyle();
 	style.Brush.Color = { 0.5,0,1,1 };
@@ -343,7 +343,7 @@ void sample1(RmGUIContextRef openui, SDL_Window* window)
 	auto button3 = RmNew<RmGUIButton>();
 	layout->addWidget(button3);
 	button3->setText("重置");
-	button3->setFixedWidth(100); button3->setFixedHeight(35);
+	button3->setFixedWidth(100); button3->setFixedHeight(30);
 	button3->setMargin({ 5,5,5,5 });
 	style = button3->getLabel()->getStyle();
 	style.Brush.Color = { 0.5,0,1,1 };
@@ -373,7 +373,7 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 	image->setScaledContents(RmGUILabel::ScaleKeepRatio);
 
 	int img_width, img_height, channels;
-	auto image_data = stbi_load("../../../Content/0.jpg", &img_width, &img_height, &channels, 4);
+	auto image_data = stbi_load("../Content/0.jpg", &img_width, &img_height, &channels, 4);
 	if (image_data) image->setPixmap({
 					(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4),
 					RmArrayView<const uint8_t>(image_data, img_height * img_width * 4) });
@@ -387,11 +387,11 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 
 	RmArray<RmString, 5> paths
 	{
-		"../../../Content/0.jpg",
-		"../../../Content/1.jpg",
-		"../../../Content/2.jpg",
-		"../../../Content/3.jpg",
-		"../../../Content/4.jpg",
+		"../Content/0.jpg",
+		"../Content/1.jpg",
+		"../Content/2.jpg",
+		"../Content/3.jpg",
+		"../Content/4.jpg",
 	};
 	static int32_t index = 0;
 	{
@@ -405,7 +405,7 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 		style.Normal.Brush = style.Disable.Brush = { .Style = RmBrush::NoBrush };
 		left->setStyle(style);
 		left->getLabel()->setScaledContents(RmGUILabel::ScaleKeepRatio);
-		image_data = stbi_load("../../../Content/sort-left.png", &img_width, &img_height, &channels, 4);
+		image_data = stbi_load("../Content/sort-left.png", &img_width, &img_height, &channels, 4);
 		if (image_data) left->getLabel()->setPixmap({
 						(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4),
 						RmArrayView<const uint8_t>(image_data, img_height * img_width * 4) });
@@ -436,7 +436,7 @@ void sample2(RmGUIContextRef openui, SDL_Window* window)
 		style.Normal.Brush = style.Disable.Brush = { .Style = RmBrush::NoBrush };
 		right->setStyle(style);
 		right->getLabel()->setScaledContents(RmGUILabel::ScaleKeepRatio);
-		image_data = stbi_load("../../../Content/sort-right.png", &img_width, &img_height, &channels, 4);
+		image_data = stbi_load("../Content/sort-right.png", &img_width, &img_height, &channels, 4);
 		if (image_data) right->getLabel()->setPixmap({
 						(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4),
 						RmArrayView<const uint8_t>(image_data, img_height * img_width * 4) });
