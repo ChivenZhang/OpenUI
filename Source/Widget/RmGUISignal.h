@@ -30,7 +30,7 @@ public:
 	bool Dirty = false;
 	uint32_t Handle = 0;
 	IRmGUIWidgetRaw Owner = nullptr;
-	RmLambda<void(T...)> Slot;
+	RmLambda<void(T...)> Lambda;
 };
 template <class... T>
 using RmGUISignalSlotRef = RmRef<RmGUISignalSlot<T...>>;
@@ -65,7 +65,7 @@ inline uint32_t RmGUISignalAs<T...>::connect(IRmGUIWidgetRaw owner, RmLambda<voi
 	auto element = RmNew<RmGUISignalSlot<T...>>();
 	element->Handle = handle;
 	element->Owner = owner;
-	element->Slot = slot;
+	element->Lambda = slot;
 	PRIVATE_SIGNAL()->ConnectList.emplace_back(element);
 	return handle;
 }
@@ -106,9 +106,9 @@ inline void RmGUISignalAs<T...>::signal(T... args)
 	auto& connectList = PRIVATE_SIGNAL()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
 	{
-		if (connectList[i]->Slot)
+		if (connectList[i]->Lambda)
 		{
-			if (connectList[i]->Dirty == false) connectList[i]->Slot(std::forward<T>(args)...);
+			if (connectList[i]->Dirty == false) connectList[i]->Lambda(std::forward<T>(args)...);
 			else hasDirty = true;
 		}
 	}
@@ -156,7 +156,7 @@ public:
 	bool Dirty = false;
 	uint32_t Handle = 0;
 	IRmGUIWidgetRaw Owner = nullptr;
-	RmLambda<void()> Slot;
+	RmLambda<void()> Lambda;
 };
 
 template <>
@@ -186,7 +186,7 @@ inline uint32_t RmGUISignalAs<void>::connect(IRmGUIWidgetRaw owner, RmLambda<voi
 	auto element = RmNew<RmGUISignalSlot<>>();
 	element->Handle = handle;
 	element->Owner = owner;
-	element->Slot = slot;
+	element->Lambda = slot;
 	PRIVATE_SIGNAL_VOID()->ConnectList.emplace_back(element);
 	return handle;
 }
@@ -224,9 +224,9 @@ inline void RmGUISignalAs<void>::signal()
 	auto& connectList = PRIVATE_SIGNAL_VOID()->ConnectList;
 	for (size_t i = 0; i < connectList.size(); ++i)
 	{
-		if (connectList[i]->Slot)
+		if (connectList[i]->Lambda)
 		{
-			if (connectList[i]->Dirty == false) connectList[i]->Slot();
+			if (connectList[i]->Dirty == false) connectList[i]->Lambda();
 			else hasDirty = true;
 		}
 	}

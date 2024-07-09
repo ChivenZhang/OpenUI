@@ -3,7 +3,7 @@
 add_definitions(-DOPENUI_SHARED_LIBRARY)
 
 add_library (OpenUI SHARED
-"UI.h" "UIContext.cpp" "UIContext.h" "UIElement.h" "UIFactory.h" "UIBuilder.h" "UIRender.h" "UIEvent.h" "UIReactor.h" "UIHandler.h" "UIPainter.h" "UIFilter.h" "UIElement.cpp")
+"UI.h" "UIContext.cpp" "UIContext.h" "UIElement.h" "UIFactory.h" "UIBuilder.h" "UIRender.h" "UIEvent.h" "UIReactor.h" "UIHandler.h" "UIPainter.h" "UIFilter.h" "UISignal.h" "UIElement.cpp")
 
 target_include_directories(OpenUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
