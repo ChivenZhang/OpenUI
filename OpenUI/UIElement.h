@@ -92,6 +92,48 @@ public:
 	virtual UIRect getViewport() const;
 	virtual void setViewport(UIRect value);
 
+	virtual float getMinWidth() const;
+	virtual void setMinWidth(float value);
+	virtual float getMaxWidth() const;
+	virtual void setMaxWidth(float value);
+	virtual float getFixedWidth() const;
+	virtual void setFixedWidth(float value);
+	virtual UIFloat2 getMinSize() const;
+	virtual UIFloat2 getMaxSize() const;
+	virtual UIFloat2 getFixedSize() const;
+	virtual void setMinSize(float width, float height);
+	virtual void setMaxSize(float width, float height);
+	virtual void setFixedSize(float width, float height);
+
+	virtual UIFloat4 getBorder() const;
+	virtual void setBorder(UIFloat4 value);
+	virtual UIFloat4 getMargin() const;
+	virtual void setMargin(UIFloat4 value);
+	virtual UIFloat4 getPadding() const;
+	virtual void setPadding(UIFloat4 value);
+
+	virtual UI::FlexDirection getFlexDirection() const;
+	virtual void setFlexDirection(UI::FlexDirection value);
+	virtual UI::FlexWrap getFlexWrap() const;
+	virtual void setFlexWrap(UI::FlexWrap value);
+	virtual UI::JustifyContent getJustifyContent() const;
+	virtual void setJustifyContent(UI::JustifyContent value);
+	virtual UI::AlignItems getAlignItems() const;
+	virtual void setAlignItems(UI::AlignItems value);
+	virtual UI::AlignContent getAlignContent() const;
+	virtual void setAlignContent(UI::AlignContent value);
+	virtual void setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap);
+
+	virtual UI::FlexGrow getFlexGrow() const;
+	virtual void setFlexGrow(UI::FlexGrow value);
+	virtual UI::FlexShrink getFlexShrink() const;
+	virtual void setFlexShrink(UI::FlexShrink value);
+	virtual UI::FlexBasis getFlexBasis() const;
+	virtual void setFlexBasis(UI::FlexBasis value);
+	virtual UI::AlignSelf getAlignSelf() const;
+	virtual void setAlignSelf(UI::AlignSelf value);
+	virtual void setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis);
+
 protected:
 	virtual void closeEvent(UICloseEventRaw event);
 	virtual void dragEnterEvent(UIDragEnterEventRaw event);
