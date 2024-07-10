@@ -98,11 +98,17 @@ public:
 	virtual void setMaxWidth(float value);
 	virtual float getFixedWidth() const;
 	virtual void setFixedWidth(float value);
+	virtual float getMinHeight() const;
+	virtual void setMinHeight(float value);
+	virtual float getMaxHeight() const;
+	virtual void setMaxHeight(float value);
+	virtual float getFixedHeight() const;
+	virtual void setFixedHeight(float value);
 	virtual UIFloat2 getMinSize() const;
-	virtual UIFloat2 getMaxSize() const;
-	virtual UIFloat2 getFixedSize() const;
 	virtual void setMinSize(float width, float height);
+	virtual UIFloat2 getMaxSize() const;
 	virtual void setMaxSize(float width, float height);
+	virtual UIFloat2 getFixedSize() const;
 	virtual void setFixedSize(float width, float height);
 
 	virtual UIFloat4 getBorder() const;

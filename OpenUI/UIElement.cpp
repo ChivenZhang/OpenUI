@@ -141,7 +141,6 @@ void UIElement::removeElement()
 
 void UIElement::layout(UIRect client)
 {
-
 	auto root = YGNodeNew();
 
 	YGNodeFreeRecursive(root);
@@ -287,6 +286,232 @@ UIRect UIElement::getViewport() const
 void UIElement::setViewport(UIRect value)
 {
 	PRIVATE()->ViewRect = value;
+}
+
+float UIElement::getMinWidth() const
+{
+	return PRIVATE()->MinWidth;
+}
+
+void UIElement::setMinWidth(float value)
+{
+	PRIVATE()->MinWidth = value;
+}
+
+float UIElement::getMaxWidth() const
+{
+	return PRIVATE()->MaxWidth;
+}
+
+void UIElement::setMaxWidth(float value)
+{
+	PRIVATE()->MaxWidth = value;
+}
+
+float UIElement::getFixedWidth() const
+{
+	return PRIVATE()->FixedWidth;
+}
+
+void UIElement::setFixedWidth(float value)
+{
+	PRIVATE()->FixedWidth = value;
+}
+
+float UIElement::getMinHeight() const
+{
+	return PRIVATE()->MinHeight;
+}
+
+void UIElement::setMinHeight(float value)
+{
+	PRIVATE()->MinHeight = value;
+}
+
+float UIElement::getMaxHeight() const
+{
+	return PRIVATE()->MaxHeight;
+}
+
+void UIElement::setMaxHeight(float value)
+{
+	PRIVATE()->MaxHeight = value;
+}
+
+float UIElement::getFixedHeight() const
+{
+	return PRIVATE()->FixedHeight;
+}
+
+void UIElement::setFixedHeight(float value)
+{
+	PRIVATE()->FixedHeight = value;
+}
+
+UIFloat2 UIElement::getMinSize() const
+{
+	return UIFloat2{ PRIVATE()->MinWidth, PRIVATE()->MinHeight };
+}
+
+void UIElement::setMinSize(float width, float height)
+{
+	setMinWidth(width);
+	setMinHeight(height);
+}
+
+UIFloat2 UIElement::getMaxSize() const
+{
+	return UIFloat2{ PRIVATE()->MaxWidth, PRIVATE()->MaxHeight };
+}
+
+void UIElement::setMaxSize(float width, float height)
+{
+	setMaxWidth(width);
+	setMaxHeight(height);
+}
+
+UIFloat2 UIElement::getFixedSize() const
+{
+	return UIFloat2{ PRIVATE()->FixedWidth, PRIVATE()->FixedHeight };
+}
+
+void UIElement::setFixedSize(float width, float height)
+{
+	setFixedWidth(width);
+	setFixedHeight(height);
+}
+
+UIFloat4 UIElement::getBorder() const
+{
+	return PRIVATE()->Border;
+}
+
+void UIElement::setBorder(UIFloat4 value)
+{
+	PRIVATE()->Border = value;
+}
+
+UIFloat4 UIElement::getMargin() const
+{
+	return PRIVATE()->Margin;
+}
+
+void UIElement::setMargin(UIFloat4 value)
+{
+	PRIVATE()->Margin = value;
+}
+
+UIFloat4 UIElement::getPadding() const
+{
+	return PRIVATE()->Padding;
+}
+
+void UIElement::setPadding(UIFloat4 value)
+{
+	PRIVATE()->Padding = value;
+}
+
+UI::FlexDirection UIElement::getFlexDirection() const
+{
+	return PRIVATE()->FlexFlow.FlexDirection;
+}
+
+void UIElement::setFlexDirection(UI::FlexDirection value)
+{
+	PRIVATE()->FlexFlow.FlexDirection = value;
+}
+
+UI::FlexWrap UIElement::getFlexWrap() const
+{
+	return PRIVATE()->FlexFlow.FlexWrap;
+}
+
+void UIElement::setFlexWrap(UI::FlexWrap value)
+{
+	PRIVATE()->FlexFlow.FlexWrap = value;
+}
+
+UI::JustifyContent UIElement::getJustifyContent() const
+{
+	return PRIVATE()->JustifyContent;
+}
+
+void UIElement::setJustifyContent(UI::JustifyContent value)
+{
+	PRIVATE()->JustifyContent = value;
+}
+
+UI::AlignItems UIElement::getAlignItems() const
+{
+	return PRIVATE()->AlignItems;
+}
+
+void UIElement::setAlignItems(UI::AlignItems value)
+{
+	PRIVATE()->AlignItems = value;
+}
+
+UI::AlignContent UIElement::getAlignContent() const
+{
+	return PRIVATE()->AlignContent;
+}
+
+void UIElement::setAlignContent(UI::AlignContent value)
+{
+	PRIVATE()->AlignContent = value;
+}
+
+void UIElement::setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap)
+{
+	setFlexDirection(direction);
+	setFlexWrap(wrap);
+}
+
+UI::FlexGrow UIElement::getFlexGrow() const
+{
+	return PRIVATE()->Flex.FlexGrow;
+}
+
+void UIElement::setFlexGrow(UI::FlexGrow value)
+{
+	PRIVATE()->Flex.FlexGrow = value;
+}
+
+UI::FlexShrink UIElement::getFlexShrink() const
+{
+	return PRIVATE()->Flex.FlexShrink;
+}
+
+void UIElement::setFlexShrink(UI::FlexShrink value)
+{
+	PRIVATE()->Flex.FlexShrink = value;
+}
+
+UI::FlexBasis UIElement::getFlexBasis() const
+{
+	return PRIVATE()->Flex.FlexBasis;
+}
+
+void UIElement::setFlexBasis(UI::FlexBasis value)
+{
+	PRIVATE()->Flex.FlexBasis;
+}
+
+UI::AlignSelf UIElement::getAlignSelf() const
+{
+	return PRIVATE()->AlignSelf;
+}
+
+void UIElement::setAlignSelf(UI::AlignSelf value)
+{
+	PRIVATE()->AlignSelf = value;
+}
+
+void UIElement::setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis)
+{
+	setFlexGrow(grow);
+	setFlexShrink(shrink);
+	setFlexBasis(basis);
 }
 
 void UIElement::closeEvent(UICloseEventRaw event)
