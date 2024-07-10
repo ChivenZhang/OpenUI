@@ -12,10 +12,30 @@ public:
 	UIContextRaw Context = nullptr;
 	UIPointUV3 Primitive[2];
 
+	float MinWidth, MinHeight;
+	float MaxWidth, MaxHeight;
+	float FixedWidth, FixedHeight;
+	UIFloat4 Border, Margin, Padding;
 	UIRect ClientRect, ViewRect;
 	bool Enable = true, Visible = true;
 
+	struct
+	{
+		UI::FlexDirection FlexDirection = UI::FlexDirectionRow;
+		UI::FlexWrap FlexWrap = UI::FlexNoWrap;
+	} FlexFlow;
+	UI::JustifyContent JustifyContent = UI::JustifyFlexStart;
+	UI::AlignItems AlignItems = UI::AlignAuto;
+	UI::AlignContent AlignContent = UI::AlignAuto;
 
+	struct
+	{
+		UI::FlexGrow FlexGrow = 0;
+		UI::FlexShrink FlexShrink = 1;
+		UI::FlexBasis FlexBasis = 0;
+	} Flex;
+	// int32_t Order;
+	UI::AlignSelf AlignSelf = UI::AlignAuto;
 };
 #define PRIVATE() ((UIElementPrivateData*) m_Private)
 

@@ -12,10 +12,9 @@ using UIElementPrivateRaw = UIRaw<UIElementPrivate>;
 class UIContext;
 using UIContextRaw = UIRaw<UIContext>;
 
-
 namespace UI
 {
-	enum Align
+	enum AlignItems
 	{
 		AlignAuto,
 		AlignFlexStart,
@@ -27,114 +26,34 @@ namespace UI
 		AlignSpaceAround,
 		AlignSpaceEvenly,
 	};
-
-	enum Dimension
-	{
-		DimensionWidth,
-		DimensionHeight
-	};
-
-	enum Direction
-	{
-		DirectionInherit,
-		DirectionLTR,
-		DirectionRTL
-	};
-
-	enum Display
-	{
-		DisplayFlex,
-		DisplayNone
-	};
-
-	enum Edge
-	{
-		EdgeLeft,
-		EdgeTop,
-		EdgeRight,
-		EdgeBottom,
-		EdgeStart,
-		EdgeEnd,
-		EdgeHorizontal,
-		EdgeVertical,
-		EdgeAll
-	};
-
-	enum Errata
-	{
-		ErrataNone = 0,
-		ErrataStretchFlexBasis = 1,
-		ErrataAbsolutePositioningIncorrect = 2,
-		ErrataAbsolutePercentAgainstInnerSize = 4,
-		ErrataAll = 2147483647,
-		ErrataClassic = 2147483646
-	};
-
-	enum ExperimentalFeature
-	{
-		ExperimentalFeatureWebFlexBasis
-	};
-
 	enum FlexDirection
 	{
 		FlexDirectionColumn,
 		FlexDirectionColumnReverse,
 		FlexDirectionRow,
-		FlexDirectionRowReverse
+		FlexDirectionRowReverse,
 	};
-
-	enum Gutter
+	enum FlexWrap
 	{
-		GutterColumn,
-		GutterRow,
-		GutterAll
+		FlexNoWrap,
+		FlexDoWrap,
+		FlexWrapReverse,
 	};
-
-	enum Justify
+	using AlignContent = AlignItems;
+	enum JustifyContent
 	{
 		JustifyFlexStart,
 		JustifyCenter,
 		JustifyFlexEnd,
 		JustifySpaceBetween,
 		JustifySpaceAround,
-		JustifySpaceEvenly
+		JustifySpaceEvenly,
 	};
 
-	enum MeasureMode
-	{
-		MeasureModeUndefined,
-		MeasureModeExactly,
-		MeasureModeAtMost
-	};
-
-	enum Overflow
-	{
-		OverflowVisible,
-		OverflowHidden,
-		OverflowScroll
-	};
-
-	enum PositionType
-	{
-		PositionTypeStatic,
-		PositionTypeRelative,
-		PositionTypeAbsolute
-	};
-
-	enum Unit
-	{
-		UnitUndefined,
-		UnitPoint,
-		UnitPercent,
-		UnitAuto
-	};
-
-	enum Wrap
-	{
-		WrapNoWrap,
-		WrapWrap,
-		WrapWrapReverse
-	};
+	using FlexGrow = float;
+	using FlexShrink = float;
+	using FlexBasis = float;
+	using AlignSelf = AlignItems;
 };
 
 /// @brief Base interface of element
