@@ -1,4 +1,5 @@
 #include "UIContext.h"
+#include <yoga/Yoga.h>
 
 struct UIContextElement
 {
@@ -114,7 +115,114 @@ void UIContext::removeElement()
 
 void UIContext::layoutElement(UIRect client)
 {
-	UILambda<void(UIElementRaw, UIRect client)> foreach_func;
+	UILambda<YGNodeRef(UIElementRaw, UIRect)> foreach_func;
+	foreach_func = [&](UIElementRaw element, UIRect client)->YGNodeRef {
+		auto node = YGNodeNew();
+		YGNodeStyleSetWidth(node, element->getFixedWidth());
+		YGNodeStyleSetHeight(node, element->getFixedHeight());
+		YGNodeStyleSetMinWidth(node, element->getMinWidth());
+		YGNodeStyleSetMinHeight(node, element->getMinHeight());
+		YGNodeStyleSetMaxWidth(node, element->getMaxWidth());
+		YGNodeStyleSetMaxHeight(node, element->getMaxHeight());
+		YGNodeStyleSetBorder(node, YGEdgeLeft, element->getBorder().X);
+		YGNodeStyleSetBorder(node, YGEdgeTop, element->getBorder().Y);
+		YGNodeStyleSetBorder(node, YGEdgeRight, element->getBorder().Z);
+		YGNodeStyleSetBorder(node, YGEdgeBottom, element->getBorder().W);
+		YGNodeStyleSetMargin(node, YGEdgeLeft, element->getMargin().X);
+		YGNodeStyleSetMargin(node, YGEdgeTop, element->getMargin().Y);
+		YGNodeStyleSetMargin(node, YGEdgeRight, element->getMargin().Z);
+		YGNodeStyleSetMargin(node, YGEdgeBottom, element->getMargin().W);
+		YGNodeStyleSetPadding(node, YGEdgeLeft, element->getPadding().X);
+		YGNodeStyleSetPadding(node, YGEdgeTop, element->getPadding().Y);
+		YGNodeStyleSetPadding(node, YGEdgeRight, element->getPadding().Z);
+		YGNodeStyleSetPadding(node, YGEdgeBottom, element->getPadding().W);
+		switch (element->getFlexDirection())
+		{
+		case UI::FlexDirectionColumn: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumn); break;
+		case UI::FlexDirectionColumnReverse: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumnReverse); break;
+		case UI::FlexDirectionRow: YGNodeStyleSetFlexDirection(node, YGFlexDirectionRow); break;
+		case UI::FlexDirectionRowReverse: YGNodeStyleSetFlexDirection(node, YGFlexDirectionRowReverse); break;
+		}
+		switch (element->getFlexWrap())
+		{
+		case UI::FlexNoWrap: YGNodeStyleSetFlexWrap(node, YGWrapNoWrap); break;
+		case UI::FlexDoWrap: YGNodeStyleSetFlexWrap(node, YGWrapWrap); break;
+		case UI::FlexWrapReverse: YGNodeStyleSetFlexWrap(node, YGWrapWrapReverse); break;
+		}
+		switch (element->getAlignContent())
+		{
+		case UI::AlignAuto: YGNodeStyleSetAlignContent(node, YGAlignAuto); break;
+		case UI::AlignFlexStart: YGNodeStyleSetAlignContent(node, YGAlignFlexStart); break;
+		case UI::AlignCenter: YGNodeStyleSetAlignContent(node, YGAlignCenter); break;
+		case UI::AlignFlexEnd: YGNodeStyleSetAlignContent(node, YGAlignFlexEnd); break;
+		case UI::AlignStretch: YGNodeStyleSetAlignContent(node, YGAlignStretch); break;
+		case UI::AlignBaseline: YGNodeStyleSetAlignContent(node, YGAlignBaseline); break;
+		case UI::AlignSpaceBetween: YGNodeStyleSetAlignContent(node, YGAlignSpaceEvenly); break;
+		case UI::AlignSpaceAround: YGNodeStyleSetAlignContent(node, YGAlignSpaceAround); break;
+		case UI::AlignSpaceEvenly: YGNodeStyleSetAlignContent(node, YGAlignSpaceEvenly); break;
+		}
+		switch (element->getAlignItems())
+		{
+		case UI::AlignAuto: YGNodeStyleSetAlignItems(node, YGAlignAuto); break;
+		case UI::AlignFlexStart: YGNodeStyleSetAlignItems(node, YGAlignFlexStart); break;
+		case UI::AlignCenter: YGNodeStyleSetAlignItems(node, YGAlignCenter); break;
+		case UI::AlignFlexEnd: YGNodeStyleSetAlignItems(node, YGAlignFlexEnd); break;
+		case UI::AlignStretch: YGNodeStyleSetAlignItems(node, YGAlignStretch); break;
+		case UI::AlignBaseline: YGNodeStyleSetAlignItems(node, YGAlignBaseline); break;
+		case UI::AlignSpaceBetween: YGNodeStyleSetAlignItems(node, YGAlignSpaceEvenly); break;
+		case UI::AlignSpaceAround: YGNodeStyleSetAlignItems(node, YGAlignSpaceAround); break;
+		case UI::AlignSpaceEvenly: YGNodeStyleSetAlignItems(node, YGAlignSpaceEvenly); break;
+		}
+		switch (element->getJustifyContent())
+		{
+		case UI::JustifyFlexStart: YGNodeStyleSetJustifyContent(node, YGJustifyFlexStart); break;
+		case UI::JustifyCenter: YGNodeStyleSetJustifyContent(node, YGJustifyCenter); break;
+		case UI::JustifyFlexEnd: YGNodeStyleSetJustifyContent(node, YGJustifyFlexEnd); break;
+		case UI::JustifySpaceBetween: YGNodeStyleSetJustifyContent(node, YGJustifySpaceBetween); break;
+		case UI::JustifySpaceAround: YGNodeStyleSetJustifyContent(node, YGJustifySpaceAround); break;
+		case UI::JustifySpaceEvenly: YGNodeStyleSetJustifyContent(node, YGJustifySpaceEvenly); break;
+		}
+		YGNodeStyleSetFlexGrow(node, element->getFlexGrow());
+		YGNodeStyleSetFlexShrink(node, element->getFlexShrink());
+		YGNodeStyleSetFlexBasis(node, element->getFlexBasis());
+		switch (element->getAlignSelf())
+		{
+		case UI::AlignAuto: YGNodeStyleSetAlignSelf(node, YGAlignAuto); break;
+		case UI::AlignFlexStart: YGNodeStyleSetAlignSelf(node, YGAlignFlexStart); break;
+		case UI::AlignCenter: YGNodeStyleSetAlignSelf(node, YGAlignCenter); break;
+		case UI::AlignFlexEnd: YGNodeStyleSetAlignSelf(node, YGAlignFlexEnd); break;
+		case UI::AlignStretch: YGNodeStyleSetAlignSelf(node, YGAlignStretch); break;
+		case UI::AlignBaseline: YGNodeStyleSetAlignSelf(node, YGAlignBaseline); break;
+		case UI::AlignSpaceBetween: YGNodeStyleSetAlignSelf(node, YGAlignSpaceEvenly); break;
+		case UI::AlignSpaceAround: YGNodeStyleSetAlignSelf(node, YGAlignSpaceAround); break;
+		case UI::AlignSpaceEvenly: YGNodeStyleSetAlignSelf(node, YGAlignSpaceEvenly); break;
+		}
+		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		{
+			auto child = foreach_func(element->getChildren()[i].get(), client);
+			YGNodeInsertChild(node, child, YGNodeGetChildCount(node));
+		}
+		return node;
+		};
+
+	UILambda<void(YGNodeRef, UIElementRaw, UIRect)> layout_func;
+	layout_func = [&](YGNodeRef node, UIElementRaw element, UIRect client) {
+		element->setBounds({ YGNodeLayoutGetLeft(node), YGNodeLayoutGetTop(node), YGNodeLayoutGetWidth(node), YGNodeLayoutGetHeight(node) });
+		for (size_t i = 0; i < YGNodeGetChildCount(node) && i < element->getChildren().size(); ++i)
+		{
+			layout_func(YGNodeGetChild(node, i), element->getChildren()[i].get(), element->getChildren()[i]->getBounds());
+		}
+		};
+
+	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
+	{
+		auto root = foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
+		YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+		layout_func(root, PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
+		YGNodeFreeRecursive(root);
+	}
+
+	/*UILambda<void(UIElementRaw, UIRect client)> foreach_func;
 	foreach_func = [&](UIElementRaw element, UIRect client) {
 		element->layout(client);
 		auto childList = element->getChildren();
@@ -125,7 +233,7 @@ void UIContext::layoutElement(UIRect client)
 		PRIVATE()->TopLevelList[i].Element->setBounds(client);
 		PRIVATE()->TopLevelList[i].Element->setViewport(client);
 		foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
-	}
+	}*/
 }
 
 void UIContext::paintElement(UIRect client)
