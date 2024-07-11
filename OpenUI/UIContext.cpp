@@ -117,25 +117,115 @@ void UIContext::layoutElement(UIRect client)
 {
 	UILambda<YGNodeRef(UIElementRaw, UIRect)> foreach_func;
 	foreach_func = [&](UIElementRaw element, UIRect client)->YGNodeRef {
+
 		auto node = YGNodeNew();
-		YGNodeStyleSetWidth(node, element->getFixedWidth());
-		YGNodeStyleSetHeight(node, element->getFixedHeight());
-		YGNodeStyleSetMinWidth(node, element->getMinWidth());
-		YGNodeStyleSetMinHeight(node, element->getMinHeight());
-		YGNodeStyleSetMaxWidth(node, element->getMaxWidth());
-		YGNodeStyleSetMaxHeight(node, element->getMaxHeight());
-		YGNodeStyleSetBorder(node, YGEdgeLeft, element->getBorder().X);
-		YGNodeStyleSetBorder(node, YGEdgeTop, element->getBorder().Y);
-		YGNodeStyleSetBorder(node, YGEdgeRight, element->getBorder().Z);
-		YGNodeStyleSetBorder(node, YGEdgeBottom, element->getBorder().W);
-		YGNodeStyleSetMargin(node, YGEdgeLeft, element->getMargin().X);
-		YGNodeStyleSetMargin(node, YGEdgeTop, element->getMargin().Y);
-		YGNodeStyleSetMargin(node, YGEdgeRight, element->getMargin().Z);
-		YGNodeStyleSetMargin(node, YGEdgeBottom, element->getMargin().W);
-		YGNodeStyleSetPadding(node, YGEdgeLeft, element->getPadding().X);
-		YGNodeStyleSetPadding(node, YGEdgeTop, element->getPadding().Y);
-		YGNodeStyleSetPadding(node, YGEdgeRight, element->getPadding().Z);
-		YGNodeStyleSetPadding(node, YGEdgeBottom, element->getPadding().W);
+
+		switch (element->getFixedPosX().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, element->getFixedPosX()); break;
+		case UI::UnitPercent: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeLeft, element->getFixedPosX()); break;
+		}
+		switch (element->getFixedPosY().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetPosition(node, YGEdge::YGEdgeRight, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetPosition(node, YGEdge::YGEdgeRight, element->getFixedPosY()); break;
+		case UI::UnitPercent: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeRight, element->getFixedPosY()); break;
+		}
+		switch (element->getFixedWidth().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetWidth(node, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetWidth(node, element->getFixedWidth()); break;
+		case UI::UnitPercent: YGNodeStyleSetWidthPercent(node, element->getFixedWidth()); break;
+		case UI::UnitAuto: YGNodeStyleSetWidthAuto(node); break;
+		}
+		switch (element->getFixedHeight().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetHeight(node, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetHeight(node, element->getFixedHeight()); break;
+		case UI::UnitPercent: YGNodeStyleSetHeightPercent(node, element->getFixedHeight()); break;
+		case UI::UnitAuto: YGNodeStyleSetHeightAuto(node); break;
+		}
+		switch (element->getMinWidth().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMinWidth(node, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMinWidth(node, element->getMinWidth()); break;
+		case UI::UnitPercent: YGNodeStyleSetMinWidthPercent(node, element->getMinWidth()); break;
+		}
+		switch (element->getMinHeight().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMinHeight(node, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMinHeight(node, element->getMinHeight()); break;
+		case UI::UnitPercent: YGNodeStyleSetMinHeightPercent(node, element->getMinHeight()); break;
+		}
+		switch (element->getMaxWidth().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMaxWidth(node, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMaxWidth(node, element->getMaxWidth()); break;
+		case UI::UnitPercent: YGNodeStyleSetMaxWidthPercent(node, element->getMaxWidth()); break;
+		}
+		switch (element->getMaxHeight().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMaxHeight(node, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMaxHeight(node, element->getMaxHeight()); break;
+		case UI::UnitPercent: YGNodeStyleSetMaxHeightPercent(node, element->getMaxHeight()); break;
+		}
+		YGNodeStyleSetBorder(node, YGEdgeLeft, element->getBorder()[0]);
+		YGNodeStyleSetBorder(node, YGEdgeTop, element->getBorder()[1]);
+		YGNodeStyleSetBorder(node, YGEdgeRight, element->getBorder()[2]);
+		YGNodeStyleSetBorder(node, YGEdgeBottom, element->getBorder()[3]);
+		switch (element->getMargin()[0].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeLeft, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeLeft, element->getMargin()[0]); break;
+		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeLeft, element->getMargin()[0]); break;
+		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeLeft); break;
+		}
+		switch (element->getMargin()[1].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeTop, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeTop, element->getMargin()[1]); break;
+		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeTop, element->getMargin()[1]); break;
+		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeTop); break;
+		}
+		switch (element->getMargin()[2].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeRight, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeRight, element->getMargin()[2]); break;
+		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeRight, element->getMargin()[2]); break;
+		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeRight); break;
+		}
+		switch (element->getMargin()[3].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeBottom, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeBottom, element->getMargin()[3]); break;
+		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeBottom, element->getMargin()[3]); break;
+		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeBottom); break;
+		}
+		switch (element->getPadding()[0].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeLeft, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeLeft, element->getPadding()[0]); break;
+		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeLeft, element->getPadding()[0]); break;
+		}
+		switch (element->getPadding()[1].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeTop, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeTop, element->getPadding()[1]); break;
+		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeTop, element->getPadding()[1]); break;
+		}
+		switch (element->getPadding()[2].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeRight, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeRight, element->getPadding()[2]); break;
+		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeRight, element->getPadding()[2]); break;
+		}
+		switch (element->getPadding()[3].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeBottom, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeBottom, element->getPadding()[3]); break;
+		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeBottom, element->getPadding()[3]); break;
+		}
 		switch (element->getFlexDirection())
 		{
 		case UI::FlexDirectionColumn: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumn); break;
@@ -182,9 +272,13 @@ void UIContext::layoutElement(UIRect client)
 		case UI::JustifySpaceAround: YGNodeStyleSetJustifyContent(node, YGJustifySpaceAround); break;
 		case UI::JustifySpaceEvenly: YGNodeStyleSetJustifyContent(node, YGJustifySpaceEvenly); break;
 		}
-		YGNodeStyleSetFlexGrow(node, element->getFlexGrow());
-		YGNodeStyleSetFlexShrink(node, element->getFlexShrink());
-		YGNodeStyleSetFlexBasis(node, element->getFlexBasis());
+		switch (element->getFlexBasis().Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetFlexBasis(node, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetFlexBasis(node, element->getFlexBasis()); break;
+		case UI::UnitPercent: YGNodeStyleSetFlexBasisPercent(node, element->getFlexBasis()); break;
+		case UI::UnitAuto: YGNodeStyleSetFlexBasisAuto(node); break;
+		}
 		switch (element->getAlignSelf())
 		{
 		case UI::AlignAuto: YGNodeStyleSetAlignSelf(node, YGAlignAuto); break;
@@ -197,6 +291,9 @@ void UIContext::layoutElement(UIRect client)
 		case UI::AlignSpaceAround: YGNodeStyleSetAlignSelf(node, YGAlignSpaceAround); break;
 		case UI::AlignSpaceEvenly: YGNodeStyleSetAlignSelf(node, YGAlignSpaceEvenly); break;
 		}
+		YGNodeStyleSetFlexGrow(node, element->getFlexGrow());
+		YGNodeStyleSetFlexShrink(node, element->getFlexShrink());
+
 		for (size_t i = 0; i < element->getChildren().size(); ++i)
 		{
 			auto child = foreach_func(element->getChildren()[i].get(), client);
@@ -207,7 +304,10 @@ void UIContext::layoutElement(UIRect client)
 
 	UILambda<void(YGNodeRef, UIElementRaw, UIRect)> layout_func;
 	layout_func = [&](YGNodeRef node, UIElementRaw element, UIRect client) {
+
 		element->setBounds({ YGNodeLayoutGetLeft(node), YGNodeLayoutGetTop(node), YGNodeLayoutGetWidth(node), YGNodeLayoutGetHeight(node) });
+		element->setViewport(UIOverlap(element->getBounds(), client));
+
 		for (size_t i = 0; i < YGNodeGetChildCount(node) && i < element->getChildren().size(); ++i)
 		{
 			layout_func(YGNodeGetChild(node, i), element->getChildren()[i].get(), element->getChildren()[i]->getBounds());
@@ -216,24 +316,15 @@ void UIContext::layoutElement(UIRect client)
 
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
+		PRIVATE()->TopLevelList[i].Element->setFixedPos(client.X, client.Y);
+		PRIVATE()->TopLevelList[i].Element->setFixedSize(client.W, client.H);
+		PRIVATE()->TopLevelList[i].Element->setBounds(client);
+		PRIVATE()->TopLevelList[i].Element->setViewport(client);
 		auto root = foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
 		YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
 		layout_func(root, PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
 		YGNodeFreeRecursive(root);
 	}
-
-	/*UILambda<void(UIElementRaw, UIRect client)> foreach_func;
-	foreach_func = [&](UIElementRaw element, UIRect client) {
-		element->layout(client);
-		auto childList = element->getChildren();
-		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds());
-		};
-	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
-	{
-		PRIVATE()->TopLevelList[i].Element->setBounds(client);
-		PRIVATE()->TopLevelList[i].Element->setViewport(client);
-		foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
-	}*/
 }
 
 void UIContext::paintElement(UIRect client)

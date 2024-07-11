@@ -7,15 +7,18 @@ class UIElementPrivateData : public UIElementPrivate
 public:
 	UIElementRaw Parent = nullptr;
 	UIVector<UIElementRef> Children;
-	UIFilterRaw Filter;
 	UIPainterRef Painter;
+	UIFilterRaw Filter = nullptr;
 	UIContextRaw Context = nullptr;
 	UIPointUV3 Primitive[2];
 
-	float MinWidth, MinHeight;
-	float MaxWidth, MaxHeight;
-	float FixedWidth, FixedHeight;
-	UIFloat4 Border, Margin, Padding;
+	UIValue2F Position{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
+	UIValueF MinWidth = { UINAN, 0 }, MinHeight = { UINAN, 0 };
+	UIValueF MaxWidth = { UINAN, 0 }, MaxHeight = { UINAN, 0 };
+	UIValueF FixedWidth = { UINAN, 0 }, FixedHeight = { UINAN, 0 };
+	UIValue4F Border{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
+	UIValue4F Margin{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
+	UIValue4F Padding{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
 	UIRect ClientRect, ViewRect;
 	bool Enable = true, Visible = true;
 
@@ -25,14 +28,14 @@ public:
 		UI::FlexWrap FlexWrap = UI::FlexNoWrap;
 	} FlexFlow;
 	UI::JustifyContent JustifyContent = UI::JustifyFlexStart;
-	UI::AlignItems AlignItems = UI::AlignAuto;
-	UI::AlignContent AlignContent = UI::AlignAuto;
+	UI::AlignItems AlignItems = UI::AlignStretch;
+	UI::AlignContent AlignContent = UI::AlignStretch;
 
 	struct
 	{
-		UI::FlexGrow FlexGrow = 0;
-		UI::FlexShrink FlexShrink = 1;
-		UI::FlexBasis FlexBasis = 0;
+		UI::FlexGrow FlexGrow = UIValueF{ 0, 0 };
+		UI::FlexShrink FlexShrink = UIValueF{ 1, 0 };
+		UI::FlexBasis FlexBasis = UIValueF{ UINAN, 0 };
 	} Flex;
 	// int32_t Order;
 	UI::AlignSelf AlignSelf = UI::AlignAuto;
@@ -288,125 +291,156 @@ void UIElement::setViewport(UIRect value)
 	PRIVATE()->ViewRect = value;
 }
 
-float UIElement::getMinWidth() const
+UIValueF UIElement::getFixedPosX() const
+{
+	return PRIVATE()->Position[0];
+}
+
+void UIElement::setFixedPosX(UIValueF value)
+{
+	PRIVATE()->Position[0] = value;
+}
+
+UIValueF UIElement::getFixedPosY() const
+{
+	return PRIVATE()->Position[1];
+}
+
+void UIElement::setFixedPosY(UIValueF value)
+{
+	PRIVATE()->Position[1] = value;
+}
+
+UIValue2F UIElement::getFixedPos() const
+{
+	return PRIVATE()->Position;
+}
+
+void UIElement::setFixedPos(UIValueF left, UIValueF top)
+{
+	setFixedPosX(left);
+	setFixedPosY(top);
+}
+
+UIValueF UIElement::getMinWidth() const
 {
 	return PRIVATE()->MinWidth;
 }
 
-void UIElement::setMinWidth(float value)
+void UIElement::setMinWidth(UIValueF value)
 {
 	PRIVATE()->MinWidth = value;
 }
 
-float UIElement::getMaxWidth() const
+UIValueF UIElement::getMaxWidth() const
 {
 	return PRIVATE()->MaxWidth;
 }
 
-void UIElement::setMaxWidth(float value)
+void UIElement::setMaxWidth(UIValueF value)
 {
 	PRIVATE()->MaxWidth = value;
 }
 
-float UIElement::getFixedWidth() const
+UIValueF UIElement::getFixedWidth() const
 {
 	return PRIVATE()->FixedWidth;
 }
 
-void UIElement::setFixedWidth(float value)
+void UIElement::setFixedWidth(UIValueF value)
 {
 	PRIVATE()->FixedWidth = value;
 }
 
-float UIElement::getMinHeight() const
+UIValueF UIElement::getMinHeight() const
 {
 	return PRIVATE()->MinHeight;
 }
 
-void UIElement::setMinHeight(float value)
+void UIElement::setMinHeight(UIValueF value)
 {
 	PRIVATE()->MinHeight = value;
 }
 
-float UIElement::getMaxHeight() const
+UIValueF UIElement::getMaxHeight() const
 {
 	return PRIVATE()->MaxHeight;
 }
 
-void UIElement::setMaxHeight(float value)
+void UIElement::setMaxHeight(UIValueF value)
 {
 	PRIVATE()->MaxHeight = value;
 }
 
-float UIElement::getFixedHeight() const
+UIValueF UIElement::getFixedHeight() const
 {
 	return PRIVATE()->FixedHeight;
 }
 
-void UIElement::setFixedHeight(float value)
+void UIElement::setFixedHeight(UIValueF value)
 {
 	PRIVATE()->FixedHeight = value;
 }
 
-UIFloat2 UIElement::getMinSize() const
+UIValue2F UIElement::getMinSize() const
 {
-	return UIFloat2{ PRIVATE()->MinWidth, PRIVATE()->MinHeight };
+	return UIValue2F{ PRIVATE()->MinWidth, PRIVATE()->MinHeight };
 }
 
-void UIElement::setMinSize(float width, float height)
+void UIElement::setMinSize(UIValueF width, UIValueF height)
 {
 	setMinWidth(width);
 	setMinHeight(height);
 }
 
-UIFloat2 UIElement::getMaxSize() const
+UIValue2F UIElement::getMaxSize() const
 {
-	return UIFloat2{ PRIVATE()->MaxWidth, PRIVATE()->MaxHeight };
+	return UIValue2F{ PRIVATE()->MaxWidth, PRIVATE()->MaxHeight };
 }
 
-void UIElement::setMaxSize(float width, float height)
+void UIElement::setMaxSize(UIValueF width, UIValueF height)
 {
 	setMaxWidth(width);
 	setMaxHeight(height);
 }
 
-UIFloat2 UIElement::getFixedSize() const
+UIValue2F UIElement::getFixedSize() const
 {
-	return UIFloat2{ PRIVATE()->FixedWidth, PRIVATE()->FixedHeight };
+	return UIValue2F{ PRIVATE()->FixedWidth, PRIVATE()->FixedHeight };
 }
 
-void UIElement::setFixedSize(float width, float height)
+void UIElement::setFixedSize(UIValueF width, UIValueF height)
 {
 	setFixedWidth(width);
 	setFixedHeight(height);
 }
 
-UIFloat4 UIElement::getBorder() const
+UIValue4F UIElement::getBorder() const
 {
 	return PRIVATE()->Border;
 }
 
-void UIElement::setBorder(UIFloat4 value)
+void UIElement::setBorder(UIValue4F value)
 {
 	PRIVATE()->Border = value;
 }
 
-UIFloat4 UIElement::getMargin() const
+UIValue4F UIElement::getMargin() const
 {
 	return PRIVATE()->Margin;
 }
 
-void UIElement::setMargin(UIFloat4 value)
+void UIElement::setMargin(UIValue4F value)
 {
 	PRIVATE()->Margin = value;
 }
 
-UIFloat4 UIElement::getPadding() const
+UIValue4F UIElement::getPadding() const
 {
 	return PRIVATE()->Padding;
 }
 
-void UIElement::setPadding(UIFloat4 value)
+void UIElement::setPadding(UIValue4F value)
 {
 	PRIVATE()->Padding = value;
 }
