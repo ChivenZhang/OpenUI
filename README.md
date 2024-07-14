@@ -1,7 +1,7 @@
 # 设计主旨
 ## To be more opened, more abstract, more tolerant, more powerful.
 
-![image](Pattern.png)
+![image](OpenUI.png)
 
 ## 需求列表
 * 支持单窗口的控件树机制
