@@ -40,7 +40,7 @@ OpenGLPainter::~OpenGLPainter()
 	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
 }
 
-RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int cursor, int* row, int* column, RmRectRaw cursorRect)
+UIRect OpenGLPainter::boundingRect(int x, int y, int width, int height, UIString const& text, int cursor, int* row, int* column, UIRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
@@ -49,16 +49,16 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	pango_layout_set_width(layout, width * PANGO_SCALE);
 	pango_layout_set_height(layout, height * PANGO_SCALE);
 
-	RmRect text_rect;
+	UIRect text_rect;
 	int text_width, text_height;
 	int baseline = pango_layout_get_baseline(layout);
 	pango_layout_get_pixel_size(layout, &text_width, &text_height);
 	text_rect.W = text_width; text_rect.H = text_height;
 
-	if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
-	else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
-	else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
-	else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+	if (font.Align & UIFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+	else if (font.Align & UIFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+	else if (font.Align & UIFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+	else if (font.Align & UIFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 	else { text_rect.X = x; text_rect.Y = y; }
 
 	int line_number, x_pos;
@@ -73,13 +73,13 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	{
 		PangoRectangle strong_pos, weak_pos;
 		pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-		(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
+		(*cursorRect) = UIRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 	}
 
 	return text_rect;
 }
 
-RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int row, int column, int* cursor, RmRectRaw cursorRect)
+UIRect OpenGLPainter::boundingRect(int x, int y, int width, int height, UIString const& text, int row, int column, int* cursor, UIRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
@@ -88,16 +88,16 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	pango_layout_set_width(layout, width * PANGO_SCALE);
 	pango_layout_set_height(layout, height * PANGO_SCALE);
 
-	RmRect text_rect;
+	UIRect text_rect;
 	int text_width, text_height;
 	int baseline = pango_layout_get_baseline(layout);
 	pango_layout_get_pixel_size(layout, &text_width, &text_height);
 	text_rect.W = text_width; text_rect.H = text_height;
 
-	if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
-	else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
-	else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
-	else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+	if (font.Align & UIFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+	else if (font.Align & UIFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+	else if (font.Align & UIFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+	else if (font.Align & UIFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 	else { text_rect.X = x; text_rect.Y = y; }
 
 	auto line = pango_layout_get_line_readonly(layout, row);
@@ -109,14 +109,14 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 		{
 			PangoRectangle strong_pos, weak_pos;
 			pango_layout_get_cursor_pos(layout, _cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
+			(*cursorRect) = UIRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 		}
 	}
 
 	return text_rect;
 }
 
-RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString const& text, int posX, int posY, int* row, int* column, int* cursor, RmRectRaw cursorRect)
+UIRect OpenGLPainter::boundingRect(int x, int y, int width, int height, UIString const& text, int posX, int posY, int* row, int* column, int* cursor, UIRectRaw cursorRect)
 {
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
@@ -125,21 +125,21 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	pango_layout_set_width(layout, width * PANGO_SCALE);
 	pango_layout_set_height(layout, height * PANGO_SCALE);
 
-	RmRect text_rect;
+	UIRect text_rect;
 	int text_width, text_height;
 	int baseline = pango_layout_get_baseline(layout);
 	pango_layout_get_pixel_size(layout, &text_width, &text_height);
 	text_rect.W = text_width; text_rect.H = text_height;
 
-	if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
-	else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
-	else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
-	else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+	if (font.Align & UIFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+	else if (font.Align & UIFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+	else if (font.Align & UIFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+	else if (font.Align & UIFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 	else { text_rect.X = x; text_rect.Y = y; }
 
 	int32_t text_index, text_trailing;
 	pango_layout_xy_to_index(layout, (posX - text_rect.X) * PANGO_SCALE, (posY - text_rect.Y) * PANGO_SCALE, &text_index, &text_trailing);
-	auto _cursor = text_index + ((text_trailing) ? RmUTF8Num(text[text_index]) : 0);
+	auto _cursor = text_index + ((text_trailing) ? UIUTF8Num(text[text_index]) : 0);
 	int line_number, x_pos;
 	pango_layout_index_to_line_x(layout, _cursor, 0, &line_number, &x_pos);
 	auto line = pango_layout_get_line_readonly(layout, line_number);
@@ -153,7 +153,7 @@ RmRect OpenGLPainter::boundingRect(int x, int y, int width, int height, RmString
 	{
 		PangoRectangle strong_pos, weak_pos;
 		pango_layout_get_cursor_pos(layout, _cursor, &strong_pos, &weak_pos);
-		(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
+		(*cursorRect) = UIRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 	}
 
 	return text_rect;
@@ -163,7 +163,7 @@ void OpenGLPainter::drawArc(int x, int y, int width, int height, int startAngle,
 {
 	if (width <= 0 || height <= 0) return;
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush)
+	if (m_Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -174,7 +174,7 @@ void OpenGLPainter::drawArc(int x, int y, int width, int height, int startAngle,
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -192,7 +192,7 @@ void OpenGLPainter::drawChord(int x, int y, int width, int height, int startAngl
 {
 	if (width <= 0 || height <= 0) return;
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush)
+	if (m_Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -203,7 +203,7 @@ void OpenGLPainter::drawChord(int x, int y, int width, int height, int startAngl
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -223,7 +223,7 @@ void OpenGLPainter::drawEllipse(int x, int y, int width, int height)
 	drawArc(x, y, width, height, 0, 360);
 }
 
-void OpenGLPainter::drawImage(int x, int y, RmImage image, int sx, int sy, int sw, int sh)
+void OpenGLPainter::drawImage(int x, int y, UIImage image, int sx, int sy, int sw, int sh)
 {
 	auto cr = m_NativeContext;
 	if (image.Data.size() == image.Height * image.Stride)
@@ -242,7 +242,7 @@ void OpenGLPainter::drawImage(int x, int y, RmImage image, int sx, int sy, int s
 void OpenGLPainter::drawLine(int x1, int y1, int x2, int y2)
 {
 	auto cr = m_NativeContext;
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_set_line_width(cr, m_Pen.Width);
@@ -254,10 +254,10 @@ void OpenGLPainter::drawLine(int x1, int y1, int x2, int y2)
 	}
 }
 
-void OpenGLPainter::drawLines(RmArrayView<RmLine> lines)
+void OpenGLPainter::drawLines(UIArrayView<UILine> lines)
 {
 	auto cr = m_NativeContext;
-	if (m_Pen.Style != RmPen::NoPen && 2 <= lines.size())
+	if (m_Pen.Style != UIPen::NoPen && 2 <= lines.size())
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_set_line_width(cr, m_Pen.Width);
@@ -276,7 +276,7 @@ void OpenGLPainter::drawPie(int x, int y, int width, int height, int startAngle,
 {
 	if (width <= 0 || height <= 0) return;
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush)
+	if (m_Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -288,7 +288,7 @@ void OpenGLPainter::drawPie(int x, int y, int width, int height, int startAngle,
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -307,7 +307,7 @@ void OpenGLPainter::drawPie(int x, int y, int width, int height, int startAngle,
 void OpenGLPainter::drawPoint(int x, int y)
 {
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush)
+	if (m_Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x - 1, y - 1, 2, 2);
@@ -315,7 +315,7 @@ void OpenGLPainter::drawPoint(int x, int y)
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x - 1, y - 1, 2, 2);
@@ -326,10 +326,10 @@ void OpenGLPainter::drawPoint(int x, int y)
 	}
 }
 
-void OpenGLPainter::drawPoints(RmArrayView<RmPoint> points)
+void OpenGLPainter::drawPoints(UIArrayView<UIPoint> points)
 {
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush)
+	if (m_Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i) cairo_rectangle(cr, points[i].X - 1, points[i].Y - 1, 2, 2);
@@ -337,7 +337,7 @@ void OpenGLPainter::drawPoints(RmArrayView<RmPoint> points)
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i) cairo_rectangle(cr, points[i].X - 1, points[i].Y - 1, 2, 2);
@@ -348,10 +348,10 @@ void OpenGLPainter::drawPoints(RmArrayView<RmPoint> points)
 	}
 }
 
-void OpenGLPainter::drawPolygon(RmArrayView<RmPoint> points)
+void OpenGLPainter::drawPolygon(UIArrayView<UIPoint> points)
 {
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush && 2 <= points.size())
+	if (m_Brush.Style != UIBrush::NoBrush && 2 <= points.size())
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
@@ -363,7 +363,7 @@ void OpenGLPainter::drawPolygon(RmArrayView<RmPoint> points)
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen && 2 <= points.size())
+	if (m_Pen.Style != UIPen::NoPen && 2 <= points.size())
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
@@ -379,10 +379,10 @@ void OpenGLPainter::drawPolygon(RmArrayView<RmPoint> points)
 	}
 }
 
-void OpenGLPainter::drawPolyline(RmArrayView<RmPoint> points)
+void OpenGLPainter::drawPolyline(UIArrayView<UIPoint> points)
 {
 	auto cr = m_NativeContext;
-	if (m_Pen.Style != RmPen::NoPen && 2 <= points.size())
+	if (m_Pen.Style != UIPen::NoPen && 2 <= points.size())
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
@@ -400,7 +400,7 @@ void OpenGLPainter::drawPolyline(RmArrayView<RmPoint> points)
 void OpenGLPainter::drawRect(int x, int y, int width, int height)
 {
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush && 0 <= width && 0 <= height)
+	if (m_Brush.Style != UIBrush::NoBrush && 0 <= width && 0 <= height)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x, y, width, height);
@@ -408,7 +408,7 @@ void OpenGLPainter::drawRect(int x, int y, int width, int height)
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen && 0 <= width && 0 <= height)
+	if (m_Pen.Style != UIPen::NoPen && 0 <= width && 0 <= height)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x, y, width, height);
@@ -419,10 +419,10 @@ void OpenGLPainter::drawRect(int x, int y, int width, int height)
 	}
 }
 
-void OpenGLPainter::drawRects(RmArrayView<RmRect> rects)
+void OpenGLPainter::drawRects(UIArrayView<UIRect> rects)
 {
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush)
+	if (m_Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < rects.size(); ++i)
@@ -433,7 +433,7 @@ void OpenGLPainter::drawRects(RmArrayView<RmRect> rects)
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < rects.size(); ++i)
@@ -450,7 +450,7 @@ void OpenGLPainter::drawRects(RmArrayView<RmRect> rects)
 void OpenGLPainter::drawRoundedRect(int x, int y, int width, int height, float xRadius, float yRadius)
 {
 	auto cr = m_NativeContext;
-	if (m_Brush.Style != RmBrush::NoBrush && 0 < width && 0 < height)
+	if (m_Brush.Style != UIBrush::NoBrush && 0 < width && 0 < height)
 	{
 		if (xRadius > width * 0.5f) xRadius = width * 0.5f;
 		if (yRadius > height * 0.5f) yRadius = height * 0.5f;
@@ -468,7 +468,7 @@ void OpenGLPainter::drawRoundedRect(int x, int y, int width, int height, float x
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen && 0 < width && 0 < height)
+	if (m_Pen.Style != UIPen::NoPen && 0 < width && 0 < height)
 	{
 		if (xRadius > width * 0.5f) xRadius = width * 0.5f;
 		if (yRadius > height * 0.5f) yRadius = height * 0.5f;
@@ -490,28 +490,28 @@ void OpenGLPainter::drawRoundedRect(int x, int y, int width, int height, float x
 	}
 }
 
-void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString& text, RmRectRaw boundingRect, int cursor, RmRectRaw cursorRect)
+void OpenGLPainter::drawText(int x, int y, int width, int height, const UIString& text, UIRectRaw boundingRect, int cursor, UIRectRaw cursorRect)
 {
 	auto cr = m_NativeContext;
 	auto layout = m_NativeLayout;
 	auto& font = m_Font;
-	if (m_Brush.Style != RmBrush::NoBrush)
+	if (m_Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		pango_layout_set_text(layout, text.c_str(), -1);
 		pango_layout_set_width(layout, width * PANGO_SCALE);
 		pango_layout_set_height(layout, height * PANGO_SCALE);
 
-		RmRect text_rect;
+		UIRect text_rect;
 		int text_width, text_height;
 		int baseline = pango_layout_get_baseline(layout);
 		pango_layout_get_pixel_size(layout, &text_width, &text_height);
 		text_rect.W = text_width; text_rect.H = text_height;
 
-		if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
-		else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
-		else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
-		else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+		if (font.Align & UIFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+		else if (font.Align & UIFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+		else if (font.Align & UIFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+		else if (font.Align & UIFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 		else { text_rect.X = x; text_rect.Y = y; }
 		if (boundingRect) (*boundingRect) = text_rect;
 
@@ -519,7 +519,7 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 		{
 			PangoRectangle strong_pos, weak_pos;
 			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
+			(*cursorRect) = UIRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 		}
 
 		cairo_move_to(cr, text_rect.X, text_rect.Y);
@@ -527,22 +527,22 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 		pango_cairo_show_layout(cr, layout);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != RmPen::NoPen)
+	if (m_Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		pango_layout_set_width(layout, width * PANGO_SCALE);
 		pango_layout_set_height(layout, height * PANGO_SCALE);
 
-		RmRect text_rect;
+		UIRect text_rect;
 		int text_width, text_height;
 		int baseline = pango_layout_get_baseline(layout);
 		pango_layout_get_pixel_size(layout, &text_width, &text_height);
 		text_rect.W = text_width; text_rect.H = text_height;
 
-		if (font.Align & RmFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
-		else if (font.Align & RmFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
-		else if (font.Align & RmFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
-		else if (font.Align & RmFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
+		if (font.Align & UIFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
+		else if (font.Align & UIFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
+		else if (font.Align & UIFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + (height - text_height) * 0.5; }
+		else if (font.Align & UIFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 		else { text_rect.X = x; text_rect.Y = y; }
 		if (boundingRect) (*boundingRect) = text_rect;
 
@@ -550,7 +550,7 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 		{
 			PangoRectangle strong_pos, weak_pos;
 			pango_layout_get_cursor_pos(layout, cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = RmRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
+			(*cursorRect) = UIRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
 		}
 
 		cairo_move_to(cr, text_rect.X, text_rect.Y);
@@ -562,17 +562,17 @@ void OpenGLPainter::drawText(int x, int y, int width, int height, const RmString
 	}
 }
 
-void OpenGLPainter::setPen(const RmPen& pen)
+void OpenGLPainter::setPen(const UIPen& pen)
 {
 	m_Pen = pen;
 }
 
-void OpenGLPainter::setBrush(const RmBrush& brush)
+void OpenGLPainter::setBrush(const UIBrush& brush)
 {
 	m_Brush = brush;
 }
 
-void OpenGLPainter::setFont(const RmFont& font)
+void OpenGLPainter::setFont(const UIFont& font)
 {
 	auto layout = m_NativeLayout;
 	auto font_desc = pango_layout_get_font_description(layout);
@@ -589,34 +589,34 @@ void OpenGLPainter::setFont(const RmFont& font)
 		pango_layout_set_font_description(layout, font_desc);
 		pango_font_description_free(font_desc);
 	}
-	if (font.Align & RmFont::AlignLeft)
+	if (font.Align & UIFont::AlignLeft)
 	{
 		pango_layout_set_justify(layout, false);
 		pango_layout_set_alignment(layout, PangoAlignment::PANGO_ALIGN_LEFT);
 	}
-	else if (font.Align & RmFont::AlignRight)
+	else if (font.Align & UIFont::AlignRight)
 	{
 		pango_layout_set_justify(layout, false);
 		pango_layout_set_alignment(layout, PangoAlignment::PANGO_ALIGN_RIGHT);
 	}
-	else if (font.Align & RmFont::AlignCenter)
+	else if (font.Align & UIFont::AlignCenter)
 	{
 		pango_layout_set_justify(layout, false);
 		pango_layout_set_alignment(layout, PangoAlignment::PANGO_ALIGN_CENTER);
 	}
-	else if (font.Align & RmFont::AlignJustify) pango_layout_set_justify(layout, true);
+	else if (font.Align & UIFont::AlignJustify) pango_layout_set_justify(layout, true);
 
 	switch (font.Direction)
 	{
-	case RmFont::DirectionAutoLayout: pango_layout_set_auto_dir(layout, true); break;
+	case UIFont::DirectionAutoLayout: pango_layout_set_auto_dir(layout, true); break;
 	default: pango_layout_set_auto_dir(layout, false); break;
 	}
 	switch (font.Ellipsize)
 	{
-	case RmFont::EllipsizeNone: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_NONE); break;
-	case RmFont::EllipsizeStart: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_START); break;
-	case RmFont::EllipsizeMiddle: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_MIDDLE); break;
-	case RmFont::EllipsizeEnd: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_END); break;
+	case UIFont::EllipsizeNone: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_NONE); break;
+	case UIFont::EllipsizeStart: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_START); break;
+	case UIFont::EllipsizeMiddle: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_MIDDLE); break;
+	case UIFont::EllipsizeEnd: pango_layout_set_ellipsize(layout, PangoEllipsizeMode::PANGO_ELLIPSIZE_END); break;
 	}
 	pango_layout_set_spacing(layout, font.Spacing);
 	pango_layout_set_line_spacing(layout, font.LineSpacing);
@@ -641,7 +641,7 @@ void OpenGLPainter::setClipping(bool enable)
 void OpenGLPainter::setClipRect(int x, int y, int width, int height)
 {
 	auto cr = m_NativeContext;
-	m_CilpRect = RmRect{ (float)x, (float)y, (float)width, (float)height };
+	m_CilpRect = UIRect{ (float)x, (float)y, (float)width, (float)height };
 }
 
 void OpenGLPainter::setViewport(int x, int y, int width, int height)
@@ -687,9 +687,9 @@ uint32_t OpenGLPainter::getStride() const
 	return cairo_image_surface_get_stride(m_NativeSurface);
 }
 
-RmArrayView<const uint8_t> OpenGLPainter::getPixelData() const
+UIArrayView<const uint8_t> OpenGLPainter::getPixelData() const
 {
-	return RmArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getHeight() * getStride());
+	return UIArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getHeight() * getStride());
 }
 
 void OpenGLPainter::resize(uint32_t width, uint32_t height)

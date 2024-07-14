@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-add_executable (Sample main.cpp "OpenGLPainter.h" "OpenGLPainter.cpp"   "OpenGLRender.h" "OpenGLRender.cpp")
+add_executable (Sample "OpenGLPainter.h" "OpenGLPainter.cpp"   "OpenGLRender.h" "OpenGLRender.cpp" "main.cpp")
 
 add_dependencies(Sample RmGUI)
 
@@ -11,6 +11,7 @@ target_link_libraries(Sample
 	debug GlU32 
 	debug OpenGL32 
 	debug RmGUI
+	debug OpenUI
 	debug brotlicommon
 	debug brotlidec
 	debug brotlienc
@@ -58,6 +59,7 @@ target_link_libraries(Sample
 	optimized GlU32 
 	optimized OpenGL32 
 	optimized RmGUI
+	optimized OpenUI
 	optimized brotlicommon
 	optimized brotlidec
 	optimized brotlienc

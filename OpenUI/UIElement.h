@@ -12,6 +12,25 @@ using UIElementPrivateRaw = UIRaw<UIElementPrivate>;
 class UIContext;
 using UIContextRaw = UIRaw<UIContext>;
 
+#define UINAN (NAN)
+
+template <class T, class E = uint8_t>
+struct UIValue
+{
+	T Value = T();
+	E Unit = E();
+	UIValue(T const& value = T(), E uint = E(1)) : Value(value), Unit(uint) {}
+	UIValue(UIValue&&) = default;
+	UIValue(UIValue const&) = default;
+	operator T() { return Value; }
+	UIValue& operator =(UIValue&& value) { Value = value.Value; Unit = value.Unit; return *this; }
+	UIValue& operator =(UIValue const& value) { Value = value.Value; Unit = value.Unit; return *this; }
+};
+using UIValueF = UIValue<float>;
+using UIValue2F = UIArray<UIValueF, 2>;
+using UIValue3F = UIArray<UIValueF, 3>;
+using UIValue4F = UIArray<UIValueF, 4>;
+
 namespace UI
 {
 	enum AlignItems
@@ -50,10 +69,12 @@ namespace UI
 		JustifySpaceEvenly,
 	};
 
-	using FlexGrow = float;
-	using FlexShrink = float;
-	using FlexBasis = float;
+	using FlexGrow = UIValueF;
+	using FlexBasis = UIValueF;
+	using FlexShrink = UIValueF;
 	using AlignSelf = AlignItems;
+
+	enum ValueUnit : uint8_t { UnitNone = 0, UnitPoint, UnitPercent, UnitAuto, };
 };
 
 /// @brief Base interface of element
@@ -92,25 +113,37 @@ public:
 	virtual UIRect getViewport() const;
 	virtual void setViewport(UIRect value);
 
-	virtual float getMinWidth() const;
-	virtual void setMinWidth(float value);
-	virtual float getMaxWidth() const;
-	virtual void setMaxWidth(float value);
-	virtual float getFixedWidth() const;
-	virtual void setFixedWidth(float value);
-	virtual UIFloat2 getMinSize() const;
-	virtual UIFloat2 getMaxSize() const;
-	virtual UIFloat2 getFixedSize() const;
-	virtual void setMinSize(float width, float height);
-	virtual void setMaxSize(float width, float height);
-	virtual void setFixedSize(float width, float height);
+	virtual UIValueF getFixedPosX() const;
+	virtual void setFixedPosX(UIValueF value);
+	virtual UIValueF getFixedPosY() const;
+	virtual void setFixedPosY(UIValueF value);
+	virtual UIValue2F getFixedPos() const;
+	virtual void setFixedPos(UIValueF left, UIValueF top);
+	virtual UIValueF getMinWidth() const;
+	virtual void setMinWidth(UIValueF value);
+	virtual UIValueF getMaxWidth() const;
+	virtual void setMaxWidth(UIValueF value);
+	virtual UIValueF getFixedWidth() const;
+	virtual void setFixedWidth(UIValueF value);
+	virtual UIValueF getMinHeight() const;
+	virtual void setMinHeight(UIValueF value);
+	virtual UIValueF getMaxHeight() const;
+	virtual void setMaxHeight(UIValueF value);
+	virtual UIValueF getFixedHeight() const;
+	virtual void setFixedHeight(UIValueF value);
+	virtual UIValue2F getMinSize() const;
+	virtual void setMinSize(UIValueF width, UIValueF height);
+	virtual UIValue2F getMaxSize() const;
+	virtual void setMaxSize(UIValueF width, UIValueF height);
+	virtual UIValue2F getFixedSize() const;
+	virtual void setFixedSize(UIValueF width, UIValueF height);
 
-	virtual UIFloat4 getBorder() const;
-	virtual void setBorder(UIFloat4 value);
-	virtual UIFloat4 getMargin() const;
-	virtual void setMargin(UIFloat4 value);
-	virtual UIFloat4 getPadding() const;
-	virtual void setPadding(UIFloat4 value);
+	virtual UIValue4F getBorder() const;
+	virtual void setBorder(UIValue4F value);
+	virtual UIValue4F getMargin() const;
+	virtual void setMargin(UIValue4F value);
+	virtual UIValue4F getPadding() const;
+	virtual void setPadding(UIValue4F value);
 
 	virtual UI::FlexDirection getFlexDirection() const;
 	virtual void setFlexDirection(UI::FlexDirection value);

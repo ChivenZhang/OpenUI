@@ -7,6 +7,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
 include_directories(Source)
+include_directories(OpenUI)
 include_directories(External/stb)
 include_directories(External/yoga)
 include_directories(External/earcut.hpp/include)

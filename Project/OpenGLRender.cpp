@@ -108,7 +108,7 @@ OpenGLRender::~OpenGLRender()
 	glDeleteProgram(m_NativeProgram); m_NativeProgram = 0;
 }
 
-void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
+void OpenGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 {
 	glUseProgram(m_NativeProgram);
 	glBindVertexArray(m_NativePrimitive);
@@ -120,7 +120,7 @@ void OpenGLRender::render(RmRect client, RmArrayView<RmPrimitive> data)
 		for (size_t k = 0; k < maxTextureUnits && i + k < data.size(); ++k)
 		{
 			auto primitive = data[i].Primitive;
-			auto painter = RmCast<OpenGLPainter>(data[i + k].Painter);
+			auto painter = UICast<OpenGLPainter>(data[i + k].Painter);
 			if (primitive.empty() || painter == nullptr) continue;
 
 			// 绑定到纹理数组

@@ -1,7 +1,7 @@
 #pragma once
-#include "Widget/IRmGUIRender.h"
+#include <UIRender.h>
 
-class OpenGLRender : public IRmGUIRender
+class OpenGLRender : public UIRender
 {
 public:
 	using primitive_t = struct primitive_t
@@ -13,11 +13,11 @@ public:
 public:
 	OpenGLRender();
 	~OpenGLRender();
-	virtual void render(RmRect client, RmArrayView<RmPrimitive> data) override;
+	virtual void render(UIRect client, UIArrayView<UIPrimitive> data) override;
 
 protected:
 	uint32_t m_NativeProgram;
 	uint32_t m_NativeBuffer;
 	uint32_t m_NativePrimitive;
-	RmVector<primitive_t> m_PrimitiveList;
+	UIVector<primitive_t> m_PrimitiveList;
 };
