@@ -1,9 +1,7 @@
 # 设计主旨
 ## To be more opened, more abstract, more tolerant, more powerful.
 
-<div align="center">
-  <img src="OpenUI.png" alt="描述文字" />
-</div>
+![image](OpenUI.png)
 
 ## 需求列表
 * 支持单窗口的控件树机制
