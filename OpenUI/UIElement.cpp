@@ -163,12 +163,12 @@ void UIElement::paint(UIRect client, UIPainterRaw painter)
 	painter->setClipRect(viewport.X, viewport.Y, viewport.W, viewport.H);
 }
 
-bool UIElement::filter(UIReactorRaw source, UIEventRaw event)
+bool UIElement::filter(UIReactorRaw sender, UIEventRaw event)
 {
 	return false;
 }
 
-void UIElement::handle(UIReactorRaw source, UIEventRaw event)
+void UIElement::handle(UIReactorRaw sender, UIEventRaw event)
 {
 	switch (event->Type)
 	{
