@@ -286,6 +286,7 @@ void sample(UIContextRef context, SDL_Window* window)
 			group->addElement(radio);
 			radio->setFixedSize(100, 30);
 			radio->setText("Radio");
+			radio->setChecked(true);
 
 			auto radio0 = UINew<UIRadio>();
 			group->addElement(radio0);
@@ -297,15 +298,7 @@ void sample(UIContextRef context, SDL_Window* window)
 			group->addElement(radio1);
 			radio1->setFixedSize(100, 30);
 			radio1->setText("Radio");
-			radio1->setChecked(true);
 			radio1->setExclusive(radio->getExclusive());
-
-		}
-		{
-			auto check = UINew<UICheck>();
-			group->addElement(check);
-			check->setFixedSize(100, 30);
-			check->setText("Check");
 		}
 		{
 			auto check = UINew<UICheck>();
@@ -313,6 +306,12 @@ void sample(UIContextRef context, SDL_Window* window)
 			check->setFixedSize(100, 30);
 			check->setText("Check");
 			check->setChecked(true);
+		}
+		{
+			auto check = UINew<UICheck>();
+			group->addElement(check);
+			check->setFixedSize(100, 30);
+			check->setText("Check");
 		}
 	}
 	//if (false)
@@ -346,7 +345,7 @@ void sample(UIContextRef context, SDL_Window* window)
 		slider->setRange(0, 100);
 		slider->setValue(25);
 	}
-	if (false)
+	//if (false)
 	{
 		auto combo = UINew<UICombo>();
 		layout->addElement(combo);
