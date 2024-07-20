@@ -1,43 +1,42 @@
 #pragma once
 #include "OpenUI/UIElement.h"
 #include "OpenUI/UIFactory.h"
+#include "UIButton.h"
 #include "UILabel.h"
 
 /// @brief 
-struct UIButtonStyle
+struct UICheckStyle
 {
-	struct ButtonMode
+	struct CheckMode
 	{
 		UIPen Pen;
+		UIFont Font;
 		UIBrush Brush;
 	};
 	UIFloat2 Round;
-	ButtonMode Normal, Hover, Press, Disable;
+	CheckMode Normal, Hover, Press, Disable;
 };
 
-/// @brief Button
-class OPENUI_API UIButton : public UIElement
+/// @brief Check
+class OPENUI_API UICheck : public UIElement
 {
 public:
-	UIButton();
-	~UIButton();
+	UICheck();
+	~UICheck();
 	virtual void arrange(UIRect client) override;
+	virtual void layout(UIRect client) override;
 	virtual void paint(UIRect client, UIPainterRaw painter) override;
 
 	UIString getText() const;
 	void setText(UIString const& text);
 
-	UIButtonStyle getStyle() const;
-	void setStyle(UIButtonStyle const& style);
+	UICheckStyle getStyle() const;
+	void setStyle(UICheckStyle const& style);
 
 	bool getChecked() const;
 	void setChecked(bool value);
 
-	bool getCheckable() const;
-	void setCheckable(bool value);
-
-	bool getDown() const;
-
+	UIButtonRaw getButton() const;
 	UILabelRaw getLabel() const;
 
 protected:
@@ -53,16 +52,15 @@ public:
 	UISignalAsRaw<> pressed;
 	UISignalAsRaw<> released;
 	UISignalAsRaw<> hovered;
-	UISignalAsRaw<bool /*checked*/> toggled;
 
 private:
-	UIElementPrivateRaw m_PrivateButton;
+	UIElementPrivateRaw m_PrivateCheck;
 };
-using UIButtonRef = UIRef<UIButton>;
-using UIButtonRaw = UIRaw<UIButton>;
+using UICheckRef = UIRef<UICheck>;
+using UICheckRaw = UIRaw<UICheck>;
 
-/// @brief Button Factory
-class OPENUI_API UIButtonFactory : public UIFactory
+/// @brief Check Factory
+class OPENUI_API UICheckFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;

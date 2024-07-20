@@ -1,6 +1,7 @@
 #pragma once
 #include "UIEvent.h"
 #include "UIPainter.h"
+#include "UISignal.h"
 
 class UIElement;
 using UIElementRef = UIRef<UIElement>;
@@ -33,6 +34,19 @@ using UIValue4F = UIArray<UIValueF, 4>;
 
 namespace UI
 {
+	enum DisplayType
+	{
+		DisplayFlex,
+		DisplayNone,
+	};
+
+	enum PositionType
+	{
+		PositionStatic,
+		PositionRelative,
+		PositionAbsolute,
+	};
+
 	enum AlignItems
 	{
 		AlignAuto,
@@ -75,6 +89,8 @@ namespace UI
 	using AlignSelf = AlignItems;
 
 	enum ValueUnit : uint8_t { UnitNone = 0, UnitPoint, UnitPercent, UnitAuto, };
+
+	enum Orientation : uint8_t { Horizontal = 0, Vertical = 1, };
 };
 
 /// @brief Base interface of element
@@ -89,14 +105,15 @@ public:
 	virtual void setPainter(UIPainterRef value);
 	virtual UIFilterRaw getEventFilter() const;
 	virtual void setEventFilter(UIFilterRaw value);
-	virtual UIString getStyle() const;
-	virtual void setStyle(UIString value);
-	virtual UIString getStyle(UIString name) const;
-	virtual void setStyle(UIString name, UIString value);
+	virtual UIString getStyleText() const;
+	virtual void setStyleText(UIString value);
+	virtual UIString getStyleText(UIString name) const;
+	virtual void setStyleText(UIString name, UIString value);
 	virtual UIArrayView<const UIPointUV3> getPrimitive() const;
 	virtual bool addElement(UIElementRef value);
 	virtual bool removeElement(UIElementRef value);
 	virtual void removeElement();
+	virtual void arrange(UIRect client);
 	virtual void layout(UIRect client);
 	virtual void paint(UIRect client, UIPainterRaw painter);
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
@@ -108,11 +125,30 @@ public:
 	virtual void setEnable(bool value);
 	virtual bool getVisible() const;
 	virtual void setVisible(bool value);
+	virtual bool getAnimate() const;
+	virtual void setAnimate(bool value);
 	virtual UIRect getBounds() const;
 	virtual void setBounds(UIRect value);
 	virtual UIRect getViewport() const;
 	virtual void setViewport(UIRect value);
+	virtual UIRect getLocalBounds() const;
+	virtual void setLocalBounds(UIRect value);
+	virtual float getPosX() const;
+	virtual float getPosY() const;
+	virtual UIFloat2 getPos() const;
+	virtual float getLocalX() const;
+	virtual float getLocalY() const;
+	virtual UIFloat2 getLocalPos() const;
+	virtual float getWidth() const;
+	virtual float getHeight() const;
+	virtual UIFloat2 getSize() const;
+	virtual bool inBounds(UIFloat2 pos);
+	virtual bool inBounds(float x, float y);
 
+	virtual UI::DisplayType getDisplayType() const;
+	virtual void setDisplayType(UI::DisplayType value);
+	virtual UI::PositionType getPositionType() const;
+	virtual void setPositionType(UI::PositionType value);
 	virtual UIValueF getFixedPosX() const;
 	virtual void setFixedPosX(UIValueF value);
 	virtual UIValueF getFixedPosY() const;
@@ -144,6 +180,8 @@ public:
 	virtual void setMargin(UIValue4F value);
 	virtual UIValue4F getPadding() const;
 	virtual void setPadding(UIValue4F value);
+	virtual UIValue2F getSpacing() const;
+	virtual void setSpacing(UIValue2F value);
 
 	virtual UI::FlexDirection getFlexDirection() const;
 	virtual void setFlexDirection(UI::FlexDirection value);
@@ -190,6 +228,7 @@ protected:
 	virtual void showEvent(UIShowEventRaw event);
 	virtual void tabletEvent(UIMouseTabletEventRaw event);
 	virtual void wheelEvent(UIMouseWheelEventRaw event);
+	virtual void timerEvent(UITimerEventRaw event);
 
 protected:
 	virtual UIContextRaw getContext() const;

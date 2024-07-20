@@ -1,4 +1,6 @@
 #include "UIContext.h"
+#include "UIContext.h"
+#include "UIContext.h"
 #include <yoga/Yoga.h>
 
 struct UIContextElement
@@ -10,9 +12,10 @@ struct UIContextElement
 class UIContextPrivateData : public UIContextPrivate
 {
 public:
-	UIPainterRef Painter;
 	UIRenderRef Render;
+	UIPainterRef Painter;
 	UIElementRaw Focus;
+	UIVector<UIElementRaw> AnimateList;
 	UIVector<UIContextElement> TopLevelList;
 };
 #define PRIVATE() ((UIContextPrivateData*) m_Private)
@@ -57,13 +60,33 @@ void UIContext::setFocus(UIElementRaw value)
 	PRIVATE()->Focus = value;
 }
 
+void UIContext::setAnimate(UIElementRaw value, bool animate)
+{
+	if (animate)
+	{
+		auto result = std::find(PRIVATE()->AnimateList.begin(), PRIVATE()->AnimateList.end(), value);
+		if (result == PRIVATE()->AnimateList.end()) PRIVATE()->AnimateList.push_back(value);
+	}
+	else
+	{
+		auto result = std::remove(PRIVATE()->AnimateList.begin(), PRIVATE()->AnimateList.end(), value);
+		PRIVATE()->AnimateList.erase(result, PRIVATE()->AnimateList.end());
+	}
+}
+
 void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
 {
 	UILambda<void(UIElementRaw)> foreach_func;
 	foreach_func = [&](UIElementRaw element) {
 		if (element->getVisible() == false) return;
-		if (element->getEventFilter() && element->getEventFilter()->filter(sender, event) == true) return;
-		if (element->filter(sender, event) == true) return;
+		if (element->getEventFilter())
+		{
+			if (element->getEventFilter()->filter(sender, event)) return;
+		}
+		else
+		{
+			if (element->filter(sender, event)) return;
+		}
 		auto childList = element->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get());
 		if (event->Accept == false) element->handle(sender, event);
@@ -71,7 +94,6 @@ void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
 		auto element = PRIVATE()->TopLevelList[PRIVATE()->TopLevelList.size() - 1 - i].Element.get();
-		if (element->getVisible() == false) continue;
 		foreach_func(element);
 		break;
 	}
@@ -115,11 +137,33 @@ void UIContext::removeElement()
 
 void UIContext::layoutElement(UIRect client)
 {
+	UILambda<void(UIElementRaw, UIRect)> arrange_func;
+	arrange_func = [&](UIElementRaw element, UIRect client) {
+
+		element->arrange(element->getBounds());
+
+		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		{
+			arrange_func(element->getChildren()[i].get(), element->getBounds());
+		}
+		};
+
 	UILambda<YGNodeRef(UIElementRaw, UIRect)> foreach_func;
 	foreach_func = [&](UIElementRaw element, UIRect client)->YGNodeRef {
 
 		auto node = YGNodeNew();
 
+		switch (element->getDisplayType())
+		{
+		case UI::DisplayFlex: YGNodeStyleSetDisplay(node, YGDisplayFlex); break;
+		case UI::DisplayNone: YGNodeStyleSetDisplay(node, YGDisplayNone); break;
+		}
+		switch (element->getPositionType())
+		{
+		case UI::PositionStatic: YGNodeStyleSetPositionType(node, YGPositionTypeStatic); break;
+		case UI::PositionRelative: YGNodeStyleSetPositionType(node, YGPositionTypeRelative); break;
+		case UI::PositionAbsolute: YGNodeStyleSetPositionType(node, YGPositionTypeAbsolute); break;
+		}
 		switch (element->getFixedPosX().Unit)
 		{
 		case UI::UnitNone: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, UINAN); break;
@@ -128,9 +172,9 @@ void UIContext::layoutElement(UIRect client)
 		}
 		switch (element->getFixedPosY().Unit)
 		{
-		case UI::UnitNone: YGNodeStyleSetPosition(node, YGEdge::YGEdgeRight, UINAN); break;
-		case UI::UnitPoint: YGNodeStyleSetPosition(node, YGEdge::YGEdgeRight, element->getFixedPosY()); break;
-		case UI::UnitPercent: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeRight, element->getFixedPosY()); break;
+		case UI::UnitNone: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, UINAN); break;
+		case UI::UnitPoint: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, element->getFixedPosY()); break;
+		case UI::UnitPercent: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeTop, element->getFixedPosY()); break;
 		}
 		switch (element->getFixedWidth().Unit)
 		{
@@ -226,6 +270,18 @@ void UIContext::layoutElement(UIRect client)
 		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeBottom, element->getPadding()[3]); break;
 		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeBottom, element->getPadding()[3]); break;
 		}
+		switch (element->getSpacing()[0].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetGap(node, YGGutterRow, 0); break;
+		case UI::UnitPoint: YGNodeStyleSetGap(node, YGGutterRow, element->getSpacing()[0]); break;
+		case UI::UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterRow, element->getSpacing()[0]); break;
+		}
+		switch (element->getSpacing()[1].Unit)
+		{
+		case UI::UnitNone: YGNodeStyleSetGap(node, YGGutterColumn, 0); break;
+		case UI::UnitPoint: YGNodeStyleSetGap(node, YGGutterColumn, element->getSpacing()[1]); break;
+		case UI::UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterColumn, element->getSpacing()[1]); break;
+		}
 		switch (element->getFlexDirection())
 		{
 		case UI::FlexDirectionColumn: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumn); break;
@@ -305,12 +361,35 @@ void UIContext::layoutElement(UIRect client)
 	UILambda<void(YGNodeRef, UIElementRaw, UIRect)> layout_func;
 	layout_func = [&](YGNodeRef node, UIElementRaw element, UIRect client) {
 
-		element->setBounds({ YGNodeLayoutGetLeft(node), YGNodeLayoutGetTop(node), YGNodeLayoutGetWidth(node), YGNodeLayoutGetHeight(node) });
-		element->setViewport(UIOverlap(element->getBounds(), client));
+		element->setLocalBounds({ YGNodeLayoutGetLeft(node), YGNodeLayoutGetTop(node), YGNodeLayoutGetWidth(node), YGNodeLayoutGetHeight(node) });
+		element->setBounds({ client.X + element->getLocalBounds().X, client.Y + element->getLocalBounds().Y, element->getLocalBounds().W, element->getLocalBounds().H });
+		element->setViewport({ UINAN, UINAN, UINAN, UINAN });
 
 		for (size_t i = 0; i < YGNodeGetChildCount(node) && i < element->getChildren().size(); ++i)
 		{
-			layout_func(YGNodeGetChild(node, i), element->getChildren()[i].get(), element->getChildren()[i]->getBounds());
+			layout_func(YGNodeGetChild(node, i), element->getChildren()[i].get(), element->getBounds());
+		}
+		};
+
+	UILambda<void(UIElementRaw, UIRect, UIRect)> relayout_func;
+	relayout_func = [&](UIElementRaw element, UIRect client, UIRect viewport) {
+		if (std::isnan(element->getViewport().X) ||
+			std::isnan(element->getViewport().Y) ||
+			std::isnan(element->getViewport().W) ||
+			std::isnan(element->getViewport().H)) element->setViewport(UIOverlap(viewport, element->getBounds()));
+
+		element->layout(element->getBounds());
+		element->setBounds({ client.X + element->getLocalBounds().X, client.Y + element->getLocalBounds().Y, element->getLocalBounds().W, element->getLocalBounds().H });
+		element->setViewport(UIOverlap(element->getViewport(), element->getBounds()));
+		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		{
+			auto bounds = element->getBounds();
+			auto childBounds = element->getChildren()[i]->getLocalBounds();
+			element->getChildren()[i]->setBounds({ bounds.X + childBounds.X, bounds.Y + childBounds.Y, childBounds.W, childBounds.H });
+		}
+		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		{
+			relayout_func(element->getChildren()[i].get(), element->getBounds(), element->getViewport());
 		}
 		};
 
@@ -320,10 +399,16 @@ void UIContext::layoutElement(UIRect client)
 		PRIVATE()->TopLevelList[i].Element->setFixedSize(client.W, client.H);
 		PRIVATE()->TopLevelList[i].Element->setBounds(client);
 		PRIVATE()->TopLevelList[i].Element->setViewport(client);
-		auto root = foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
+		PRIVATE()->TopLevelList[i].Element->setLocalBounds(client);
+
+		arrange_func(PRIVATE()->TopLevelList[i].Element.get(), client);
+
+		auto root = foreach_func(PRIVATE()->TopLevelList[i].Element.get(), client);
 		YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
-		layout_func(root, PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
+		layout_func(root, PRIVATE()->TopLevelList[i].Element.get(), client);
 		YGNodeFreeRecursive(root);
+
+		relayout_func(PRIVATE()->TopLevelList[i].Element.get(), client, client);
 	}
 }
 
@@ -375,4 +460,14 @@ void UIContext::renderElement(UIRect client)
 		foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
 	}
 	getRender()->render(client, renderList);
+}
+
+void UIContext::animateElement(float time)
+{
+	for (size_t i = 0; i < PRIVATE()->AnimateList.size(); ++i)
+	{
+		if (PRIVATE()->AnimateList[i] == nullptr) continue;
+		UITimerEvent event(time);
+		PRIVATE()->AnimateList[i]->timerEvent(&event);
+	}
 }

@@ -1,12 +1,6 @@
-[submodule "External/Taitank"]
-	path = External/Taitank
-	url = https://github.com/Tencent/Taitank.git
 [submodule "External/earcut.hpp"]
 	path = External/earcut.hpp
 	url = https://github.com/mapbox/earcut.hpp.git
 [submodule "External/stb"]
 	path = External/stb
 	url = https://github.com/nothings/stb.git
-[submodule "External/yoga"]
-	path = External/yoga
-	url = https://github.com/facebook/yoga.git

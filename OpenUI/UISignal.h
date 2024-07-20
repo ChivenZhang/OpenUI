@@ -31,15 +31,15 @@ private:
 		UIElementRaw Owner = nullptr;
 		UILambda<void(T...)> Lambda;
 	};
-	using UISignalSlotRef = UIRef<UISignalSlot<T...>>;
-	UIVector<UISignalSlotRef<T...>> m_SlotList;
+	using UISignalSlotRef = UIRef<UISignalSlot>;
+	UIVector<UISignalSlotRef> m_SlotList;
 };
 
 template<class ...T>
 inline uint32_t UISignalAs<T...>::connect(UIElementRaw owner, UILambda<void(T...)> slot)
 {
 	auto handle = ++this->m_SlotID;
-	auto element = UINew<UISignalSlot<T...>>();
+	auto element = UINew<UISignalSlot>();
 	element->Handle = handle;
 	element->Owner = owner;
 	element->Lambda = slot;
@@ -100,7 +100,7 @@ inline void UISignalAs<T...>::signal(T ...args)
 
 	if (isDirty)
 	{
-		UIVector<UISignalSlotRef<T...>> result;
+		UIVector<UISignalSlotRef> result;
 		for (size_t i = 0; i < connectList.size(); ++i)
 		{
 			if (connectList[i]->Dirty) result.push_back(connectList[i]);

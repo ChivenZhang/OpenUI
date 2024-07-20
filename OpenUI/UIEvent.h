@@ -301,3 +301,14 @@ public:
 		UIEvent(UIHash("DragLeave")) {}
 };
 using UIDragLeaveEventRaw = UIRaw<UIDragLeaveEvent>;
+
+class UITimerEvent : public UIEvent
+{
+public:
+	UITimerEvent(float time)
+		:
+		UIEvent(UIHash("Timer")), Time(time) {}
+
+	const float Time;
+};
+using UITimerEventRaw = UIRaw<UITimerEvent>;

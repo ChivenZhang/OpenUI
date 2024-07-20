@@ -19,6 +19,7 @@ public:
 	virtual void setRender(UIRenderRef value);
 	virtual UIElementRaw getFocus() const;
 	virtual void setFocus(UIElementRaw value);
+	virtual void setAnimate(UIElementRaw value, bool animate);
 	virtual void sendEvent(UIReactorRaw sender, UIEventRaw event);
 	virtual void postEvent(UIReactorRef sender, UIEventRef event);
 	virtual bool addElement(UIElementRef value, int32_t zorder = 0);
@@ -27,6 +28,7 @@ public:
 	virtual void layoutElement(UIRect client);
 	virtual void paintElement(UIRect client);
 	virtual void renderElement(UIRect client);
+	virtual void animateElement(float time);
 
 private:
 	UIContextPrivateRaw m_Private;

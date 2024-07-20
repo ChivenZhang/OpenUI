@@ -311,7 +311,7 @@ struct UIBrush
 		TexturePattern,
 	};
 	style_t Style = style_t::SolidPattern;
-	UIColor Color = UIColor{ 0, 0, 0, 1 };
+	UIColor Color = UIColor{ 1, 1, 1, 1 };
 };
 
 struct UIFont

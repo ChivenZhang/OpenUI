@@ -1,4 +1,7 @@
 #include "UIElement.h"
+#include "UIElement.h"
+#include "UIElement.h"
+#include "UIContext.h"
 #include "UIPainter.h"
 #include <yoga/Yoga.h>
 
@@ -12,6 +15,8 @@ public:
 	UIContextRaw Context = nullptr;
 	UIPointUV3 Primitive[2];
 
+	UI::DisplayType DisplayType = UI::DisplayFlex;
+	UI::PositionType PositionType = UI::PositionRelative;
 	UIValue2F Position{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
 	UIValueF MinWidth = { UINAN, 0 }, MinHeight = { UINAN, 0 };
 	UIValueF MaxWidth = { UINAN, 0 }, MaxHeight = { UINAN, 0 };
@@ -19,8 +24,9 @@ public:
 	UIValue4F Border{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
 	UIValue4F Margin{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
 	UIValue4F Padding{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
-	UIRect ClientRect, ViewRect;
-	bool Enable = true, Visible = true;
+	UIValue2F Spacing{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
+	UIRect LocalRect, ClientRect, ViewRect;
+	bool Enable = true, Visible = true, Animate = false;
 
 	struct
 	{
@@ -49,6 +55,7 @@ UIElement::UIElement()
 
 UIElement::~UIElement()
 {
+	if (getContext()) getContext()->setAnimate(this, false);
 	delete m_Private; m_Private = nullptr;
 }
 
@@ -82,21 +89,21 @@ void UIElement::setEventFilter(UIFilterRaw value)
 	PRIVATE()->Filter = value;
 }
 
-UIString UIElement::getStyle() const
+UIString UIElement::getStyleText() const
 {
 	return UIString();
 }
 
-void UIElement::setStyle(UIString value)
+void UIElement::setStyleText(UIString value)
 {
 }
 
-UIString UIElement::getStyle(UIString name) const
+UIString UIElement::getStyleText(UIString name) const
 {
 	return UIString();
 }
 
-void UIElement::setStyle(UIString name, UIString value)
+void UIElement::setStyleText(UIString name, UIString value)
 {
 }
 
@@ -114,7 +121,7 @@ UIArrayView<const UIPointUV3> UIElement::getPrimitive() const
 
 bool UIElement::addElement(UIElementRef value)
 {
-	if (value == nullptr) return false;
+	if (value == nullptr || value.get() == this) return false;
 	auto result = std::find(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
 	if (result == PRIVATE()->Children.end()) PRIVATE()->Children.push_back(value);
 	value->setContext(PRIVATE()->Context);
@@ -142,11 +149,12 @@ void UIElement::removeElement()
 	PRIVATE()->Children.clear();
 }
 
+void UIElement::arrange(UIRect client)
+{
+}
+
 void UIElement::layout(UIRect client)
 {
-	auto root = YGNodeNew();
-
-	YGNodeFreeRecursive(root);
 }
 
 void UIElement::paint(UIRect client, UIPainterRaw painter)
@@ -248,6 +256,10 @@ void UIElement::handle(UIReactorRaw source, UIEventRaw event)
 	{
 		focusOutEvent(UICast<UIFocusEvent>(event));
 	} break;
+	case UIHash("Timer"):
+	{
+		timerEvent(UICast<UITimerEvent>(event));
+	} break;
 	}
 }
 
@@ -271,6 +283,17 @@ void UIElement::setVisible(bool value)
 	PRIVATE()->Visible = value;
 }
 
+bool UIElement::getAnimate() const
+{
+	return PRIVATE()->Animate;
+}
+
+void UIElement::setAnimate(bool value)
+{
+	PRIVATE()->Animate = value;
+	if (getContext()) getContext()->setAnimate(this, value);
+}
+
 UIRect UIElement::getBounds() const
 {
 	return PRIVATE()->ClientRect;
@@ -289,6 +312,93 @@ UIRect UIElement::getViewport() const
 void UIElement::setViewport(UIRect value)
 {
 	PRIVATE()->ViewRect = value;
+}
+
+UIRect UIElement::getLocalBounds() const
+{
+	return PRIVATE()->LocalRect;
+}
+
+void UIElement::setLocalBounds(UIRect value)
+{
+	PRIVATE()->LocalRect = value;
+}
+
+float UIElement::getPosX() const
+{
+	return getBounds().X;
+}
+
+float UIElement::getPosY() const
+{
+	return getBounds().Y;
+}
+
+UIFloat2 UIElement::getPos() const
+{
+	return UIFloat2{ getPosX(), getPosY() };
+}
+
+float UIElement::getLocalX() const
+{
+	return 0.0f;
+}
+
+float UIElement::getLocalY() const
+{
+	return 0.0f;
+}
+
+UIFloat2 UIElement::getLocalPos() const
+{
+	return UIFloat2();
+}
+
+float UIElement::getWidth() const
+{
+	return getBounds().W;
+}
+
+float UIElement::getHeight() const
+{
+	return getBounds().H;
+}
+
+UIFloat2 UIElement::getSize() const
+{
+	return UIFloat2{ getWidth(), getHeight() };
+}
+
+bool UIElement::inBounds(UIFloat2 pos)
+{
+	return inBounds(pos.X, pos.Y);
+}
+
+bool UIElement::inBounds(float x, float y)
+{
+	auto viewport = UIOverlap(getViewport(), getBounds());
+	return (viewport.X <= x && x <= viewport.X + viewport.W
+		&& viewport.Y <= y && y <= viewport.Y + viewport.H);
+}
+
+UI::DisplayType UIElement::getDisplayType() const
+{
+	return PRIVATE()->DisplayType;
+}
+
+void UIElement::setDisplayType(UI::DisplayType value)
+{
+	PRIVATE()->DisplayType = value;
+}
+
+UI::PositionType UIElement::getPositionType() const
+{
+	return PRIVATE()->PositionType;
+}
+
+void UIElement::setPositionType(UI::PositionType value)
+{
+	PRIVATE()->PositionType = value;
 }
 
 UIValueF UIElement::getFixedPosX() const
@@ -443,6 +553,16 @@ UIValue4F UIElement::getPadding() const
 void UIElement::setPadding(UIValue4F value)
 {
 	PRIVATE()->Padding = value;
+}
+
+UIValue2F UIElement::getSpacing() const
+{
+	return PRIVATE()->Spacing;
+}
+
+void UIElement::setSpacing(UIValue2F value)
+{
+	PRIVATE()->Spacing = value;
 }
 
 UI::FlexDirection UIElement::getFlexDirection() const
@@ -636,6 +756,10 @@ void UIElement::wheelEvent(UIMouseWheelEventRaw event)
 {
 }
 
+void UIElement::timerEvent(UITimerEventRaw event)
+{
+}
+
 UIContextRaw UIElement::getContext() const
 {
 	return PRIVATE()->Context;
@@ -644,6 +768,7 @@ UIContextRaw UIElement::getContext() const
 void UIElement::setContext(UIContextRaw value)
 {
 	PRIVATE()->Context = value;
+	if (getContext()) getContext()->setAnimate(this, getAnimate());
 }
 
 void UIElement::setParent(UIElementRaw value)

@@ -7,27 +7,27 @@ class OPENUI_API UIPainter
 public:
 	virtual ~UIPainter() = default;
 
-	virtual UIRect boundingRect(int x, int y, int width, int height, UIString const& text, int cursor, int* row, int* column, UIRectRaw cursorRect = nullptr) = 0;
+	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, int* row, int* column, UIRectRaw cursorRect = nullptr) = 0;
 
-	virtual UIRect boundingRect(int x, int y, int width, int height, UIString const& text, int row, int column, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
+	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float row, float column, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
 
-	virtual UIRect boundingRect(int x, int y, int width, int height, UIString const& text, int posX, int posY, int* row, int* column, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
+	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* row, int* column, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
 
-	virtual void drawArc(int x, int y, int width, int height, int startAngle, int spanAngle) = 0;
+	virtual void drawArc(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
 
-	virtual void drawChord(int x, int y, int width, int height, int startAngle, int spanAngle) = 0;
+	virtual void drawChord(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
 
-	virtual void drawEllipse(int x, int y, int width, int height) = 0;
+	virtual void drawEllipse(float x, float y, float width, float height) = 0;
 
-	virtual void drawImage(int x, int y, UIImage image, int sx = 0, int sy = 0, int sw = -1, int sh = -1) = 0;
+	virtual void drawImage(float x, float y, UIImage image, float sx = 0, float sy = 0, float sw = -1, float sh = -1) = 0;
 
-	virtual void drawLine(int x1, int y1, int x2, int y2) = 0;
+	virtual void drawLine(float x1, float y1, float x2, float y2) = 0;
 
 	virtual void drawLines(UIArrayView<UILine> lines) = 0;
 
-	virtual void drawPie(int x, int y, int width, int height, int startAngle, int spanAngle) = 0;
+	virtual void drawPie(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
 
-	virtual void drawPoint(int x, int y) = 0;
+	virtual void drawPoint(float x, float y) = 0;
 
 	virtual void drawPoints(UIArrayView<UIPoint> points) = 0;
 
@@ -35,17 +35,23 @@ public:
 
 	virtual void drawPolyline(UIArrayView<UIPoint> points) = 0;
 
-	virtual void drawRect(int x, int y, int width, int height) = 0;
+	virtual void drawRect(float x, float y, float width, float height) = 0;
 
 	virtual void drawRects(UIArrayView<UIRect> rects) = 0;
 
-	virtual void drawRoundedRect(int x, int y, int w, int h, float xRadius, float yRadius) = 0;
+	virtual void drawRoundedRect(float x, float y, float w, float h, float xRadius, float yRadius) = 0;
 
-	virtual void drawText(int x, int y, int width, int height, const UIString& text, UIRectRaw boundingRect = nullptr, int cursor = 0, UIRectRaw cursorRect = nullptr) = 0;
+	virtual void drawText(float x, float y, float width, float height, const UIString& text, UIRectRaw boundingRect = nullptr, float cursor = 0, UIRectRaw cursorRect = nullptr) = 0;
+
+	virtual UIPen const& getPen() const = 0;
 
 	virtual void setPen(const UIPen& pen) = 0;
 
+	virtual UIBrush const& getBrush() const = 0;
+
 	virtual void setBrush(const UIBrush& brush) = 0;
+
+	virtual UIFont const& getFont() const = 0;
 
 	virtual void setFont(const UIFont& font) = 0;
 
@@ -53,9 +59,9 @@ public:
 
 	// virtual void setClipPath(UIArrayView<UIPoint> points) = 0;
 
-	virtual void setClipRect(int x, int y, int width, int height) = 0;
+	virtual void setClipRect(float x, float y, float width, float height) = 0;
 
-	virtual void setViewport(int x, int y, int width, int height) = 0;
+	virtual void setViewport(float x, float y, float width, float height) = 0;
 
 	virtual void shear(float sh, float sv) = 0;
 
