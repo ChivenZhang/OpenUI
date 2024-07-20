@@ -345,7 +345,7 @@ void sample(UIContextRef context, SDL_Window* window)
 		slider->setRange(0, 100);
 		slider->setValue(25);
 	}
-	if (false)
+	//if (false)
 	{
 		auto combo = UINew<UICombo>();
 		layout->addElement(combo);
