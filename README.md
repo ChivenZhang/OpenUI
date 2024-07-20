@@ -6,6 +6,18 @@
   <img src="OpenUI.png" alt="描述文字" />
 </div>
 
+# 整体设计
+
+<div align="center">
+  <img src="Pattern.png" alt="描述文字" />
+</div>
+
+# 详细设计
+
+<div align="center">
+  <img src="Design.png" alt="描述文字" />
+</div>
+
 ## 需求列表
 * 支持单窗口的控件树机制
 * 支持单窗口之间的拖拽事件
