@@ -26,26 +26,24 @@ UICheck::UICheck()
 	released = &PRIVATE()->OnReleased;
 	hovered = &PRIVATE()->OnHovered;
 
-	PRIVATE()->Style.Round = { 4,4 };
-	PRIVATE()->Style.Normal.Pen = PRIVATE()->Style.Hover.Pen = PRIVATE()->Style.Press.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
-	PRIVATE()->Style.Normal.Brush = PRIVATE()->Style.Hover.Brush = PRIVATE()->Style.Press.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
-
 	PRIVATE()->Button = UINew<UIButton>();
 	addElement(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize(16, 16);
 	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
 	PRIVATE()->Button->setCheckable(true);
+
+	{
+		PRIVATE()->Style.Round = { 4,4 };
+		PRIVATE()->Style.Normal.Pen = PRIVATE()->Style.Hover.Pen = PRIVATE()->Style.Press.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
+		PRIVATE()->Style.Normal.Brush = PRIVATE()->Style.Hover.Brush = PRIVATE()->Style.Press.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
+	}
 	{
 		auto style = PRIVATE()->Button->getStyle();
 		style.Round = { 2, 2 };
 		style.Normal.Brush.Style = style.Press.Brush.Style = style.Hover.Brush.Style = UIBrush::NoBrush;
+		style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
+		style.Label.Normal.Foreground.Brush.Color = style.Label.Hover.Foreground.Brush.Color = PRIVATE()->Button->getStyle().Normal.Pen.Color;
 		PRIVATE()->Button->setStyle(style);
-	}
-	{
-		auto style = PRIVATE()->Button->getLabel()->getStyle();
-		style.Normal.Background.Brush.Style = style.Hover.Background.Brush.Style = UIBrush::NoBrush;
-		style.Normal.Foreground.Brush.Color = style.Hover.Foreground.Brush.Color = PRIVATE()->Button->getStyle().Normal.Pen.Color;
-		PRIVATE()->Button->getLabel()->setStyle(style);
 	}
 
 	PRIVATE()->Label = UINew<UILabel>();

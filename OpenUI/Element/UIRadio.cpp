@@ -48,13 +48,10 @@ UIRadio::UIRadio()
 		style.Round = { 8, 8 };
 		style.Normal.Brush.Style = UIBrush::NoBrush;
 		style.Press.Brush.Color = { 0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f };
+		style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
+		style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
+		style.Label.Normal.Foreground.Brush.Color = style.Label.Hover.Foreground.Brush.Color = PRIVATE()->Button->getStyle().Normal.Pen.Color;
 		PRIVATE()->Button->setStyle(style);
-	}
-	{
-		auto style = PRIVATE()->Button->getLabel()->getStyle();
-		style.Normal.Background.Brush.Style = style.Hover.Background.Brush.Style = UIBrush::NoBrush;
-		style.Normal.Foreground.Brush.Color = style.Hover.Foreground.Brush.Color = PRIVATE()->Button->getStyle().Normal.Pen.Color;
-		PRIVATE()->Button->getLabel()->setStyle(style);
 	}
 	{
 		auto style = PRIVATE()->Label->getStyle();
