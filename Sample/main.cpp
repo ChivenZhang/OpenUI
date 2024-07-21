@@ -229,6 +229,58 @@ void sample(UIContextRef context, SDL_Window* window)
 
 	//if (false)
 	{
+		auto vbox = UINew<UIVBox>();
+		layout->addElement(vbox);
+		vbox->setFixedSize(200, 200);
+		{
+			auto button = UINew<UIButton>();
+			vbox->addElement(button);
+			button->setText("Button0");
+		}
+		{
+			auto button = UINew<UIButton>();
+			vbox->addElement(button);
+			button->setText("Button1");
+		}
+		{
+			auto button = UINew<UIButton>();
+			vbox->addElement(button);
+			button->setText("Button2");
+		}
+		{
+			auto button = UINew<UIButton>();
+			vbox->addElement(button);
+			button->setText("Button3");
+		}
+	}
+	//if (false)
+	{
+		auto hbox = UINew<UIHBox>();
+		layout->addElement(hbox);
+		hbox->setFixedSize(200, 200);
+		{
+			auto button = UINew<UIButton>();
+			hbox->addElement(button);
+			button->setText("Button0");
+		}
+		{
+			auto button = UINew<UIButton>();
+			hbox->addElement(button);
+			button->setText("Button1");
+		}
+		{
+			auto button = UINew<UIButton>();
+			hbox->addElement(button);
+			button->setText("Button2");
+		}
+		{
+			auto button = UINew<UIButton>();
+			hbox->addElement(button);
+			button->setText("Button3");
+		}
+	}
+	//if (false)
+	{
 		auto scroll = UINew<UIScroll>();
 		layout->addElement(scroll);
 		scroll->setFixedSize(200, 200);
@@ -286,6 +338,7 @@ void sample(UIContextRef context, SDL_Window* window)
 			group->addElement(radio);
 			radio->setFixedSize(100, 30);
 			radio->setText("Radio");
+			radio->setChecked(true);
 
 			auto radio0 = UINew<UIRadio>();
 			group->addElement(radio0);
@@ -297,15 +350,7 @@ void sample(UIContextRef context, SDL_Window* window)
 			group->addElement(radio1);
 			radio1->setFixedSize(100, 30);
 			radio1->setText("Radio");
-			radio1->setChecked(true);
 			radio1->setExclusive(radio->getExclusive());
-
-		}
-		{
-			auto check = UINew<UICheck>();
-			group->addElement(check);
-			check->setFixedSize(100, 30);
-			check->setText("Check");
 		}
 		{
 			auto check = UINew<UICheck>();
@@ -313,6 +358,12 @@ void sample(UIContextRef context, SDL_Window* window)
 			check->setFixedSize(100, 30);
 			check->setText("Check");
 			check->setChecked(true);
+		}
+		{
+			auto check = UINew<UICheck>();
+			group->addElement(check);
+			check->setFixedSize(100, 30);
+			check->setText("Check");
 		}
 	}
 	//if (false)
@@ -346,10 +397,25 @@ void sample(UIContextRef context, SDL_Window* window)
 		slider->setRange(0, 100);
 		slider->setValue(25);
 	}
-	if (false)
+	//if (false)
 	{
 		auto combo = UINew<UICombo>();
 		layout->addElement(combo);
 		combo->setFixedSize(100, 30);
+		combo->setMaxCount(4);
+		combo->setItems({ "AAA", "BBB", "CCC", "DDD", "EEE" });
+		combo->setCurrentIndex(0);
+		combo->currentTextChanged->connect(nullptr, [](UIString text) {
+			printf("combo1 %s\n", text.c_str());
+			});
+
+		auto combo2 = UINew<UICombo>();
+		layout->addElement(combo2);
+		combo2->setFixedSize(100, 30);
+		combo2->setItems({ "111", "222", "333", "444", "555", "666" });
+		combo2->setCurrentText("666");
+		combo2->currentTextChanged->connect(nullptr, [](UIString text) {
+			printf("combo2 %s\n", text.c_str());
+			});
 	}
 }

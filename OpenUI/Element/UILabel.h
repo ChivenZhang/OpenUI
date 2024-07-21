@@ -3,20 +3,20 @@
 #include "OpenUI/UIFactory.h"
 
 /// @brief 
-using UILabelStyle = struct
+struct UILabelStyle
 {
 	struct LabelMode
 	{
 		struct
 		{
-			UIPen Pen;
-			UIFont Font;
-			UIBrush Brush;
+			UIPen Pen = { .Style = UIPen::NoPen, };
+			UIFont Font = { .Align = UIFont::AlignLeft | UIFont::AlignVCenter, };
+			UIBrush Brush = { .Color = {0,0,0,1}, };
 		} Foreground;
 		struct
 		{
-			UIPen Pen;
-			UIBrush Brush;
+			UIPen Pen = { .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, };
+			UIBrush Brush = { .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, };
 		} Background;
 	};
 	LabelMode Normal, Hover, Disable;

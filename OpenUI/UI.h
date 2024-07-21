@@ -76,6 +76,7 @@
 #include <bitset>
 #include <exception>
 #include <functional>
+#define UINAN (NAN)
 
 // ============================================
 
@@ -441,6 +442,23 @@ struct UIImage
 };
 using UIImageRaw = UIRaw<UIImage>;
 
+template <class T, class E = uint8_t>
+struct UIValue
+{
+	T Value = T();
+	E Unit = E();
+	UIValue(T const& value = T(), E uint = E(1)) : Value(value), Unit(uint) {}
+	UIValue(UIValue&&) = default;
+	UIValue(UIValue const&) = default;
+	operator T() { return Value; }
+	UIValue& operator =(UIValue&& value) { Value = value.Value; Unit = value.Unit; return *this; }
+	UIValue& operator =(UIValue const& value) { Value = value.Value; Unit = value.Unit; return *this; }
+};
+using UIValueF = UIValue<float>;
+using UIValue2F = UIArray<UIValueF, 2>;
+using UIValue3F = UIArray<UIValueF, 3>;
+using UIValue4F = UIArray<UIValueF, 4>;
+
 inline UIRect UIOverlap(UIRect const& viewport, UIRect const& client)
 {
 	// 计算两个矩形的右下角坐标  
@@ -470,6 +488,12 @@ inline UIRect UIOverlap(UIRect const& viewport, UIRect const& client)
 
 	// 创建一个表示重叠区域的矩形（如果有的话）  
 	return UIRect{ overlapX1, overlapY1, overlapWidth, overlapHeight };
+}
+
+inline bool UIBounds(UIRect const& client, float x, float y)
+{
+	return client.X <= x && x <= client.X + client.W
+		&& client.Y <= y && y <= client.Y + client.H;
 }
 
 inline int32_t UIUTF8Num(char prefix)

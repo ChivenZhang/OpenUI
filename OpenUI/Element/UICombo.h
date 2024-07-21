@@ -3,6 +3,12 @@
 #include "OpenUI/UIFactory.h"
 #include "UIButton.h"
 
+/// @brief 
+struct UIComboStyle
+{
+	UIButtonStyle Button;
+};
+
 /// @brief Combo
 class OPENUI_API UICombo : public UIElement
 {
@@ -25,11 +31,8 @@ public:
 	UIString getCurrentText() const;
 	void setCurrentText(UIString const& text);
 
-	UIButtonStyle getStyle() const;
-	void setStyle(UIButtonStyle value);
-
-	UIButtonStyle getItemStyle() const;
-	void setItemStyle(UIButtonStyle value);
+	UIComboStyle getStyle() const;
+	void setStyle(UIComboStyle value);
 
 protected:
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;

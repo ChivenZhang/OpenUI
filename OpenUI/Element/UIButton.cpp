@@ -107,6 +107,7 @@ UIButtonStyle UIButton::getStyle() const
 void UIButton::setStyle(UIButtonStyle const& style)
 {
 	PRIVATE()->Style = style;
+	PRIVATE()->Label->setStyle(PRIVATE()->Style.Label);
 }
 
 bool UIButton::getChecked() const

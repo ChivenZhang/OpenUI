@@ -13,25 +13,6 @@ using UIElementPrivateRaw = UIRaw<UIElementPrivate>;
 class UIContext;
 using UIContextRaw = UIRaw<UIContext>;
 
-#define UINAN (NAN)
-
-template <class T, class E = uint8_t>
-struct UIValue
-{
-	T Value = T();
-	E Unit = E();
-	UIValue(T const& value = T(), E uint = E(1)) : Value(value), Unit(uint) {}
-	UIValue(UIValue&&) = default;
-	UIValue(UIValue const&) = default;
-	operator T() { return Value; }
-	UIValue& operator =(UIValue&& value) { Value = value.Value; Unit = value.Unit; return *this; }
-	UIValue& operator =(UIValue const& value) { Value = value.Value; Unit = value.Unit; return *this; }
-};
-using UIValueF = UIValue<float>;
-using UIValue2F = UIArray<UIValueF, 2>;
-using UIValue3F = UIArray<UIValueF, 3>;
-using UIValue4F = UIArray<UIValueF, 4>;
-
 namespace UI
 {
 	enum DisplayType

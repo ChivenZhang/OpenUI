@@ -81,11 +81,11 @@ void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
 		if (element->getVisible() == false) return;
 		if (element->getEventFilter())
 		{
-			if (element->getEventFilter()->filter(sender, event)) return;
+			if (element->getEventFilter()->filter(element, event)) return;
 		}
 		else
 		{
-			if (element->filter(sender, event)) return;
+			if (element->filter(element, event)) return;
 		}
 		auto childList = element->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get());
@@ -395,16 +395,10 @@ void UIContext::layoutElement(UIRect client)
 
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		PRIVATE()->TopLevelList[i].Element->setFixedPos(client.X, client.Y);
-		PRIVATE()->TopLevelList[i].Element->setFixedSize(client.W, client.H);
-		PRIVATE()->TopLevelList[i].Element->setBounds(client);
-		PRIVATE()->TopLevelList[i].Element->setViewport(client);
-		PRIVATE()->TopLevelList[i].Element->setLocalBounds(client);
-
 		arrange_func(PRIVATE()->TopLevelList[i].Element.get(), client);
 
 		auto root = foreach_func(PRIVATE()->TopLevelList[i].Element.get(), client);
-		YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+		YGNodeCalculateLayout(root, client.W, client.H, YGDirectionLTR);
 		layout_func(root, PRIVATE()->TopLevelList[i].Element.get(), client);
 		YGNodeFreeRecursive(root);
 

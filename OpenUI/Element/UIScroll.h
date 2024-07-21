@@ -36,11 +36,9 @@ public:
 
 	policy_t getHorizontalPolicy() const;
 	void setHorizontalPolicy(policy_t value);
-	UIScrollBarRaw getHorizontalBar() const;
 
 	policy_t getVerticalPolicy() const;
 	void setVerticalPolicy(policy_t value);
-	UIScrollBarRaw getVerticalBar() const;
 
 	void setScrollPolicy(policy_t horizontal, policy_t vertical);
 
@@ -49,6 +47,10 @@ public:
 
 	float getVerticalValue() const;
 	void setVerticallValue(float value);
+
+	UIScrollBarRaw getHorizontalBar() const;
+	UIScrollBarRaw getVerticalBar() const;
+	UIElementRaw getContentView() const;
 
 protected:
 	virtual void wheelEvent(UIMouseWheelEventRaw event) override;

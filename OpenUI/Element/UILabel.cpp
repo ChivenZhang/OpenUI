@@ -33,14 +33,6 @@ UILabel::UILabel()
 
 	linkHovered = &PRIVATE()->LinkHovered;
 	linkActivated = &PRIVATE()->LinkActivated;
-
-	auto style = getStyle();
-	style.Normal.Foreground.Pen = style.Hover.Foreground.Pen = style.Disable.Foreground.Pen = { .Style = UIPen::NoPen, };
-	style.Normal.Foreground.Font = style.Hover.Foreground.Font = style.Disable.Foreground.Font = { .Align = UIFont::AlignLeft | UIFont::AlignVCenter, };
-	style.Normal.Foreground.Brush = style.Hover.Foreground.Brush = style.Disable.Foreground.Brush = { .Color = {0,0,0,1}, };
-	style.Normal.Background.Pen = style.Hover.Background.Pen = style.Disable.Background.Pen = { .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, };
-	style.Normal.Background.Brush = style.Hover.Background.Brush = style.Disable.Background.Brush = { .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, };
-	setStyle(style);
 }
 
 UILabel::~UILabel()

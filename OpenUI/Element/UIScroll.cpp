@@ -4,6 +4,7 @@
 #include "UIScroll.h"
 #include "UIScroll.h"
 #include "UIScroll.h"
+#include "UIScroll.h"
 
 class UIScrollPrivate : public UIElementPrivate
 {
@@ -199,11 +200,6 @@ void UIScroll::setHorizontalPolicy(policy_t value)
 	PRIVATE()->HorizontalPolicy = value;
 }
 
-UIScrollBarRaw UIScroll::getHorizontalBar() const
-{
-	return PRIVATE()->HorizontalScrollBar.get();
-}
-
 UIScroll::policy_t UIScroll::getVerticalPolicy() const
 {
 	return PRIVATE()->VerticalPolicy;
@@ -212,11 +208,6 @@ UIScroll::policy_t UIScroll::getVerticalPolicy() const
 void UIScroll::setVerticalPolicy(policy_t value)
 {
 	PRIVATE()->VerticalPolicy = value;
-}
-
-UIScrollBarRaw UIScroll::getVerticalBar() const
-{
-	return PRIVATE()->VerticalScrollBar.get();
 }
 
 void UIScroll::setScrollPolicy(policy_t horizontal, policy_t vertical)
@@ -243,6 +234,21 @@ float UIScroll::getVerticalValue() const
 void UIScroll::setVerticallValue(float value)
 {
 	getVerticalBar()->setValue(value);
+}
+
+UIScrollBarRaw UIScroll::getHorizontalBar() const
+{
+	return PRIVATE()->HorizontalScrollBar.get();
+}
+
+UIScrollBarRaw UIScroll::getVerticalBar() const
+{
+	return PRIVATE()->VerticalScrollBar.get();
+}
+
+UIElementRaw UIScroll::getContentView() const
+{
+	return (2 < getChildren().size()) ? getChildren()[2].get() : nullptr;
 }
 
 void UIScroll::wheelEvent(UIMouseWheelEventRaw event)

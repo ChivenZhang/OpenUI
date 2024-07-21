@@ -11,8 +11,12 @@ struct UIButtonStyle
 		UIPen Pen;
 		UIBrush Brush;
 	};
-	UIFloat2 Round;
-	ButtonMode Normal, Hover, Press, Disable;
+	UILabelStyle Label;
+	UIFloat2 Round = { 5, 5 };
+	ButtonMode Normal = { .Pen = {.Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} }, .Brush = {.Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} } };
+	ButtonMode Hover = { .Pen = {.Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} }, .Brush = {.Color = {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f} } };
+	ButtonMode Press = { .Pen = {.Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} }, .Brush = {.Color = {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f} } };
+	ButtonMode Disable = { .Pen = {.Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} }, };
 };
 
 /// @brief Button
@@ -61,7 +65,7 @@ private:
 using UIButtonRef = UIRef<UIButton>;
 using UIButtonRaw = UIRaw<UIButton>;
 
-/// @brief Button Factory
+/// @brief Button factory
 class OPENUI_API UIButtonFactory : public UIFactory
 {
 public:

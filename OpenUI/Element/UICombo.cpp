@@ -11,7 +11,7 @@ public:
 	UIStringList Items;
 	UIButtonRef Button;
 	UIScrollRef Popup;
-	UIButtonStyle ItemStyle;
+	UIComboStyle Style;
 
 	UISignalAs<int /*index*/> OnActivated;
 	UISignalAs<int /*index*/> OnCurrentIndexChanged;
@@ -33,13 +33,6 @@ UICombo::UICombo()
 	highlighted = &PRIVATE()->OnHighlighted;
 	textActivated = &PRIVATE()->OnTextActivated;
 	textHighlighted = &PRIVATE()->OnTextHighlighted;
-
-	PRIVATE()->ItemStyle.Normal.Pen = { .Style = UIPen::NoPen, .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
-	PRIVATE()->ItemStyle.Normal.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
-	PRIVATE()->ItemStyle.Hover.Pen = { .Style = UIPen::NoPen, .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
-	PRIVATE()->ItemStyle.Hover.Brush = { .Color = {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f} };
-	PRIVATE()->ItemStyle.Press.Pen = { .Style = UIPen::NoPen,.Color = {0 / 255.0f, 84 / 255.0f, 153 / 255.0f, 1.0f} };
-	PRIVATE()->ItemStyle.Press.Brush = { .Color = {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f} };
 
 	PRIVATE()->Button = UINew<UIButton>();
 	addElement(PRIVATE()->Button);
@@ -65,6 +58,39 @@ void UICombo::arrange(UIRect client)
 {
 	setJustifyContent(UI::JustifySpaceEvenly);
 	PRIVATE()->Button->setFlexGrow(1);
+
+	PRIVATE()->Popup->setAlignItems(UI::AlignStretch);
+	PRIVATE()->Popup->setJustifyContent(UI::JustifySpaceEvenly);
+	PRIVATE()->Popup->setPositionType(UI::PositionAbsolute);
+
+	auto painter = getPainter();
+	if (painter == nullptr) painter = getContext()->getPainter();
+	if (painter == nullptr) return;
+	painter->setFont(PRIVATE()->Style.Button.Label.Normal.Foreground.Font);
+
+	auto content = PRIVATE()->Popup->getContentView();
+	content->setFixedWidth(0);
+	content->setFixedHeight(0);
+	for (size_t i = 0; content && i < content->getChildren().size(); ++i)
+	{
+		auto itemWidget = UICast<UIButton>(content->getChildren()[i]);
+		auto textRect = painter->boundingRect(0, 0, FLT_MAX, FLT_MAX, itemWidget->getText(), 0, nullptr, nullptr);
+
+		content->getChildren()[i]->setFlexGrow(1);
+		content->getChildren()[i]->setMinWidth(textRect.W);
+		content->getChildren()[i]->setMinHeight(textRect.H);
+		content->setFixedWidth(std::max(content->getFixedWidth().Value, textRect.W));
+		content->setFixedHeight(content->getFixedHeight() + textRect.H);
+
+		if (std::isnan(getFixedWidth()) == false)
+		{
+			content->setFixedWidth(std::max<float>(getFixedWidth(), content->getFixedWidth()));
+			PRIVATE()->Popup->setFixedWidth(std::max<float>(getFixedWidth(), content->getFixedWidth()));
+		}
+		PRIVATE()->Popup->setFixedWidth(std::max<float>(PRIVATE()->Popup->getFixedWidth(), content->getFixedWidth()));
+		if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight(content->getFixedHeight());
+	}
+	PRIVATE()->Popup->setFixedHeight(std::max<float>(painter->getFont().Size, PRIVATE()->Popup->getFixedHeight()));
 }
 
 void UICombo::layout(UIRect client)
@@ -87,9 +113,6 @@ void UICombo::setItems(UIStringList const& texts)
 	PRIVATE()->Popup->removeElement();
 	auto itemsWidget = UINew<UIVBox>();
 	PRIVATE()->Popup->addElement(itemsWidget);
-	PRIVATE()->Popup->setFixedWidth(getFixedWidth() * 1.2f);
-	itemsWidget->setFixedHeight(200);
-	PRIVATE()->Popup->setFixedHeight(200);
 
 	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
 	{
@@ -97,8 +120,13 @@ void UICombo::setItems(UIStringList const& texts)
 		auto button = UINew<UIButton>();
 		itemsWidget->addElement(button);
 		button->setText(text);
-		button->setStyle(PRIVATE()->ItemStyle);
-		button->setFixedHeight(35);
+		button->setStyle(PRIVATE()->Style.Button);
+		button->getLabel()->setStyle(PRIVATE()->Style.Button.Label);
+
+		button->hovered->connect(this, [=]() {
+			PRIVATE()->OnHighlighted.signal(i);
+			PRIVATE()->OnTextHighlighted.signal(text);
+			});
 
 		button->clicked->connect(this, [=](bool clicked) {
 			auto oldIndex = PRIVATE()->Index;
@@ -111,11 +139,6 @@ void UICombo::setItems(UIStringList const& texts)
 				PRIVATE()->OnCurrentIndexChanged.signal(i);
 				PRIVATE()->OnCurrentTextChanged.signal(text);
 			}
-			});
-
-		button->hovered->connect(this, [=]() {
-			PRIVATE()->OnHighlighted.signal(i);
-			PRIVATE()->OnTextHighlighted.signal(text);
 			});
 	}
 }
@@ -172,58 +195,41 @@ void UICombo::setCurrentText(UIString const& text)
 	}
 }
 
-UIButtonStyle UICombo::getStyle() const
+UIComboStyle UICombo::getStyle() const
 {
-	return PRIVATE()->Button->getStyle();
+	return PRIVATE()->Style;
 }
 
-void UICombo::setStyle(UIButtonStyle value)
+void UICombo::setStyle(UIComboStyle value)
 {
-	PRIVATE()->Button->setStyle(value);
-}
+	PRIVATE()->Style = value;
+	PRIVATE()->Button->setStyle(PRIVATE()->Style.Button);
+	PRIVATE()->Button->getLabel()->setStyle(PRIVATE()->Style.Button.Label);
 
-UIButtonStyle UICombo::getItemStyle() const
-{
-	return PRIVATE()->ItemStyle;
-}
-
-void UICombo::setItemStyle(UIButtonStyle value)
-{
-	PRIVATE()->ItemStyle = value;
-	auto contentWidget = PRIVATE()->Popup->getChildren()[0];
+	auto contentWidget = PRIVATE()->Popup->getContentView();
 	for (size_t i = 0; contentWidget && i < contentWidget->getChildren().size(); ++i)
 	{
 		auto itemWidget = UICast<UIButton>(contentWidget->getChildren()[i]);
 		if (itemWidget == nullptr) continue;
-		itemWidget->setStyle(value);
+		itemWidget->setStyle(PRIVATE()->Style.Button);
+		itemWidget->getLabel()->setStyle(PRIVATE()->Style.Button.Label);
 	}
 }
 
 bool UICombo::filter(UIReactorRaw source, UIEventRaw event)
 {
-	if (source == UICast<UIReactor>(PRIVATE()->Popup.get()))
+	switch (event->Type)
 	{
-		switch (event->Type)
+	case UIHash("MouseDown"):
+	{
+		auto event2 = UICast<UIMouseEvent>(event);
+		auto client = PRIVATE()->Popup->getBounds();
+		auto viewport = PRIVATE()->Popup->getViewport();
+		if (UIBounds(UIOverlap(client, viewport), event2->X, event2->Y) == false)
 		{
-		case UIHash("MouseDown"):
-		{
-			auto event2 = UICast<UIMouseEvent>(event);
-			auto client = PRIVATE()->Popup->getBounds();
-			auto viewport = PRIVATE()->Popup->getViewport();
-			if (client.X <= event2->X && event2->X <= client.X + client.W
-				&& client.Y <= event2->Y && event2->Y <= client.Y + client.H
-				&& viewport.X <= event2->X && event2->X <= viewport.X + viewport.W
-				&& viewport.Y <= event2->Y && event2->Y <= viewport.Y + viewport.H)
-			{
-				;
-			}
-			else
-			{
-				getContext()->removeElement(PRIVATE()->Popup);
-			}
-
-		} break;
+			getContext()->removeElement(PRIVATE()->Popup);
 		}
+	} break;
 	}
 	return false;
 }
