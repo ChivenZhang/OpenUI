@@ -97,6 +97,7 @@ public:
 	virtual void arrange(UIRect client);
 	virtual void layout(UIRect client);
 	virtual void paint(UIRect client, UIPainterRaw painter);
+	virtual void repaint(UIRect client, UIPainterRaw painter);
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
 	virtual void handle(UIReactorRaw source, UIEventRaw event) final override;
 

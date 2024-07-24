@@ -7,18 +7,19 @@
 #include "OpenGLRender.h"
 #include "OpenUI/UIContext.h"
 #include "OpenUI/UIBuilder.h"
-#include "OpenUI/Element/UIHBox.h"
-#include "OpenUI/Element/UIVBox.h"
-#include "OpenUI/Element/UIFlow.h"
-#include "OpenUI/Element/UIScroll.h"
-#include "OpenUI/Element/UIGrid.h"
-#include "OpenUI/Element/UILabel.h"
-#include "OpenUI/Element/UIButton.h"
-#include "OpenUI/Element/UISlider.h"
-#include "OpenUI/Element/UIRadio.h"
-#include "OpenUI/Element/UICheck.h"
-#include "OpenUI/Element/UICombo.h"
-static int count = 0;
+#include "OpenUI/UIHBox.h"
+#include "OpenUI/UIVBox.h"
+#include "OpenUI/UIFlow.h"
+#include "OpenUI/UIScroll.h"
+#include "OpenUI/UIGrid.h"
+#include "OpenUI/UILabel.h"
+#include "OpenUI/UIButton.h"
+#include "OpenUI/UISlider.h"
+#include "OpenUI/UIRadio.h"
+#include "OpenUI/UICheck.h"
+#include "OpenUI/UICombo.h"
+#include "OpenUI/UILine.h"
+#include "OpenUI/UIInput.h"
 
 void sample(UIContextRef context, SDL_Window* window);
 
@@ -229,6 +230,27 @@ void sample(UIContextRef context, SDL_Window* window)
 
 	//if (false)
 	{
+		auto scroll = UINew<UIScroll>();
+		layout->addElement(scroll);
+		scroll->setFixedSize(300, 200);
+		scroll->setHorizontalValue(150);
+		scroll->setVerticallValue(150);
+		//if (false)
+		{
+			auto label = UINew<UILabel>();
+			scroll->addElement(label);
+			label->setFixedSize(300, 300);
+			label->setScaledContents(UILabel::ScaleKeepRatio);
+			int img_width, img_height, channels;
+			auto image_data = stbi_load("../../../OpenUI.png", &img_width, &img_height, &channels, 4);
+			if (image_data) label->setPixmap({
+							(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4),
+							UIArrayView<const uint8_t>(image_data, img_height * img_width * 4) });
+			stbi_image_free(image_data);
+		}
+	}
+	//if (false)
+	{
 		auto vbox = UINew<UIVBox>();
 		layout->addElement(vbox);
 		vbox->setFixedSize(200, 200);
@@ -257,7 +279,7 @@ void sample(UIContextRef context, SDL_Window* window)
 	{
 		auto hbox = UINew<UIHBox>();
 		layout->addElement(hbox);
-		hbox->setFixedSize(200, 200);
+		hbox->setFixedSize(250, 200);
 		{
 			auto button = UINew<UIButton>();
 			hbox->addElement(button);
@@ -277,27 +299,6 @@ void sample(UIContextRef context, SDL_Window* window)
 			auto button = UINew<UIButton>();
 			hbox->addElement(button);
 			button->setText("Button3");
-		}
-	}
-	//if (false)
-	{
-		auto scroll = UINew<UIScroll>();
-		layout->addElement(scroll);
-		scroll->setFixedSize(200, 200);
-		scroll->setHorizontalValue(150);
-		scroll->setVerticallValue(150);
-		//if (false)
-		{
-			auto label = UINew<UILabel>();
-			scroll->addElement(label);
-			label->setFixedSize(300, 300);
-			label->setScaledContents(UILabel::ScaleKeepRatio);
-			int img_width, img_height, channels;
-			auto image_data = stbi_load("../../../OpenUI.png", &img_width, &img_height, &channels, 4);
-			if (image_data) label->setPixmap({
-							(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4),
-							UIArrayView<const uint8_t>(image_data, img_height * img_width * 4) });
-			stbi_image_free(image_data);
 		}
 	}
 	//if (false)
@@ -397,13 +398,25 @@ void sample(UIContextRef context, SDL_Window* window)
 		slider->setRange(0, 100);
 		slider->setValue(25);
 	}
+	//if(false)
+	{
+		auto hline = UINew<UIHLine>();
+		layout->addElement(hline);
+		hline->setFixedSize(100, 30);
+	}
+	//if(false)
+	{
+		auto vline = UINew<UIVLine>();
+		layout->addElement(vline);
+		vline->setFixedSize(30, 100);
+	}
 	//if (false)
 	{
 		auto combo = UINew<UICombo>();
 		layout->addElement(combo);
 		combo->setFixedSize(100, 30);
 		combo->setMaxCount(4);
-		combo->setItems({ "AAA", "BBB", "CCC", "DDD", "EEE" });
+		combo->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
 		combo->setCurrentIndex(0);
 		combo->currentTextChanged->connect(nullptr, [](UIString text) {
 			printf("combo1 %s\n", text.c_str());
@@ -412,10 +425,34 @@ void sample(UIContextRef context, SDL_Window* window)
 		auto combo2 = UINew<UICombo>();
 		layout->addElement(combo2);
 		combo2->setFixedSize(100, 30);
-		combo2->setItems({ "111", "222", "333", "444", "555", "666" });
-		combo2->setCurrentText("666");
+		combo2->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
+		combo2->setCurrentText("黄金糕");
 		combo2->currentTextChanged->connect(nullptr, [](UIString text) {
 			printf("combo2 %s\n", text.c_str());
+			});
+	}
+	// if(false)
+	{
+		auto input = UINew<UIInput>();
+		layout->addElement(input);
+		input->setFixedSize(100, 30);
+		input->setText("Hello,OpenUI");
+		input->editingStarted->connect(nullptr, [=](UIRect rect) {
+			SDL_StartTextInput(window);
+			SDL_Rect sdlRect{ rect.X, rect.Y, rect.W, rect.H };
+			SDL_SetTextInputArea(window, &sdlRect, 0);
+			});
+		input->textPasted->connect(nullptr, [=](UIString& value) {
+			if (SDL_HasClipboardText())
+			{
+				auto result = SDL_GetClipboardText();
+				value = UIString(result);
+				SDL_free(result);
+			}
+			});
+		input->textCopied->connect(nullptr, [=](UIString const& value) {
+			SDL_ClearClipboardData();
+			SDL_SetClipboardText(value.c_str());
 			});
 	}
 }

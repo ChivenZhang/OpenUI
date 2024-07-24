@@ -286,6 +286,34 @@ struct UIPen
 	UIColor Color = UIColor{ 0, 0, 0, 1 };
 	float Width = 1.0f;
 };
+static constexpr UIPen UINoPen
+{
+	.Style = UIPen::NoPen,
+};
+static constexpr UIPen UIBlackPen
+{
+	.Color { 0,0,0,1 },
+};
+static constexpr UIPen UIWhitePen
+{
+	.Color { 1,1,1,1 },
+};
+static constexpr UIPen UIRedPen
+{
+	.Color { 1,0,0,1 },
+};
+static constexpr UIPen UIGreenPen
+{
+	.Color { 0,1,0,1 },
+};
+static constexpr UIPen UIBluePen
+{
+	.Color { 0,0,1,1 },
+};
+static constexpr UIPen UIFramePen
+{
+	.Color { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f },
+};
 
 struct UIBrush
 {
@@ -313,6 +341,34 @@ struct UIBrush
 	};
 	style_t Style = style_t::SolidPattern;
 	UIColor Color = UIColor{ 1, 1, 1, 1 };
+};
+static constexpr UIBrush UINoBrush
+{
+	.Style = UIBrush::NoBrush,
+};
+static constexpr UIBrush UIBlackBrush
+{
+	.Color { 0,0,0,1 },
+};
+static constexpr UIBrush UIWhiteBrush
+{
+	.Color { 1,1,1,1 },
+};
+static constexpr UIBrush UIRedBrush
+{
+	.Color { 1,0,0,1 },
+};
+static constexpr UIBrush UIGreenBrush
+{
+	.Color { 0,1,0,1 },
+};
+static constexpr UIBrush UIBlueBrush
+{
+	.Color { 0,0,1,1 },
+};
+static constexpr UIBrush UIFrameBrush
+{
+	.Color { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f },
 };
 
 struct UIFont
@@ -498,9 +554,11 @@ inline bool UIBounds(UIRect const& client, float x, float y)
 
 inline int32_t UIUTF8Num(char prefix)
 {
-	if (0 <= uint8_t(prefix) && uint8_t(prefix) < 0x80) return 1;
-	if (0xC2 <= uint8_t(prefix) && uint8_t(prefix) < 0xE0) return 2;
-	if (0xE0 <= uint8_t(prefix) && uint8_t(prefix) < 0xF0) return 3;
-	if (0xF0 <= uint8_t(prefix) && uint8_t(prefix) < 0xF8) return 4;
+	if ((prefix & 0x80) == 0) return 1; // 0xxxxxxx
+	if ((prefix & 0xE0) == 0xC0) return 2; // 110xxxxx
+	if ((prefix & 0xF0) == 0xE0) return 3; // 1110xxxx
+	if ((prefix & 0xF8) == 0xF0) return 4; // 11110xxx
+	if ((prefix & 0xFC) == 0xF8) return 5; // 111110xx
+	if ((prefix & 0xFE) == 0xFC) return 6; // 1111110x
 	return 0;
 }
