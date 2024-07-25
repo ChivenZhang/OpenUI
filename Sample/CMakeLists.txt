@@ -99,3 +99,9 @@ target_link_libraries(Sample
 	optimized pthreadVSE3
 	optimized zlib
 )
+
+add_custom_command(  
+    TARGET Sample POST_BUILD  
+    COMMAND "${CMAKE_SOURCE_DIR}/INSTALL.bat"
+    COMMENT "Copying dll to output directory"  
+)

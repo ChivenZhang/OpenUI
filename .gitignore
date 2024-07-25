@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /External/x64-windows
 /build
+/Output
