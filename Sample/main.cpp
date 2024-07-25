@@ -242,7 +242,7 @@ void sample(UIContextRef context, SDL_Window* window)
 			label->setFixedSize(300, 300);
 			label->setScaledContents(UILabel::ScaleKeepRatio);
 			int img_width, img_height, channels;
-			auto image_data = stbi_load("../../../OpenUI.png", &img_width, &img_height, &channels, 4);
+			auto image_data = stbi_load("../../OpenUI.png", &img_width, &img_height, &channels, 4);
 			if (image_data) label->setPixmap({
 							(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4),
 							UIArrayView<const uint8_t>(image_data, img_height * img_width * 4) });
