@@ -1,5 +1,4 @@
 ﻿cmake_minimum_required (VERSION 3.8)
-
 project(OpenUI)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -8,13 +7,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
+option(OPENUI_ENABLE_SAMPLE "Enable Sample Compile" ON)
+
 include_directories(./)
 include_directories(External/stb)
 include_directories(External/x64-windows/include)
-include_directories(External/x64-windows/include/pango-1.0)
-include_directories(External/x64-windows/include/cairo)
-include_directories(External/x64-windows/include/harfbuzz)
-include_directories(External/x64-windows/include/glib-2.0)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
 link_directories(External/x64-windows/debug/lib)
 else()
@@ -22,4 +19,11 @@ link_directories(External/x64-windows/lib)
 endif()
 
 add_subdirectory(OpenUI)
+
+if(OPENUI_ENABLE_SAMPLE)
+include_directories(External/x64-windows/include/pango-1.0)
+include_directories(External/x64-windows/include/cairo)
+include_directories(External/x64-windows/include/harfbuzz)
+include_directories(External/x64-windows/include/glib-2.0)
 add_subdirectory(Sample)
+endif()
