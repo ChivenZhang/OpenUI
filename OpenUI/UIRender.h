@@ -1,6 +1,14 @@
 #pragma once
 #include "UI.h"
 
+/// @brief 
+class UIRenderPrivate
+{
+public:
+	virtual ~UIRenderPrivate() = default;
+};
+using UIRenderPrivateRaw = UIRaw<UIRenderPrivate>;
+
 /// @brief Base interface of render backend.
 class OPENUI_API UIRender
 {
