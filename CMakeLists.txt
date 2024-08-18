@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 
-option(OPENUI_ENABLE_SAMPLE "Enable Sample Compile" ON)
+option(OPENUI_ENABLE_SAMPLE "Enable Sample Compile" OFF)
 
 include_directories(./)
 include_directories(External/stb)
