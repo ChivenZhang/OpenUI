@@ -758,11 +758,6 @@ void OpenGLPainter::resize(uint32_t width, uint32_t height)
 
 uint32_t OpenGLPainter::getTexture() const
 {
-	return PRIVATE()->NativeTexture;
-}
-
-uint32_t OpenGLPainter::getTextureUpdated() const
-{
 	glBindTexture(GL_TEXTURE_2D, PRIVATE()->NativeTexture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, getWidth(), getHeight(), GL_BGRA, GL_UNSIGNED_BYTE, getPixelData().data());
 	glBindTexture(GL_TEXTURE_2D, 0);

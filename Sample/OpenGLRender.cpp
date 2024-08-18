@@ -124,7 +124,7 @@ void OpenGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 			if (primitive.empty() || painter == nullptr) continue;
 
 			// 绑定到纹理数组
-			auto texture = painter->getTextureUpdated();
+			auto texture = painter->getTexture();
 			glActiveTexture(GL_TEXTURE0 + k);
 			glBindTexture(GL_TEXTURE_2D, texture);
 

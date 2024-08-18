@@ -43,7 +43,6 @@ public:
 	virtual UIArrayView<const uint8_t> getPixelData() const override;
 	virtual void resize(uint32_t width, uint32_t height) override;
 	uint32_t getTexture() const;
-	uint32_t getTextureUpdated() const;
 
 private:
 	UIPainterPrivateRaw m_Private;

@@ -408,9 +408,7 @@ void UIContext::paintElement(UIRect client)
 {
 	UILambda<void(UIElementRaw, UIRect, UIPainterRaw)> foreach_func;
 	foreach_func = [&](UIElementRaw element, UIRect client, UIPainterRaw painter) {
-		if (element->getVisible() == false) return;
-		if (element->getPainter()) painter = element->getPainter();
-		if (painter == nullptr) return;
+		if (element->getVisible() == false || painter == nullptr) return;
 		element->paint(client, painter);
 		auto childList = element->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds(), painter);
@@ -424,35 +422,18 @@ void UIContext::paintElement(UIRect client)
 
 void UIContext::renderElement(UIRect client)
 {
-	if (getRender() == nullptr) return;
-
-	UIVector<UIPrimitive> renderList;
-	UILambda<void(UIElementRaw, UIRect client)> foreach_func;
-	foreach_func = [&](UIElementRaw element, UIRect client) {
-		if (element->getVisible() == false) return;
-		if (element->getPainter()) renderList.emplace_back(element->getPainter(), element->getPrimitive());
-		auto childList = element->getChildren();
-		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds());
-		};
-
-	if (getPainter())
+	if (getPainter() && getRender())
 	{
-		auto viewport = client;
-		UIPointUV3 primitive[2];
-		primitive[0].P0 = { viewport.X, viewport.Y };
-		primitive[0].P1 = { viewport.X + viewport.W, viewport.Y };
-		primitive[0].P2 = { viewport.X + viewport.W, viewport.Y + viewport.H };
-		primitive[1].P0 = { viewport.X, viewport.Y };
-		primitive[1].P1 = { viewport.X + viewport.W, viewport.Y + viewport.H };
-		primitive[1].P2 = { viewport.X, viewport.Y + viewport.H };
-		renderList.emplace_back(getPainter(), primitive);
+		UIPointUV3 pointList[2];
+		pointList[0].P0 = { client.X, client.Y };
+		pointList[0].P1 = { client.X + client.W, client.Y };
+		pointList[0].P2 = { client.X + client.W, client.Y + client.H };
+		pointList[1].P0 = { client.X, client.Y };
+		pointList[1].P1 = { client.X + client.W, client.Y + client.H };
+		pointList[1].P2 = { client.X, client.Y + client.H };
+		UIPrimitive primitive{ getPainter(), pointList };
+		getRender()->render(client, UIArrayView<UIPrimitive>(&primitive, 1));
 	}
-
-	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
-	{
-		foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
-	}
-	getRender()->render(client, renderList);
 }
 
 void UIContext::animateElement(float time)
