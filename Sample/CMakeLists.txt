@@ -1,5 +1,7 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
+if(OPENUI_ENABLE_SAMPLE)
+
 add_executable (Sample "OpenGLPainter.h" "OpenGLPainter.cpp" "OpenGLRender.h" "OpenGLRender.cpp" "main.cpp")
 
 add_dependencies(Sample OpenUI)
@@ -105,3 +107,4 @@ add_custom_command(
     COMMAND "${CMAKE_SOURCE_DIR}/INSTALL.bat"
     COMMENT "Copying dll to output directory"  
 )
+endif()
