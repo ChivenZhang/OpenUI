@@ -425,12 +425,12 @@ void UIContext::renderElement(UIRect client)
 	if (getPainter() && getRender())
 	{
 		UIPointUV3 pointList[2];
-		pointList[0].P0 = { client.X, client.Y };
-		pointList[0].P1 = { client.X + client.W, client.Y };
-		pointList[0].P2 = { client.X + client.W, client.Y + client.H };
-		pointList[1].P0 = { client.X, client.Y };
-		pointList[1].P1 = { client.X + client.W, client.Y + client.H };
-		pointList[1].P2 = { client.X, client.Y + client.H };
+		pointList[0].P0 = { 0, 0 };
+		pointList[0].P1 = { 0 + 1, 0 };
+		pointList[0].P2 = { 0 + 1, 0 + 1 };
+		pointList[1].P0 = { 0, 0 };
+		pointList[1].P1 = { 0 + 1, 0 + 1 };
+		pointList[1].P2 = { 0, 0 + 1 };
 		UIPrimitive primitive{ getPainter(), pointList };
 		getRender()->render(client, UIArrayView<UIPrimitive>(&primitive, 1));
 	}
