@@ -81,6 +81,7 @@ int main(int argc, char* argv[])
 			{
 			case SDL_EVENT_QUIT:
 			{
+				quit = true;
 			} break;
 			case SDL_EVENT_KEY_DOWN:
 			{
@@ -174,6 +175,7 @@ int main(int argc, char* argv[])
 			} break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			{
+				openui->layoutElement();
 				openui->getPainter()->resize(event.window.data1, event.window.data2);
 				UIResizeEvent event2(event.window.data1, event.window.data2);
 				openui->sendEvent(nullptr, &event2);
