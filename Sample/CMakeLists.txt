@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-add_executable (Sample "OpenGLPainter.h" "OpenGLPainter.cpp" "OpenGLRender.h" "OpenGLRender.cpp" "main.cpp")
+add_executable (Sample "OpenGLPainter.h" "OpenGLPainter.cpp" "OpenGLRender.h" "OpenGLRender.cpp" "SDL3InputConstant.cpp" "SDL3InputConstant.h" "main.cpp")
 
 add_dependencies(Sample OpenUI)
 

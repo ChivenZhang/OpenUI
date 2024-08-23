@@ -1,4 +1,5 @@
 #include "../UIButton.h"
+#include "../UIContext.h"
 
 class UIButtonPrivate : public UIElementPrivate
 {
@@ -160,12 +161,13 @@ void UIButton::mouseDoubleEvent(UIMouseEventRaw event)
 {
 	if (inBounds(event->X, event->Y))
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->Pressed = true;
 			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
+			if (getContext()) getContext()->paintElement();
 
 			event->Accept = true;
 		}
@@ -176,12 +178,13 @@ void UIButton::mousePressEvent(UIMouseEventRaw event)
 {
 	if (inBounds(event->X, event->Y))
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->Pressed = true;
 			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
+			if (getContext()) getContext()->paintElement();
 
 			event->Accept = true;
 		}
@@ -190,12 +193,13 @@ void UIButton::mousePressEvent(UIMouseEventRaw event)
 
 void UIButton::mouseReleaseEvent(UIMouseEventRaw event)
 {
-	if (event->Button == 1)
+	if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 	{
 		if (PRIVATE()->Pressed)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
+			if (getContext()) getContext()->paintElement();
 
 			event->Accept = true;
 		}
@@ -208,10 +212,12 @@ void UIButton::mouseMoveEvent(UIMouseEventRaw event)
 	{
 		PRIVATE()->Hovered = true;
 		PRIVATE()->OnHovered.signal();
+		if (getContext()) getContext()->paintElement();
 	}
 	else
 	{
 		PRIVATE()->Hovered = false;
+		if (getContext()) getContext()->paintElement();
 	}
 }
 
@@ -222,6 +228,7 @@ void UIButton::enterEvent(UIMouseEventRaw event)
 void UIButton::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
+	if (getContext()) getContext()->paintElement();
 }
 
 UIString UIButtonFactory::getTagName() const

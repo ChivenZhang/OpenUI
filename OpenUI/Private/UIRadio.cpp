@@ -191,7 +191,7 @@ void UIRadio::mouseDoubleEvent(UIMouseEventRaw event)
 {
 	if (inBounds(event->X, event->Y))
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->Pressed = true;
 			PRIVATE()->Checked = true;
@@ -210,7 +210,7 @@ void UIRadio::mousePressEvent(UIMouseEventRaw event)
 {
 	if (inBounds(event->X, event->Y))
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->Pressed = true;
 			PRIVATE()->Checked = true;
@@ -227,7 +227,7 @@ void UIRadio::mousePressEvent(UIMouseEventRaw event)
 
 void UIRadio::mouseReleaseEvent(UIMouseEventRaw event)
 {
-	if (event->Button == 1)
+	if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 	{
 		if (PRIVATE()->Pressed)
 		{

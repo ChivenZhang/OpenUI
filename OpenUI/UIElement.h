@@ -75,11 +75,13 @@ namespace UI
 };
 
 /// @brief Base interface of element
-class OPENUI_API UIElement : public UIReactor, public UIHandler, public UIFilter
+class OPENUI_API UIElement : public UIReactor, public UIHandler, public UIFilter, public std::enable_shared_from_this<UIElement>
 {
 public:
 	UIElement();
 	virtual ~UIElement();
+	UIString getID() const;
+	void setID(UIString value);
 	UIElementRaw getParent() const;
 	UIArrayView<const UIElementRef> getChildren() const;
 	virtual UIPainterRaw getPainter() const;
@@ -90,10 +92,16 @@ public:
 	virtual void setStyleText(UIString value);
 	virtual UIString getStyleText(UIString name) const;
 	virtual void setStyleText(UIString name, UIString value);
+	virtual UIString getAttribute(UIString name) const;
+	virtual void setAttribute(UIString name, UIString value);
 	virtual UIArrayView<const UIPointUV3> getPrimitive() const;
 	virtual bool addElement(UIElementRef value);
 	virtual bool removeElement(UIElementRef value);
 	virtual void removeElement();
+	virtual UIElementRef getElementByID(UIString identity) const;
+	virtual UIVector<UIElementRef> getElementsByID(UIString identity) const;
+	virtual UIElementRef getElement(UILambda<bool(UIElementRef)> selector) const;
+	virtual UIVector<UIElementRef> getElements(UILambda<bool(UIElementRef)> selector) const;
 	virtual void arrange(UIRect client);
 	virtual void layout(UIRect client);
 	virtual void paint(UIRect client, UIPainterRaw painter);

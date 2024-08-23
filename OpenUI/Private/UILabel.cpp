@@ -1,4 +1,5 @@
 #include "../UILabel.h"
+#include "../UIContext.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -268,6 +269,7 @@ void UILabel::setPixmap(UIImage image)
 		PRIVATE()->ImageData.clear();
 		PRIVATE()->Image = UIImage{};
 	}
+	getContext()->paintElement();
 }
 
 UILabel::scale_t UILabel::getScaledContents() const
@@ -278,6 +280,7 @@ UILabel::scale_t UILabel::getScaledContents() const
 void UILabel::setScaledContents(scale_t value)
 {
 	PRIVATE()->ScaledContents = value;
+	getContext()->paintElement();
 }
 
 void UILabel::mouseDoubleEvent(UIMouseEventRaw event)
@@ -286,7 +289,7 @@ void UILabel::mouseDoubleEvent(UIMouseEventRaw event)
 	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->LinkActivated.signal(PRIVATE()->Text);
 		}
@@ -299,7 +302,7 @@ void UILabel::mousePressEvent(UIMouseEventRaw event)
 	if (viewport.X <= event->X && event->X <= viewport.X + viewport.W
 		&& viewport.Y <= event->Y && event->Y <= viewport.Y + viewport.H)
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->LinkActivated.signal(PRIVATE()->Text);
 		}

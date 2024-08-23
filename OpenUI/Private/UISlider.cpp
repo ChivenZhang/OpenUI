@@ -1,4 +1,5 @@
 #include "../UISlider.h"
+#include "../UIContext.h"
 
 /// @brief 
 class UISliderPrivate : public UIElementPrivate
@@ -90,6 +91,8 @@ bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
 			PRIVATE()->Value = std::clamp<int32_t>(PRIVATE()->Value, PRIVATE()->Minimum, PRIVATE()->Maximum);
 			PRIVATE()->OnSliderMoved.signal(PRIVATE()->Value);
 			if (PRIVATE()->Tracking) if (PRIVATE()->Value != oldValue) PRIVATE()->OnValueChanged.signal(PRIVATE()->Value);
+
+			if (getContext()) getContext()->layoutElement();
 		}
 	} break;
 	}

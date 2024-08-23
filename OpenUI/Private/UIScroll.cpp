@@ -1,4 +1,5 @@
 #include "../UIScroll.h"
+#include "../UIContext.h"
 
 class UIScrollPrivate : public UIElementPrivate
 {
@@ -264,6 +265,8 @@ void UIScroll::wheelEvent(UIMouseWheelEventRaw event)
 		getHorizontalBar()->setValue(getHorizontalBar()->getValue() + event->AngleX * getHorizontalBar()->getSingleStep());
 		getVerticalBar()->setValue(getVerticalBar()->getValue() - event->AngleY * getVerticalBar()->getSingleStep());
 		event->Accept = true;
+
+		if (getContext()) getContext()->layoutElement();
 	}
 }
 

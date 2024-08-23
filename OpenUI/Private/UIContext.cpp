@@ -13,7 +13,10 @@ public:
 	UIRenderRef Render;
 	UIPainterRef Painter;
 	UIElementRaw Focus;
+	bool NeedLayout = true, NeedPaint = true;
+	UIVector<UIPrimitive> RenderList;
 	UIVector<UIElementRaw> AnimateList;
+	UIVector<UIElementRef> TopLevelView;
 	UIVector<UIContextElement> TopLevelList;
 };
 #define PRIVATE() ((UIContextPrivateData*) m_Private)
@@ -110,6 +113,9 @@ bool UIContext::addElement(UIElementRef value, int32_t zorder)
 	value->setContext(this);
 	value->setParent(nullptr);
 	std::sort(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [](UIContextElement const& a, UIContextElement const& b) { return a.ZOrder < b.ZOrder; });
+	PRIVATE()->TopLevelView.resize(PRIVATE()->TopLevelList.size());
+	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i) PRIVATE()->TopLevelView[i] = PRIVATE()->TopLevelList[i].Element;
+	layoutElement();
 	return true;
 }
 
@@ -118,8 +124,11 @@ bool UIContext::removeElement(UIElementRef value)
 	auto result = std::remove_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextElement const& e)->bool { return e.Element == value; });
 	if (result == PRIVATE()->TopLevelList.end()) return false;
 	PRIVATE()->TopLevelList.erase(result, PRIVATE()->TopLevelList.end());
+	PRIVATE()->TopLevelView.resize(PRIVATE()->TopLevelList.size());
+	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i) PRIVATE()->TopLevelView[i] = PRIVATE()->TopLevelList[i].Element;
 	value->setContext(nullptr);
 	value->setParent(nullptr);
+	layoutElement();
 	return true;
 }
 
@@ -131,10 +140,32 @@ void UIContext::removeElement()
 		PRIVATE()->TopLevelList[i].Element->setParent(nullptr);
 	}
 	PRIVATE()->TopLevelList.clear();
+	PRIVATE()->TopLevelView.clear();
+	layoutElement();
 }
 
-void UIContext::layoutElement(UIRect client)
+bool UIContext::existElement(UIElementRef value) const
 {
+	auto result = std::find(PRIVATE()->TopLevelView.begin(), PRIVATE()->TopLevelView.end(), value);
+	return result != PRIVATE()->TopLevelView.end();
+}
+
+UIArrayView<const UIElementRef> UIContext::getElement() const
+{
+	return PRIVATE()->TopLevelView;
+}
+
+void UIContext::layoutElement()
+{
+	PRIVATE()->NeedLayout = true;
+	paintElement();
+}
+
+bool UIContext::layoutElement(UIRect client)
+{
+	if (PRIVATE()->NeedLayout == false) return false;
+	PRIVATE()->NeedLayout = false;
+
 	UILambda<void(UIElementRaw, UIRect)> arrange_func;
 	arrange_func = [&](UIElementRaw element, UIRect client) {
 
@@ -402,57 +433,49 @@ void UIContext::layoutElement(UIRect client)
 
 		relayout_func(PRIVATE()->TopLevelList[i].Element.get(), client, client);
 	}
+	return true;
 }
 
-void UIContext::paintElement(UIRect client)
+void UIContext::paintElement()
 {
+	PRIVATE()->NeedPaint = true;
+}
+
+bool UIContext::paintElement(UIRect client)
+{
+	if (PRIVATE()->NeedPaint == false) return false;
+	PRIVATE()->NeedPaint = false;
+
 	UILambda<void(UIElementRaw, UIRect, UIPainterRaw)> foreach_func;
 	foreach_func = [&](UIElementRaw element, UIRect client, UIPainterRaw painter) {
-		if (element->getVisible() == false) return;
-		if (element->getPainter()) painter = element->getPainter();
-		if (painter == nullptr) return;
+		if (element->getVisible() == false || painter == nullptr) return;
 		element->paint(client, painter);
 		auto childList = element->getChildren();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds(), painter);
 		element->repaint(client, painter);
 		};
+
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
 		foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds(), getPainter());
 	}
+	return true;
 }
 
 void UIContext::renderElement(UIRect client)
 {
-	if (getRender() == nullptr) return;
-
-	UIVector<UIPrimitive> renderList;
-	UILambda<void(UIElementRaw, UIRect client)> foreach_func;
-	foreach_func = [&](UIElementRaw element, UIRect client) {
-		if (element->getVisible() == false) return;
-		if (element->getPainter()) renderList.emplace_back(element->getPainter(), element->getPrimitive());
-		auto childList = element->getChildren();
-		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds());
-		};
-
-	if (getPainter())
+	if (getPainter() && getRender())
 	{
-		auto viewport = client;
-		UIPointUV3 primitive[2];
-		primitive[0].P0 = { viewport.X, viewport.Y };
-		primitive[0].P1 = { viewport.X + viewport.W, viewport.Y };
-		primitive[0].P2 = { viewport.X + viewport.W, viewport.Y + viewport.H };
-		primitive[1].P0 = { viewport.X, viewport.Y };
-		primitive[1].P1 = { viewport.X + viewport.W, viewport.Y + viewport.H };
-		primitive[1].P2 = { viewport.X, viewport.Y + viewport.H };
-		renderList.emplace_back(getPainter(), primitive);
+		UIPointUV3 pointList[2];
+		pointList[0].P0 = { client.X, client.Y };
+		pointList[0].P1 = { client.X + client.W, client.Y };
+		pointList[0].P2 = { client.X + client.W, client.Y + client.H };
+		pointList[1].P0 = { client.X, client.Y };
+		pointList[1].P1 = { client.X + client.W, client.Y + client.H };
+		pointList[1].P2 = { client.X, client.Y + client.H };
+		UIPrimitive primitive{ getPainter(), pointList };
+		getRender()->render(client, UIArrayView<UIPrimitive>(&primitive, 1));
 	}
-
-	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
-	{
-		foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds());
-	}
-	getRender()->render(client, renderList);
 }
 
 void UIContext::animateElement(float time)

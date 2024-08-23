@@ -2,10 +2,12 @@
 #include "../UIContext.h"
 #include "../UIPainter.h"
 #include <yoga/Yoga.h>
+#pragma comment(lib, "yogacore.lib")
 
 class UIElementPrivateData : public UIElementPrivate
 {
 public:
+	UIString Identity;
 	UIElementRaw Parent = nullptr;
 	UIVector<UIElementRef> Children;
 	UIPainterRef Painter;
@@ -57,6 +59,16 @@ UIElement::~UIElement()
 	delete m_Private; m_Private = nullptr;
 }
 
+UIString UIElement::getID() const
+{
+	return PRIVATE()->Identity;
+}
+
+void UIElement::setID(UIString value)
+{
+	PRIVATE()->Identity = value;
+}
+
 UIElementRaw UIElement::getParent() const
 {
 	return PRIVATE()->Parent;
@@ -105,6 +117,15 @@ void UIElement::setStyleText(UIString name, UIString value)
 {
 }
 
+UIString UIElement::getAttribute(UIString name) const
+{
+	return UIString();
+}
+
+void UIElement::setAttribute(UIString name, UIString value)
+{
+}
+
 UIArrayView<const UIPointUV3> UIElement::getPrimitive() const
 {
 	auto viewport = UIOverlap(getViewport(), getBounds());
@@ -122,8 +143,9 @@ bool UIElement::addElement(UIElementRef value)
 	if (value == nullptr || value.get() == this) return false;
 	auto result = std::find(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
 	if (result == PRIVATE()->Children.end()) PRIVATE()->Children.push_back(value);
-	value->setContext(PRIVATE()->Context);
+	value->setContext(getContext());
 	value->setParent(this);
+	if (getContext()) getContext()->layoutElement();
 	return true;
 }
 
@@ -132,6 +154,7 @@ bool UIElement::removeElement(UIElementRef value)
 	auto result = std::remove(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
 	if (result == PRIVATE()->Children.end()) return false;
 	PRIVATE()->Children.erase(result, PRIVATE()->Children.end());
+	if (getContext()) getContext()->layoutElement();
 	value->setContext(nullptr);
 	value->setParent(nullptr);
 	return true;
@@ -139,12 +162,61 @@ bool UIElement::removeElement(UIElementRef value)
 
 void UIElement::removeElement()
 {
+	if (getContext()) getContext()->layoutElement();
 	for (size_t i = 0; i < PRIVATE()->Children.size(); ++i)
 	{
 		PRIVATE()->Children[i]->setContext(nullptr);
 		PRIVATE()->Children[i]->setParent(nullptr);
 	}
 	PRIVATE()->Children.clear();
+}
+
+UIElementRef UIElement::getElementByID(UIString identity) const
+{
+	return getElement([=](UIElementRef element)->bool { return element->getID() == identity; });
+}
+
+UIVector<UIElementRef> UIElement::getElementsByID(UIString identity) const
+{
+	return getElements([=](UIElementRef element)->bool { return element->getID() == identity; });
+}
+
+UIElementRef UIElement::getElement(UILambda<bool(UIElementRef)> selector) const
+{
+	UIElementRef result;
+	UILambda<bool(UIElementRef)> foreach_func;
+	foreach_func = [&](UIElementRef element)->bool {
+		if (selector && selector(element))
+		{
+			result = element;
+			return false;
+		}
+		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		{
+			if (foreach_func(element->getChildren()[i]) == false) return false;
+		}
+		return true;
+		};
+	foreach_func(std::const_pointer_cast<UIElement>(this->shared_from_this()));
+	return result;
+}
+
+UIVector<UIElementRef> UIElement::getElements(UILambda<bool(UIElementRef)> selector) const
+{
+	UIVector<UIElementRef> result;
+	UILambda<void(UIElementRef)> foreach_func;
+	foreach_func = [&](UIElementRef element) {
+		if (selector && selector(element))
+		{
+			result.push_back(element);
+		}
+		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		{
+			foreach_func(element->getChildren()[i]);
+		}
+		};
+	foreach_func(std::const_pointer_cast<UIElement>(this->shared_from_this()));
+	return result;
 }
 
 void UIElement::arrange(UIRect client)
@@ -773,6 +845,7 @@ void UIElement::setContext(UIContextRaw value)
 {
 	PRIVATE()->Context = value;
 	if (getContext()) getContext()->setAnimate(this, getAnimate());
+	for (size_t i = 0; i < getChildren().size(); ++i) getChildren()[i]->setContext(value);
 }
 
 void UIElement::setParent(UIElementRaw value)

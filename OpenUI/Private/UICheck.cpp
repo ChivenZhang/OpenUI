@@ -140,6 +140,7 @@ void UICheck::setChecked(bool value)
 	PRIVATE()->Button->setChecked(value);
 	if (PRIVATE()->Checked) PRIVATE()->Button->setText("✔");
 	else PRIVATE()->Button->setText("");
+	if (getContext()) getContext()->paintElement();
 }
 
 UIButtonRaw UICheck::getButton() const
@@ -156,7 +157,7 @@ void UICheck::mouseDoubleEvent(UIMouseEventRaw event)
 {
 	if (inBounds(event->X, event->Y))
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->Pressed = true;
 			PRIVATE()->Checked = !PRIVATE()->Checked;
@@ -165,6 +166,7 @@ void UICheck::mouseDoubleEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
+			if (getContext()) getContext()->paintElement();
 		}
 	}
 }
@@ -173,7 +175,7 @@ void UICheck::mousePressEvent(UIMouseEventRaw event)
 {
 	if (inBounds(event->X, event->Y))
 	{
-		if (event->Button == 1)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			PRIVATE()->Pressed = true;
 			PRIVATE()->Checked = !PRIVATE()->Checked;
@@ -182,6 +184,7 @@ void UICheck::mousePressEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
+			if (getContext()) getContext()->paintElement();
 
 			event->Accept = true;
 		}
@@ -190,12 +193,13 @@ void UICheck::mousePressEvent(UIMouseEventRaw event)
 
 void UICheck::mouseReleaseEvent(UIMouseEventRaw event)
 {
-	if (event->Button == 1)
+	if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 	{
 		if (PRIVATE()->Pressed)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
+			if (getContext()) getContext()->paintElement();
 
 			event->Accept = true;
 		}
@@ -210,10 +214,12 @@ void UICheck::mouseMoveEvent(UIMouseEventRaw event)
 	{
 		PRIVATE()->Hovered = true;
 		PRIVATE()->OnHovered.signal();
+		if (getContext()) getContext()->paintElement();
 	}
 	else
 	{
 		PRIVATE()->Hovered = false;
+		if (getContext()) getContext()->paintElement();
 	}
 }
 
@@ -224,6 +230,7 @@ void UICheck::enterEvent(UIMouseEventRaw event)
 void UICheck::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
+	if (getContext()) getContext()->paintElement();
 }
 
 UIString UICheckFactory::getTagName() const

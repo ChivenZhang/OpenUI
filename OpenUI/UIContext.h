@@ -4,7 +4,12 @@
 #include "UIRender.h"
 
 /// @brief 
-class UIContextPrivate {};
+class UIContextPrivate
+{
+public:
+	virtual ~UIContextPrivate() = default;
+};
+
 using UIContextPrivateRaw = UIRaw<UIContextPrivate>;
 
 /// @brief 
@@ -25,8 +30,12 @@ public:
 	virtual bool addElement(UIElementRef value, int32_t zorder = 0);
 	virtual bool removeElement(UIElementRef value);
 	virtual void removeElement();
-	virtual void layoutElement(UIRect client);
-	virtual void paintElement(UIRect client);
+	virtual bool existElement(UIElementRef value) const;
+	virtual UIArrayView<const UIElementRef> getElement() const;
+	virtual void layoutElement();
+	virtual bool layoutElement(UIRect client);
+	virtual void paintElement();
+	virtual bool paintElement(UIRect client);
 	virtual void renderElement(UIRect client);
 	virtual void animateElement(float time);
 
