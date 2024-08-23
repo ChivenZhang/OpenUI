@@ -2,6 +2,14 @@
 #include "UI.h"
 
 /// @brief 
+class UIPainterPrivate
+{
+public:
+	virtual ~UIPainterPrivate() = default;
+};
+using UIPainterPrivateRaw = UIRaw<UIPainterPrivate>;
+
+/// @brief 
 class OPENUI_API UIPainter
 {
 public:

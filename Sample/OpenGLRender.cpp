@@ -119,12 +119,12 @@ void OpenGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 	{
 		for (size_t k = 0; k < maxTextureUnits && i + k < data.size(); ++k)
 		{
-			auto primitive = data[i].Primitive;
+			auto primitive = data[i + k].Primitive;
 			auto painter = UICast<OpenGLPainter>(data[i + k].Painter);
 			if (primitive.empty() || painter == nullptr) continue;
 
 			// 绑定到纹理数组
-			auto texture = painter->getTextureUpdated();
+			auto texture = painter->getTexture();
 			glActiveTexture(GL_TEXTURE0 + k);
 			glBindTexture(GL_TEXTURE_2D, texture);
 

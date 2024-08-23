@@ -1,12 +1,31 @@
 #include "OpenGLPainter.h"
 #include <GL/glew.h>
+#include <cairo/cairo.h>
+#include <pango/pangocairo.h>
+
+class UIPainterPrivateData : public UIPainterPrivate
+{
+public:
+	uint32_t NativeTexture;
+	cairo_t* NativeContext;
+	PangoLayout* NativeLayout;
+	cairo_surface_t* NativeSurface;
+	UIPen Pen;
+	UIFont Font;
+	UIBrush Brush;
+	UIRect CilpRect;
+	bool EnableCilp = false;
+};
+#define PRIVATE() ((UIPainterPrivateData*) m_Private)
 
 OpenGLPainter::OpenGLPainter(uint32_t width, uint32_t height)
 {
-	m_NativeTexture = 0;
-	glGenTextures(1, &m_NativeTexture);
-	if (m_NativeTexture == 0) ::exit(-1);
-	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
+	m_Private = new UIPainterPrivateData;
+
+	PRIVATE()->NativeTexture = 0;
+	glGenTextures(1, &PRIVATE()->NativeTexture);
+	if (PRIVATE()->NativeTexture == 0) ::exit(-1);
+	glBindTexture(GL_TEXTURE_2D, PRIVATE()->NativeTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -14,16 +33,16 @@ OpenGLPainter::OpenGLPainter(uint32_t width, uint32_t height)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
-	m_NativeContext = cairo_create(m_NativeSurface);
-	auto cr = m_NativeContext;
+	PRIVATE()->NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
+	PRIVATE()->NativeContext = cairo_create(PRIVATE()->NativeSurface);
+	auto cr = PRIVATE()->NativeContext;
 	cairo_set_source_rgba(cr, 0, 0, 0, 1);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
 	cairo_paint(cr);
 
-	m_NativeLayout = pango_cairo_create_layout(cr);
-	auto& font = m_Font;
-	auto layout = m_NativeLayout;
+	PRIVATE()->NativeLayout = pango_cairo_create_layout(cr);
+	auto& font = PRIVATE()->Font;
+	auto layout = PRIVATE()->NativeLayout;
 	auto font_desc = pango_font_description_new();
 	pango_font_description_set_family(font_desc, font.Family.c_str());
 	pango_font_description_set_style(font_desc, (PangoStyle)font.Style);
@@ -35,15 +54,16 @@ OpenGLPainter::OpenGLPainter(uint32_t width, uint32_t height)
 
 OpenGLPainter::~OpenGLPainter()
 {
-	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
-	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
-	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+	g_object_unref(PRIVATE()->NativeLayout); PRIVATE()->NativeLayout = nullptr;
+	cairo_destroy(PRIVATE()->NativeContext); PRIVATE()->NativeContext = nullptr;
+	cairo_surface_destroy(PRIVATE()->NativeSurface); PRIVATE()->NativeSurface = nullptr;
+	delete  m_Private; m_Private = nullptr;
 }
 
 UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, int* row, int* column, UIRectRaw cursorRect)
 {
-	auto layout = m_NativeLayout;
-	auto& font = m_Font;
+	auto layout = PRIVATE()->NativeLayout;
+	auto& font = PRIVATE()->Font;
 
 	pango_layout_set_text(layout, text.c_str(), -1);
 	pango_layout_set_width(layout, width * PANGO_SCALE);
@@ -81,8 +101,8 @@ UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, 
 
 UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float row, float column, int* cursor, UIRectRaw cursorRect)
 {
-	auto layout = m_NativeLayout;
-	auto& font = m_Font;
+	auto layout = PRIVATE()->NativeLayout;
+	auto& font = PRIVATE()->Font;
 
 	pango_layout_set_text(layout, text.c_str(), -1);
 	pango_layout_set_width(layout, width * PANGO_SCALE);
@@ -118,8 +138,8 @@ UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, 
 
 UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* row, int* column, int* cursor, UIRectRaw cursorRect)
 {
-	auto layout = m_NativeLayout;
-	auto& font = m_Font;
+	auto layout = PRIVATE()->NativeLayout;
+	auto& font = PRIVATE()->Font;
 
 	pango_layout_set_text(layout, text.c_str(), -1);
 	pango_layout_set_width(layout, width * PANGO_SCALE);
@@ -162,27 +182,27 @@ UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, 
 void OpenGLPainter::drawArc(float x, float y, float width, float height, float startAngle, float spanAngle)
 {
 	if (width <= 0 || height <= 0) return;
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
 		cairo_arc(cr, width * 0.5, height * 0.5 / scale_factor, width * 0.5, startAngle * (M_PI / 180.0), spanAngle * (M_PI / 180.0));
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
 		cairo_arc(cr, width * 0.5, height * 0.5 / scale_factor, width * 0.5, startAngle * (M_PI / 180.0), spanAngle * (M_PI / 180.0));
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -191,19 +211,19 @@ void OpenGLPainter::drawArc(float x, float y, float width, float height, float s
 void OpenGLPainter::drawChord(float x, float y, float width, float height, float startAngle, float spanAngle)
 {
 	if (width <= 0 || height <= 0) return;
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
 		cairo_scale(cr, 1.0, scale_factor);
 		cairo_translate(cr, x, y / scale_factor);
 		cairo_arc(cr, 0, 0, width * 0.5, startAngle * (M_PI / 180.0), spanAngle * (M_PI / 180.0));
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -211,8 +231,8 @@ void OpenGLPainter::drawChord(float x, float y, float width, float height, float
 		cairo_translate(cr, x, y / scale_factor);
 		cairo_arc(cr, 0, 0, width * 0.5, startAngle * (M_PI / 180.0), spanAngle * (M_PI / 180.0));
 		cairo_close_path(cr);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -225,7 +245,7 @@ void OpenGLPainter::drawEllipse(float x, float y, float width, float height)
 
 void OpenGLPainter::drawImage(float x, float y, UIImage image, float sx, float sy, float sw, float sh)
 {
-	auto cr = m_NativeContext;
+	auto cr = PRIVATE()->NativeContext;
 	if (image.Data.size() == image.Height * image.Stride)
 	{
 		if (image.Width * 4 != image.Stride) return;
@@ -241,12 +261,12 @@ void OpenGLPainter::drawImage(float x, float y, UIImage image, float sx, float s
 
 void OpenGLPainter::drawLine(float x1, float y1, float x2, float y2)
 {
-	auto cr = m_NativeContext;
-	if (m_Pen.Style != UIPen::NoPen)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_move_to(cr, x1, y1);
 		cairo_line_to(cr, x2, y2);
 		cairo_stroke(cr);
@@ -256,12 +276,12 @@ void OpenGLPainter::drawLine(float x1, float y1, float x2, float y2)
 
 void OpenGLPainter::drawLines(UIArrayView<UILine> lines)
 {
-	auto cr = m_NativeContext;
-	if (m_Pen.Style != UIPen::NoPen && 2 <= lines.size())
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Pen.Style != UIPen::NoPen && 2 <= lines.size())
 	{
 		cairo_save(cr); setClipping(true);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		for (size_t i = 0; i < lines.size(); ++i)
 		{
 			if (i == 0) cairo_move_to(cr, lines[i].P0.X, lines[i].P0.Y);
@@ -275,8 +295,8 @@ void OpenGLPainter::drawLines(UIArrayView<UILine> lines)
 void OpenGLPainter::drawPie(float x, float y, float width, float height, float startAngle, float spanAngle)
 {
 	if (width <= 0 || height <= 0) return;
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -284,11 +304,11 @@ void OpenGLPainter::drawPie(float x, float y, float width, float height, float s
 		cairo_translate(cr, x, y / scale_factor);
 		cairo_move_to(cr, 0, 0);
 		cairo_arc(cr, 0, 0, width * 0.5, startAngle * (M_PI / 180.0), spanAngle * (M_PI / 180.0));
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		auto scale_factor = 1.0 * height / width;
@@ -297,8 +317,8 @@ void OpenGLPainter::drawPie(float x, float y, float width, float height, float s
 		cairo_move_to(cr, 0, 0);
 		cairo_arc(cr, 0, 0, width * 0.5, startAngle * (M_PI / 180.0), spanAngle * (M_PI / 180.0));
 		cairo_close_path(cr);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -306,21 +326,21 @@ void OpenGLPainter::drawPie(float x, float y, float width, float height, float s
 
 void OpenGLPainter::drawPoint(float x, float y)
 {
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x - 1, y - 1, 2, 2);
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x - 1, y - 1, 2, 2);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -328,21 +348,21 @@ void OpenGLPainter::drawPoint(float x, float y)
 
 void OpenGLPainter::drawPoints(UIArrayView<UIPoint> points)
 {
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i) cairo_rectangle(cr, points[i].X - 1, points[i].Y - 1, 2, 2);
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i) cairo_rectangle(cr, points[i].X - 1, points[i].Y - 1, 2, 2);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -350,8 +370,8 @@ void OpenGLPainter::drawPoints(UIArrayView<UIPoint> points)
 
 void OpenGLPainter::drawPolygon(UIArrayView<UIPoint> points)
 {
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush && 2 <= points.size())
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush && 2 <= points.size())
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
@@ -359,11 +379,11 @@ void OpenGLPainter::drawPolygon(UIArrayView<UIPoint> points)
 			if (i == 0) cairo_move_to(cr, points[i].X, points[i].Y);
 			else cairo_line_to(cr, points[i].X, points[i].Y);
 		}
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen && 2 <= points.size())
+	if (PRIVATE()->Pen.Style != UIPen::NoPen && 2 <= points.size())
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
@@ -372,8 +392,8 @@ void OpenGLPainter::drawPolygon(UIArrayView<UIPoint> points)
 			else cairo_line_to(cr, points[i].X, points[i].Y);
 		}
 		cairo_close_path(cr);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -381,8 +401,8 @@ void OpenGLPainter::drawPolygon(UIArrayView<UIPoint> points)
 
 void OpenGLPainter::drawPolyline(UIArrayView<UIPoint> points)
 {
-	auto cr = m_NativeContext;
-	if (m_Pen.Style != UIPen::NoPen && 2 <= points.size())
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Pen.Style != UIPen::NoPen && 2 <= points.size())
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < points.size(); ++i)
@@ -390,8 +410,8 @@ void OpenGLPainter::drawPolyline(UIArrayView<UIPoint> points)
 			if (i == 0) cairo_move_to(cr, points[i].X, points[i].Y);
 			else cairo_line_to(cr, points[i].X, points[i].Y);
 		}
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -399,21 +419,21 @@ void OpenGLPainter::drawPolyline(UIArrayView<UIPoint> points)
 
 void OpenGLPainter::drawRect(float x, float y, float width, float height)
 {
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush && 0 <= width && 0 <= height)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush && 0 <= width && 0 <= height)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x, y, width, height);
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen && 0 <= width && 0 <= height)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen && 0 <= width && 0 <= height)
 	{
 		cairo_save(cr); setClipping(true);
 		cairo_rectangle(cr, x, y, width, height);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -421,27 +441,27 @@ void OpenGLPainter::drawRect(float x, float y, float width, float height)
 
 void OpenGLPainter::drawRects(UIArrayView<UIRect> rects)
 {
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < rects.size(); ++i)
 		{
 			if (0 < rects[i].W && 0 < rects[i].H) cairo_rectangle(cr, rects[i].X, rects[i].Y, rects[i].W, rects[i].H);
 		}
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		for (size_t i = 0; i < rects.size(); ++i)
 		{
 			if (0 < rects[i].W && 0 < rects[i].H) cairo_rectangle(cr, rects[i].X, rects[i].Y, rects[i].W, rects[i].H);
 		}
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -449,8 +469,8 @@ void OpenGLPainter::drawRects(UIArrayView<UIRect> rects)
 
 void OpenGLPainter::drawRoundedRect(float x, float y, float width, float height, float xRadius, float yRadius)
 {
-	auto cr = m_NativeContext;
-	if (m_Brush.Style != UIBrush::NoBrush && 0 < width && 0 < height)
+	auto cr = PRIVATE()->NativeContext;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush && 0 < width && 0 < height)
 	{
 		if (xRadius > width * 0.5f) xRadius = width * 0.5f;
 		if (yRadius > height * 0.5f) yRadius = height * 0.5f;
@@ -464,11 +484,11 @@ void OpenGLPainter::drawRoundedRect(float x, float y, float width, float height,
 		cairo_arc(cr, x + width - xRadius, (y + height - yRadius) * scale_inverse, xRadius, 0, 90 * to_radius);
 		cairo_arc(cr, x + xRadius, (y + height - yRadius) * scale_inverse, xRadius, 90 * to_radius, 180 * to_radius);
 		cairo_arc(cr, x + xRadius, (y + yRadius) * scale_inverse, xRadius, 180 * to_radius, 270 * to_radius);
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		cairo_fill(cr);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen && 0 < width && 0 < height)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen && 0 < width && 0 < height)
 	{
 		if (xRadius > width * 0.5f) xRadius = width * 0.5f;
 		if (yRadius > height * 0.5f) yRadius = height * 0.5f;
@@ -483,8 +503,8 @@ void OpenGLPainter::drawRoundedRect(float x, float y, float width, float height,
 		cairo_arc(cr, x + xRadius, (y + height - yRadius) * scale_inverse, xRadius, 90 * to_radius, 180 * to_radius);
 		cairo_arc(cr, x + xRadius, (y + yRadius) * scale_inverse, xRadius, 180 * to_radius, 270 * to_radius);
 		cairo_close_path(cr);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -492,10 +512,10 @@ void OpenGLPainter::drawRoundedRect(float x, float y, float width, float height,
 
 void OpenGLPainter::drawText(float x, float y, float width, float height, const UIString& text, UIRectRaw boundingRect, float cursor, UIRectRaw cursorRect)
 {
-	auto cr = m_NativeContext;
-	auto layout = m_NativeLayout;
-	auto& font = m_Font;
-	if (m_Brush.Style != UIBrush::NoBrush)
+	auto cr = PRIVATE()->NativeContext;
+	auto layout = PRIVATE()->NativeLayout;
+	auto& font = PRIVATE()->Font;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
 		cairo_save(cr); setClipping(true);
 		pango_layout_set_text(layout, text.c_str(), -1);
@@ -523,11 +543,11 @@ void OpenGLPainter::drawText(float x, float y, float width, float height, const 
 		}
 
 		cairo_move_to(cr, text_rect.X, text_rect.Y);
-		cairo_set_source_rgba(cr, m_Brush.Color.R, m_Brush.Color.G, m_Brush.Color.B, m_Brush.Color.A);
+		cairo_set_source_rgba(cr, PRIVATE()->Brush.Color.R, PRIVATE()->Brush.Color.G, PRIVATE()->Brush.Color.B, PRIVATE()->Brush.Color.A);
 		pango_cairo_show_layout(cr, layout);
 		cairo_restore(cr);
 	}
-	if (m_Pen.Style != UIPen::NoPen)
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
 		cairo_save(cr); setClipping(true);
 		pango_layout_set_width(layout, width * PANGO_SCALE);
@@ -555,8 +575,8 @@ void OpenGLPainter::drawText(float x, float y, float width, float height, const 
 
 		cairo_move_to(cr, text_rect.X, text_rect.Y);
 		pango_cairo_layout_path(cr, layout);
-		cairo_set_line_width(cr, m_Pen.Width);
-		cairo_set_source_rgba(cr, m_Pen.Color.R, m_Pen.Color.G, m_Pen.Color.B, m_Pen.Color.A);
+		cairo_set_line_width(cr, PRIVATE()->Pen.Width);
+		cairo_set_source_rgba(cr, PRIVATE()->Pen.Color.R, PRIVATE()->Pen.Color.G, PRIVATE()->Pen.Color.B, PRIVATE()->Pen.Color.A);
 		cairo_stroke(cr);
 		cairo_restore(cr);
 	}
@@ -564,32 +584,32 @@ void OpenGLPainter::drawText(float x, float y, float width, float height, const 
 
 UIPen const& OpenGLPainter::getPen() const
 {
-	return m_Pen;
+	return PRIVATE()->Pen;
 }
 
 void OpenGLPainter::setPen(const UIPen& pen)
 {
-	m_Pen = pen;
+	PRIVATE()->Pen = pen;
 }
 
 UIBrush const& OpenGLPainter::getBrush() const
 {
-	return m_Brush;
+	return PRIVATE()->Brush;
 }
 
 void OpenGLPainter::setBrush(const UIBrush& brush)
 {
-	m_Brush = brush;
+	PRIVATE()->Brush = brush;
 }
 
 UIFont const& OpenGLPainter::getFont() const
 {
-	return m_Font;
+	return PRIVATE()->Font;
 }
 
 void OpenGLPainter::setFont(const UIFont& font)
 {
-	auto layout = m_NativeLayout;
+	auto layout = PRIVATE()->NativeLayout;
 	auto font_desc = pango_layout_get_font_description(layout);
 	if (pango_font_description_get_family(font_desc) != font.Family
 		|| pango_font_description_get_style(font_desc) != (PangoStyle)font.Style
@@ -636,15 +656,15 @@ void OpenGLPainter::setFont(const UIFont& font)
 	pango_layout_set_spacing(layout, font.Spacing);
 	pango_layout_set_line_spacing(layout, font.LineSpacing);
 	pango_layout_set_single_paragraph_mode(layout, font.NoWrap);
-	m_Font = font;
+	PRIVATE()->Font = font;
 }
 
 void OpenGLPainter::setClipping(bool enable)
 {
-	auto cr = m_NativeContext;
+	auto cr = PRIVATE()->NativeContext;
 	if (enable)
 	{
-		cairo_rectangle(cr, m_CilpRect.X, m_CilpRect.Y, m_CilpRect.W, m_CilpRect.H);
+		cairo_rectangle(cr, PRIVATE()->CilpRect.X, PRIVATE()->CilpRect.Y, PRIVATE()->CilpRect.W, PRIVATE()->CilpRect.H);
 		cairo_clip(cr);
 	}
 	else
@@ -655,8 +675,8 @@ void OpenGLPainter::setClipping(bool enable)
 
 void OpenGLPainter::setClipRect(float x, float y, float width, float height)
 {
-	auto cr = m_NativeContext;
-	m_CilpRect = UIRect{ (float)x, (float)y, (float)width, (float)height };
+	auto cr = PRIVATE()->NativeContext;
+	PRIVATE()->CilpRect = UIRect{ (float)x, (float)y, (float)width, (float)height };
 }
 
 void OpenGLPainter::setViewport(float x, float y, float width, float height)
@@ -671,62 +691,62 @@ void OpenGLPainter::shear(float sh, float sv)
 
 void OpenGLPainter::rotate(float angle)
 {
-	auto cr = m_NativeContext;
+	auto cr = PRIVATE()->NativeContext;
 	cairo_rotate(cr, angle * (M_PI / 180.0));
 }
 
 void OpenGLPainter::scale(float dx, float dy)
 {
-	auto cr = m_NativeContext;
+	auto cr = PRIVATE()->NativeContext;
 	cairo_scale(cr, dx, dy);
 }
 
 void OpenGLPainter::translate(float dx, float dy)
 {
-	auto cr = m_NativeContext;
+	auto cr = PRIVATE()->NativeContext;
 	cairo_translate(cr, dx, dy);
 }
 
 uint32_t OpenGLPainter::getWidth() const
 {
-	return cairo_image_surface_get_width(m_NativeSurface);
+	return cairo_image_surface_get_width(PRIVATE()->NativeSurface);
 }
 
 uint32_t OpenGLPainter::getHeight() const
 {
-	return cairo_image_surface_get_height(m_NativeSurface);
+	return cairo_image_surface_get_height(PRIVATE()->NativeSurface);
 }
 
 uint32_t OpenGLPainter::getStride() const
 {
-	return cairo_image_surface_get_stride(m_NativeSurface);
+	return cairo_image_surface_get_stride(PRIVATE()->NativeSurface);
 }
 
 UIArrayView<const uint8_t> OpenGLPainter::getPixelData() const
 {
-	return UIArrayView<const uint8_t>(cairo_image_surface_get_data(m_NativeSurface), getHeight() * getStride());
+	return UIArrayView<const uint8_t>(cairo_image_surface_get_data(PRIVATE()->NativeSurface), getHeight() * getStride());
 }
 
 void OpenGLPainter::resize(uint32_t width, uint32_t height)
 {
-	g_object_unref(m_NativeLayout); m_NativeLayout = nullptr;
-	cairo_destroy(m_NativeContext); m_NativeContext = nullptr;
-	cairo_surface_destroy(m_NativeSurface); m_NativeSurface = nullptr;
+	g_object_unref(PRIVATE()->NativeLayout); PRIVATE()->NativeLayout = nullptr;
+	cairo_destroy(PRIVATE()->NativeContext); PRIVATE()->NativeContext = nullptr;
+	cairo_surface_destroy(PRIVATE()->NativeSurface); PRIVATE()->NativeSurface = nullptr;
 
-	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
+	glBindTexture(GL_TEXTURE_2D, PRIVATE()->NativeTexture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	m_NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
-	m_NativeContext = cairo_create(m_NativeSurface);
-	auto cr = m_NativeContext;
+	PRIVATE()->NativeSurface = cairo_image_surface_create(cairo_format_t::CAIRO_FORMAT_ARGB32, width, height);
+	PRIVATE()->NativeContext = cairo_create(PRIVATE()->NativeSurface);
+	auto cr = PRIVATE()->NativeContext;
 	cairo_set_source_rgba(cr, 0, 0, 0, 1);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
 	cairo_paint(cr);
 
-	m_NativeLayout = pango_cairo_create_layout(cr);
-	auto& font = m_Font;
-	auto layout = m_NativeLayout;
+	PRIVATE()->NativeLayout = pango_cairo_create_layout(cr);
+	auto& font = PRIVATE()->Font;
+	auto layout = PRIVATE()->NativeLayout;
 	auto font_desc = pango_font_description_new();
 	pango_font_description_set_family(font_desc, font.Family.c_str());
 	pango_font_description_set_style(font_desc, (PangoStyle)font.Style);
@@ -738,13 +758,8 @@ void OpenGLPainter::resize(uint32_t width, uint32_t height)
 
 uint32_t OpenGLPainter::getTexture() const
 {
-	return m_NativeTexture;
-}
-
-uint32_t OpenGLPainter::getTextureUpdated() const
-{
-	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
+	glBindTexture(GL_TEXTURE_2D, PRIVATE()->NativeTexture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, getWidth(), getHeight(), GL_BGRA, GL_UNSIGNED_BYTE, getPixelData().data());
 	glBindTexture(GL_TEXTURE_2D, 0);
-	return m_NativeTexture;
+	return PRIVATE()->NativeTexture;
 }

@@ -1,7 +1,5 @@
 #pragma once
 #include <OpenUI/UIPainter.h>
-#include <cairo/cairo.h>
-#include <pango/pangocairo.h>
 
 class OpenGLPainter : public UIPainter
 {
@@ -45,16 +43,7 @@ public:
 	virtual UIArrayView<const uint8_t> getPixelData() const override;
 	virtual void resize(uint32_t width, uint32_t height) override;
 	uint32_t getTexture() const;
-	uint32_t getTextureUpdated() const;
 
-protected:
-	uint32_t m_NativeTexture;
-	cairo_t* m_NativeContext;
-	PangoLayout* m_NativeLayout;
-	cairo_surface_t* m_NativeSurface;
-	UIPen m_Pen;
-	UIFont m_Font;
-	UIBrush m_Brush;
-	UIRect m_CilpRect;
-	bool m_EnableCilp = false;
+private:
+	UIPainterPrivateRaw m_Private;
 };
