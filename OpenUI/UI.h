@@ -621,7 +621,7 @@ struct UIFont
 		WeightBlack = 900,
 	};
 	bool NoWrap = false;
-	UIString Family = "Segoe UI";
+	UIString Family = "微软雅黑";
 	uint32_t Align = align_t::AlignLeft;
 	style_t Style = style_t::StyleNormal;
 	weight_t Weight = weight_t::WeightNormal;
