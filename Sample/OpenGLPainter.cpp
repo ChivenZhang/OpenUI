@@ -655,7 +655,7 @@ void OpenGLPainter::setFont(const UIFont& font)
 	}
 	pango_layout_set_spacing(layout, font.Spacing);
 	pango_layout_set_line_spacing(layout, font.LineSpacing);
-	pango_layout_set_single_paragraph_mode(layout, font.NoWrap);
+	pango_layout_set_single_paragraph_mode(layout, font.LineWrap);
 	PRIVATE()->Font = font;
 }
 

@@ -620,13 +620,13 @@ struct UIFont
 		WeightExtraBold = 800,
 		WeightBlack = 900,
 	};
-	bool NoWrap = false;
 	UIString Family = "微软雅黑,Segoe UI Emoji";
 	uint32_t Align = align_t::AlignLeft;
 	style_t Style = style_t::StyleNormal;
 	weight_t Weight = weight_t::WeightNormal;
 	ellipsize_t Ellipsize = ellipsize_t::EllipsizeEnd;
 	direction_t Direction = direction_t::DirectionAutoLayout;
+	bool LineWrap = false;
 	float LineSpacing = 0;
 	uint32_t Size = 12, Spacing = 0;
 };
