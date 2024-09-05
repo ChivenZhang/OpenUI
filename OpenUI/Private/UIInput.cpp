@@ -96,7 +96,7 @@ void UIInput::paint(UIRect client, UIPainterRaw painter)
 		painter->setFont(PRIVATE()->Style.Foreground.Font);
 		painter->setBrush(PRIVATE()->Style.Foreground.Brush);
 		UIRect cursorRect;
-		painter->drawText(PRIVATE()->SelectOffset + client.X, client.Y, -1, client.H, PRIVATE()->Text, nullptr, PRIVATE()->Cursor, &cursorRect);
+		painter->drawText(PRIVATE()->SelectOffset + client.X, client.Y, client.W, client.H, PRIVATE()->Text, nullptr, PRIVATE()->Cursor, &cursorRect);
 
 		painter->setPen(PRIVATE()->Style.Background.Pen);
 		painter->setBrush({ .Style = UIBrush::NoBrush });

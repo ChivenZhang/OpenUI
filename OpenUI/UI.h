@@ -489,7 +489,7 @@ struct UIPen
 	};
 	style_t Style = style_t::SolidLine;
 	UIColor Color = UIColor{ 0, 0, 0, 1 };
-	float Width = 1.0f;
+	float Width = 2.0f;
 };
 static constexpr UIPen UINoPen
 {
