@@ -627,7 +627,8 @@ struct UIFont
 	weight_t Weight = weight_t::WeightNormal;
 	ellipsize_t Ellipsize = ellipsize_t::EllipsizeEnd;
 	direction_t Direction = direction_t::DirectionAutoLayout;
-	uint32_t Size = 12, Spacing = 0, LineSpacing = 0;
+	float LineSpacing = 0;
+	uint32_t Size = 12, Spacing = 0;
 };
 using UIFontAlign = UIFont::align_t;
 using UIFontAligns = uint32_t;
