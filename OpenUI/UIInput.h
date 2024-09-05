@@ -8,7 +8,7 @@ struct UIInputStyle
 	struct
 	{
 		UIPen Pen{ .Style = UIPen::NoPen, };
-		UIFont Font{ .LineWrap = true, .Align = UIFont::AlignLeft | UIFont::AlignVCenter, .Ellipsize = UIFont::EllipsizeNone, };
+		UIFont Font{ .LineWrap = false, .Align = UIFont::AlignLeft | UIFont::AlignVCenter, .Ellipsize = UIFont::EllipsizeNone, };
 		UIBrush Brush{ .Color {0,0,0,1}, };
 	} Foreground;
 	struct
