@@ -445,6 +445,7 @@ void UIInput::mouseDoubleEvent(UIMouseEventRaw event)
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
 			PRIVATE()->MousePress = true;
+			getContext()->paintElement();
 
 			getContext()->setFocus(this);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
@@ -470,6 +471,7 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
 			PRIVATE()->MousePress = true;
+			getContext()->paintElement();
 
 			getContext()->setFocus(this);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
