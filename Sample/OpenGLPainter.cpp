@@ -60,7 +60,7 @@ OpenGLPainter::~OpenGLPainter()
 	delete  m_Private; m_Private = nullptr;
 }
 
-UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, int* row, int* column, UIRectRaw cursorRect)
+UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect)
 {
 	auto layout = PRIVATE()->NativeLayout;
 	auto& font = PRIVATE()->Font;
@@ -80,14 +80,6 @@ UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, 
 	else if (font.Align & UIFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + std::round((height - text_height) * 0.5f); }
 	else if (font.Align & UIFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
 	else { text_rect.X = x; text_rect.Y = y; }
-
-	int32_t line_number, x_pos;
-	pango_layout_index_to_line_x(layout, cursor, 0, &line_number, &x_pos);
-	auto line = pango_layout_get_line_readonly(layout, line_number);
-	int32_t line_start_index = line->start_index;
-	int32_t column_number = cursor - line_start_index;
-	if (row) (*row) = line_number;
-	if (column) (*column) = column_number;
 
 	if (cursorRect)
 	{
@@ -99,44 +91,7 @@ UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, 
 	return text_rect;
 }
 
-UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float row, float column, int* cursor, UIRectRaw cursorRect)
-{
-	auto layout = PRIVATE()->NativeLayout;
-	auto& font = PRIVATE()->Font;
-
-	pango_layout_set_text(layout, text.c_str(), -1);
-	pango_layout_set_width(layout, width * PANGO_SCALE);
-	pango_layout_set_height(layout, height * PANGO_SCALE);
-
-	UIRect text_rect;
-	int32_t text_width, text_height;
-	int32_t baseline = pango_layout_get_baseline(layout);
-	pango_layout_get_pixel_size(layout, &text_width, &text_height);
-	text_rect.W = text_width; text_rect.H = text_height;
-
-	if (font.Align & UIFont::AlignTop) { text_rect.X = x; text_rect.Y = y; }
-	else if (font.Align & UIFont::AlignBottom) { text_rect.X = x; text_rect.Y = y + height - text_height; }
-	else if (font.Align & UIFont::AlignVCenter) { text_rect.X = x; text_rect.Y = y + std::round((height - text_height) * 0.5f); }
-	else if (font.Align & UIFont::AlignBaseline) { text_rect.X = x; text_rect.Y = y + baseline; }
-	else { text_rect.X = x; text_rect.Y = y; }
-
-	auto line = pango_layout_get_line_readonly(layout, row);
-	if (line)
-	{
-		auto _cursor = line->start_index + column;
-		if (cursor) (*cursor) = _cursor;
-		if (cursorRect)
-		{
-			PangoRectangle strong_pos, weak_pos;
-			pango_layout_get_cursor_pos(layout, _cursor, &strong_pos, &weak_pos);
-			(*cursorRect) = UIRect{ text_rect.X + (float)strong_pos.x / PANGO_SCALE, text_rect.Y + (float)strong_pos.y / PANGO_SCALE, 0, (float)strong_pos.height / PANGO_SCALE };
-		}
-	}
-
-	return text_rect;
-}
-
-UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* row, int* column, int* cursor, UIRectRaw cursorRect)
+UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect)
 {
 	auto layout = PRIVATE()->NativeLayout;
 	auto& font = PRIVATE()->Font;
@@ -160,13 +115,6 @@ UIRect OpenGLPainter::boundingRect(float x, float y, float width, float height, 
 	int32_t text_index, text_trailing;
 	pango_layout_xy_to_index(layout, (posX - text_rect.X) * PANGO_SCALE, (posY - text_rect.Y) * PANGO_SCALE, &text_index, &text_trailing);
 	auto _cursor = text_index + ((text_trailing) ? UIUTF8Num(text[text_index]) : 0);
-	int32_t line_number, x_pos;
-	pango_layout_index_to_line_x(layout, _cursor, 0, &line_number, &x_pos);
-	auto line = pango_layout_get_line_readonly(layout, line_number);
-	int32_t line_start_index = line->start_index;
-	int32_t column_number = _cursor - line_start_index;
-	if (row) (*row) = line_number;
-	if (column) (*column) = column_number;
 
 	if (cursor) (*cursor) = _cursor;
 	if (cursorRect)

@@ -80,7 +80,7 @@ void UICombo::arrange(UIRect client)
 		for (size_t i = 0; content && i < content->getChildren().size(); ++i)
 		{
 			auto itemWidget = UICast<UIButton>(content->getChildren()[i]);
-			auto textRect = painter->boundingRect(0, 0, FLT_MAX, FLT_MAX, itemWidget->getText(), 0, nullptr, nullptr);
+			auto textRect = painter->boundingRect(0, 0, FLT_MAX, FLT_MAX, itemWidget->getText(), 0);
 
 			content->getChildren()[i]->setFlexGrow(1);
 			content->getChildren()[i]->setMinWidth(textRect.W);

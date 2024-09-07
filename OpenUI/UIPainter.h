@@ -15,11 +15,9 @@ class OPENUI_API UIPainter
 public:
 	virtual ~UIPainter() = default;
 
-	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, int* row, int* column, UIRectRaw cursorRect = nullptr) = 0;
+	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect = nullptr) = 0;
 
-	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float row, float column, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
-
-	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* row, int* column, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
+	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
 
 	virtual void drawArc(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
 

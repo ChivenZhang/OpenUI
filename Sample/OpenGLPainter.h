@@ -6,9 +6,8 @@ class OpenGLPainter : public UIPainter
 public:
 	OpenGLPainter(uint32_t width, uint32_t height);
 	~OpenGLPainter();
-	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, int* row, int* column, UIRectRaw cursorRect) override;
-	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float row, float column, int* cursor, UIRectRaw cursorRect) override;
-	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* row, int* column, int* cursor, UIRectRaw cursorRect) override;
+	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect) override;
+	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect) override;
 	virtual void drawArc(float x, float y, float width, float height, float startAngle, float spanAngle) override;
 	virtual void drawChord(float x, float y, float width, float height, float startAngle, float spanAngle) override;
 	virtual void drawEllipse(float x, float y, float width, float height) override;
