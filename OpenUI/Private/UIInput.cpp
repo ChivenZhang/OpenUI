@@ -342,17 +342,17 @@ void UIInput::undo()
 void UIInput::keyPressEvent(UIKeyEventRaw event)
 {
 	// Backspace
-	if (event->Key == 8)
+	if (event->Key == UIInputEnum::KEY_BACKSPACE)
 	{
 		this->backspace();
 	}
 	// Del
-	if (event->Key == 127)
+	if (event->Key == UIInputEnum::KEY_DELETE)
 	{
 		this->del();
 	}
 	// Left
-	if (event->Key == 1073741904)
+	if (event->Key == UIInputEnum::KEY_LEFT)
 	{
 		int32_t bytes = 0;
 		for (size_t i = 0; i < 6 && i + 1 <= PRIVATE()->Cursor; ++i)
@@ -365,7 +365,7 @@ void UIInput::keyPressEvent(UIKeyEventRaw event)
 		deselect();
 	}
 	// Right
-	if (event->Key == 1073741903)
+	if (event->Key == UIInputEnum::KEY_RIGHT)
 	{
 		auto bytes = ::UIUTF8Num(PRIVATE()->Text[PRIVATE()->Cursor]);
 		PRIVATE()->Cursor = PRIVATE()->Cursor + bytes;
@@ -373,38 +373,39 @@ void UIInput::keyPressEvent(UIKeyEventRaw event)
 		deselect();
 	}
 	// CTRL + A
-	if (event->Key == 'a' && (event->Modifiers & 0x0040u || event->Modifiers & 0x0080u))
+	if (event->Key == UIInputEnum::KEY_A && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
 	{
 		setSelection(0, PRIVATE()->Text.length());
 	}
 	// CTRL + C
-	if (event->Key == 'c' && (event->Modifiers & 0x0040u || event->Modifiers & 0x0080u))
+	if (event->Key == UIInputEnum::KEY_C && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
 	{
 		auto text = copy();
 		PRIVATE()->OnTextCopied.signal(text);
 	}
 	// CTRL + V
-	if (event->Key == 'v' && (event->Modifiers & 0x0040u || event->Modifiers & 0x0080u))
+	if (event->Key == UIInputEnum::KEY_V && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
 	{
 		UIString text;
 		PRIVATE()->OnTextPasted.signal(text);
 		paste(text);
 	}
 	// CTRL + Z
-	if (event->Key == 'z' && (event->Modifiers & 0x0040u || event->Modifiers & 0x0080u))
+	if (event->Key == UIInputEnum::KEY_Z && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
 	{
 		undo();
 	}
 	// CTRL + Y
-	if (event->Key == 'y' && (event->Modifiers & 0x0040u || event->Modifiers & 0x0080u))
+	if (event->Key == UIInputEnum::KEY_Y && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
 	{
 		redo();
 	}
 	// CTRL + X
-	if (event->Key == 'x' && (event->Modifiers & 0x0040u || event->Modifiers & 0x0080u))
+	if (event->Key == UIInputEnum::KEY_X && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
 	{
 		cut();
 	}
+	getContext()->paintElement();
 }
 
 void UIInput::inputEvent(UITextInputEventRaw event)
@@ -426,6 +427,7 @@ void UIInput::inputEvent(UITextInputEventRaw event)
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 		}
+		getContext()->paintElement();
 	}
 }
 
@@ -433,7 +435,7 @@ void UIInput::mouseDoubleEvent(UIMouseEventRaw event)
 {
 	if (UIBounds(UIOverlap(getViewport(), getBounds()), event->X, event->Y))
 	{
-		if (event->Button == 1 || event->Button == 3)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT || event->Button == UIInputEnum::MOUSE_BUTTON_RIGHT)
 		{
 			auto painter = getPainter();
 			if (painter == nullptr) painter = getContext()->getPainter();
@@ -458,7 +460,7 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 {
 	if (UIBounds(UIOverlap(getViewport(), getBounds()), event->X, event->Y))
 	{
-		if (event->Button == 1 || event->Button == 3)
+		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT || event->Button == UIInputEnum::MOUSE_BUTTON_RIGHT)
 		{
 			auto painter = getPainter();
 			if (painter == nullptr) painter = getContext()->getPainter();
@@ -500,6 +502,8 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 		auto boundRect = painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor);
 		if (event->X < viewport.X && boundRect.X < viewport.X) PRIVATE()->SelectOffset += 1;
 		if (event->X > (viewport.X + viewport.W) && boundRect.X + boundRect.W > (viewport.X)) PRIVATE()->SelectOffset -= 1;
+
+		getContext()->paintElement();
 	}
 }
 
