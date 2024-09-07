@@ -59,12 +59,12 @@ void UIInput::layout(UIRect client)
 	if (painter == nullptr) return;
 	UIRect cursorRect;
 	painter->setFont(PRIVATE()->Style.Foreground.Font);
-	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
+	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 
 	if (PRIVATE()->CursorStart != -1 && PRIVATE()->CursorStart != PRIVATE()->Cursor)
 	{
 		UIRect cursorStartRect;
-		painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->CursorStart, &cursorStartRect);
+		painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, PRIVATE()->CursorStart, &cursorStartRect);
 
 		auto selectionX = std::min<float>(cursorStartRect.X, cursorRect.X);
 		auto selectionY = std::max<float>(cursorStartRect.X, cursorRect.X);
@@ -184,7 +184,7 @@ int32_t UIInput::getCursorPosition(int32_t x, int32_t y) const
 	if (painter == nullptr) return -1;
 	int32_t cursor = -1;
 	painter->setFont(PRIVATE()->Style.Foreground.Font);
-	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, x, y, &cursor);
+	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, x, y, &cursor);
 	return cursor;
 }
 
