@@ -424,7 +424,7 @@ void UIInput::inputEvent(UITextInputEventRaw event)
 			if (painter == nullptr) return;
 			UIRect cursorRect;
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
-			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
+			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 		}
 		getContext()->paintElement();
@@ -442,7 +442,7 @@ void UIInput::mouseDoubleEvent(UIMouseEventRaw event)
 			if (painter == nullptr) return;
 			UIRect cursorRect;
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
-			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
+			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
 			PRIVATE()->MousePress = true;
 
@@ -467,7 +467,7 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 			if (painter == nullptr) return;
 			UIRect cursorRect;
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
-			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
+			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
 			PRIVATE()->MousePress = true;
 
@@ -499,7 +499,7 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 		if (painter == nullptr) painter = getContext()->getPainter();
 		if (painter == nullptr) return;
 		painter->setFont(PRIVATE()->Style.Foreground.Font);
-		auto boundRect = painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor);
+		auto boundRect = painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, getBounds().W, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor);
 		if (event->X < viewport.X && boundRect.X < viewport.X) PRIVATE()->SelectOffset += 1;
 		if (event->X > (viewport.X + viewport.W) && boundRect.X + boundRect.W > (viewport.X)) PRIVATE()->SelectOffset -= 1;
 
