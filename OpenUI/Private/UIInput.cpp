@@ -505,7 +505,7 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 		if (event->X < viewport.X && boundRect.X < viewport.X) PRIVATE()->SelectOffset += 1;
 		if (event->X > (viewport.X + viewport.W) && boundRect.X + boundRect.W > (viewport.X)) PRIVATE()->SelectOffset -= 1;
 
-		getContext()->paintElement();
+		getContext()->layoutElement();
 	}
 }
 
