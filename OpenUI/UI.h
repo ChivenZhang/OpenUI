@@ -699,8 +699,9 @@ inline bool operator ==(UIFloat4x4 const& a, UIFloat4x4 const& b)
 
 struct UIImage
 {
-	uint32_t Width = 0, Height = 0, Stride = 0;
-	UIArrayView<const uint8_t> Data;
+	uint32_t Width = 0, Height = 0, Stride = 0, Channel = 0;
+	union { void* Pixel; size_t Data = 0; };
+	enum { Byte = 0, HWByte, Float, HWFloat, } Type = Byte;
 };
 using UIImageRaw = UIRaw<UIImage>;
 

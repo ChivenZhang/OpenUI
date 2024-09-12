@@ -34,8 +34,8 @@ UILabel::~UILabel()
 
 void UILabel::layout(UIRect client)
 {
-	if (PRIVATE()->Image.Data.empty()) return;
-	auto rawPixels = PRIVATE()->Image.Data.data();
+	if (PRIVATE()->Image.Pixel == nullptr) return;
+	auto rawPixels = PRIVATE()->Image.Pixel;
 	auto rawWidth = PRIVATE()->Image.Width;
 	auto rawHeight = PRIVATE()->Image.Height;
 	auto rawStride = PRIVATE()->Image.Stride;
@@ -71,7 +71,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Data = PRIVATE()->ImageDataScaled;
+			PRIVATE()->ImageScaled.Pixel = PRIVATE()->ImageDataScaled.data();
 		}
 	} break;
 	case ScaleNoRatio:
@@ -87,7 +87,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Data = PRIVATE()->ImageDataScaled;
+			PRIVATE()->ImageScaled.Pixel = PRIVATE()->ImageDataScaled.data();
 		}
 	} break;
 	case ScaleKeepRatio:
@@ -113,7 +113,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Data = PRIVATE()->ImageDataScaled;
+			PRIVATE()->ImageScaled.Pixel = PRIVATE()->ImageDataScaled.data();
 		}
 	} break;
 	}
@@ -138,7 +138,7 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 	}
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 
-	if (PRIVATE()->Image.Data.size())
+	if (PRIVATE()->Image.Pixel)
 	{
 		switch (PRIVATE()->ScaledContents)
 		{
@@ -247,21 +247,24 @@ UIImage UILabel::getPixmap() const
 
 void UILabel::setPixmap(UIImage image)
 {
-	if (image.Height * image.Stride == image.Data.size())
+	if (image.Pixel
+		&& image.Type == UIImage::Byte
+		&& image.Width * 4 == image.Stride)
 	{
 		auto channel = image.Stride / image.Width;
 		PRIVATE()->ImageData.resize(image.Width * image.Height * 4);
-		PRIVATE()->Image = UIImage{ image.Width, image.Height, image.Width * 4, PRIVATE()->ImageData };
+		PRIVATE()->Image = UIImage{ image.Width, image.Height, image.Width * 4, 0, PRIVATE()->ImageData.data() };
 		auto pixels = PRIVATE()->ImageData.data();
+		auto rawPixels = (uint8_t*)image.Pixel;
 		auto numPixels = image.Width * image.Height;
 		for (int i = 0; i < numPixels; ++i)
 		{
 			auto toIndex = 4 * i;
 			auto fromIndex = channel * i;
-			pixels[toIndex + 2] = (0 < channel) ? image.Data[fromIndex] : 0;
-			pixels[toIndex + 1] = (1 < channel) ? image.Data[fromIndex + 1] : 0;
-			pixels[toIndex + 0] = (2 < channel) ? image.Data[fromIndex + 2] : 0;
-			pixels[toIndex + 3] = (3 < channel) ? image.Data[fromIndex + 3] : 255;
+			pixels[toIndex + 2] = (0 < channel) ? rawPixels[fromIndex] : 0;
+			pixels[toIndex + 1] = (1 < channel) ? rawPixels[fromIndex + 1] : 0;
+			pixels[toIndex + 0] = (2 < channel) ? rawPixels[fromIndex + 2] : 0;
+			pixels[toIndex + 3] = (3 < channel) ? rawPixels[fromIndex + 3] : 255;
 		}
 	}
 	else

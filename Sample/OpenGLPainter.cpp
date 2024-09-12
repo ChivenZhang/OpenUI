@@ -194,10 +194,11 @@ void OpenGLPainter::drawEllipse(float x, float y, float width, float height)
 void OpenGLPainter::drawImage(float x, float y, UIImage image, float sx, float sy, float sw, float sh)
 {
 	auto cr = PRIVATE()->NativeContext;
-	if (image.Data.size() == image.Height * image.Stride)
+	if (image.Pixel
+		&& image.Type == UIImage::Byte
+		&& image.Width * 4 == image.Stride)
 	{
-		if (image.Width * 4 != image.Stride) return;
-		auto surface = cairo_image_surface_create_for_data((uint8_t*)image.Data.data(), CAIRO_FORMAT_ARGB32, image.Width, image.Height, image.Stride);
+		auto surface = cairo_image_surface_create_for_data((uint8_t*)image.Pixel, CAIRO_FORMAT_ARGB32, image.Width, image.Height, image.Stride);
 		cairo_save(cr); setClipping(true);
 		cairo_set_source_surface(cr, surface, x - sx, y - sy);
 		cairo_rectangle(cr, x, y, std::min<float>(uint32_t(sw), image.Width), std::min<float>(uint32_t(sh), image.Height));
