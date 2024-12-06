@@ -53,7 +53,7 @@
 
 #ifdef _WIN32
 #	ifdef _DEBUG
-#		define OPENUI_DEBUG
+#		define OPENUI_DEBUG_MODE
 #	endif
 #endif
 
