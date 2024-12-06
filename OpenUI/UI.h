@@ -1,8 +1,19 @@
 #pragma once
+/*=================================================
+* Copyright © 2020-2024 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by ChivenZhang@gmail.com.
+*
+* =================================================*/
 
 #if defined( _MSVC_LANG )
 #	define OPENUI_CPLUSPLUS _MSVC_LANG
 #else
+#	define __FUNCTION__ __func__
 #	define OPENUI_CPLUSPLUS __cplusplus
 #endif
 #if 201703L < OPENUI_CPLUSPLUS
@@ -14,7 +25,10 @@
 #elif 199711L < OPENUI_CPLUSPLUS
 #	define OPENUI_CPP_VERSION 11
 #else
-#	error "At least c++ standard version 11"
+#	define OPENUI_CPP_VERSION 0
+#endif
+#if OPENUI_CPP_VERSION < 17
+#	error "At least c++ standard version 17"
 #endif
 
 // ============================================
@@ -33,7 +47,13 @@
 #		define OPENUI_C_API extern "C" 
 #	else
 #		define OPENUI_API 
-#		define OPENUI_C_API 
+#		define OPENUI_C_API extern "C"
+#	endif
+#endif
+
+#ifdef _WIN32
+#	ifdef _DEBUG
+#		define OPENUI_DEBUG
 #	endif
 #endif
 
@@ -51,7 +71,6 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <assert.h>
 #include <iostream>
 #include <utility>
 #include <algorithm>
@@ -59,11 +78,7 @@
 #include <memory>
 #include <string>
 #include <array>
-#if 20 <= OPENUI_CPP_VERSION
 #include <span>
-#else
-#include "Utility/span.h"
-#endif
 #include <vector>
 #include <deque>
 #include <list>
@@ -76,24 +91,13 @@
 #include <bitset>
 #include <exception>
 #include <functional>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <future>
+#include <condition_variable>
+#include <any>
 #define UINAN (NAN)
-
-// ============================================
-
-#include <time.h>
-#define UIPrint(FORMAT, ...) do{ fprintf(stdout, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "INFO", __VA_ARGS__); }while(0)
-#define UIError(FORMAT, ...) do{ fprintf(stderr, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "ERROR", __VA_ARGS__); }while(0)
-#define UIFatal(FORMAT, ...) do{ fprintf(stderr, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "FATAL", __VA_ARGS__); exit(1); }while(0)
-#ifdef OPENUI_DEBUG_MODE
-#define UIDebug(FORMAT, ...) do{ fprintf(stdout, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "DEBUG", __VA_ARGS__); }while(0)
-#else													
-#define UIDebug(FORMAT, ...)
-#endif
-
-#define UIPRINT UIPrint
-#define UIERROR UIError
-#define UIFATAL UIFatal
-#define UIDEBUG UIDebug
 
 // ============================================
 
@@ -101,29 +105,31 @@ template<class T>
 using UIRaw = T*;
 template<class T>
 using UIRef = std::shared_ptr<T>;
+template<class T>
+using UIHnd = std::weak_ptr<T>;
 using UIString = std::string;
 using UICString = const char*;
 using UIWString = std::wstring;
 #if 20 <= OPENUI_CPP_VERSION
 using UIString8 = std::u8string;
-#else
-using UIString8 = std::string;
 #endif
 using UIString16 = std::u16string;
 using UIString32 = std::u32string;
+#if 17 <= OPENUI_CPP_VERSION
 using UIStringView = std::string_view;
 using UIWStringView = std::wstring_view;
-#if 20 <= OPENUI_CPP_VERSION
-using UIString8View = std::u8string_view;
-#else
-using UIString8View = std::string_view;
-#endif
 using UIString16View = std::u16string_view;
 using UIString32View = std::u32string_view;
+#endif
+#if 20 <= OPENUI_CPP_VERSION
+using UIString8View = std::u8string_view;
+#endif
 template <class T, size_t N>
 using UIArray = std::array<T, N>;
+#if 20 <= OPENUI_CPP_VERSION
 template <class T, size_t N = std::dynamic_extent>
 using UIArrayView = std::span<T, N>;
+#endif
 template <class T>
 using UIVector = std::vector<T>;
 template <class T>
@@ -154,20 +160,36 @@ template <class T, class U>
 using UIBinary = std::pair<T, U>;
 template <class ...TS>
 using UITuple = std::tuple<TS...>;
+using UIAny = std::any;
 using UIException = std::exception;
 template <class T>
 using UILambda = std::function<T>;
+using UIThread = std::thread;
+template <class T>
+using UIFuture = std::future<T>;
+template <class T>
+using UIPromise = std::promise<T>;
+template <class T>
+using UIAtomic = std::atomic<T>;
+using UIMutex = std::recursive_mutex;
+using UIMutexLock = std::lock_guard<UIMutex>;
+using UIUniqueLock = std::unique_lock<UIMutex>;
+using UIMutexUnlock = std::condition_variable_any;
 using UIStringList = UIVector<UIString>;
 using UIWStringList = UIVector<UIWString>;
+#if 20 <= OPENUI_CPP_VERSION
 using UIString8List = UIVector<UIString8>;
+#endif
 using UIString16List = UIVector<UIString16>;
 using UIString32List = UIVector<UIString32>;
 template<class T>
 using UIStringMap = UIMap<UIString, T>;
 template<class T>
 using UIWStringMap = UIMap<UIWString, T>;
+#if 20 <= OPENUI_CPP_VERSION
 template<class T>
 using UIString8Map = UIMap<UIString8, T>;
+#endif
 template<class T>
 using UIString16Map = UIMap<UIString16, T>;
 template<class T>
@@ -176,8 +198,10 @@ template<class T>
 using UIStringHashMap = UIHashMap<UIString, T>;
 template<class T>
 using UIWStringHashMap = UIHashMap<UIWString, T>;
+#if 20 <= OPENUI_CPP_VERSION
 template<class T>
 using UIString8HashMap = UIHashMap<UIString8, T>;
+#endif
 template<class T>
 using UIString16HashMap = UIHashMap<UIString16, T>;
 template<class T>
