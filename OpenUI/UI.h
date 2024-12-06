@@ -100,6 +100,54 @@
 
 // ============================================
 
+#include <cstdio>
+#include <ctime>
+#include <thread>
+#define UI_FORMAT(TARGET, FORMAT, LEVEL, ...) \
+do { \
+char __DATETIME__[32]; auto __NOWTIME__ = std::time(nullptr); \
+std::strftime(__DATETIME__, sizeof(__DATETIME__), "%Y-%m-%d %H:%M:%S", std::localtime(&__NOWTIME__)); \
+auto __THREAD__ = []()->uint32_t { std::stringstream ss; ss << std::this_thread::get_id(); return std::stoul(ss.str()); }(); \
+std::fprintf(TARGET, "%s:%d\n" "%s " #LEVEL " %d --- " FORMAT "\n\n", __FILE__, __LINE__, __DATETIME__, __THREAD__, ##__VA_ARGS__); \
+} while (0)
+
+#ifndef UI_DEBUG
+#ifdef OPENUI_DEBUG_MODE
+#	define UI_DEBUG(FORMAT, ...) UI_FORMAT(stdout, FORMAT, DEBUG, ##__VA_ARGS__)
+#else
+#	define UI_DEBUG(FORMAT, ...)
+#endif
+#endif
+
+#ifndef UI_WARN
+#	define UI_WARN(FORMAT, ...) UI_FORMAT(stdout, FORMAT, WARN, ##__VA_ARGS__)
+#endif
+
+#ifndef UI_INFO
+#	define UI_INFO(FORMAT, ...) UI_FORMAT(stdout, FORMAT, INFO, ##__VA_ARGS__)
+#endif
+
+#ifndef UI_ERROR
+#	define UI_ERROR(FORMAT, ...) UI_FORMAT(stderr, FORMAT, ERROR, ##__VA_ARGS__)
+#endif
+
+#ifndef UI_FATAL
+#	define UI_FATAL(FORMAT, ...) do{ UI_FORMAT(stderr, FORMAT, FATAL, ##__VA_ARGS__); std::abort(); } while(0)
+#endif
+
+#ifndef UI_PRINT
+#	define UI_PRINT(FORMAT, ...) UI_INFO(FORMAT, ##__VA_ARGS__)
+#endif
+
+#define UIDebug UI_DEBUG
+#define UIWarn UI_WARN
+#define UIInfo UI_INFO
+#define UIError UI_ERROR
+#define UIFatal UI_FATAL
+#define UIPrint UI_PRINT
+
+// ============================================
+
 template<class T>
 using UIRaw = T*;
 template<class T>
