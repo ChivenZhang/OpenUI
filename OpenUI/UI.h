@@ -621,7 +621,7 @@ struct UIFont
 		WeightBlack = 900,
 	};
 	bool LineWrap = false;
-	UIString Family = "微软雅黑,Segoe UI Emoji";
+	UIString Family = "Segoe UI";
 	uint32_t Align = align_t::AlignLeft;
 	style_t Style = style_t::StyleNormal;
 	weight_t Weight = weight_t::WeightNormal;
