@@ -80,6 +80,23 @@
 
 // ============================================
 
+#include <time.h>
+#define UIPrint(FORMAT, ...) do{ fprintf(stdout, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "INFO", __VA_ARGS__); }while(0)
+#define UIError(FORMAT, ...) do{ fprintf(stderr, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "ERROR", __VA_ARGS__); }while(0)
+#define UIFatal(FORMAT, ...) do{ fprintf(stderr, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "FATAL", __VA_ARGS__); exit(1); }while(0)
+#ifdef OPENUI_DEBUG_MODE
+#define UIDebug(FORMAT, ...) do{ fprintf(stdout, "%s(%d)\n%.3f s\t[%s]\t" FORMAT "\n\n", __FILE__, __LINE__, ::clock()*0.001f, "DEBUG", __VA_ARGS__); }while(0)
+#else													
+#define UIDebug(FORMAT, ...)
+#endif
+
+#define UIPRINT UIPrint
+#define UIERROR UIError
+#define UIFATAL UIFatal
+#define UIDEBUG UIDebug
+
+// ============================================
+
 template<class T>
 using UIRaw = T*;
 template<class T>
