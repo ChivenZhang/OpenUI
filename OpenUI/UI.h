@@ -97,7 +97,6 @@
 #include <future>
 #include <condition_variable>
 #include <any>
-#define UINAN (NAN)
 
 // ============================================
 
@@ -227,6 +226,18 @@ inline UIRef<U> UICast(UIRef<T> const& target)
 	return std::dynamic_pointer_cast<U>(target);
 }
 template<typename U, typename T>
+inline UIHnd<U> UICast(UIHnd<T>&& target)
+{
+	if (target == nullptr) return THnd<U>();
+	return std::dynamic_pointer_cast<U>(target.lock());
+}
+template<typename U, typename T>
+inline UIHnd<U> UICast(UIHnd<T> const& target)
+{
+	if (target == nullptr) return THnd<U>();
+	return std::dynamic_pointer_cast<U>(target.lock());
+}
+template<typename U, typename T>
 inline UIRaw<U> UICast(UIRaw<T>&& target)
 {
 	if (target == nullptr) return nullptr;
@@ -239,15 +250,55 @@ inline UIRaw<U> UICast(UIRaw<T> const& target)
 	return const_cast<U*>(dynamic_cast<const U*>((const T*)target));
 }
 
-inline constexpr uint32_t UIHash(UICString value)
+inline constexpr uint32_t UIHash32(const char* const first, const size_t count) noexcept
 {
-	uint32_t hash = 0; // From JDK 8
-	if (value == nullptr) return hash;
-	while (*value) hash = hash * 31 + (*value++);
-	return hash;
+	// These FNV-1a utility functions are extremely performance sensitive,
+	// check examples like that in VSO-653642 before making changes.
+	constexpr uint32_t _FNV_offset_basis = 2166136261U;
+	constexpr uint32_t _FNV_prime = 16777619U;
+	auto result = _FNV_offset_basis;
+	// accumulate range [_First, _First + _Count) into partial FNV-1a hash _Val
+	for (size_t i = 0; i < count; ++i)
+	{
+		result ^= (uint32_t)first[i];
+		result *= _FNV_prime;
+	}
+	return result;
 }
+inline constexpr uint64_t UIHash64(const char* const first, const size_t count) noexcept
+{
+	// These FNV-1a utility functions are extremely performance sensitive,
+	// check examples like that in VSO-653642 before making changes.
+	constexpr uint64_t _FNV_offset_basis = 14695981039346656037ULL;
+	constexpr uint64_t _FNV_prime = 1099511628211ULL;
+	auto result = _FNV_offset_basis;
+	// accumulate range [_First, _First + _Count) into partial FNV-1a hash _Val
+	for (size_t i = 0; i < count; ++i)
+	{
+		result ^= (uint64_t)first[i];
+		result *= _FNV_prime;
+	}
+	return result;
+}
+inline constexpr uint32_t UIHash(const char* const value) noexcept
+{
+	size_t count = 0; for (size_t i = 0; value[i]; ++i) ++count;
+	return UIHash32(value, count);
+}
+inline const uint32_t UIHash(UIString const& value) noexcept
+{
+	return UIHash32(value.c_str(), value.size());
+}
+#if 17 <= OPENUI_CPP_VERSION
+inline const uint32_t UIHash(UIStringView value) noexcept
+{
+	return UIHash32(value.data(), value.size());
+}
+#endif
 
 // ============================================
+
+#define UINAN (NAN)
 
 #define UI_INPUT_FOREACH(XX) \
 XX(NONE, NONE, NONE), \
