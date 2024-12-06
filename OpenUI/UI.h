@@ -100,6 +100,11 @@
 
 // ============================================
 
+#include <assert.h>
+#define UIAssert(...) assert(__VA_ARGS__)
+
+// ============================================
+
 #include <cstdio>
 #include <ctime>
 #include <thread>
