@@ -70,33 +70,33 @@
 #pragma warning(disable:26816)
 
 #define _USE_MATH_DEFINES
-#include <math.h>
-#include <iostream>
-#include <utility>
 #include <algorithm>
-#include <sstream>
-#include <memory>
-#include <string>
+#include <any>
 #include <array>
-#include <span>
-#include <vector>
-#include <deque>
-#include <list>
-#include <set>
-#include <unordered_set>
-#include <map>
-#include <unordered_map>
-#include <queue>
-#include <stack>
+#include <atomic>
 #include <bitset>
+#include <condition_variable>
+#include <deque>
 #include <exception>
 #include <functional>
-#include <thread>
-#include <mutex>
-#include <atomic>
 #include <future>
-#include <condition_variable>
-#include <any>
+#include <iostream>
+#include <list>
+#include <map>
+#include <math.h>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <set>
+#include <span>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 // ============================================
 
@@ -213,7 +213,7 @@ using UIBinary = std::pair<T, U>;
 template <class ...TS>
 using UITuple = std::tuple<TS...>;
 using UIAny = std::any;
-using UIException = std::exception;
+using UIError = std::exception;
 template <class T>
 using UILambda = std::function<T>;
 using UIThread = std::thread;
