@@ -5,7 +5,7 @@
 CairoGLRender::CairoGLRender()
 {
 	auto vsource = R"(
-		#version 450 core
+		#version 450
 		layout (location = 0) in vec2 _point;
 		layout (location = 1) in uint _index;
 		out vec2 uv;
@@ -20,7 +20,7 @@ CairoGLRender::CairoGLRender()
 	)";
 
 	auto fsource = R"(
-		#version 450 core
+		#version 450
 		in vec2 uv;
 		flat in uint index;
 		layout (location = 0) out vec4 color;

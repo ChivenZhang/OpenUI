@@ -223,6 +223,8 @@ int main()
 		SDL_GL_MakeCurrent(window, context);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_SCISSOR_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glClearColor(0.8, 0.8, 0.8, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
