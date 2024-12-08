@@ -49,7 +49,7 @@ public:
 	virtual uint32_t getWidth() const override;
 	virtual uint32_t getHeight() const override;
 	virtual uint32_t getStride() const override;
-	virtual UIArrayView<const uint8_t> getPixelData() const override;
+	virtual UIArrayView<const uint8_t> getPixels() const override;
 	virtual void resize(uint32_t width, uint32_t height) override;
 
 private:

@@ -2,11 +2,7 @@
 #include "UI.h"
 
 /// @brief 
-class UIPainterPrivate
-{
-public:
-	virtual ~UIPainterPrivate() = default;
-};
+class UIPainterPrivate {};
 using UIPainterPrivateRaw = UIRaw<UIPainterPrivate>;
 
 /// @brief 
@@ -83,7 +79,7 @@ public:
 
 	virtual uint32_t getStride() const = 0;
 
-	virtual UIArrayView<const uint8_t> getPixelData() const = 0;
+	virtual UIArrayView<const uint8_t> getPixels() const = 0;
 
 	virtual void resize(uint32_t width, uint32_t height) = 0;
 };

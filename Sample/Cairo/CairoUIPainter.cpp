@@ -668,7 +668,7 @@ uint32_t CairoUIPainter::getStride() const
 	return cairo_image_surface_get_stride(PRIVATE()->NativeSurface);
 }
 
-UIArrayView<const uint8_t> CairoUIPainter::getPixelData() const
+UIArrayView<const uint8_t> CairoUIPainter::getPixels() const
 {
 	return UIArrayView<const uint8_t>(cairo_image_surface_get_data(PRIVATE()->NativeSurface), getHeight() * getStride());
 }

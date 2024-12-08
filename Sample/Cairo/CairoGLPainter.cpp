@@ -35,7 +35,7 @@ void CairoGLPainter::resize(uint32_t width, uint32_t height)
 uint32_t CairoGLPainter::getTexture() const
 {
 	glBindTexture(GL_TEXTURE_2D, m_NativeTexture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, getWidth(), getHeight(), GL_BGRA, GL_UNSIGNED_BYTE, getPixelData().data());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, getWidth(), getHeight(), GL_BGRA, GL_UNSIGNED_BYTE, getPixels().data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return m_NativeTexture;
 }
