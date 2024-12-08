@@ -1,8 +1,17 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
 if(OPENUI_ENABLE_SAMPLE)
-add_executable (Sample "OpenGLPainter.h" "OpenGLPainter.cpp" "OpenGLRender.h" "OpenGLRender.cpp" "SDL3InputConstant.cpp" "SDL3InputConstant.h" "main.cpp")
-
+add_executable (Sample
+	Cairo/CairoGLPainter.cpp
+	Cairo/CairoGLPainter.h
+	Cairo/CairoGLRender.cpp
+	Cairo/CairoGLRender.h
+	Cairo/CairoUIPainter.cpp
+	Cairo/CairoUIPainter.h 
+	main.cpp 
+	SDL3InputEnum.cpp
+	SDL3InputEnum.h
+)
 add_dependencies(Sample OpenUI)
 
 target_include_directories(Sample PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

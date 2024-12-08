@@ -1,8 +1,8 @@
-#include "OpenGLRender.h"
-#include "OpenGLPainter.h"
+#include "CairoGLRender.h"
+#include "CairoGLPainter.h"
 #include <GL/glew.h>
 
-OpenGLRender::OpenGLRender()
+CairoGLRender::CairoGLRender()
 {
 	auto vsource = R"(
 		#version 450 core
@@ -42,9 +42,8 @@ OpenGLRender::OpenGLRender()
 	{
 		GLchar infoLog[512];
 		glGetShaderInfoLog(vshader, 512, NULL, infoLog);
-		std::cerr << "Shader compilation failed: " << infoLog << std::endl;
 		glDeleteShader(vshader); // 删除着色器，防止内存泄漏  
-		::exit(-1);
+		UI_FATAL("Shader compilation failed: %s", infoLog);
 	}
 
 	// 检查编译错误 
@@ -56,9 +55,8 @@ OpenGLRender::OpenGLRender()
 	{
 		GLchar infoLog[512];
 		glGetShaderInfoLog(fshader, 512, NULL, infoLog);
-		std::cerr << "Shader compilation failed: " << infoLog << std::endl;
 		glDeleteShader(fshader); // 删除着色器，防止内存泄漏  
-		::exit(-1);
+		UI_FATAL("Shader compilation failed: %s", infoLog);
 	}
 
 	// 检查链接错误  
@@ -71,9 +69,8 @@ OpenGLRender::OpenGLRender()
 	{
 		GLchar infoLog[512];
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cerr << "Shader program linking failed: " << infoLog << std::endl;
 		glDeleteProgram(shaderProgram); // 删除程序，防止内存泄漏  
-		::exit(-1);
+		UI_FATAL("Shader program linking failed: %s", infoLog);
 	}
 	glDeleteShader(vshader);
 	glDeleteShader(fshader);
@@ -101,14 +98,14 @@ OpenGLRender::OpenGLRender()
 	m_NativePrimitive = vao;
 }
 
-OpenGLRender::~OpenGLRender()
+CairoGLRender::~CairoGLRender()
 {
 	glDeleteBuffers(1, &m_NativeBuffer); m_NativeBuffer = 0;
 	glDeleteVertexArrays(1, &m_NativePrimitive); m_NativePrimitive = 0;
 	glDeleteProgram(m_NativeProgram); m_NativeProgram = 0;
 }
 
-void OpenGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
+void CairoGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 {
 	glUseProgram(m_NativeProgram);
 	glBindVertexArray(m_NativePrimitive);
@@ -120,7 +117,7 @@ void OpenGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 		for (size_t k = 0; k < maxTextureUnits && i + k < data.size(); ++k)
 		{
 			auto primitive = data[i + k].Primitive;
-			auto painter = UICast<OpenGLPainter>(data[i + k].Painter);
+			auto painter = UICast<CairoGLPainter>(data[i + k].Painter);
 			if (primitive.empty() || painter == nullptr) continue;
 
 			// 绑定到纹理数组

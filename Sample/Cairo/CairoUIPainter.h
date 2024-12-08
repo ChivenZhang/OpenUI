@@ -1,11 +1,21 @@
 #pragma once
+/*=================================================
+* Copyright © 2020-2024 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+*=====================History========================
+* Created by ChivenZhang@gmail.com.
+*
+* =================================================*/
 #include <OpenUI/UIPainter.h>
 
-class OpenGLPainter : public UIPainter
+class CairoUIPainter : public UIPainter
 {
 public:
-	OpenGLPainter(uint32_t width, uint32_t height);
-	~OpenGLPainter();
+	CairoUIPainter(uint32_t width, uint32_t height);
+	~CairoUIPainter();
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect) override;
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect) override;
 	virtual void drawArc(float x, float y, float width, float height, float startAngle, float spanAngle) override;
@@ -41,7 +51,6 @@ public:
 	virtual uint32_t getStride() const override;
 	virtual UIArrayView<const uint8_t> getPixelData() const override;
 	virtual void resize(uint32_t width, uint32_t height) override;
-	uint32_t getTexture() const;
 
 private:
 	UIPainterPrivateRaw m_Private;

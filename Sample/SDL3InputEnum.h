@@ -2,7 +2,7 @@
 #include <OpenUI/UI.h>
 
 /// @brief 
-class SDL3InputConstant
+class SDL3InputEnum
 {
 public:
 	static UIInputEnum GetMouseEnum(int key);
