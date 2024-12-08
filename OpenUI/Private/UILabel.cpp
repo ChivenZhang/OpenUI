@@ -1,3 +1,13 @@
+/*=================================================
+* Copyright © 2020-2025 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by ChivenZhang@gmail.com.
+*
+* =================================================*/
 #include "../UILabel.h"
 #include "../UIContext.h"
 #define STB_IMAGE_IMPLEMENTATION
