@@ -99,9 +99,9 @@ public:
 	virtual bool removeElement(UIElementRef value);
 	virtual void removeElement();
 	virtual UIElementRef getElementByID(UIString identity) const;
-	virtual UIVector<UIElementRef> getElementsByID(UIString identity) const;
+	virtual UIList<UIElementRef> getElementsByID(UIString identity) const;
 	virtual UIElementRef getElement(UILambda<bool(UIElementRef)> selector) const;
-	virtual UIVector<UIElementRef> getElements(UILambda<bool(UIElementRef)> selector) const;
+	virtual UIList<UIElementRef> getElements(UILambda<bool(UIElementRef)> selector) const;
 	virtual void arrange(UIRect client);
 	virtual void layout(UIRect client);
 	virtual void paint(UIRect client, UIPainterRaw painter);

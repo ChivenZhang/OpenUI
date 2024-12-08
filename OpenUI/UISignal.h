@@ -32,7 +32,7 @@ private:
 		UILambda<void(T...)> Lambda;
 	};
 	using UISignalSlotRef = UIRef<UISignalSlot>;
-	UIVector<UISignalSlotRef> m_SlotList;
+	UIList<UISignalSlotRef> m_SlotList;
 };
 
 template<class ...T>
@@ -100,7 +100,7 @@ inline void UISignalAs<T...>::signal(T ...args)
 
 	if (isDirty)
 	{
-		UIVector<UISignalSlotRef> result;
+		UIList<UISignalSlotRef> result;
 		for (size_t i = 0; i < connectList.size(); ++i)
 		{
 			if (connectList[i]->Dirty) result.push_back(connectList[i]);
@@ -137,7 +137,7 @@ private:
 		UILambda<void()> Lambda;
 	};
 	using UISignalSlotVoidRef = UIRef<UISignalSlot>;
-	UIVector<UISignalSlotVoidRef> m_SlotList;
+	UIList<UISignalSlotVoidRef> m_SlotList;
 };
 
 inline uint32_t UISignalAs<void>::connect(UIElementRaw owner, UILambda<void()> slot)
@@ -200,7 +200,7 @@ inline void UISignalAs<void>::signal()
 
 	if (isDirty)
 	{
-		UIVector<UISignalSlotVoidRef> result;
+		UIList<UISignalSlotVoidRef> result;
 		for (size_t i = 0; i < connectList.size(); ++i)
 		{
 			if (connectList[i]->Dirty) result.push_back(connectList[i]);

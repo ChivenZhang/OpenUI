@@ -144,13 +144,6 @@ std::fprintf(TARGET, "%s:%d\n" "%s " #LEVEL " %d --- " FORMAT "\n\n", __FILE__, 
 #	define UI_PRINT(FORMAT, ...) UI_INFO(FORMAT, ##__VA_ARGS__)
 #endif
 
-#define UIDebug UI_DEBUG
-#define UIWarn UI_WARN
-#define UIInfo UI_INFO
-#define UIError UI_ERROR
-#define UIFatal UI_FATAL
-#define UIPrint UI_PRINT
-
 // ============================================
 
 template<class T>
@@ -183,11 +176,11 @@ template <class T, size_t N = std::dynamic_extent>
 using UIArrayView = std::span<T, N>;
 #endif
 template <class T>
-using UIVector = std::vector<T>;
+using UIList = std::vector<T>;
 template <class T>
 using UIDeque = std::deque<T>;
 template <class T>
-using UIList = std::list<T>;
+using UILinkedList = std::list<T>;
 template <class T, class L = std::less<T>>
 using UISet = std::set<T, L>;
 template <class K, class T, class L = std::less<K>>
@@ -202,8 +195,8 @@ template <class K, class T, class H = std::hash<K>, class E = std::equal_to<K>>
 using UIHashMap = std::unordered_map<K, T, H, E>;
 template <class T>
 using UIQueue = std::queue<T>;
-template <class T, class C = UIVector<T>, class L = std::less<typename C::value_type>>
-using UIPriorityQueue = std::priority_queue<T, C, L>;
+template <class T, class C = UIList<T>, class L = std::less<typename C::value_type>>
+using UISortedQueue = std::priority_queue<T, C, L>;
 template <class T>
 using UIStack = std::stack<T>;
 template <size_t N>
@@ -227,13 +220,13 @@ using UIMutex = std::recursive_mutex;
 using UIMutexLock = std::lock_guard<UIMutex>;
 using UIUniqueLock = std::unique_lock<UIMutex>;
 using UIMutexUnlock = std::condition_variable_any;
-using UIStringList = UIVector<UIString>;
-using UIWStringList = UIVector<UIWString>;
+using UIStringList = UIList<UIString>;
+using UIWStringList = UIList<UIWString>;
 #if 20 <= OPENUI_CPP_VERSION
-using UIString8List = UIVector<UIString8>;
+using UIString8List = UIList<UIString8>;
 #endif
-using UIString16List = UIVector<UIString16>;
-using UIString32List = UIVector<UIString32>;
+using UIString16List = UIList<UIString16>;
+using UIString32List = UIList<UIString32>;
 template<class T>
 using UIStringMap = UIMap<UIString, T>;
 template<class T>

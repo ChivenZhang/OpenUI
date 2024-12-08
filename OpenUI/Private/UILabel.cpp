@@ -12,7 +12,7 @@ public:
 	UILabelStyle Style;
 	UIString Text;
 	UIImage Image, ImageScaled;
-	UIVector<uint8_t> ImageData, ImageDataScaled;
+	UIList<uint8_t> ImageData, ImageDataScaled;
 	UILabel::scale_t ScaledContents = UILabel::scale_t::ScaleFixed;
 	bool Hovered = false;
 	UISignalAs<UIString> LinkHovered, LinkActivated;

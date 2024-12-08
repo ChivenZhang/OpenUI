@@ -19,5 +19,5 @@ protected:
 	uint32_t m_NativeProgram;
 	uint32_t m_NativeBuffer;
 	uint32_t m_NativePrimitive;
-	UIVector<primitive_t> m_PrimitiveList;
+	UIList<primitive_t> m_PrimitiveList;
 };

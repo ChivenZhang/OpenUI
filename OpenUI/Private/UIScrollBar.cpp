@@ -132,7 +132,7 @@ void UIScrollBar::paint(UIRect client, UIPainterRaw painter)
 
 void UIScrollBar::removeElement()
 {
-	UIVector<UIElementRef> result;
+	UIList<UIElementRef> result;
 	for (size_t i = 1; i < getChildren().size(); ++i) result.push_back(getChildren()[i]);
 	for (size_t i = 0; i < result.size(); ++i) removeElement(result[i]);
 }

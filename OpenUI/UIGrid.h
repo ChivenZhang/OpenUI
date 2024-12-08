@@ -30,12 +30,12 @@ public:
 	size_t getRowCount() const;
 	uint32_t getRowStretch(size_t index) const;
 	void setRowStretch(size_t index, uint32_t stretch);
-	void setRowStretch(UIVector<uint32_t> stretch);
+	void setRowStretch(UIList<uint32_t> stretch);
 
 	size_t getColumnCount() const;
 	uint32_t getColumnStretch(size_t index) const;
 	void setColumnStretch(size_t index, uint32_t stretch);
-	void setColumnStretch(UIVector<uint32_t> stretch);
+	void setColumnStretch(UIList<uint32_t> stretch);
 
 private:
 	UIElementPrivateRaw m_PrivateGrid;

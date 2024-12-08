@@ -182,7 +182,7 @@ bool UIScroll::removeElement(UIElementRef value)
 
 void UIScroll::removeElement()
 {
-	UIVector<UIElementRef> result;
+	UIList<UIElementRef> result;
 	for (size_t i = 2; i < getChildren().size(); ++i) result.push_back(getChildren()[i]);
 	for (size_t i = 0; i < result.size(); ++i) removeElement(result[i]);
 }

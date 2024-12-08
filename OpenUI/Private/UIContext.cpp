@@ -14,10 +14,10 @@ public:
 	UIPainterRef Painter;
 	UIElementRaw Focus;
 	bool NeedLayout = true, NeedPaint = true;
-	UIVector<UIPrimitive> RenderList;
-	UIVector<UIElementRaw> AnimateList;
-	UIVector<UIElementRef> TopLevelView;
-	UIVector<UIContextElement> TopLevelList;
+	UIList<UIPrimitive> RenderList;
+	UIList<UIElementRaw> AnimateList;
+	UIList<UIElementRef> TopLevelView;
+	UIList<UIContextElement> TopLevelList;
 };
 #define PRIVATE() ((UIContextPrivateData*) m_Private)
 

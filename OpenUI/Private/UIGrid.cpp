@@ -12,8 +12,8 @@ class UIGridPrivate : public UIElementPrivate
 public:
 	UIGridStyle Style;
 	UIMap<UIElementRaw, UIGridItem> GridItemMap;
-	UIVector<uint32_t> RowStretch, ColumnStretch;
-	UIVector<float> RowPercent, ColumnPercent, RowSummary, ColumnSummary;
+	UIList<uint32_t> RowStretch, ColumnStretch;
+	UIList<float> RowPercent, ColumnPercent, RowSummary, ColumnSummary;
 };
 #define PRIVATE() ((UIGridPrivate*) m_PrivateGrid)
 
@@ -156,7 +156,7 @@ void UIGrid::setRowStretch(size_t index, uint32_t stretch)
 	}
 }
 
-void UIGrid::setRowStretch(UIVector<uint32_t> stretch)
+void UIGrid::setRowStretch(UIList<uint32_t> stretch)
 {
 	PRIVATE()->RowStretch = stretch;
 	PRIVATE()->RowPercent.resize(PRIVATE()->RowStretch.size());
@@ -220,7 +220,7 @@ void UIGrid::setColumnStretch(size_t index, uint32_t stretch)
 	}
 }
 
-void UIGrid::setColumnStretch(UIVector<uint32_t> stretch)
+void UIGrid::setColumnStretch(UIList<uint32_t> stretch)
 {
 	PRIVATE()->ColumnStretch = stretch;
 	PRIVATE()->ColumnPercent.resize(PRIVATE()->ColumnStretch.size());

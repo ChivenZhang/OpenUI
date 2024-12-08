@@ -10,7 +10,7 @@ UIRef<UIParser::XMLElement> UIParser::parseLayout(UIString html) const
 	return UIRef<XMLElement>();
 }
 
-UIVector<UIParser::CSSSelector> UIParser::parseStyle(UIString css) const
+UIList<UIParser::CSSSelector> UIParser::parseStyle(UIString css) const
 {
-	return UIVector<CSSSelector>();
+	return UIList<CSSSelector>();
 }

@@ -17,7 +17,7 @@ public:
 		addBuffer.append(text);
 		size_t addLength = text.length();
 
-		UIVector<Piece> newPieces;
+		UIList<Piece> newPieces;
 		size_t currentPos = 0;
 
 		for (auto& piece : pieces)
@@ -48,7 +48,7 @@ public:
 
 	void remove(size_t position, size_t length)
 	{
-		UIVector<Piece> newPieces;
+		UIList<Piece> newPieces;
 		size_t currentPos = 0;
 
 		for (auto& piece : pieces)
@@ -157,5 +157,5 @@ private:
 
 	UIString originalBuffer;
 	UIString addBuffer;
-	UIVector<Piece> pieces;
+	UIList<Piece> pieces;
 };

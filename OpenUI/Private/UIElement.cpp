@@ -2,14 +2,13 @@
 #include "../UIContext.h"
 #include "../UIPainter.h"
 #include <yoga/Yoga.h>
-#pragma comment(lib, "yogacore.lib")
 
 class UIElementPrivateData : public UIElementPrivate
 {
 public:
 	UIString Identity;
 	UIElementRaw Parent = nullptr;
-	UIVector<UIElementRef> Children;
+	UIList<UIElementRef> Children;
 	UIPainterRef Painter;
 	UIFilterRaw Filter = nullptr;
 	UIContextRaw Context = nullptr;
@@ -176,7 +175,7 @@ UIElementRef UIElement::getElementByID(UIString identity) const
 	return getElement([=](UIElementRef element)->bool { return element->getID() == identity; });
 }
 
-UIVector<UIElementRef> UIElement::getElementsByID(UIString identity) const
+UIList<UIElementRef> UIElement::getElementsByID(UIString identity) const
 {
 	return getElements([=](UIElementRef element)->bool { return element->getID() == identity; });
 }
@@ -201,9 +200,9 @@ UIElementRef UIElement::getElement(UILambda<bool(UIElementRef)> selector) const
 	return result;
 }
 
-UIVector<UIElementRef> UIElement::getElements(UILambda<bool(UIElementRef)> selector) const
+UIList<UIElementRef> UIElement::getElements(UILambda<bool(UIElementRef)> selector) const
 {
-	UIVector<UIElementRef> result;
+	UIList<UIElementRef> result;
 	UILambda<void(UIElementRef)> foreach_func;
 	foreach_func = [&](UIElementRef element) {
 		if (selector && selector(element))

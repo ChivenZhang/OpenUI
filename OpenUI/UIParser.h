@@ -12,9 +12,9 @@ public:
 	struct XMLElement
 	{
 		UIString Name, Class, ID;
-		UIVector<XMLStyle> Style;
+		UIList<XMLStyle> Style;
 		// UIRaw<XMLElement> Parent;
-		UIVector<UIRef<XMLElement>> Children;
+		UIList<UIRef<XMLElement>> Children;
 	};
 	struct CSSSelector
 	{
@@ -27,7 +27,7 @@ public:
 	struct CSSElement
 	{
 		CSSSelector Selector;
-		UIVector<CSSDeclare> Declare;
+		UIList<CSSDeclare> Declare;
 	};
 
 public:
@@ -36,5 +36,5 @@ public:
 
 protected:
 	virtual UIRef<XMLElement> parseLayout(UIString html) const;
-	virtual UIVector<CSSSelector> parseStyle(UIString css) const;
+	virtual UIList<CSSSelector> parseStyle(UIString css) const;
 };
