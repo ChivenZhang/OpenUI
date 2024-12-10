@@ -58,6 +58,12 @@ void UIScroll::arrange(UIRect client)
 {
 	this->setJustifyContent(UI::JustifyFlexEnd);
 
+	PRIVATE()->HorizontalScrollBar->setFixedHeight(12 * getContext()->getConfig().ScaleFactor);
+	PRIVATE()->HorizontalScrollBar->setMinWidth(12 * getContext()->getConfig().ScaleFactor);
+
+	PRIVATE()->VerticalScrollBar->setFixedWidth(12 * getContext()->getConfig().ScaleFactor);
+	PRIVATE()->VerticalScrollBar->setMinHeight(12 * getContext()->getConfig().ScaleFactor);
+
 	if (2 < getChildren().size())
 	{
 		getChildren()[2]->setFixedPos(0, 0);

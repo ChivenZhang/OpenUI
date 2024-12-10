@@ -13,6 +13,12 @@
 #include "UIPainter.h"
 #include "UIRender.h"
 
+class UIConfig
+{
+public:
+	float ScaleFactor = 1.0f;
+};
+
 /// @brief 
 class UIContextPrivate
 {
@@ -26,8 +32,9 @@ using UIContextPrivateRaw = UIRaw<UIContextPrivate>;
 class OPENUI_API UIContext
 {
 public:
-	UIContext();
+	UIContext(UIConfig config = {});
 	virtual ~UIContext();
+	virtual UIConfig const& getConfig() const;
 	virtual UIPainterRaw getPainter() const;
 	virtual void setPainter(UIPainterRef value);
 	virtual UIRenderRaw getRender() const;

@@ -49,6 +49,6 @@ add_library (OpenUI SHARED
 "Private/UISlider.cpp"
 "Private/UISplit.cpp"
 "Private/UIVBox.cpp"
-)
+ )
 
 target_link_libraries(OpenUI yogacore)

@@ -58,6 +58,11 @@ UISlider::~UISlider()
 	delete m_PrivateSlider; m_PrivateSlider = nullptr;
 }
 
+void UISlider::arrange(UIRect client)
+{
+	PRIVATE()->Handle->setFixedSize(16 * getContext()->getConfig().ScaleFactor, 16 * getContext()->getConfig().ScaleFactor);
+}
+
 bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
 {
 	switch (_event->Type)

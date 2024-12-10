@@ -43,7 +43,7 @@ UICheck::UICheck()
 	PRIVATE()->Button->setCheckable(true);
 
 	{
-		PRIVATE()->Style.Round = { 4,4 };
+		PRIVATE()->Style.Round = { 4, 4 };
 		PRIVATE()->Style.Normal.Pen = PRIVATE()->Style.Hover.Pen = PRIVATE()->Style.Press.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
 		PRIVATE()->Style.Normal.Brush = PRIVATE()->Style.Hover.Brush = PRIVATE()->Style.Press.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
 	}
@@ -107,7 +107,8 @@ void UICheck::arrange(UIRect client)
 	if (painter == nullptr) painter = getContext()->getPainter();
 	if (painter == nullptr) return;
 	auto fontSize = painter->getFont().Size * 1.0f;
-	PRIVATE()->Button->setFixedSize(fontSize, fontSize);
+	PRIVATE()->Button->setFixedSize(fontSize * getContext()->getConfig().ScaleFactor, fontSize * getContext()->getConfig().ScaleFactor);
+	PRIVATE()->Button->setMargin({ 8 * getContext()->getConfig().ScaleFactor, 0, 8 * getContext()->getConfig().ScaleFactor, 0 });
 }
 
 void UICheck::layout(UIRect client)

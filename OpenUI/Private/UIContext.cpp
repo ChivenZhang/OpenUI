@@ -17,9 +17,10 @@ struct UIContextElement
 	int32_t ZOrder;
 };
 
-class UIContextPrivateData : public UIContextPrivate
+class UIContextData : public UIContextPrivate
 {
 public:
+	UIConfig Config;
 	UIRenderRef Render;
 	UIPainterRef Painter;
 	UIElementRaw Focus;
@@ -29,16 +30,23 @@ public:
 	UIList<UIElementRef> TopLevelView;
 	UIList<UIContextElement> TopLevelList;
 };
-#define PRIVATE() ((UIContextPrivateData*) m_Private)
+#define PRIVATE() ((UIContextData*) m_Private)
 
-UIContext::UIContext()
+UIContext::UIContext(UIConfig config)
 {
-	m_Private = new UIContextPrivateData;
+	m_Private = new UIContextData;
+
+	PRIVATE()->Config = config;
 }
 
 UIContext::~UIContext()
 {
 	delete m_Private; m_Private = nullptr;
+}
+
+UIConfig const& UIContext::getConfig() const
+{
+	return PRIVATE()->Config;
 }
 
 UIPainterRaw UIContext::getPainter() const

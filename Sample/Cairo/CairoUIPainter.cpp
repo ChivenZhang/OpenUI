@@ -653,26 +653,6 @@ void CairoUIPainter::translate(float dx, float dy)
 	cairo_translate(cr, dx, dy);
 }
 
-uint32_t CairoUIPainter::getWidth() const
-{
-	return cairo_image_surface_get_width(PRIVATE()->NativeSurface);
-}
-
-uint32_t CairoUIPainter::getHeight() const
-{
-	return cairo_image_surface_get_height(PRIVATE()->NativeSurface);
-}
-
-uint32_t CairoUIPainter::getStride() const
-{
-	return cairo_image_surface_get_stride(PRIVATE()->NativeSurface);
-}
-
-UIArrayView<const uint8_t> CairoUIPainter::getPixels() const
-{
-	return UIArrayView<const uint8_t>(cairo_image_surface_get_data(PRIVATE()->NativeSurface), getHeight() * getStride());
-}
-
 void CairoUIPainter::resize(uint32_t width, uint32_t height)
 {
 	g_object_unref(PRIVATE()->NativeLayout); PRIVATE()->NativeLayout = nullptr;
@@ -696,4 +676,24 @@ void CairoUIPainter::resize(uint32_t width, uint32_t height)
 	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_description_free(font_desc);
+}
+
+uint32_t CairoUIPainter::getWidth() const
+{
+	return cairo_image_surface_get_width(PRIVATE()->NativeSurface);
+}
+
+uint32_t CairoUIPainter::getHeight() const
+{
+	return cairo_image_surface_get_height(PRIVATE()->NativeSurface);
+}
+
+uint32_t CairoUIPainter::getStride() const
+{
+	return cairo_image_surface_get_stride(PRIVATE()->NativeSurface);
+}
+
+UIArrayView<const uint8_t> CairoUIPainter::getPixels() const
+{
+	return UIArrayView<const uint8_t>(cairo_image_surface_get_data(PRIVATE()->NativeSurface), getHeight() * getStride());
 }

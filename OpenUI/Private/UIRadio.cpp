@@ -114,9 +114,10 @@ void UIRadio::arrange(UIRect client)
 	if (painter == nullptr) painter = getContext()->getPainter();
 	if (painter == nullptr) return;
 	auto fontSize = painter->getFont().Size * 1.0f;
-	PRIVATE()->Button->setFixedSize(fontSize, fontSize);
+	PRIVATE()->Button->setFixedSize(fontSize * getContext()->getConfig().ScaleFactor, fontSize * getContext()->getConfig().ScaleFactor);
+	PRIVATE()->Button->setMargin({ 8 * getContext()->getConfig().ScaleFactor, 0, 8 * getContext()->getConfig().ScaleFactor, 0 });
 	auto style = PRIVATE()->Button->getStyle();
-	style.Round = { (fontSize * 0.5f + 1) , (fontSize * 0.5f + 1) };
+	style.Round = { (fontSize * getContext()->getConfig().ScaleFactor * 0.5f + 1) , (fontSize * getContext()->getConfig().ScaleFactor * 0.5f + 1) };
 	PRIVATE()->Button->setStyle(style);
 }
 
@@ -243,6 +244,8 @@ void UIRadio::mouseReleaseEvent(UIMouseEventRaw event)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
+
+			getContext()->paintElement();
 
 			event->Accept = true;
 		}

@@ -10,6 +10,7 @@
 *
 * =================================================*/
 #include "UI.h"
+class UIContext;
 
 /// @brief 
 class UIRenderPrivate {};

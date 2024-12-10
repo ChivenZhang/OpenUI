@@ -33,7 +33,9 @@ int main()
 		UI_ERROR("SDL could not initialize! SDL_Error: %s", SDL_GetError());
 		return -1;
 	}
+
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -52,7 +54,7 @@ int main()
 		SDL_Quit();
 		return -1;
 	}
-	SDL_GL_SetSwapInterval(0);
+	SDL_GL_SetSwapInterval(1);
 	auto glewInitResult = glewInit();
 	if (GLEW_OK != glewInitResult)
 	{
@@ -64,25 +66,26 @@ int main()
 	}
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
+	auto scale = SDL_GetWindowDisplayScale(window);
+	UI_INFO("%f", scale);
 
 	// Initialize OpenUI context
 
-	auto openui = UINew<UIContext>();
-	auto painter = UINew<CairoGLPainter>(w, h);
-	auto render = UINew<CairoGLRender>();
-	openui->setPainter(painter);
-	openui->setRender(render);
+	UIConfig config{ .ScaleFactor = scale };
+	auto openui = UINew<UIContext>(config);
+	openui->setRender(UINew<CairoGLRender>());
+	openui->setPainter(UINew<CairoGLPainter>(w, h));
 
 	// Run sample in event loop
 
 	sample(openui, window);
 
-	SDL_Event event;
 	bool running = true;
 	while (running)
 	{
 		// Send events to OpenUI
 
+		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
 			switch (event.type)
@@ -234,8 +237,6 @@ int main()
 
 	// Clean up OpenUI and SDL
 
-	render = nullptr;
-	painter = nullptr;
 	openui = nullptr;
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
@@ -246,6 +247,8 @@ int main()
 
 void sample(UIContextRef context, SDL_Window* window)
 {
+	auto scale = context->getConfig().ScaleFactor;
+
 	auto layout = UINew<UIFlow>();
 	context->addElement(layout);
 
@@ -253,14 +256,14 @@ void sample(UIContextRef context, SDL_Window* window)
 	{
 		auto scroll = UINew<UIScroll>();
 		layout->addElement(scroll);
-		scroll->setFixedSize(300, 200);
+		scroll->setFixedSize(300 * scale, 200 * scale);
 		scroll->setHorizontalValue(150);
 		scroll->setVerticallValue(150);
 		//if (false)
 		{
 			auto label = UINew<UILabel>();
 			scroll->addElement(label);
-			label->setFixedSize(300, 300);
+			label->setFixedSize(300 * scale, 300 * scale);
 			label->setScaledContents(UILabel::ScaleKeepRatio);
 			int img_width, img_height, channels;
 			auto image_data = stbi_load("../../OpenUI.png", &img_width, &img_height, &channels, 4);
@@ -273,7 +276,7 @@ void sample(UIContextRef context, SDL_Window* window)
 	{
 		auto vbox = UINew<UIVBox>();
 		layout->addElement(vbox);
-		vbox->setFixedSize(200, 200);
+		vbox->setFixedSize(200 * scale, 200 * scale);
 		{
 			auto button = UINew<UIButton>();
 			vbox->addElement(button);
@@ -299,7 +302,7 @@ void sample(UIContextRef context, SDL_Window* window)
 	{
 		auto hbox = UINew<UIHBox>();
 		layout->addElement(hbox);
-		hbox->setFixedSize(250, 200);
+		hbox->setFixedSize(250 * scale, 200 * scale);
 		{
 			auto button = UINew<UIButton>();
 			hbox->addElement(button);
@@ -327,7 +330,7 @@ void sample(UIContextRef context, SDL_Window* window)
 		layout->addElement(grid);
 		grid->setRowStretch({ 1,1,1 });
 		grid->setColumnStretch({ 1,1,1 });
-		grid->setFixedSize(200, 200);
+		grid->setFixedSize(200 * scale, 200 * scale);
 		{
 			auto button = UINew<UIButton>();
 			grid->addElement(button, 0, 0, 2, 2);
@@ -353,37 +356,37 @@ void sample(UIContextRef context, SDL_Window* window)
 	{
 		auto group = UINew<UIVBox>();
 		layout->addElement(group);
-		group->setFixedSize(200, 200);
+		group->setFixedSize(200 * scale, 200 * scale);
 		{
 			auto radio = UINew<UIRadio>();
 			group->addElement(radio);
-			radio->setFixedSize(100, 30);
+			radio->setFixedSize(100 * scale, 30 * scale);
 			radio->setText("Radio");
 			radio->setChecked(true);
 
 			auto radio0 = UINew<UIRadio>();
 			group->addElement(radio0);
-			radio0->setFixedSize(100, 30);
+			radio0->setFixedSize(100 * scale, 30 * scale);
 			radio0->setText("Radio");
 			radio0->setExclusive(radio->getExclusive());
 
 			auto radio1 = UINew<UIRadio>();
 			group->addElement(radio1);
-			radio1->setFixedSize(100, 30);
+			radio1->setFixedSize(100 * scale, 30 * scale);
 			radio1->setText("Radio");
 			radio1->setExclusive(radio->getExclusive());
 		}
 		{
 			auto check = UINew<UICheck>();
 			group->addElement(check);
-			check->setFixedSize(100, 30);
+			check->setFixedSize(100 * scale, 30 * scale);
 			check->setText("Check");
 			check->setChecked(true);
 		}
 		{
 			auto check = UINew<UICheck>();
 			group->addElement(check);
-			check->setFixedSize(100, 30);
+			check->setFixedSize(100 * scale, 30 * scale);
 			check->setText("Check");
 		}
 	}
@@ -391,50 +394,50 @@ void sample(UIContextRef context, SDL_Window* window)
 	{
 		auto label = UINew<UILabel>();
 		layout->addElement(label);
-		label->setFixedSize(100, 30);
+		label->setFixedSize(100 * scale, 30 * scale);
 		label->setText("Label");
 	}
 	//if (false)
 	{
 		auto button = UINew<UIButton>();
 		layout->addElement(button);
-		button->setFixedSize(100, 30);
+		button->setFixedSize(100 * scale, 30 * scale);
 		button->setText("Button");
 	}
 	//if (false)
 	{
 		auto slider = UINew<UISlider>();
 		layout->addElement(slider);
-		slider->setFixedSize(100, 30);
-		slider->setRange(0, 100);
-		slider->setValue(25);
+		slider->setFixedSize(100 * scale, 30 * scale);
+		slider->setRange(0, 100 * scale);
+		slider->setValue(25 * scale);
 	}
 	//if (false)
 	{
 		auto slider = UINew<UISlider>();
 		layout->addElement(slider);
 		slider->setOrientation(UI::Vertical);
-		slider->setFixedSize(30, 100);
-		slider->setRange(0, 100);
-		slider->setValue(25);
+		slider->setFixedSize(30 * scale, 100 * scale);
+		slider->setRange(0, 100 * scale);
+		slider->setValue(25 * scale);
 	}
 	//if(false)
 	{
 		auto hline = UINew<UIHLine>();
 		layout->addElement(hline);
-		hline->setFixedSize(100, 30);
+		hline->setFixedSize(100 * scale, 30 * scale);
 	}
 	//if(false)
 	{
 		auto vline = UINew<UIVLine>();
 		layout->addElement(vline);
-		vline->setFixedSize(30, 100);
+		vline->setFixedSize(30 * scale, 100 * scale);
 	}
 	//if (false)
 	{
 		auto combo = UINew<UICombo>();
 		layout->addElement(combo);
-		combo->setFixedSize(100, 30);
+		combo->setFixedSize(100 * scale, 30 * scale);
 		combo->setMaxCount(4);
 		combo->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
 		combo->setCurrentIndex(0);
@@ -444,7 +447,7 @@ void sample(UIContextRef context, SDL_Window* window)
 
 		auto combo2 = UINew<UICombo>();
 		layout->addElement(combo2);
-		combo2->setFixedSize(100, 30);
+		combo2->setFixedSize(100 * scale, 30 * scale);
 		combo2->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
 		combo2->setCurrentText("黄金糕");
 		combo2->currentTextChanged->connect(nullptr, [](UIString text) {
@@ -455,7 +458,7 @@ void sample(UIContextRef context, SDL_Window* window)
 	{
 		auto input = UINew<UIInput>();
 		layout->addElement(input);
-		input->setFixedSize(100, 30);
+		input->setFixedSize(100 * scale, 30 * scale);
 		input->setText("Hello,OpenUI");
 		input->editingStarted->connect(nullptr, [=](UIRect rect) {
 			SDL_StartTextInput(window);

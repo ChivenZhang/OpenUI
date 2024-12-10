@@ -42,7 +42,7 @@ CairoGLRender::CairoGLRender()
 		}
 	)";
 
-	// 检查编译错误 
+	// 检查编译错误
 	auto vshader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vshader, 1, &vsource, NULL);
 	glCompileShader(vshader);
@@ -52,11 +52,11 @@ CairoGLRender::CairoGLRender()
 	{
 		GLchar infoLog[512];
 		glGetShaderInfoLog(vshader, 512, NULL, infoLog);
-		glDeleteShader(vshader); // 删除着色器，防止内存泄漏  
+		glDeleteShader(vshader); // 删除着色器，防止内存泄漏
 		UI_FATAL("Shader compilation failed: %s", infoLog);
 	}
 
-	// 检查编译错误 
+	// 检查编译错误
 	auto fshader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fshader, 1, &fsource, NULL);
 	glCompileShader(fshader);
@@ -65,11 +65,11 @@ CairoGLRender::CairoGLRender()
 	{
 		GLchar infoLog[512];
 		glGetShaderInfoLog(fshader, 512, NULL, infoLog);
-		glDeleteShader(fshader); // 删除着色器，防止内存泄漏  
+		glDeleteShader(fshader); // 删除着色器，防止内存泄漏
 		UI_FATAL("Shader compilation failed: %s", infoLog);
 	}
 
-	// 检查链接错误  
+	// 检查链接错误
 	auto shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vshader);
 	glAttachShader(shaderProgram, fshader);
@@ -79,7 +79,7 @@ CairoGLRender::CairoGLRender()
 	{
 		GLchar infoLog[512];
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		glDeleteProgram(shaderProgram); // 删除程序，防止内存泄漏  
+		glDeleteProgram(shaderProgram); // 删除程序，防止内存泄漏
 		UI_FATAL("Shader program linking failed: %s", infoLog);
 	}
 	glDeleteShader(vshader);
@@ -117,11 +117,17 @@ CairoGLRender::~CairoGLRender()
 
 void CairoGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 {
+	static int32_t maxTextureUnits = 0;
+	if (maxTextureUnits == 0)
+	{
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+		maxTextureUnits = std::clamp(maxTextureUnits, 1, 32);
+	}
+
 	glUseProgram(m_NativeProgram);
 	glBindVertexArray(m_NativePrimitive);
+
 	m_PrimitiveList.clear();
-	int32_t maxTextureUnits = 16;
-	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
 	for (size_t i = 0; i < data.size(); i += maxTextureUnits)
 	{
 		for (size_t k = 0; k < maxTextureUnits && i + k < data.size(); ++k)
@@ -130,10 +136,8 @@ void CairoGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 			auto painter = UICast<CairoGLPainter>(data[i + k].Painter);
 			if (primitive.empty() || painter == nullptr) continue;
 
-			// 绑定到纹理数组
-			auto texture = painter->getTexture();
 			glActiveTexture(GL_TEXTURE0 + k);
-			glBindTexture(GL_TEXTURE_2D, texture);
+			glBindTexture(GL_TEXTURE_2D, painter->getTexture());
 
 			for (size_t n = 0; n < primitive.size(); ++n)
 			{

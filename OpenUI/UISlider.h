@@ -37,6 +37,7 @@ public:
 public:
 	UISlider();
 	~UISlider();
+	virtual void arrange(UIRect client) override;
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
 	virtual void layout(UIRect client) override;
 	virtual void paint(UIRect client, UIPainterRaw painter) override;
