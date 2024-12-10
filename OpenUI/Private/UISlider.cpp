@@ -60,7 +60,7 @@ UISlider::~UISlider()
 
 void UISlider::arrange(UIRect client)
 {
-	PRIVATE()->Handle->setFixedSize(16 * getContext()->getConfig().ScaleFactor, 16 * getContext()->getConfig().ScaleFactor);
+	PRIVATE()->Handle->setFixedSize(16 * getContext()->getConfig().DisplayScale, 16 * getContext()->getConfig().DisplayScale);
 }
 
 bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)

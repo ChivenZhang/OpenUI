@@ -16,7 +16,8 @@
 class UIConfig
 {
 public:
-	float ScaleFactor = 1.0f;
+	float DisplayScale = 1.0f;
+	float PixelDensity = 1.0f;
 };
 
 /// @brief 

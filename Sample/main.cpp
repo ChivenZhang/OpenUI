@@ -71,7 +71,7 @@ int main()
 
 	// Initialize OpenUI context
 
-	UIConfig config{ .ScaleFactor = scale };
+	UIConfig config{ .DisplayScale = scale };
 	auto openui = UINew<UIContext>(config);
 	openui->setRender(UINew<CairoGLRender>());
 	openui->setPainter(UINew<CairoGLPainter>(w, h));
@@ -247,7 +247,7 @@ int main()
 
 void sample(UIContextRef context, SDL_Window* window)
 {
-	auto scale = context->getConfig().ScaleFactor;
+	auto scale = context->getConfig().DisplayScale;
 
 	auto layout = UINew<UIFlow>();
 	context->addElement(layout);
