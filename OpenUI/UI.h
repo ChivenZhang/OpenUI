@@ -714,6 +714,10 @@ static constexpr UIBrush UIFrameBrush
 	.Color { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f },
 };
 
+#ifndef OPENUI_FONT_FAMILY
+#define OPENUI_FONT_FAMILY "Segoe UI"
+#endif
+
 struct UIFont
 {
 	using align_t = enum
@@ -759,7 +763,7 @@ struct UIFont
 		WeightBlack = 900,
 	};
 	bool LineWrap = false;
-	UIString Family = "Segoe UI";
+	UIString Family = OPENUI_FONT_FAMILY;
 	uint32_t Align = align_t::AlignLeft;
 	style_t Style = style_t::StyleNormal;
 	weight_t Weight = weight_t::WeightNormal;
