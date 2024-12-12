@@ -41,6 +41,6 @@
 # 成果展示
 
 <div align="center">
-  <img src="Sample.png" style="width:50%;" alt="描述文字" />
+  <img src="Sample.png" style="width:100%;" alt="描述文字" />
 </div>
 <p>兴趣讨论QQ群：1006760893</p>
