@@ -9,13 +9,13 @@
 # 整体设计
 
 <div align="center">
-  <img src="Pattern.png" style="width:50%;" alt="描述文字" />
+  <img src="Pattern.png" style="width:100%;" alt="描述文字" />
 </div>
 
 # 详细设计
 
 <div align="center">
-  <img src="Design.png" style="width:50%;" alt="描述文字" />
+  <img src="Design.png" style="width:100%;" alt="描述文字" />
 </div>
 
 ## 需求列表
