@@ -2,7 +2,7 @@
 
 add_definitions(-DOPENUI_SHARED_LIBRARY)
 
-add_library (OpenUI SHARED
+add_library(OpenUI SHARED
 "UI.h"
 "UIButton.h"
 "UICheck.h"
@@ -51,4 +51,5 @@ add_library (OpenUI SHARED
 "Private/UIVBox.cpp"
  )
 
-target_link_libraries(OpenUI yogacore)
+find_package(yoga CONFIG REQUIRED)
+target_link_libraries(OpenUI PRIVATE yoga::yogacore)

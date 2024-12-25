@@ -11,20 +11,9 @@ set(OPENUI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "OpenUI Source Pa
 option(OPENUI_ENABLE_SAMPLE "Enable Sample Compile" OFF)
 
 include_directories(${OPENUI_SOURCE_DIR})
-include_directories(${OPENUI_SOURCE_DIR}/External/stb)
-include_directories(${OPENUI_SOURCE_DIR}/External/x64-windows/include)
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-link_directories(${OPENUI_SOURCE_DIR}/External/x64-windows/debug/lib)
-else()
-link_directories(${OPENUI_SOURCE_DIR}/External/x64-windows/lib)
-endif()
 
 add_subdirectory(OpenUI)
 
 if(OPENUI_ENABLE_SAMPLE)
-include_directories(${OPENUI_SOURCE_DIR}/External/x64-windows/include/pango-1.0)
-include_directories(${OPENUI_SOURCE_DIR}/External/x64-windows/include/cairo)
-include_directories(${OPENUI_SOURCE_DIR}/External/x64-windows/include/harfbuzz)
-include_directories(${OPENUI_SOURCE_DIR}/External/x64-windows/include/glib-2.0)
 add_subdirectory(Sample)
 endif()
