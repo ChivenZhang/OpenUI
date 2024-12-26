@@ -13,19 +13,17 @@ add_executable (Sample
 	SDL3InputEnum.h
 )
 add_dependencies(Sample OpenUI)
-
 target_include_directories(Sample PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_include_directories(Sample PUBLIC ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/include)
-target_include_directories(Sample PUBLIC ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/include/cairo)
-target_include_directories(Sample PUBLIC ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/include/harfbuzz)
-target_include_directories(Sample PUBLIC ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/include/glib-2.0)
-target_include_directories(Sample PUBLIC ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/include/pango-1.0)
-target_include_directories(Sample PUBLIC ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/lib/glib-2.0/include)
+target_include_directories(Sample PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
+target_include_directories(Sample PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/cairo)
+target_include_directories(Sample PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/harfbuzz)
+target_include_directories(Sample PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/glib-2.0)
+target_include_directories(Sample PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/pango-1.0)
+target_include_directories(Sample PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/glib-2.0/include)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-	target_link_directories(Sample PRIVATE ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/debug/lib)
+	target_link_directories(Sample PRIVATE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib)
 else()
-	target_link_directories(Sample PRIVATE ${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-static-md/lib)
+	target_link_directories(Sample PRIVATE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
 
 if(CMAKE_HOST_WIN32)
