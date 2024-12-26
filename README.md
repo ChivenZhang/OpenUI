@@ -1,24 +1,21 @@
-# 设计主旨
-
-## To be more opened, more abstract, more tolerant, more powerful.
-
 <div align="center">
   <img src="OpenUI.png" alt="描述文字" />
 </div>
 
-# 整体设计
+## Description
+A retained mode GUI solution for c++ game development.
+```c++
+auto vbox = UINew<UIVBox>();
+context->addElement(vbox);
+vbox->setFixedSize(200, 200);
 
-<div align="center">
-  <img src="Pattern.png" style="width:100%;" alt="描述文字" />
-</div>
+auto button = UINew<UIButton>();
+vbox->addElement(button);
+button->setText("button");
+...
+```
 
-# 详细设计
-
-<div align="center">
-  <img src="Design.png" style="width:100%;" alt="描述文字" />
-</div>
-
-## 需求列表
+## Features
 - [x] 支持单窗口的控件树机制
 - [x] 支持控件的样式+行为定制
 - [x] 支持常用的控件+布局
@@ -30,7 +27,7 @@
 - [ ] 支持三维场景控件能力
 - [ ] 支持单窗口之间的拖拽事件
 
-## 开发工作
+## Works to do
 - [x] 顶层接口设计
 - [x] 控件布局计算
 - [x] 字体布局排版
@@ -38,7 +35,13 @@
 - [x] OpenGL渲染后端
 - [ ] 三维控件框架
 
-# 成果展示
+## How to install
+* Add "VCPKG_ROOT_CUSTOM" env variable to implicate vcpkg directory.
+* Run "vcpkg install" command under project directory.
+* Open CMakeLists.txt use cmake and build it.
+* See "Sample/main.cpp" for more details.
+
+# Presentation
 
 <div align="center">
   <img src="Sample.png" style="width:100%;" alt="描述文字" />

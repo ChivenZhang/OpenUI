@@ -7,11 +7,8 @@
       "binaryDir": "${sourceDir}/Output/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_CRT_LINKAGE": "dynamic",
-        "VCPKG_LIBRARY_LINKAGE": "static",
-        "VCPKG_CMAKE_SYSTEM_NAME": "Darwin",
-        "VCPKG_OSX_ARCHITECTURES": "x86_64",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
 
         "OPENUI_ENABLE_SAMPLE": "ON"
       }
@@ -22,9 +19,34 @@
       "binaryDir": "${sourceDir}/Output/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_CRT_LINKAGE": "dynamic",
-        "VCPKG_LIBRARY_LINKAGE": "static",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+
+        "OPENUI_ENABLE_SAMPLE": "ON"
+      }
+    },
+    {
+      "name": "x64-osx-Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/Output/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-osx",
+        "VCPKG_CMAKE_SYSTEM_NAME": "Darwin",
+        "VCPKG_OSX_ARCHITECTURES": "x86_64",
+
+        "OPENUI_ENABLE_SAMPLE": "ON"
+      }
+    },
+    {
+      "name": "x64-osx-Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/Output/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-osx",
         "VCPKG_CMAKE_SYSTEM_NAME": "Darwin",
         "VCPKG_OSX_ARCHITECTURES": "x86_64",
 
