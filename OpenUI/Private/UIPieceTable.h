@@ -18,7 +18,7 @@ public:
 	UIPieceTable(const UIString& text = UIString())
 	{
 		originalBuffer = text;
-		pieces.emplace_back(ORIGINAL, 0, text.length());
+		pieces.push_back({ORIGINAL, 0, text.length()});
 	}
 
 	void insert(size_t position, const std::string& text)
@@ -37,11 +37,11 @@ public:
 				if (currentPos < position)
 				{
 					size_t splitLength = position - currentPos;
-					newPieces.emplace_back(piece.bufferType, piece.start, splitLength);
+					newPieces.push_back({piece.bufferType, piece.start, splitLength});
 					piece.start += splitLength;
 					piece.length -= splitLength;
 				}
-				newPieces.emplace_back(ADD, addStart, addLength);
+				newPieces.push_back({ADD, addStart, addLength});
 				currentPos += addLength;
 			}
 			newPieces.push_back(piece);
@@ -50,7 +50,7 @@ public:
 
 		if (currentPos <= position)
 		{
-			newPieces.emplace_back(ADD, addStart, addLength);
+			newPieces.push_back({ADD, addStart, addLength});
 		}
 
 		pieces = newPieces;
@@ -73,7 +73,7 @@ public:
 				if (position > currentPos)
 				{
 					size_t splitLength = position - currentPos;
-					newPieces.emplace_back(piece.bufferType, piece.start, splitLength);
+					newPieces.push_back({piece.bufferType, piece.start, splitLength});
 					piece.start += splitLength;
 					piece.length -= splitLength;
 				}

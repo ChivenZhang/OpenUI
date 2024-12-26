@@ -1,8 +1,10 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-add_definitions(-DOPENUI_SHARED_LIBRARY)
+add_definitions(
+        #-DOPENUI_SHARED_LIBRARY
+)
 
-add_library(OpenUI SHARED
+add_library(OpenUI STATIC
 "UI.h"
 "UIButton.h"
 "UICheck.h"

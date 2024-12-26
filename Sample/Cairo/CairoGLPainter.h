@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "Cairo/CairoUIPainter.h"
+#include "CairoUIPainter.h"
 
 class CairoGLPainter : public CairoUIPainter
 {

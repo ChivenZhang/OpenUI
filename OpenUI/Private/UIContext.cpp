@@ -126,7 +126,7 @@ bool UIContext::addElement(UIElementRef value, int32_t zorder)
 {
 	if (value == nullptr) return false;
 	auto result = std::find_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextElement const& e)->bool { return e.Element == value; });
-	if (result == PRIVATE()->TopLevelList.end()) PRIVATE()->TopLevelList.emplace_back(value, zorder);
+	if (result == PRIVATE()->TopLevelList.end()) PRIVATE()->TopLevelList.push_back({value, zorder});
 	else result->ZOrder = zorder;
 	value->setContext(this);
 	value->setParent(nullptr);

@@ -15,7 +15,7 @@
 CairoGLRender::CairoGLRender()
 {
 	auto vsource = R"(
-		#version 450
+		#version 330
 		layout (location = 0) in vec2 _point;
 		layout (location = 1) in uint _index;
 		out vec2 uv;
@@ -30,11 +30,11 @@ CairoGLRender::CairoGLRender()
 	)";
 
 	auto fsource = R"(
-		#version 450
+		#version 330
 		in vec2 uv;
 		flat in uint index;
 		layout (location = 0) out vec4 color;
-		layout (binding = 0) uniform sampler2D textureList[32];
+		uniform sampler2D textureList[16];
 
 		void main()
 		{
@@ -141,9 +141,9 @@ void CairoGLRender::render(UIRect client, UIArrayView<UIPrimitive> data)
 
 			for (size_t n = 0; n < primitive.size(); ++n)
 			{
-				m_PrimitiveList.emplace_back(primitive[n].P0.X, primitive[n].P0.Y, (uint32_t)k);
-				m_PrimitiveList.emplace_back(primitive[n].P1.X, primitive[n].P1.Y, (uint32_t)k);
-				m_PrimitiveList.emplace_back(primitive[n].P2.X, primitive[n].P2.Y, (uint32_t)k);
+				m_PrimitiveList.push_back({primitive[n].P0.X, primitive[n].P0.Y, (uint32_t)k});
+				m_PrimitiveList.push_back({primitive[n].P1.X, primitive[n].P1.Y, (uint32_t)k});
+				m_PrimitiveList.push_back({primitive[n].P2.X, primitive[n].P2.Y, (uint32_t)k});
 			}
 		}
 

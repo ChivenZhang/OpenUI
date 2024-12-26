@@ -733,7 +733,7 @@ UI::FlexBasis UIElement::getFlexBasis() const
 
 void UIElement::setFlexBasis(UI::FlexBasis value)
 {
-	PRIVATE()->Flex.FlexBasis;
+	PRIVATE()->Flex.FlexBasis = value;
 }
 
 UI::AlignSelf UIElement::getAlignSelf() const

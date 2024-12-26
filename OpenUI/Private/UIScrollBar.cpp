@@ -65,7 +65,7 @@ bool UIScrollBar::filter(UIReactorRaw source, UIEventRaw _event)
 		if (PRIVATE()->Handle->inBounds(event->X, event->Y))
 		{
 			PRIVATE()->SliderPosition = PRIVATE()->Value;
-			PRIVATE()->MousePos = UIFloat2(event->X, event->Y);
+			PRIVATE()->MousePos = UIFloat2{(float)event->X, (float)event->Y};
 		}
 	} break;
 	case UIHash("MouseMove"):
@@ -74,7 +74,7 @@ bool UIScrollBar::filter(UIReactorRaw source, UIEventRaw _event)
 		if (PRIVATE()->Handle->getDown())
 		{
 			auto oldValue = PRIVATE()->Value;
-			auto offset = UIFloat2(event->X - PRIVATE()->MousePos.X, event->Y - PRIVATE()->MousePos.Y);
+			auto offset = UIFloat2{event->X - PRIVATE()->MousePos.X, event->Y - PRIVATE()->MousePos.Y};
 			if (PRIVATE()->Orientation == UI::Horizontal)
 			{
 				auto range = std::max<float>(getWidth(), getMaximum() - getMinimum());

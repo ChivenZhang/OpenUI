@@ -73,7 +73,7 @@ bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
 		if (PRIVATE()->Handle->inBounds(event->X, event->Y))
 		{
 			PRIVATE()->SliderPosition = std::clamp(PRIVATE()->Value, getMinimum(), getMaximum());
-			PRIVATE()->MousePos = UIFloat2(event->X, event->Y);
+			PRIVATE()->MousePos = UIFloat2{ (float)event->X, (float)event->Y };
 		}
 	} break;
 	case UIHash("MouseMove"):
@@ -82,7 +82,7 @@ bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
 		if (PRIVATE()->Handle->getDown())
 		{
 			auto oldValue = std::clamp(PRIVATE()->Value, getMinimum(), getMaximum());
-			auto offset = UIFloat2(event->X - PRIVATE()->MousePos.X, event->Y - PRIVATE()->MousePos.Y);
+			auto offset = UIFloat2{event->X - PRIVATE()->MousePos.X, event->Y - PRIVATE()->MousePos.Y};
 			if (PRIVATE()->Orientation == UI::Horizontal)
 			{
 				auto range = getMaximum() - getMinimum();

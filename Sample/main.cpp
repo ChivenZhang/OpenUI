@@ -1,8 +1,6 @@
 #include <SDL3/SDL.h>
 #include <GL/glew.h>
 #include <SDL3/SDL_opengl.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 #include "SDL3InputEnum.h"
 #include "Cairo/CairoGLPainter.h"
 #include "Cairo/CairoGLRender.h"
@@ -21,6 +19,7 @@
 #include "OpenUI/UICombo.h"
 #include "OpenUI/UILine.h"
 #include "OpenUI/UIInput.h"
+#include <stb_image.h>
 
 void sample(UIContextRef context, SDL_Window* window);
 
@@ -28,15 +27,15 @@ int main()
 {
 	// Create SDL window and OpenGL context
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO) == false)
 	{
 		UI_ERROR("SDL could not initialize! SDL_Error: %s", SDL_GetError());
 		return -1;
 	}
 
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	if (window == nullptr)
@@ -66,7 +65,6 @@ int main()
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	auto scale = SDL_GetWindowDisplayScale(window);
-	UI_INFO("%f", scale);
 
 	// Initialize OpenUI context
 

@@ -8,7 +8,10 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "VCPKG_CRT_LINKAGE": "dynamic",
+        "VCPKG_LIBRARY_LINKAGE": "static",
+        "VCPKG_CMAKE_SYSTEM_NAME": "Darwin",
+        "VCPKG_OSX_ARCHITECTURES": "x86_64",
 
         "OPENUI_ENABLE_SAMPLE": "ON"
       }
@@ -20,7 +23,10 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "VCPKG_CRT_LINKAGE": "dynamic",
+        "VCPKG_LIBRARY_LINKAGE": "static",
+        "VCPKG_CMAKE_SYSTEM_NAME": "Darwin",
+        "VCPKG_OSX_ARCHITECTURES": "x86_64",
 
         "OPENUI_ENABLE_SAMPLE": "ON"
       }

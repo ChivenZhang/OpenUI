@@ -71,6 +71,8 @@
 
 #define _USE_MATH_DEFINES
 #include <algorithm>
+#include <cfloat>
+#include <cstdint>
 #include <any>
 #include <array>
 #include <atomic>
