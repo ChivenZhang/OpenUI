@@ -80,11 +80,6 @@ target_link_libraries(OpenUIDemo PRIVATE
 		debug zlibd optimized zlib
 		Ws2_32 Dwrite
 )
-add_custom_command(
-		TARGET OpenUIDemo POST_BUILD
-		COMMAND "${CMAKE_SOURCE_DIR}/INSTALL.bat"
-		COMMENT "Copying dll to output directory"
-)
 endif()
 
 if(CMAKE_HOST_APPLE)
