@@ -36,9 +36,9 @@ button->setText("button");
 - [ ] 三维控件框架
 
 ## How to install
-* Add "VCPKG_ROOT_CUSTOM" env variable to implicate vcpkg directory.
-* Run "vcpkg install" command under project directory.
-* Open CMakeLists.txt use cmake and build it.
+* Add "VCPKG_ROOT_CUSTOM" to environment.
+* Run [VCPKG](https://learn.microsoft.com/zh-cn/vcpkg/get_started/overview) in the project directory.
+* Use [CMAKE](https://cmake.org/getting-started/) to open CMakeLists.txt and build it.
 * See "Sample/main.cpp" for more details.
 
 # Presentation
