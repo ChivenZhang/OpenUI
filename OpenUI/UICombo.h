@@ -85,12 +85,12 @@ struct UIComboStyle
 class OPENUI_API UICombo : public UIElement
 {
 public:
-	UICombo();
-	~UICombo();
-	virtual void arrange(UIRect client) override;
-	virtual void layout(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
+	explicit UICombo(UIContextRaw context);
+	~UICombo() override;
+	void arrange(UIRect client) override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIStringList const& getItems() const;
 	void setItems(UIStringList const& texts);
@@ -108,7 +108,7 @@ public:
 	void setStyle(UIComboStyle value);
 
 protected:
-	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
+	bool filter(UIReactorRaw source, UIEventRaw event) override;
 
 public:
 	UISignalAsRaw<int /*index*/> activated;

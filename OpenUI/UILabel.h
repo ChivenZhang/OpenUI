@@ -39,17 +39,17 @@ public:
 	using scale_t = enum
 	{
 		ScaleFixed = 0,
-		ScaleAuto = 1,
-		ScaleNoRatio = 2,
-		ScaleKeepRatio = 3,
+		ScaleAuto,
+		ScaleNoRatio,
+		ScaleKeepRatio,
 	};
 
 public:
-	UILabel();
-	~UILabel();
-	virtual void layout(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
+	explicit UILabel(UIContextRaw context);
+	~UILabel() override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIString getText() const;
 	void setText(UIString const& text);
@@ -67,12 +67,12 @@ public:
 	void setScaledContents(scale_t value);
 
 protected:
-	virtual void mouseDoubleEvent(UIMouseEventRaw event) override;
-	virtual void mousePressEvent(UIMouseEventRaw event) override;
-	virtual void mouseReleaseEvent(UIMouseEventRaw event) override;
-	virtual void mouseMoveEvent(UIMouseEventRaw event) override;
-	virtual void enterEvent(UIMouseEventRaw event) override;
-	virtual void leaveEvent(UIMouseEventRaw event) override;
+	void mouseDoubleEvent(UIMouseEventRaw event) override;
+	void mousePressEvent(UIMouseEventRaw event) override;
+	void mouseReleaseEvent(UIMouseEventRaw event) override;
+	void mouseMoveEvent(UIMouseEventRaw event) override;
+	void enterEvent(UIMouseEventRaw event) override;
+	void leaveEvent(UIMouseEventRaw event) override;
 
 public:
 	UISignalAsRaw<UIString> linkHovered;
@@ -88,6 +88,6 @@ using UILabelRaw = UIRaw<UILabel>;
 class OPENUI_API UILabelFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

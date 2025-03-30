@@ -22,11 +22,13 @@ public:
 };
 #define PRIVATE() ((UIScrollPrivate*)m_PrivateScroll)
 
-UIScroll::UIScroll()
+UIScroll::UIScroll(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateScroll = new UIScrollPrivate;
 
-	PRIVATE()->HorizontalScrollBar = UINew<UIScrollBar>();
+	PRIVATE()->HorizontalScrollBar = UINew<UIScrollBar>(context);
 	addElement(PRIVATE()->HorizontalScrollBar);
 	PRIVATE()->HorizontalScrollBar->setFixedHeight(12);
 	PRIVATE()->HorizontalScrollBar->setMinWidth(12);
@@ -37,7 +39,7 @@ UIScroll::UIScroll()
 	style.Normal.Pen = UIFramePen;
 	PRIVATE()->HorizontalScrollBar->getHandle()->setStyle(style);
 
-	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>();
+	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(context);
 	addElement(PRIVATE()->VerticalScrollBar);
 	PRIVATE()->VerticalScrollBar->setFixedWidth(12);
 	PRIVATE()->VerticalScrollBar->setMinHeight(12);
@@ -293,7 +295,7 @@ UIString UIScrollFactory::getTagName() const
 
 UIElementRef UIScrollFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIScroll>();
+	auto result = UINew<UIScroll>(getContext());
 	result->setStyleText(style);
 	return result;
 }

@@ -19,7 +19,6 @@ public:
 	UIString Identity;
 	UIElementRaw Parent = nullptr;
 	UIList<UIElementRef> Children;
-	UIPainterRef Painter;
 	UIFilterRaw Filter = nullptr;
 	UIContextRaw Context = nullptr;
 	UIPointUV3 Primitive[2];
@@ -57,9 +56,11 @@ public:
 };
 #define PRIVATE() ((UIElementPrivateData*) m_Private)
 
-UIElement::UIElement()
+UIElement::UIElement(UIContextRaw context)
 {
 	m_Private = new UIElementPrivateData;
+
+	PRIVATE()->Context = context;
 }
 
 UIElement::~UIElement()
@@ -83,19 +84,9 @@ UIElementRaw UIElement::getParent() const
 	return PRIVATE()->Parent;
 }
 
-UIArrayView<const UIElementRef> UIElement::getChildren() const
+UIListView<const UIElementRef> UIElement::getChildren() const
 {
 	return PRIVATE()->Children;
-}
-
-UIPainterRaw UIElement::getPainter() const
-{
-	return PRIVATE()->Painter.get();
-}
-
-void UIElement::setPainter(UIPainterRef value)
-{
-	PRIVATE()->Painter = value;
 }
 
 UIFilterRaw UIElement::getEventFilter() const
@@ -135,7 +126,7 @@ void UIElement::setAttribute(UIString name, UIString value)
 {
 }
 
-UIArrayView<const UIPointUV3> UIElement::getPrimitive() const
+UIListView<const UIPointUV3> UIElement::getPrimitive() const
 {
 	auto viewport = UIOverlap(getViewport(), getBounds());
 	PRIVATE()->Primitive[0].P0 = { viewport.X, viewport.Y };
@@ -852,6 +843,7 @@ UIContextRaw UIElement::getContext() const
 
 void UIElement::setContext(UIContextRaw value)
 {
+	if (getContext()) getContext()->setAnimate(this, false);
 	PRIVATE()->Context = value;
 	if (getContext()) getContext()->setAnimate(this, getAnimate());
 	for (size_t i = 0; i < getChildren().size(); ++i) getChildren()[i]->setContext(value);

@@ -27,7 +27,9 @@ public:
 };
 #define PRIVATE() ((UIGridPrivate*) m_PrivateGrid)
 
-UIGrid::UIGrid()
+UIGrid::UIGrid(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateGrid = new UIGridPrivate;
 
@@ -258,7 +260,7 @@ UIString UIGridFactory::getTagName() const
 
 UIElementRef UIGridFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIGrid>();
+	auto result = UINew<UIGrid>(getContext());
 	result->setStyleText(style);
 	return result;
 }

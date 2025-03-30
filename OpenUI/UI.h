@@ -173,12 +173,12 @@ using UIString8View = std::u8string_view;
 #endif
 template <class T, size_t N>
 using UIArray = std::array<T, N>;
-#if 20 <= OPENUI_CPP_VERSION
-template <class T, size_t N = std::dynamic_extent>
-using UIArrayView = std::span<T, N>;
-#endif
 template <class T>
 using UIList = std::vector<T>;
+#if 20 <= OPENUI_CPP_VERSION
+template <class T, size_t N = std::dynamic_extent>
+using UIListView = std::span<T, N>;
+#endif
 template <class T>
 using UIDeque = std::deque<T>;
 template <class T>
@@ -276,13 +276,13 @@ inline UIRef<U> UICast(UIRef<T> const& target)
 template<typename U, typename T>
 inline UIHnd<U> UICast(UIHnd<T>&& target)
 {
-	if (target == nullptr) return THnd<U>();
+	if (target == nullptr) return UIHnd<U>();
 	return std::dynamic_pointer_cast<U>(target.lock());
 }
 template<typename U, typename T>
 inline UIHnd<U> UICast(UIHnd<T> const& target)
 {
-	if (target == nullptr) return THnd<U>();
+	if (target == nullptr) return UIHnd<U>();
 	return std::dynamic_pointer_cast<U>(target.lock());
 }
 template<typename U, typename T>
@@ -612,7 +612,7 @@ using UIPainterRaw = UIRaw<UIPainter>;
 struct UIPrimitive
 {
 	UIPainterRaw Painter;
-	UIArrayView<const UIPointUV3> Primitive;
+	UIListView<const UIPointUV3> Primitive;
 };
 
 struct UIPen
@@ -844,8 +844,8 @@ inline bool operator ==(UIFloat4x4 const& a, UIFloat4x4 const& b)
 struct UIImage
 {
 	uint32_t Width = 0, Height = 0, Stride = 0, Channel = 0;
-	union { void* Pixel; size_t Data = 0; };
-	enum { Byte = 0, HWByte, Float, HWFloat, } Type = Byte;
+	union { void* Pixel; uint64_t /*GL & VK*/ Data = 0;  };
+	enum { Byte = 0, Float, GPUByte, GPUFloat, } Type = Byte;
 };
 using UIImageRaw = UIRaw<UIImage>;
 

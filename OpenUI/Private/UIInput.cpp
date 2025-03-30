@@ -36,7 +36,9 @@ public:
 };
 #define PRIVATE() ((UIInputPrivate*) m_PrivateInput)
 
-UIInput::UIInput()
+UIInput::UIInput(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateInput = new UIInputPrivate;
 	PRIVATE()->PieceTable = UINew<UIPieceTable>();
@@ -64,10 +66,8 @@ void UIInput::arrange(UIRect client)
 
 void UIInput::layout(UIRect client)
 {
-	auto painter = getPainter();
-	if (painter == nullptr) painter = getContext()->getPainter();
-	if (painter == nullptr) return;
 	UIRect cursorRect;
+	auto painter = getContext()->getPainter();
 	painter->setFont(PRIVATE()->Style.Foreground.Font);
 	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 
@@ -189,10 +189,8 @@ int32_t UIInput::getCursorPosition() const
 
 int32_t UIInput::getCursorPosition(int32_t x, int32_t y) const
 {
-	auto painter = getPainter();
-	if (painter == nullptr) painter = getContext()->getPainter();
-	if (painter == nullptr) return -1;
 	int32_t cursor = -1;
+	auto painter = getContext()->getPainter();
 	painter->setFont(PRIVATE()->Style.Foreground.Font);
 	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, x, y, &cursor);
 	return cursor;
@@ -200,9 +198,7 @@ int32_t UIInput::getCursorPosition(int32_t x, int32_t y) const
 
 void UIInput::setCursorPosition(int32_t value)
 {
-	auto painter = getPainter();
-	if (painter == nullptr) painter = getContext()->getPainter();
-	if (painter == nullptr) return;
+	auto painter = getContext()->getPainter();
 	PRIVATE()->Cursor = std::clamp<int32_t>(value, 0, PRIVATE()->Text.length());
 }
 
@@ -221,9 +217,7 @@ void UIInput::getSelection(int32_t& start, int32_t& length) const
 
 void UIInput::setSelection(int32_t start, int32_t length)
 {
-	auto painter = getPainter();
-	if (painter == nullptr) painter = getContext()->getPainter();
-	if (painter == nullptr) return;
+	auto painter = getContext()->getPainter();
 	PRIVATE()->CursorStart = std::clamp<int32_t>(start, 0, PRIVATE()->Text.size());
 	PRIVATE()->Cursor = std::clamp<int32_t>(start + std::max<int32_t>(0, length), 0, PRIVATE()->Text.size());
 
@@ -433,10 +427,8 @@ void UIInput::inputEvent(UITextInputEventRaw event)
 			cut();
 			insert(event->Text);
 			deselect();
-			auto painter = getPainter();
-			if (painter == nullptr) painter = getContext()->getPainter();
-			if (painter == nullptr) return;
 			UIRect cursorRect;
+			auto painter = getContext()->getPainter();
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
@@ -456,10 +448,8 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 	{
 		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
-			auto painter = getPainter();
-			if (painter == nullptr) painter = getContext()->getPainter();
-			if (painter == nullptr) return;
 			UIRect cursorRect;
+			auto painter = getContext()->getPainter();
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
@@ -498,9 +488,7 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 		if (PRIVATE()->MousePress)
 		{
 			auto viewport = UIOverlap(getViewport(), getBounds());
-			auto painter = getPainter();
-			if (painter == nullptr) painter = getContext()->getPainter();
-			if (painter == nullptr) return;
+			auto painter = getContext()->getPainter();
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
 			auto boundRect = painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor);
 			if (event->X < viewport.X && boundRect.X < viewport.X) PRIVATE()->SelectOffset += 1;
@@ -518,7 +506,7 @@ UIString UIInputFactory::getTagName() const
 
 UIElementRef UIInputFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIInput>();
+	auto result = UINew<UIInput>(getContext());
 	result->setStyleText(style);
 	return result;
 }

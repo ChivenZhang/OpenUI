@@ -88,14 +88,12 @@ namespace UI
 class OPENUI_API UIElement : public UIReactor, public UIHandler, public UIFilter, public std::enable_shared_from_this<UIElement>
 {
 public:
-	UIElement();
-	virtual ~UIElement();
+	explicit UIElement(UIContextRaw context);
+	~UIElement() override;
 	UIString getID() const;
 	void setID(UIString value);
 	UIElementRaw getParent() const;
-	UIArrayView<const UIElementRef> getChildren() const;
-	virtual UIPainterRaw getPainter() const;
-	virtual void setPainter(UIPainterRef value);
+	UIListView<const UIElementRef> getChildren() const;
 	virtual UIFilterRaw getEventFilter() const;
 	virtual void setEventFilter(UIFilterRaw value);
 	virtual UIString getStyleText() const;
@@ -104,7 +102,7 @@ public:
 	virtual void setStyleText(UIString name, UIString value);
 	virtual UIString getAttribute(UIString name) const;
 	virtual void setAttribute(UIString name, UIString value);
-	virtual UIArrayView<const UIPointUV3> getPrimitive() const;
+	virtual UIListView<const UIPointUV3> getPrimitive() const;
 	virtual bool addElement(UIElementRef value);
 	virtual bool removeElement(UIElementRef value);
 	virtual void removeElement();
@@ -231,7 +229,9 @@ protected:
 	virtual void timerEvent(UITimerEventRaw event);
 
 protected:
-	virtual UIContextRaw getContext() const;
+	UIContextRaw getContext() const;
+
+private:
 	virtual void setContext(UIContextRaw value);
 	virtual void setParent(UIElementRaw value);
 

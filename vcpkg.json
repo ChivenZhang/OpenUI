@@ -1,16 +1,10 @@
 {
   "name" : "openui",
   "version-string" : "1.0.0",
-  "builtin-baseline" : "b545373a9a536dc559dac8583467a21497a0e897",
+  "builtin-baseline" : "478939b61bfc6aa9faf4ab18b5e2495f18ac1fea",
   "dependencies" : [ {
-    "name" : "pango",
-    "version>=" : "1.54.0"
-  }, {
     "name" : "yoga",
     "version>=" : "3.1.0"
-  }, {
-    "name" : "cairo",
-    "version>=" : "1.18.2"
   }, {
     "name" : "sdl3",
     "version>=" : "3.1.6-preview#2"
@@ -20,5 +14,11 @@
   }, {
     "name" : "glew",
     "version>=" : "2.2.0#4"
+  }, {
+    "name" : "gperf",
+    "version>=" : "3.1#7"
+  }, {
+    "name" : "pango",
+    "version>=" : "1.56.1#1"
   } ]
 }

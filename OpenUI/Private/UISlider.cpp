@@ -32,7 +32,9 @@ public:
 };
 #define PRIVATE() ((UISliderPrivate*)m_PrivateSlider)
 
-UISlider::UISlider()
+UISlider::UISlider(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateSlider = new UISliderPrivate;
 
@@ -42,7 +44,7 @@ UISlider::UISlider()
 	valueChanged = &PRIVATE()->OnValueChanged;
 	rangeChanged = &PRIVATE()->OnRangeChanged;
 
-	PRIVATE()->Handle = UINew<UIButton>();
+	PRIVATE()->Handle = UINew<UIButton>(context);
 	addElement(PRIVATE()->Handle);
 	PRIVATE()->Handle->setFixedSize(16, 16);
 
@@ -255,7 +257,7 @@ UIString UISliderFactory::getTagName() const
 
 UIElementRef UISliderFactory::getElement(UIString style) const
 {
-	auto result = UINew<UISlider>();
+	auto result = UINew<UISlider>(getContext());
 	result->setStyleText(style);
 	return result;
 }

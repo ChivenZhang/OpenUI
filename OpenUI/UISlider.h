@@ -35,14 +35,14 @@ public:
 	};
 
 public:
-	UISlider();
-	~UISlider();
-	virtual void arrange(UIRect client) override;
-	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
-	virtual void layout(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
+	explicit UISlider(UIContextRaw context);
+	~UISlider() override;
+	void arrange(UIRect client) override;
+	bool filter(UIReactorRaw source, UIEventRaw event) override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
 	using UIElement::removeElement;
-	virtual void removeElement() override;
+	void removeElement() override;
 
 	UI::Orientation getOrientation() const;
 	void setOrientation(UI::Orientation value);
@@ -86,6 +86,6 @@ using UISliderRaw = UIRaw<UISlider>;
 class OPENUI_API UISliderFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

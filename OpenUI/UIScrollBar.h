@@ -24,13 +24,13 @@ struct UIScrollBarStyle
 class OPENUI_API UIScrollBar : public UIElement
 {
 public:
-	UIScrollBar();
-	~UIScrollBar();
-	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
-	virtual void layout(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
+	explicit UIScrollBar(UIContextRaw context);
+	~UIScrollBar() override;
+	bool filter(UIReactorRaw source, UIEventRaw event) override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
 	using UIElement::removeElement;
-	virtual void removeElement() override;
+	void removeElement() override;
 
 	UI::Orientation getOrientation() const;
 	void setOrientation(UI::Orientation value);
@@ -68,6 +68,6 @@ using UIScrollBarRaw = UIRaw<UIScrollBar>;
 class OPENUI_API UIScrollBarFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

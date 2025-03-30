@@ -21,13 +21,14 @@ public:
 	};
 
 public:
-	CairoGLRender();
-	~CairoGLRender();
-	virtual void render(UIRect client, UIArrayView<UIPrimitive> data) override;
+	CairoGLRender(uint32_t width, uint32_t height);
+	~CairoGLRender() override;
+	void render(UIRect client, UIListView<UIPrimitive> data) override;
 
 protected:
 	uint32_t m_NativeProgram;
 	uint32_t m_NativeBuffer;
 	uint32_t m_NativePrimitive;
+	uint32_t m_NativeTexture;
 	UIList<primitive_t> m_PrimitiveList;
 };

@@ -10,9 +10,6 @@
 *
 * =================================================*/
 #include "UI.h"
-class UIContext;
-
-/// @brief 
 class UIRenderPrivate {};
 using UIRenderPrivateRaw = UIRaw<UIRenderPrivate>;
 
@@ -22,7 +19,7 @@ class OPENUI_API UIRender
 public:
 	virtual ~UIRender() = default;
 
-	virtual void render(UIRect client, UIArrayView<UIPrimitive> data) = 0;
+	virtual void render(UIRect client, UIListView<UIPrimitive> data) = 0;
 };
 using UIRenderRef = UIRef<UIRender>;
 using UIRenderRaw = UIRaw<UIRender>;

@@ -23,11 +23,11 @@ struct UIVBoxStyle
 class OPENUI_API UIVBox : public UIElement
 {
 public:
-	UIVBox();
-	~UIVBox();
-	virtual void arrange(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
+	explicit UIVBox(UIContextRaw context);
+	~UIVBox() override;
+	void arrange(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIVBoxStyle getStyle() const;
 	void setStyle(UIVBoxStyle value);
@@ -40,6 +40,6 @@ private:
 class OPENUI_API UIVBoxFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

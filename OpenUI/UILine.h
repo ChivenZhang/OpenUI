@@ -23,9 +23,9 @@ struct UILineStyle
 class OPENUI_API UIHLine : public UIElement
 {
 public:
-	UIHLine();
-	~UIHLine();
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
+	explicit UIHLine(UIContextRaw context);
+	~UIHLine() override;
+	void paint(UIRect client, UIPainterRaw painter) override;
 
 	UILineStyle getStyle() const;
 	void setStyle(UILineStyle value);
@@ -38,9 +38,9 @@ private:
 class OPENUI_API UIVLine : public UIElement
 {
 public:
-	UIVLine();
-	~UIVLine();
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
+	explicit UIVLine(UIContextRaw context);
+	~UIVLine() override;
+	void paint(UIRect client, UIPainterRaw painter) override;
 
 	UILineStyle getStyle() const;
 	void setStyle(UILineStyle value);

@@ -28,7 +28,9 @@ public:
 };
 #define PRIVATE() ((UIButtonPrivate*) m_PrivateButton)
 
-UIButton::UIButton()
+UIButton::UIButton(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateButton = new UIButtonPrivate;
 
@@ -38,7 +40,7 @@ UIButton::UIButton()
 	hovered = &PRIVATE()->OnHovered;
 	toggled = &PRIVATE()->OnToggled;
 
-	PRIVATE()->Label = UINew<UILabel>();
+	PRIVATE()->Label = UINew<UILabel>(context);
 	addElement(PRIVATE()->Label);
 
 	setStyle(PRIVATE()->Style);
@@ -248,7 +250,7 @@ UIString UIButtonFactory::getTagName() const
 
 UIElementRef UIButtonFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIButton>();
+	auto result = UINew<UIButton>(getContext());
 	result->setStyleText(style);
 	return result;
 }

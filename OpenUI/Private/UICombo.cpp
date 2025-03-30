@@ -33,7 +33,9 @@ public:
 };
 #define PRIVATE() ((UIComboPrivate*)m_PrivateCombo)
 
-UICombo::UICombo()
+UICombo::UICombo(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateCombo = new UIComboPrivate;
 
@@ -44,9 +46,9 @@ UICombo::UICombo()
 	textActivated = &PRIVATE()->OnTextActivated;
 	textHighlighted = &PRIVATE()->OnTextHighlighted;
 
-	PRIVATE()->Button = UINew<UIButton>();
+	PRIVATE()->Button = UINew<UIButton>(context);
 	addElement(PRIVATE()->Button);
-	PRIVATE()->Popup = UINew<UIScroll>();
+	PRIVATE()->Popup = UINew<UIScroll>(context);
 	PRIVATE()->Popup->setEventFilter(this);
 	setStyle(PRIVATE()->Style);
 
@@ -77,9 +79,7 @@ void UICombo::arrange(UIRect client)
 	PRIVATE()->Popup->setPositionType(UI::PositionAbsolute);
 	PRIVATE()->Popup->setFixedHeight(0);
 
-	auto painter = getPainter();
-	if (painter == nullptr) painter = getContext()->getPainter();
-	if (painter == nullptr) return;
+	auto painter = getContext()->getPainter();
 	painter->setFont(PRIVATE()->Style.Button.Label.Normal.Foreground.Font);
 
 	auto content = PRIVATE()->Popup->getContentView();
@@ -144,13 +144,13 @@ void UICombo::setItems(UIStringList const& texts)
 {
 	PRIVATE()->Items = texts;
 	PRIVATE()->Popup->removeElement();
-	auto itemsWidget = UINew<UIVBox>();
+	auto itemsWidget = UINew<UIVBox>(getContext());
 	PRIVATE()->Popup->addElement(itemsWidget);
 
 	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
 	{
 		auto text = PRIVATE()->Items[i];
-		auto button = UINew<UIButton>();
+		auto button = UINew<UIButton>(getContext());
 		itemsWidget->addElement(button);
 		button->setText(text);
 		button->setStyle(PRIVATE()->Style.Items);
@@ -283,7 +283,7 @@ UIString UIComboFactory::getTagName() const
 
 UIElementRef UIComboFactory::getElement(UIString style) const
 {
-	auto result = UINew<UICombo>();
+	auto result = UINew<UICombo>(getContext());
 	result->setStyleText(style);
 	return result;
 }

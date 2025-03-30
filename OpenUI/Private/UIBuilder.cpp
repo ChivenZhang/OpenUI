@@ -8,24 +8,33 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIBuilder.h"
-#include "UIParser.h"
+#include "../UIBuilder.h"
+#include "../UIParser.h"
 
 class UIBuilderPrivate : public UIElementPrivate
 {
 public:
+	UIContextRaw Context;
 	UIStringMap<UIFactoryRef> FactoryMap;
 };
 #define PRIVATE() ((UIBuilderPrivate*) m_Private)
 
-UIBuilder::UIBuilder()
+UIBuilder::UIBuilder(UIContextRaw context)
 {
 	m_Private = new UIBuilderPrivate;
+
+	PRIVATE()->Context = context;
 }
 
 UIBuilder::~UIBuilder()
 {
-	delete m_Private; m_Private = nullptr;
+	delete m_Private;
+	m_Private = nullptr;
+}
+
+UIContextRaw UIBuilder::getContext() const
+{
+	return PRIVATE()->Context;
 }
 
 bool UIBuilder::addFactory(UIFactoryRef value)

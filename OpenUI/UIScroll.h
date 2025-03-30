@@ -32,15 +32,15 @@ public:
 	};
 
 public:
-	UIScroll();
-	~UIScroll();
-	virtual void arrange(UIRect client) override;
-	virtual void layout(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
-	virtual bool addElement(UIElementRef value) override;
-	virtual bool removeElement(UIElementRef value) override;
-	virtual void removeElement() override;
+	explicit UIScroll(UIContextRaw context);
+	~UIScroll() override;
+	void arrange(UIRect client) override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
+	bool addElement(UIElementRef value) override;
+	bool removeElement(UIElementRef value) override;
+	void removeElement() override;
 
 	UIScrollStyle getStyle() const;
 	void setStyle(UIScrollStyle value);
@@ -64,7 +64,7 @@ public:
 	UIElementRaw getContentView() const;
 
 protected:
-	virtual void wheelEvent(UIMouseWheelEventRaw event) override;
+	void wheelEvent(UIMouseWheelEventRaw event) override;
 
 private:
 	UIElementPrivateRaw m_PrivateScroll;
@@ -76,6 +76,6 @@ using UIScrollRaw = UIRaw<UIScroll>;
 class OPENUI_API UIScrollFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

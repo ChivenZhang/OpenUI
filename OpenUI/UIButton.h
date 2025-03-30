@@ -70,11 +70,11 @@ struct UIButtonStyle
 class OPENUI_API UIButton : public UIElement
 {
 public:
-	UIButton();
-	~UIButton();
-	virtual void arrange(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
+	explicit UIButton(UIContextRaw context);
+	~UIButton() override;
+	void arrange(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIString getText() const;
 	void setText(UIString const& text);
@@ -93,12 +93,12 @@ public:
 	UILabelRaw getLabel() const;
 
 protected:
-	virtual void mouseDoubleEvent(UIMouseEventRaw event) override;
-	virtual void mousePressEvent(UIMouseEventRaw event) override;
-	virtual void mouseReleaseEvent(UIMouseEventRaw event) override;
-	virtual void mouseMoveEvent(UIMouseEventRaw event) override;
-	virtual void enterEvent(UIMouseEventRaw event) override;
-	virtual void leaveEvent(UIMouseEventRaw event) override;
+	void mouseDoubleEvent(UIMouseEventRaw event) override;
+	void mousePressEvent(UIMouseEventRaw event) override;
+	void mouseReleaseEvent(UIMouseEventRaw event) override;
+	void mouseMoveEvent(UIMouseEventRaw event) override;
+	void enterEvent(UIMouseEventRaw event) override;
+	void leaveEvent(UIMouseEventRaw event) override;
 
 public:
 	UISignalAsRaw<bool /*checked*/> clicked;

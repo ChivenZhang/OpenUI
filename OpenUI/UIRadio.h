@@ -35,11 +35,11 @@ using UIRadioGroupRaw = UIRaw<UIRadioGroup>;
 class OPENUI_API UIRadio : public UIElement
 {
 public:
-	UIRadio();
-	~UIRadio();
-	virtual void arrange(UIRect client) override;
-	virtual void layout(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
+	explicit UIRadio(UIContextRaw context);
+	~UIRadio() override;
+	void arrange(UIRect client) override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
 
 	UIString getText() const;
 	void setText(UIString const& text);
@@ -57,12 +57,12 @@ public:
 	UILabelRaw getLabel() const;
 
 protected:
-	virtual void mouseDoubleEvent(UIMouseEventRaw event) override;
-	virtual void mousePressEvent(UIMouseEventRaw event) override;
-	virtual void mouseReleaseEvent(UIMouseEventRaw event) override;
-	virtual void mouseMoveEvent(UIMouseEventRaw event) override;
-	virtual void enterEvent(UIMouseEventRaw event) override;
-	virtual void leaveEvent(UIMouseEventRaw event) override;
+	void mouseDoubleEvent(UIMouseEventRaw event) override;
+	void mousePressEvent(UIMouseEventRaw event) override;
+	void mouseReleaseEvent(UIMouseEventRaw event) override;
+	void mouseMoveEvent(UIMouseEventRaw event) override;
+	void enterEvent(UIMouseEventRaw event) override;
+	void leaveEvent(UIMouseEventRaw event) override;
 
 public:
 	UISignalAsRaw<bool /*checked*/> clicked;

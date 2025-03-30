@@ -18,7 +18,9 @@ public:
 };
 #define PRIVATE() ((UIVBoxPrivate*) m_PrivateVBox)
 
-UIVBox::UIVBox()
+UIVBox::UIVBox(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateVBox = new UIVBoxPrivate;
 }
@@ -78,7 +80,7 @@ UIString UIVBoxFactory::getTagName() const
 
 UIElementRef UIVBoxFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIVBox>();
+	auto result = UINew<UIVBox>(getContext());
 	result->setStyleText(style);
 	return result;
 }

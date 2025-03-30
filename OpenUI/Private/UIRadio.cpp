@@ -29,7 +29,9 @@ public:
 };
 #define PRIVATE() ((UIRadioPrivate*) m_PrivateRadio)
 
-UIRadio::UIRadio()
+UIRadio::UIRadio(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateRadio = new UIRadioPrivate;
 
@@ -40,13 +42,13 @@ UIRadio::UIRadio()
 
 	PRIVATE()->SelfGroup = UINew<UIRadioGroup>();
 
-	PRIVATE()->Button = UINew<UIButton>();
+	PRIVATE()->Button = UINew<UIButton>(context);
 	addElement(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize(16, 16);
 	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
 	PRIVATE()->Button->setCheckable(true);
 
-	PRIVATE()->Label = UINew<UILabel>();
+	PRIVATE()->Label = UINew<UILabel>(context);
 	addElement(PRIVATE()->Label);
 
 	{
@@ -110,9 +112,7 @@ void UIRadio::arrange(UIRect client)
 	PRIVATE()->Label->setFlexGrow(1);
 	PRIVATE()->Label->setAlignSelf(UI::AlignStretch);
 
-	auto painter = getPainter();
-	if (painter == nullptr) painter = getContext()->getPainter();
-	if (painter == nullptr) return;
+	auto painter = getContext()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;
 	PRIVATE()->Button->setFixedSize(fontSize * getContext()->getConfig().DisplayScale, fontSize * getContext()->getConfig().DisplayScale);
 	PRIVATE()->Button->setMargin({ 8 * getContext()->getConfig().DisplayScale, 0, 8 * getContext()->getConfig().DisplayScale, 0 });
@@ -281,7 +281,7 @@ UIString UIRadioFactory::getTagName() const
 
 UIElementRef UIRadioFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIRadio>();
+	auto result = UINew<UIRadio>(getContext());
 	result->setStyleText(style);
 	return result;
 }

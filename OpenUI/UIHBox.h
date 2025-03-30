@@ -23,11 +23,11 @@ struct UIHBoxStyle
 class OPENUI_API UIHBox : public UIElement
 {
 public:
-	UIHBox();
-	~UIHBox();
-	virtual void arrange(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
+	explicit UIHBox(UIContextRaw context);
+	~UIHBox() override;
+	void arrange(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIHBoxStyle getStyle() const;
 	void setStyle(UIHBoxStyle value);
@@ -40,6 +40,6 @@ private:
 class OPENUI_API UIHBoxFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

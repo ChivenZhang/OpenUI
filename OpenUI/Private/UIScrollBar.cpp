@@ -29,7 +29,9 @@ public:
 };
 #define PRIVATE() ((UIScrollBarPrivate*)m_PrivateScrollBar)
 
-UIScrollBar::UIScrollBar()
+UIScrollBar::UIScrollBar(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateScrollBar = new UIScrollBarPrivate;
 
@@ -39,7 +41,7 @@ UIScrollBar::UIScrollBar()
 	valueChanged = &PRIVATE()->OnValueChanged;
 	rangeChanged = &PRIVATE()->OnRangeChanged;
 
-	PRIVATE()->Handle = UINew<UIButton>();
+	PRIVATE()->Handle = UINew<UIButton>(context);
 	addElement(PRIVATE()->Handle);
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });
@@ -221,7 +223,7 @@ UIString UIScrollBarFactory::getTagName() const
 
 UIElementRef UIScrollBarFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIScrollBar>();
+	auto result = UINew<UIScrollBar>(getContext());
 	result->setStyleText(style);
 	return result;
 }

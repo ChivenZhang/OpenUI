@@ -23,10 +23,10 @@ struct UIFlowStyle
 class OPENUI_API UIFlow : public UIElement
 {
 public:
-	UIFlow();
-	~UIFlow();
-	virtual void arrange(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
+	explicit UIFlow(UIContextRaw context);
+	~UIFlow() override;
+	void arrange(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
 
 	UIFlowStyle getStyle() const;
 	void setStyle(UIFlowStyle value);
@@ -39,6 +39,6 @@ private:
 class OPENUI_API UIFlowFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

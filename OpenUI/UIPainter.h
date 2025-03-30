@@ -10,8 +10,6 @@
 *
 * =================================================*/
 #include "UI.h"
-
-/// @brief 
 class UIPainterPrivate {};
 using UIPainterPrivateRaw = UIRaw<UIPainterPrivate>;
 
@@ -35,21 +33,21 @@ public:
 
 	virtual void drawLine(float x1, float y1, float x2, float y2) = 0;
 
-	virtual void drawLines(UIArrayView<UILine> lines) = 0;
+	virtual void drawLines(UIListView<UILine> lines) = 0;
 
 	virtual void drawPie(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
 
 	virtual void drawPoint(float x, float y) = 0;
 
-	virtual void drawPoints(UIArrayView<UIPoint> points) = 0;
+	virtual void drawPoints(UIListView<UIPoint> points) = 0;
 
-	virtual void drawPolygon(UIArrayView<UIPoint> points) = 0;
+	virtual void drawPolygon(UIListView<UIPoint> points) = 0;
 
-	virtual void drawPolyline(UIArrayView<UIPoint> points) = 0;
+	virtual void drawPolyline(UIListView<UIPoint> points) = 0;
 
 	virtual void drawRect(float x, float y, float width, float height) = 0;
 
-	virtual void drawRects(UIArrayView<UIRect> rects) = 0;
+	virtual void drawRects(UIListView<UIRect> rects) = 0;
 
 	virtual void drawRoundedRect(float x, float y, float w, float h, float xRadius, float yRadius) = 0;
 
@@ -69,8 +67,6 @@ public:
 
 	virtual void setClipping(bool enable) = 0;
 
-	// virtual void setClipPath(UIArrayView<UIPoint> points) = 0;
-
 	virtual void setClipRect(float x, float y, float width, float height) = 0;
 
 	virtual void setViewport(float x, float y, float width, float height) = 0;
@@ -82,12 +78,6 @@ public:
 	virtual void scale(float dx, float dy) = 0;
 
 	virtual void translate(float dx, float dy) = 0;
-
-	virtual void resize(uint32_t width, uint32_t height) = 0;
-
-	virtual uint32_t getWidth() const = 0;
-
-	virtual uint32_t getHeight() const = 0;
 };
 using UIPainterRef = UIRef<UIPainter>;
 using UIPainterRaw = UIRaw<UIPainter>;

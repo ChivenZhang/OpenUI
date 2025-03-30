@@ -12,6 +12,7 @@
 #include "UIElement.h"
 #include "UIPainter.h"
 #include "UIRender.h"
+#include "UIBuilder.h"
 
 class UIConfig
 {
@@ -33,29 +34,37 @@ using UIContextPrivateRaw = UIRaw<UIContextPrivate>;
 class OPENUI_API UIContext
 {
 public:
-	UIContext(UIConfig config = {});
-	virtual ~UIContext();
-	virtual UIConfig const& getConfig() const;
-	virtual UIPainterRaw getPainter() const;
-	virtual void setPainter(UIPainterRef value);
-	virtual UIRenderRaw getRender() const;
-	virtual void setRender(UIRenderRef value);
-	virtual UIElementRaw getFocus() const;
-	virtual void setFocus(UIElementRaw value);
-	virtual void setAnimate(UIElementRaw value, bool animate);
-	virtual void sendEvent(UIReactorRaw sender, UIEventRaw event);
-	virtual void postEvent(UIReactorRef sender, UIEventRef event);
-	virtual bool addElement(UIElementRef value, int32_t zorder = 0);
-	virtual bool removeElement(UIElementRef value);
-	virtual void removeElement();
-	virtual bool existElement(UIElementRef value) const;
-	virtual UIArrayView<const UIElementRef> getElement() const;
-	virtual void layoutElement();
-	virtual bool layoutElement(UIRect client);
-	virtual void paintElement();
-	virtual bool paintElement(UIRect client);
-	virtual void renderElement(UIRect client);
-	virtual void animateElement(float time);
+	explicit UIContext(UIConfig config = {});
+	~UIContext();
+	UIConfig const& getConfig() const;
+	UIPainterRaw getPainter() const;
+	void setPainter(UIPainterRef value);
+	UIRenderRaw getRender() const;
+	void setRender(UIRenderRef value);
+	UIBuilderRaw getBuilder() const;
+	UIElementRaw getFocus() const;
+	void setFocus(UIElementRaw value);
+	void setAnimate(UIElementRaw value, bool animate);
+	void sendEvent(UIReactorRaw sender, UIEventRaw event);
+	void postEvent(UIReactorRef sender, UIEventRef event);
+	bool addElement(UIElementRef value, int32_t zorder = 0);
+	bool removeElement(UIElementRef value);
+	void removeElement();
+	bool existElement(UIElementRef value) const;
+	UIListView<const UIElementRef> getElement() const;
+	void layoutElement();
+	bool layoutElement(UIRect client);
+	void paintElement();
+	bool paintElement(UIRect client);
+	void renderElement(UIRect client);
+	void animateElement(float time);
+
+	void updateElement(float time, UIRect client)
+	{
+		animateElement(time);
+		layoutElement(client);
+		paintElement(client);
+    }
 
 private:
 	UIContextPrivateRaw m_Private;

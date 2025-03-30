@@ -17,7 +17,9 @@ public:
 };
 #define PRIVATE() ((UILinePrivate*)m_PrivateLine)
 
-UIHLine::UIHLine()
+UIHLine::UIHLine(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateLine = new UILinePrivate;
 }
@@ -52,12 +54,14 @@ UIString UIHLineFactory::getTagName() const
 
 UIElementRef UIHLineFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIHLine>();
+	auto result = UINew<UIHLine>(getContext());
 	result->setStyleText(style);
 	return result;
 }
 
-UIVLine::UIVLine()
+UIVLine::UIVLine(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateLine = new UILinePrivate;
 }
@@ -92,7 +96,7 @@ UIString UIVLineFactory::getTagName() const
 
 UIElementRef UIVLineFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIVLine>();
+	auto result = UINew<UIVLine>(getContext());
 	result->setStyleText(style);
 	return result;
 }

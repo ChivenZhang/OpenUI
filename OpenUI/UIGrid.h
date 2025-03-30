@@ -23,16 +23,16 @@ struct UIGridStyle
 class OPENUI_API UIGrid : public UIElement
 {
 public:
-	UIGrid();
-	~UIGrid();
-	virtual void arrange(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
+	explicit UIGrid(UIContextRaw context);
+	~UIGrid() override;
+	void arrange(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
 
-	virtual bool addElement(UIElementRef value) override;
-	virtual bool addElement(UIElementRef value, uint32_t row, uint32_t column, uint32_t rowSpan = 1, uint32_t columnSpan = 1);
-	virtual bool removeElement(UIElementRef value) override;
-	virtual void removeElement() override;
+	bool addElement(UIElementRef value) override;
+	bool addElement(UIElementRef value, uint32_t row, uint32_t column, uint32_t rowSpan = 1, uint32_t columnSpan = 1);
+	bool removeElement(UIElementRef value) override;
+	void removeElement() override;
 
 	UIGridStyle getStyle() const;
 	void setStyle(UIGridStyle value);
@@ -55,6 +55,6 @@ private:
 class OPENUI_API UIGridFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };

@@ -17,7 +17,9 @@ public:
 };
 #define PRIVATE() ((UIFlowPrivateData*) m_PrivateFlow)
 
-UIFlow::UIFlow()
+UIFlow::UIFlow(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateFlow = new UIFlowPrivateData;
 }
@@ -70,7 +72,7 @@ UIString UIFlowFactory::getTagName() const
 
 UIElementRef UIFlowFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIFlow>();
+	auto result = UINew<UIFlow>(getContext());
 	result->setStyleText(style);
 	return result;
 }

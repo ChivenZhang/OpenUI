@@ -220,7 +220,7 @@ void CairoUIPainter::drawLine(float x1, float y1, float x2, float y2)
 	}
 }
 
-void CairoUIPainter::drawLines(UIArrayView<UILine> lines)
+void CairoUIPainter::drawLines(UIListView<UILine> lines)
 {
 	auto cr = PRIVATE()->NativeContext;
 	if (PRIVATE()->Pen.Style != UIPen::NoPen && 2 <= lines.size())
@@ -292,7 +292,7 @@ void CairoUIPainter::drawPoint(float x, float y)
 	}
 }
 
-void CairoUIPainter::drawPoints(UIArrayView<UIPoint> points)
+void CairoUIPainter::drawPoints(UIListView<UIPoint> points)
 {
 	auto cr = PRIVATE()->NativeContext;
 	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
@@ -314,7 +314,7 @@ void CairoUIPainter::drawPoints(UIArrayView<UIPoint> points)
 	}
 }
 
-void CairoUIPainter::drawPolygon(UIArrayView<UIPoint> points)
+void CairoUIPainter::drawPolygon(UIListView<UIPoint> points)
 {
 	auto cr = PRIVATE()->NativeContext;
 	if (PRIVATE()->Brush.Style != UIBrush::NoBrush && 2 <= points.size())
@@ -345,7 +345,7 @@ void CairoUIPainter::drawPolygon(UIArrayView<UIPoint> points)
 	}
 }
 
-void CairoUIPainter::drawPolyline(UIArrayView<UIPoint> points)
+void CairoUIPainter::drawPolyline(UIListView<UIPoint> points)
 {
 	auto cr = PRIVATE()->NativeContext;
 	if (PRIVATE()->Pen.Style != UIPen::NoPen && 2 <= points.size())
@@ -385,7 +385,7 @@ void CairoUIPainter::drawRect(float x, float y, float width, float height)
 	}
 }
 
-void CairoUIPainter::drawRects(UIArrayView<UIRect> rects)
+void CairoUIPainter::drawRects(UIListView<UIRect> rects)
 {
 	auto cr = PRIVATE()->NativeContext;
 	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
@@ -653,6 +653,26 @@ void CairoUIPainter::translate(float dx, float dy)
 	cairo_translate(cr, dx, dy);
 }
 
+int32_t CairoUIPainter::getWidth() const
+{
+	return cairo_image_surface_get_width(PRIVATE()->NativeSurface);
+}
+
+int32_t CairoUIPainter::getHeight() const
+{
+	return cairo_image_surface_get_height(PRIVATE()->NativeSurface);
+}
+
+int32_t CairoUIPainter::getStride() const
+{
+	return cairo_image_surface_get_stride(PRIVATE()->NativeSurface);
+}
+
+UIListView<const uint8_t> CairoUIPainter::getPixels() const
+{
+	return UIListView<const uint8_t>(cairo_image_surface_get_data(PRIVATE()->NativeSurface), getHeight() * getStride());
+}
+
 void CairoUIPainter::resize(uint32_t width, uint32_t height)
 {
 	g_object_unref(PRIVATE()->NativeLayout); PRIVATE()->NativeLayout = nullptr;
@@ -676,24 +696,4 @@ void CairoUIPainter::resize(uint32_t width, uint32_t height)
 	pango_font_description_set_weight(font_desc, (PangoWeight)font.Weight);
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_description_free(font_desc);
-}
-
-uint32_t CairoUIPainter::getWidth() const
-{
-	return cairo_image_surface_get_width(PRIVATE()->NativeSurface);
-}
-
-uint32_t CairoUIPainter::getHeight() const
-{
-	return cairo_image_surface_get_height(PRIVATE()->NativeSurface);
-}
-
-uint32_t CairoUIPainter::getStride() const
-{
-	return cairo_image_surface_get_stride(PRIVATE()->NativeSurface);
-}
-
-UIArrayView<const uint8_t> CairoUIPainter::getPixels() const
-{
-	return UIArrayView<const uint8_t>(cairo_image_surface_get_data(PRIVATE()->NativeSurface), getHeight() * getStride());
 }

@@ -27,7 +27,9 @@ public:
 };
 #define PRIVATE() ((UICheckPrivate*) m_PrivateCheck)
 
-UICheck::UICheck()
+UICheck::UICheck(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateCheck = new UICheckPrivate;
 
@@ -36,7 +38,7 @@ UICheck::UICheck()
 	released = &PRIVATE()->OnReleased;
 	hovered = &PRIVATE()->OnHovered;
 
-	PRIVATE()->Button = UINew<UIButton>();
+	PRIVATE()->Button = UINew<UIButton>(context);
 	addElement(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize(16, 16);
 	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
@@ -56,7 +58,7 @@ UICheck::UICheck()
 		PRIVATE()->Button->setStyle(style);
 	}
 
-	PRIVATE()->Label = UINew<UILabel>();
+	PRIVATE()->Label = UINew<UILabel>(context);
 	addElement(PRIVATE()->Label);
 	{
 		auto style = PRIVATE()->Label->getStyle();
@@ -103,9 +105,7 @@ void UICheck::arrange(UIRect client)
 	PRIVATE()->Label->setFlexGrow(1);
 	PRIVATE()->Label->setAlignSelf(UI::AlignStretch);
 
-	auto painter = getPainter();
-	if (painter == nullptr) painter = getContext()->getPainter();
-	if (painter == nullptr) return;
+	auto painter = getContext()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;
 	PRIVATE()->Button->setFixedSize(fontSize * getContext()->getConfig().DisplayScale, fontSize * getContext()->getConfig().DisplayScale);
 	PRIVATE()->Button->setMargin({ 8 * getContext()->getConfig().DisplayScale, 0, 8 * getContext()->getConfig().DisplayScale, 0 });
@@ -251,7 +251,7 @@ UIString UICheckFactory::getTagName() const
 
 UIElementRef UICheckFactory::getElement(UIString style) const
 {
-	auto result = UINew<UICheck>();
+	auto result = UINew<UICheck>(getContext());
 	result->setStyleText(style);
 	return result;
 }

@@ -8,7 +8,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIParser.h"
+#include "../UIParser.h"
 
 UIRef<UIParser::XMLElement> UIParser::parse(UIString html, UIString css) const
 {

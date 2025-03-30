@@ -22,14 +22,16 @@ public:
 	UILabelStyle Style;
 	UIString Text;
 	UIImage Image, ImageScaled;
-	UIList<uint8_t> ImageData, ImageDataScaled;
+	UIList<uint8_t> Pixel, PixelScaled;
 	UILabel::scale_t ScaledContents = UILabel::scale_t::ScaleFixed;
 	bool Hovered = false;
 	UISignalAs<UIString> LinkHovered, LinkActivated;
 };
 #define PRIVATE() ((UILabelPrivate*)m_PrivateLabel)
 
-UILabel::UILabel()
+UILabel::UILabel(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateLabel = new UILabelPrivate;
 
@@ -54,7 +56,7 @@ void UILabel::layout(UIRect client)
 	{
 	case ScaleFixed:
 	{
-		PRIVATE()->ImageDataScaled.clear();
+		PRIVATE()->PixelScaled.clear();
 		PRIVATE()->ImageScaled = UIImage{};
 	} break;
 	case ScaleAuto:
@@ -73,15 +75,15 @@ void UILabel::layout(UIRect client)
 			newHeight = client.H;
 		}
 		uint32_t newStride = newWidth * 4;
-		PRIVATE()->ImageDataScaled.resize(newHeight * newStride);
-		auto newPixels = PRIVATE()->ImageDataScaled.data();
+		PRIVATE()->PixelScaled.resize(newHeight * newStride);
+		auto newPixels = PRIVATE()->PixelScaled.data();
 		if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
 			newPixels, newWidth, newHeight, newStride, STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
 		{
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->ImageDataScaled.data();
+			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	case ScaleNoRatio:
@@ -89,15 +91,15 @@ void UILabel::layout(UIRect client)
 		uint32_t newWidth = client.W;
 		uint32_t newHeight = client.H;
 		uint32_t newStride = newWidth * 4;
-		PRIVATE()->ImageDataScaled.resize(newHeight * newStride);
-		auto newPixels = PRIVATE()->ImageDataScaled.data();
+		PRIVATE()->PixelScaled.resize(newHeight * newStride);
+		auto newPixels = PRIVATE()->PixelScaled.data();
 		if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
 			newPixels, newWidth, newHeight, newStride, STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
 		{
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->ImageDataScaled.data();
+			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	case ScaleKeepRatio:
@@ -115,15 +117,15 @@ void UILabel::layout(UIRect client)
 			newHeight = rawHeight * client.W / rawWidth;
 		}
 		uint32_t newStride = newWidth * 4;
-		PRIVATE()->ImageDataScaled.resize(newHeight * newStride);
-		auto newPixels = PRIVATE()->ImageDataScaled.data();
+		PRIVATE()->PixelScaled.resize(newHeight * newStride);
+		auto newPixels = PRIVATE()->PixelScaled.data();
 		if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
 			newPixels, newWidth, newHeight, newStride, STBIR_BGRA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
 		{
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->ImageDataScaled.data();
+			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	}
@@ -257,30 +259,30 @@ UIImage UILabel::getPixmap() const
 
 void UILabel::setPixmap(UIImage image)
 {
-	if (image.Pixel
-		&& image.Type == UIImage::Byte
-		&& image.Width * 4 == image.Stride)
+	if (image.Pixel && image.Type == UIImage::Byte && image.Width * 4 == image.Stride)
 	{
 		auto channel = image.Stride / image.Width;
-		PRIVATE()->ImageData.resize(image.Width * image.Height * 4);
-		PRIVATE()->Image = UIImage{ image.Width, image.Height, image.Width * 4, 0, PRIVATE()->ImageData.data() };
-		auto pixels = PRIVATE()->ImageData.data();
-		auto rawPixels = (uint8_t*)image.Pixel;
+		PRIVATE()->Pixel.resize(image.Width * image.Height * 4);
+		PRIVATE()->Image = UIImage{ image.Width, image.Height, image.Width * 4, 0, PRIVATE()->Pixel.data() };
+		auto dstPixels = PRIVATE()->Pixel.data();
+		auto srcPixels = (uint8_t*)image.Pixel;
 		auto numPixels = image.Width * image.Height;
-		for (int i = 0; i < numPixels; ++i)
+		for (uint32_t i = 0; i < numPixels; ++i)
 		{
-			auto toIndex = 4 * i;
-			auto fromIndex = channel * i;
-			pixels[toIndex + 2] = (0 < channel) ? rawPixels[fromIndex] : 0;
-			pixels[toIndex + 1] = (1 < channel) ? rawPixels[fromIndex + 1] : 0;
-			pixels[toIndex + 0] = (2 < channel) ? rawPixels[fromIndex + 2] : 0;
-			pixels[toIndex + 3] = (3 < channel) ? rawPixels[fromIndex + 3] : 255;
+			auto dstIndex = 4 * i;
+			auto srcIndex = channel * i;
+			dstPixels[dstIndex + 2] = (0 < channel) ? srcPixels[srcIndex] : 0;
+			dstPixels[dstIndex + 1] = (1 < channel) ? srcPixels[srcIndex + 1] : 0;
+			dstPixels[dstIndex + 0] = (2 < channel) ? srcPixels[srcIndex + 2] : 0;
+			dstPixels[dstIndex + 3] = (3 < channel) ? srcPixels[srcIndex + 3] : 255;
 		}
 	}
 	else
 	{
-		PRIVATE()->ImageData.clear();
+		PRIVATE()->Pixel.clear();
 		PRIVATE()->Image = UIImage{};
+		PRIVATE()->PixelScaled.clear();
+		PRIVATE()->ImageScaled = UIImage{};
 	}
 	getContext()->paintElement();
 }
@@ -356,7 +358,7 @@ UIString UILabelFactory::getTagName() const
 
 UIElementRef UILabelFactory::getElement(UIString style) const
 {
-	auto result = UINew<UILabel>();
+	auto result = UINew<UILabel>(getContext());
 	result->setStyleText(style);
 	return result;
 }

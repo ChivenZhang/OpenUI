@@ -18,7 +18,9 @@ public:
 };
 #define PRIVATE() ((UIHboxPrivateData*) m_PrivateHbox)
 
-UIHBox::UIHBox()
+UIHBox::UIHBox(UIContextRaw context)
+	:
+	UIElement(context)
 {
 	m_PrivateHbox = new UIHboxPrivateData;
 }
@@ -78,7 +80,7 @@ UIString UIHBoxFactory::getTagName() const
 
 UIElementRef UIHBoxFactory::getElement(UIString style) const
 {
-	auto result = UINew<UIHBox>();
+	auto result = UINew<UIHBox>(getContext());
 	result->setStyleText(style);
 	return result;
 }

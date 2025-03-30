@@ -41,12 +41,12 @@ public:
 	};
 
 public:
-	UIInput();
-	~UIInput();
-	virtual void arrange(UIRect client) override;
-	virtual void layout(UIRect client) override;
-	virtual void paint(UIRect client, UIPainterRaw painter) override;
-	virtual void repaint(UIRect client, UIPainterRaw painter) override;
+	explicit UIInput(UIContextRaw context);
+	~UIInput() override;
+	void arrange(UIRect client) override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIInputStyle getStyle() const;
 	void setStyle(UIInputStyle value);
@@ -90,12 +90,12 @@ public:
 	void undo();
 
 protected:
-	virtual void keyPressEvent(UIKeyEventRaw event) override;
-	virtual void inputEvent(UITextInputEventRaw event) override;
-	virtual void mouseDoubleEvent(UIMouseEventRaw event) override;
-	virtual void mousePressEvent(UIMouseEventRaw event) override;
-	virtual void mouseReleaseEvent(UIMouseEventRaw event) override;
-	virtual void mouseMoveEvent(UIMouseEventRaw event) override;
+	void keyPressEvent(UIKeyEventRaw event) override;
+	void inputEvent(UITextInputEventRaw event) override;
+	void mouseDoubleEvent(UIMouseEventRaw event) override;
+	void mousePressEvent(UIMouseEventRaw event) override;
+	void mouseReleaseEvent(UIMouseEventRaw event) override;
+	void mouseMoveEvent(UIMouseEventRaw event) override;
 
 public:
 	UISignalAsRaw<int32_t /*oldPos*/, int32_t /*newPos*/> cursorPositionChanged;
@@ -117,6 +117,6 @@ private:
 class OPENUI_API UIInputFactory : public UIFactory
 {
 public:
-	virtual UIString getTagName() const override;
-	virtual UIElementRef getElement(UIString style) const override;
+	UIString getTagName() const override;
+	UIElementRef getElement(UIString style) const override;
 };
