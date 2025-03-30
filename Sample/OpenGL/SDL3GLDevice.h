@@ -9,8 +9,12 @@
 * Created by ChivenZhang at 2025/03/29 14:16:23.
 *
 * =================================================*/
+#include <gl/glew.h>
 #include <SDL3/SDL.h>
 #include <OpenUI/UIContext.h>
+#include "SDL3InputEnum.h"
+#include "CairoGLRender.h"
+#include "Cairo/CairoUIPainter.h"
 
 /// @brief 
 class SDL3GLDevice
@@ -18,7 +22,6 @@ class SDL3GLDevice
 public:
 	SDL3GLDevice()
 	{
-		SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
 		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 		if (window == nullptr)
 		{

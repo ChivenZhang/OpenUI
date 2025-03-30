@@ -8,7 +8,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
-        "OPENUI_ENABLE_SAMPLE": "ON"
+        "OPENUI_ENABLE_SAMPLE": "ON",
+        "OPENUI_ENABLE_OPENGL": "ON"
       }
     },
     {
@@ -18,8 +19,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
-
-        "OPENUI_ENABLE_SAMPLE": "ON"
+        "OPENUI_ENABLE_SAMPLE": "ON",
+        "OPENUI_ENABLE_VULKAN": "ON"
       }
     },
     {

@@ -8,11 +8,11 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
+#include <gl/glew.h>
 #include "CairoGLRender.h"
-#include "CairoUIPainter.h"
-#include <GL/glew.h>
+#include "../Cairo/CairoUIPainter.h"
 
-auto vsource = R"(
+static auto vsource = R"(
 #version 330
 layout (location = 0) in vec2 _point;
 layout (location = 1) in uint _index;
@@ -26,7 +26,7 @@ void main()
 }
 )";
 
-auto fsource = R"(
+static auto fsource = R"(
 #version 330
 in vec2 uv;
 flat in uint index;
@@ -134,11 +134,11 @@ void CairoGLRender::render(UIRect client, UIListView<UIPrimitive> data)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
 
 		m_PrimitiveList.clear();
-		for (size_t n = 0; n < primitive.size(); ++n)
+		for (size_t k = 0; k < primitive.size(); ++k)
 		{
-			m_PrimitiveList.push_back({primitive[n].P0.X, primitive[n].P0.Y, 0});
-			m_PrimitiveList.push_back({primitive[n].P1.X, primitive[n].P1.Y, 0});
-			m_PrimitiveList.push_back({primitive[n].P2.X, primitive[n].P2.Y, 0});
+			m_PrimitiveList.push_back({primitive[k].P0.X, primitive[k].P0.Y, 0});
+			m_PrimitiveList.push_back({primitive[k].P1.X, primitive[k].P1.Y, 0});
+			m_PrimitiveList.push_back({primitive[k].P2.X, primitive[k].P2.Y, 0});
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_NativeBuffer);

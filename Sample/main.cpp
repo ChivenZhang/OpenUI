@@ -1,10 +1,4 @@
 #include <SDL3/SDL.h>
-#include <GL/glew.h>
-#include <SDL3/SDL_opengl.h>
-#include "SDL3InputEnum.h"
-#include "Cairo/CairoUIPainter.h"
-#include "Cairo/CairoGLRender.h"
-#include "OpenGL/SDL3GLDevice.h"
 #include "OpenUI/UIContext.h"
 #include "OpenUI/UIBuilder.h"
 #include "OpenUI/UIHBox.h"
@@ -21,14 +15,23 @@
 #include "OpenUI/UILine.h"
 #include "OpenUI/UIInput.h"
 #include <stb_image.h>
-
+#ifdef OPENUI_ENABLE_OPENGL
 #include "OpenGL/SDL3GLDevice.h"
+#endif
+#ifdef OPENUI_ENABLE_VULKAN
+#include <vulkan/vulkan.h>
+#include <SDL3/SDL_vulkan.h>
+#include "Vulkan/SDL3VKDevice.h"
+#endif
 
 void business(UIContextRaw context, SDL_Window* window);
 
 int main()
 {
 	SDL_Init(SDL_INIT_VIDEO);
+	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
+
+#ifdef OPENUI_ENABLE_OPENGL
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -37,6 +40,29 @@ int main()
     auto window = device->getWindow();
 	business(openui, window);
 	while (device->update()) {}
+#endif
+
+#ifdef OPENUI_ENABLE_VULKAN
+	VkApplicationInfo appInfo = {};
+    VkInstanceCreateInfo instanceCreateInfo = {};
+	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	appInfo.apiVersion = VK_API_VERSION_1_3;
+	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	instanceCreateInfo.pApplicationInfo = &appInfo;
+#ifdef __APPLE__
+	instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+	instanceCreateInfo.ppEnabledExtensionNames = SDL_Vulkan_GetInstanceExtensions(&instanceCreateInfo.enabledExtensionCount);
+	VkInstance instance = VK_NULL_HANDLE;
+	vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+	auto device = UINew<SDL3VKDevice>(instance);
+	auto openui = device->getContext();
+	auto window = device->getWindow();
+	business(openui, window);
+	while (device->update()) {}
+	vkDestroyInstance(instance, nullptr);
+#endif
+
 	SDL_Quit();
 	return 0;
 }

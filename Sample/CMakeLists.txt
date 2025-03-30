@@ -1,13 +1,23 @@
 ﻿if(OPENUI_ENABLE_SAMPLE)
+
+if(OPENUI_ENABLE_OPENGL)
+	add_definitions(-DOPENUI_ENABLE_OPENGL)
+endif ()
+if(OPENUI_ENABLE_VULKAN)
+	add_definitions(-DOPENUI_ENABLE_VULKAN)
+endif ()
+
 add_executable (OpenUIDemo
-        Cairo/CairoGLRender.cpp
-		Cairo/CairoGLRender.h
+		OpenGL/CairoGLRender.cpp
+		OpenGL/CairoGLRender.h
 		Cairo/CairoUIPainter.cpp
 		Cairo/CairoUIPainter.h
 		OpenGL/SDL3GLDevice.h
 		main.cpp
 		SDL3InputEnum.cpp
 		SDL3InputEnum.h
+		Vulkan/CairoVKRender.h
+		Vulkan/CairoVKRender.cpp
 )
 add_dependencies(OpenUIDemo OpenUI)
 
@@ -15,6 +25,9 @@ find_package(GLEW REQUIRED)
 target_link_libraries(OpenUIDemo PRIVATE GLEW::GLEW)
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(OpenUIDemo PRIVATE SDL3::SDL3)
+# https://cmake.org/cmake/help/latest/module/FindVulkan.html
+find_package(Vulkan REQUIRED)
+target_link_libraries(OpenUIDemo PRIVATE Vulkan::Vulkan)
 
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/cairo)
