@@ -9,6 +9,9 @@
 *
 * =================================================*/
 #include "CairoVKRender.h"
+
+#include <SDL3/SDL_timer.h>
+
 #include "../Cairo/CairoUIPainter.h"
 
 static auto vsource = R"(
@@ -37,7 +40,10 @@ void main()
 }
 )";
 
-CairoVKRender::CairoVKRender(uint32_t width, uint32_t height)
+CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkCommandBuffer commandBuffer)
+	:
+	m_Device(device),
+	m_CommandBuffer(commandBuffer)
 {
 }
 

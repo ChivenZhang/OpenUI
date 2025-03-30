@@ -163,22 +163,22 @@ public:
 
 		// Initialize OpenUI context
 
-		int w, h;
-		SDL_GetWindowSize(window, &w, &h);
+		int width = 0, height = 0;
+		SDL_GetWindowSize(window, &width, &height);
 		auto scale = SDL_GetWindowDisplayScale(window);
 		UIConfig config{.DisplayScale = scale};
 		auto openui = UINew<UIContext>(config);
-		openui->setPainter(UINew<CairoUIPainter>(w, h));
-		openui->setRender(UINew<CairoVKRender>(w, h));
+		openui->setPainter(UINew<CairoUIPainter>(width, height));
+		openui->setRender(UINew<CairoVKRender>(width, height, device, commandBuffer));
 		m_UIContext = openui;
 	}
 
 	~SDL3VKDevice()
 	{
 		vkDeviceWaitIdle(m_Device);
+		m_SwapchainImages.clear();
 		for (size_t i=0; i<m_SwapchainFences.size(); ++i) vkDestroyFence(m_Device, m_SwapchainFences[i], nullptr);
 		m_SwapchainFences.clear();
-		m_SwapchainImages.clear();
 		vkDestroySemaphore(m_Device, m_SemaphoreImage, nullptr); m_SemaphoreImage = VK_NULL_HANDLE;
 		vkDestroySemaphore(m_Device, m_SemaphorePaint, nullptr); m_SemaphorePaint = VK_NULL_HANDLE;
 		vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &m_CommandBuffer); m_CommandBuffer = VK_NULL_HANDLE;
@@ -386,13 +386,6 @@ public:
 		result = vkResetFences(m_Device, 1, &m_SwapchainFences[frameIndex]);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to reset swap chain image!");
 
-		VkClearColorValue clearColor = {};
-		auto currentTime = (double)SDL_GetPerformanceCounter() / SDL_GetPerformanceFrequency();
-		clearColor.float32[0] = (float)(0.5 + 0.5 * SDL_sin(currentTime));
-		clearColor.float32[1] = (float)(0.5 + 0.5 * SDL_sin(currentTime + SDL_PI_D * 2 / 3));
-		clearColor.float32[2] = (float)(0.5 + 0.5 * SDL_sin(currentTime + SDL_PI_D * 4 / 3));
-		clearColor.float32[3] = 0.5;
-
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.flags = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -415,6 +408,12 @@ public:
 		barrier.subresourceRange.layerCount = 1;
 		vkCmdPipelineBarrier(m_CommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
+		VkClearColorValue clearColor = {};
+		auto currentTime = (double)SDL_GetPerformanceCounter() / SDL_GetPerformanceFrequency();
+		clearColor.float32[0] = (float)(0.5 + 0.5 * SDL_sin(currentTime));
+		clearColor.float32[1] = (float)(0.5 + 0.5 * SDL_sin(currentTime + SDL_PI_D * 2 / 3));
+		clearColor.float32[2] = (float)(0.5 + 0.5 * SDL_sin(currentTime + SDL_PI_D * 4 / 3));
+		clearColor.float32[3] = 0.5;
 		VkImageSubresourceRange clearRange = {};
 		clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		clearRange.baseMipLevel = 0;
@@ -488,9 +487,9 @@ public:
 		SDL_GetWindowSizeInPixels(m_Window, &width, &height);
 		auto flags = SDL_GetWindowFlags(m_Window);
 
+		m_SwapchainImages.clear();
 		for (size_t i=0; i<m_SwapchainFences.size(); ++i) vkDestroyFence(m_Device, m_SwapchainFences[i], nullptr);
 		m_SwapchainFences.clear();
-		m_SwapchainImages.clear();
 
 		VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
 		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;

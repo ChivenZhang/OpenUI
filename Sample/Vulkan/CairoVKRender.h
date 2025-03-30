@@ -10,6 +10,7 @@
 *
 * =================================================*/
 #include <OpenUI/UIRender.h>
+#include <vulkan/vulkan_core.h>
 
 class CairoVKRender : public UIRender
 {
@@ -21,10 +22,12 @@ public:
 	};
 
 public:
-	CairoVKRender(uint32_t width, uint32_t height);
+	CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkCommandBuffer commandBuffer);
 	~CairoVKRender() override;
 	void render(UIRect client, UIListView<UIPrimitive> data) override;
 
 protected:
+	VkDevice m_Device;
+	VkCommandBuffer m_CommandBuffer;
 	UIList<primitive_t> m_PrimitiveList;
 };
