@@ -35,17 +35,19 @@ int main()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    auto device = UINew<SDL3GLDevice>();
-    auto openui = device->getContext();
-    auto window = device->getWindow();
-	business(openui, window);
-	while (device->update()) {}
-	device = nullptr;
+	{
+		auto device = UINew<SDL3GLDevice>();
+		auto openui = device->getContext();
+		auto window = device->getWindow();
+		business(openui, window);
+		while (device->update());
+		device = nullptr;
+	}
 #endif
 
 #ifdef OPENUI_ENABLE_VULKAN
 	VkApplicationInfo appInfo = {};
-    VkInstanceCreateInfo instanceCreateInfo = {};
+	VkInstanceCreateInfo instanceCreateInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.apiVersion = VK_API_VERSION_1_3;
 	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -56,12 +58,14 @@ int main()
 	instanceCreateInfo.ppEnabledExtensionNames = SDL_Vulkan_GetInstanceExtensions(&instanceCreateInfo.enabledExtensionCount);
 	VkInstance instance = VK_NULL_HANDLE;
 	vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-	auto device = UINew<SDL3VKDevice>(instance);
-	auto openui = device->getContext();
-	auto window = device->getWindow();
-	business(openui, window);
-	while (device->update()) {}
-	device = nullptr;
+	{
+		auto device = UINew<SDL3VKDevice>(instance);
+		auto openui = device->getContext();
+		auto window = device->getWindow();
+		business(openui, window);
+		while (device->update());
+		device = nullptr;
+	}
 	vkDestroyInstance(instance, nullptr);
 #endif
 
