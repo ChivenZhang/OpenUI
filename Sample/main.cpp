@@ -40,6 +40,7 @@ int main()
     auto window = device->getWindow();
 	business(openui, window);
 	while (device->update()) {}
+	device = nullptr;
 #endif
 
 #ifdef OPENUI_ENABLE_VULKAN
@@ -60,6 +61,7 @@ int main()
 	auto window = device->getWindow();
 	business(openui, window);
 	while (device->update()) {}
+	device = nullptr;
 	vkDestroyInstance(instance, nullptr);
 #endif
 

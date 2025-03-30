@@ -185,7 +185,7 @@ public:
 		vkDestroyCommandPool(m_Device, m_CommandPool, nullptr); m_CommandPool = VK_NULL_HANDLE;
 		vkDestroyDevice(m_Device, nullptr); m_Device = VK_NULL_HANDLE;
 		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr); m_Surface = VK_NULL_HANDLE;
-		vkDestroyInstance(m_Instance, nullptr); m_Instance = VK_NULL_HANDLE;
+		m_Instance = VK_NULL_HANDLE;
 		m_UIContext = nullptr;
 		SDL_DestroyWindow(m_Window); m_Window = VK_NULL_HANDLE;
 	}
