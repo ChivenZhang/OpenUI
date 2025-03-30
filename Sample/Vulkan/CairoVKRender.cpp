@@ -40,11 +40,13 @@ void main()
 }
 )";
 
-CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkCommandBuffer commandBuffer)
+CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkPipelineCache pipelineCache, VkDescriptorPool descriptorPool, VkCommandBuffer commandBuffer)
 	:
 	m_Device(device),
 	m_CommandBuffer(commandBuffer)
 {
+
+
 }
 
 CairoVKRender::~CairoVKRender()
@@ -53,4 +55,32 @@ CairoVKRender::~CairoVKRender()
 
 void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 {
+	auto cmdBuffer = m_CommandBuffer;
+
+	VkRect2D renderAreaExtent = {};
+	UIList<VkRenderingAttachmentInfo> colorAttachments;
+	VkRenderingAttachmentInfo depthAttachment, stencilAttachment;
+
+	VkRenderingInfo renderingInfo = {};
+	renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+	renderingInfo.renderArea = renderAreaExtent;
+	renderingInfo.layerCount = 1;
+	renderingInfo.pDepthAttachment = &depthAttachment;
+	renderingInfo.pStencilAttachment = &stencilAttachment;
+	renderingInfo.pColorAttachments = colorAttachments.data();
+	renderingInfo.colorAttachmentCount = (uint32_t)colorAttachments.size();
+	vkCmdBeginRendering(cmdBuffer, &renderingInfo);
+
+	VkViewport viewport = {};
+	viewport.x = renderAreaExtent.offset.x;
+	viewport.y = renderAreaExtent.offset.y;
+	viewport.width = renderAreaExtent.extent.width;
+	viewport.height = -renderAreaExtent.extent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+	vkCmdBindDescriptorSets
+	vkCmdBindVertexBuffers
+	vkCmdDraw
+	vkCmdEndRendering(cmdBuffer);
 }

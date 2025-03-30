@@ -145,6 +145,30 @@ public:
 		if (result != VK_SUCCESS) UI_FATAL("Could not allocate command buffers!");
 		m_CommandBuffer = commandBuffer;
 
+		VkDescriptorPoolSize poolSize = {};
+		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSize.descriptorCount = 1000; // TODO: maxSets
+		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
+		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		descriptorPoolCreateInfo.maxSets = 1000; // TODO: maxSets
+		descriptorPoolCreateInfo.poolSizeCount = 1;
+		descriptorPoolCreateInfo.pPoolSizes = &poolSize;
+		descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+		result = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
+		if (result != VK_SUCCESS) UI_FATAL("Could not create descriptor pool!");
+		m_DescriptorPool = descriptorPool;
+
+		VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+		pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+		pipelineCacheCreateInfo.initialDataSize = 0;
+		pipelineCacheCreateInfo.pInitialData = nullptr;
+		pipelineCacheCreateInfo.flags = 0;
+		VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+		result = vkCreatePipelineCache(device, &pipelineCacheCreateInfo, nullptr, &pipelineCache);
+		if (result != VK_SUCCESS) UI_FATAL("Could not create pipeline cache!");
+		m_PipelineCache = pipelineCache;
+
 		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
 		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 		VkSemaphore semaphore = VK_NULL_HANDLE;
@@ -169,7 +193,7 @@ public:
 		UIConfig config{.DisplayScale = scale};
 		auto openui = UINew<UIContext>(config);
 		openui->setPainter(UINew<CairoUIPainter>(width, height));
-		openui->setRender(UINew<CairoVKRender>(width, height, device, commandBuffer));
+		openui->setRender(UINew<CairoVKRender>(width, height, device, pipelineCache, descriptorPool, commandBuffer));
 		m_UIContext = openui;
 	}
 
@@ -181,6 +205,8 @@ public:
 		m_SwapchainFences.clear();
 		vkDestroySemaphore(m_Device, m_SemaphoreImage, nullptr); m_SemaphoreImage = VK_NULL_HANDLE;
 		vkDestroySemaphore(m_Device, m_SemaphorePaint, nullptr); m_SemaphorePaint = VK_NULL_HANDLE;
+		vkDestroyPipelineCache(m_Device, m_PipelineCache, nullptr); m_PipelineCache = VK_NULL_HANDLE;
+		vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr); m_DescriptorPool = VK_NULL_HANDLE;
 		vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &m_CommandBuffer); m_CommandBuffer = VK_NULL_HANDLE;
 		vkDestroyCommandPool(m_Device, m_CommandPool, nullptr); m_CommandPool = VK_NULL_HANDLE;
 		vkDestroyDevice(m_Device, nullptr); m_Device = VK_NULL_HANDLE;
@@ -493,7 +519,6 @@ public:
 
 		VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
 		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainCreateInfo.surface = m_Surface;
 		swapchainCreateInfo.minImageCount = surfaceCapabilities.minImageCount + 1;
 		swapchainCreateInfo.imageFormat = VK_FORMAT_R8G8B8A8_UNORM;
@@ -513,16 +538,13 @@ public:
 		{
 			swapchainCreateInfo.minImageCount = surfaceCapabilities.maxImageCount;
 		}
-		if (surfaceFormatsCount && surfaceFormats[0].format != VK_FORMAT_UNDEFINED)
+		for (auto i = 0; i < surfaceFormatsCount; i++)
 		{
-			for (auto i = 0; i < surfaceFormatsCount; i++)
+			if (surfaceFormats[i].format == VK_FORMAT_R8G8B8A8_UNORM)
 			{
-				if (surfaceFormats[i].format == VK_FORMAT_R8G8B8A8_UNORM)
-				{
-					swapchainCreateInfo.imageFormat = surfaceFormats[i].format;
-					swapchainCreateInfo.imageColorSpace = surfaceFormats[i].colorSpace;
-					break;
-				}
+				swapchainCreateInfo.imageFormat = surfaceFormats[i].format;
+				swapchainCreateInfo.imageColorSpace = surfaceFormats[i].colorSpace;
+				break;
 			}
 		}
 		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
@@ -557,6 +579,8 @@ protected:
 	VkQueue m_Queue;
 	VkCommandPool m_CommandPool;
 	VkCommandBuffer m_CommandBuffer;
+	VkDescriptorPool m_DescriptorPool;
+	VkPipelineCache m_PipelineCache;
 	VkSemaphore m_SemaphoreImage, m_SemaphorePaint;
 	VkSwapchainKHR m_Swapchain;
 	UIList<VkImage> m_SwapchainImages;

@@ -22,12 +22,16 @@ public:
 	};
 
 public:
-	CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkCommandBuffer commandBuffer);
+	CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkPipelineCache pipelineCache, VkDescriptorPool descriptorPool, VkCommandBuffer commandBuffer);
 	~CairoVKRender() override;
 	void render(UIRect client, UIListView<UIPrimitive> data) override;
 
 protected:
 	VkDevice m_Device;
 	VkCommandBuffer m_CommandBuffer;
+	VkPipeline m_Pipeline;
+	VkPipelineLayout m_PipelineLayout;
+	VkDescriptorSet m_DescriptorSet;
+	VkDescriptorSetLayout m_DescriptorSetLayout;
 	UIList<primitive_t> m_PrimitiveList;
 };
