@@ -9,7 +9,8 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
         "OPENUI_ENABLE_SAMPLE": "ON",
-        "OPENUI_ENABLE_OPENGL": "ON"
+        "OPENUI_ENABLE_OPENGL": "ON",
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic"
       }
     },
     {
@@ -20,7 +21,8 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
         "OPENUI_ENABLE_SAMPLE": "ON",
-        "OPENUI_ENABLE_VULKAN": "ON"
+        "OPENUI_ENABLE_VULKAN": "ON",
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic"
       }
     },
     {
