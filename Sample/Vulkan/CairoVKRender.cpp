@@ -36,7 +36,7 @@ layout (location = 0) out vec4 color;
 layout (binding = 0) uniform sampler2D textureList[16];
 void main()
 {
-	color = texture(textureList[index], uv);
+	color = vec4(1,0,0,1);// texture(textureList[index], uv);
 }
 )";
 
@@ -58,13 +58,11 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		binding.descriptorCount = 16;
 		binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		binding.pImmutableSamplers = nullptr;
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = 1;
 		layoutInfo.pBindings = &binding;
-
 		auto result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &m_DescriptorSetLayout);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create descriptor set layout! %d", result);
 	}
@@ -100,28 +98,15 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		fragShaderStageInfo.module = fragShaderModule;
 		fragShaderStageInfo.pName = "main";
 
-		UIList<VkVertexInputBindingDescription> vertexInputBindings;
-		UIList<VkVertexInputAttributeDescription> vertexInputAttributes;
-
-		auto& vertexInputBindingDescription = vertexInputBindings.emplace_back();
-		vertexInputBindingDescription.binding = 0;
-		vertexInputBindingDescription.stride = sizeof(primitive_t);
-		vertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		UIList<VkVertexInputBindingDescription> vertexInputBindings
 		{
-			auto& vertexInputAttributeDescription = vertexInputAttributes.emplace_back();
-			vertexInputAttributeDescription.binding = 0;
-			vertexInputAttributeDescription.location = 0;
-			vertexInputAttributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
-			vertexInputAttributeDescription.offset = 0;
-		}
+			{0, (uint32_t)sizeof(primitive_t), VK_VERTEX_INPUT_RATE_VERTEX},
+		};
+		UIList<VkVertexInputAttributeDescription> vertexInputAttributes
 		{
-			auto& vertexInputAttributeDescription = vertexInputAttributes.emplace_back();
-			vertexInputAttributeDescription.binding = 0;
-			vertexInputAttributeDescription.location = 1;
-			vertexInputAttributeDescription.format = VK_FORMAT_R32_UINT;
-			vertexInputAttributeDescription.offset = sizeof(float) * 2;
-		}
-
+			{0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(primitive_t, X)},
+			{1, 0, VK_FORMAT_R32_UINT, offsetof(primitive_t, Index)},
+		};
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexBindingDescriptionCount = vertexInputBindings.size();
@@ -133,6 +118,21 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+		VkPipelineRasterizationStateCreateInfo rasterizer = {};
+		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+		rasterizer.depthBiasEnable = VK_FALSE;
+		rasterizer.lineWidth = 1.0f;
+
+		VkPipelineColorBlendStateCreateInfo colorBlending = {};
+		VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		colorBlending.attachmentCount = 1;
+		colorBlending.pAttachments = &colorBlendAttachment;
 
 		VkPipelineViewportStateCreateInfo viewportState = {};
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -154,57 +154,34 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		viewportState.scissorCount = 1;
 		viewportState.pScissors = &scissorRect;
 
-		VkPipelineRasterizationStateCreateInfo rasterizer = {};
-		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterizer.depthClampEnable = VK_FALSE;
-		rasterizer.rasterizerDiscardEnable = VK_FALSE;
-		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterizer.depthBiasEnable = VK_FALSE;
-		rasterizer.depthBiasConstantFactor = 0.0f;
-		rasterizer.depthBiasClamp = 0.0f;
-		rasterizer.depthBiasSlopeFactor = 0.0f;
-		rasterizer.lineWidth = 1.0f;
-
 		VkPipelineMultisampleStateCreateInfo multisampling = {};
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampling.sampleShadingEnable = VK_FALSE;
 		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-		multisampling.minSampleShading = 0.0f;
-		multisampling.pSampleMask = nullptr;
-		multisampling.alphaToCoverageEnable = VK_FALSE;
-		multisampling.alphaToOneEnable = VK_FALSE;
 
-		VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-		colorBlendAttachment.blendEnable = VK_FALSE;
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-		VkPipelineColorBlendStateCreateInfo colorBlending = {};
-		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlending.logicOpEnable = VK_FALSE;
-		colorBlending.logicOp = VK_LOGIC_OP_CLEAR;
-		colorBlending.attachmentCount = 1;
-		colorBlending.pAttachments = &colorBlendAttachment;
-
-		VkDynamicState dynamicStates[] = {
-			VK_DYNAMIC_STATE_VIEWPORT,
-			VK_DYNAMIC_STATE_SCISSOR,
-		};
 		VkPipelineDynamicStateCreateInfo dynamicState = {};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicState.dynamicStateCount = 2;
-		dynamicState.pDynamicStates = dynamicStates;
+		UIList<VkDynamicState> dynamicStates
+		{
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR,
+			VK_DYNAMIC_STATE_CULL_MODE,
+			VK_DYNAMIC_STATE_FRONT_FACE,
+			VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY
+		};
+		dynamicState.dynamicStateCount = dynamicStates.size();
+		dynamicState.pDynamicStates = dynamicStates.data();
+
+		VkPipelineRenderingCreateInfo renderingCreateInfo = {};
+		renderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+		renderingCreateInfo.colorAttachmentCount = 1;
+		renderingCreateInfo.pColorAttachmentFormats = &m_Device->m_SwapchainFormat;
+		renderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+		renderingCreateInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
 
 		VkGraphicsPipelineCreateInfo pipelineInfo = {};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = 2;
+		pipelineInfo.pNext = &renderingCreateInfo;
+		pipelineInfo.stageCount = sizeof(shaderStages) / sizeof(VkPipelineShaderStageCreateInfo);
 		pipelineInfo.pStages = shaderStages;
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
 		pipelineInfo.pInputAssemblyState = &inputAssembly;
@@ -212,19 +189,8 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		pipelineInfo.pRasterizationState = &rasterizer;
 		pipelineInfo.pMultisampleState = &multisampling;
 		pipelineInfo.pColorBlendState = &colorBlending;
-		pipelineInfo.pDepthStencilState = nullptr;
 		pipelineInfo.pDynamicState = &dynamicState;
 		pipelineInfo.layout = m_PipelineLayout;
-
-		VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
-		VkPipelineRenderingCreateInfo renderingCreateInfo = {};
-		renderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-		renderingCreateInfo.colorAttachmentCount = 1;
-		renderingCreateInfo.pColorAttachmentFormats = &colorFormat;
-		renderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
-		renderingCreateInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
-		pipelineInfo.pNext = &renderingCreateInfo;
-
 		auto result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineInfo, nullptr, &m_Pipeline);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create graphics pipeline! %d", result);
 
@@ -232,7 +198,7 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	}
 
-	// 创建临时纹理视图
+	// 创建纹理视图
 
 	{
 		VkImageCreateInfo imageInfo = {};
@@ -249,94 +215,17 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
 		auto result = vkCreateImage(device, &imageInfo, nullptr, &m_Texture);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create image! %d", result);
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device, m_Texture, &memRequirements);
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		uint32_t memoryTypeIndex = -1;
-		VkPhysicalDeviceMemoryProperties memProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-		for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-		{
-			if((memRequirements.memoryTypeBits & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
-			{
-				memoryTypeIndex = i;
-				break;
-			}
-		}
-		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
-		allocInfo.memoryTypeIndex = memoryTypeIndex;
-		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_TextureMemory);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate image memory! %d", result);
-		result = vkBindImageMemory(device, m_Texture, m_TextureMemory, 0);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to bind image memory! %d", result);
-
-		VkImageViewCreateInfo viewInfo = {};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = m_Texture;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-		result = vkCreateImageView(device, &viewInfo, nullptr, &m_TextureView);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to create image view! %d", result);
-	}
-	
-	// 创建描述符
-
-	{
-		VkDescriptorSetAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &m_DescriptorSetLayout;
-		auto result = vkAllocateDescriptorSets(device, &allocInfo, &m_DescriptorSet);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate descriptor set! %d", result);
-
-		VkDescriptorImageInfo imageInfo = {};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = m_TextureView;
-
-		VkWriteDescriptorSet descriptorWrite = {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = m_DescriptorSet;
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite.pImageInfo = &imageInfo;
-		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-	}
-
-	// 创建顶点缓冲
-
-	{
-		VkBufferCreateInfo bufferInfo = {};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(primitive_t) * 1024; // TODO: Dynamic size
-		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		auto result = vkCreateBuffer(device, &bufferInfo, nullptr, &m_VertexBuffer);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to create vertex buffer! %d", result);
 
 		VkMemoryRequirements memoryRequirements;
-		vkGetBufferMemoryRequirements(device, m_VertexBuffer, &memoryRequirements);
+		vkGetImageMemoryRequirements(device, m_Texture, &memoryRequirements);
 		VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memoryRequirements.size;
 		uint32_t memoryTypeIndex = -1;
-		VkPhysicalDeviceMemoryProperties memProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-		for(uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
+		VkPhysicalDeviceMemoryProperties deviceMemoryProperties = {};
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+		for(uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; ++i)
 		{
 			// Resource must support this memory type
 			if ((memoryRequirements.memoryTypeBits & (1 << i)) == 0) continue;
@@ -360,6 +249,118 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 			}
 		}
 		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memoryRequirements.size;
+		allocInfo.memoryTypeIndex = memoryTypeIndex;
+		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_TextureMemory);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate image memory! %d", result);
+		result = vkBindImageMemory(device, m_Texture, m_TextureMemory, 0);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to bind image memory! %d", result);
+
+		VkImageViewCreateInfo viewInfo = {};
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = m_Texture;
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+		result = vkCreateImageView(device, &viewInfo, nullptr, &m_TextureView);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to create image view! %d", result);
+
+		VkSamplerCreateInfo samplerInfo = {};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.anisotropyEnable = VK_FALSE;
+		samplerInfo.maxAnisotropy = 16.0f;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		result = vkCreateSampler(device, &samplerInfo, nullptr, &m_Sampler);
+		if (result != VK_SUCCESS) UI_FATAL("Failed to create texture sampler! %d", result);
+	}
+	
+	// 创建描述符
+
+	{
+		VkDescriptorSetAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = descriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &m_DescriptorSetLayout;
+		auto result = vkAllocateDescriptorSets(device, &allocInfo, &m_DescriptorSet);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate descriptor set! %d", result);
+
+		VkDescriptorImageInfo imageInfo = {};
+		imageInfo.sampler = m_Sampler;
+		imageInfo.imageView = m_TextureView;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		VkWriteDescriptorSet descriptorWrite = {};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = m_DescriptorSet;
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pImageInfo = &imageInfo;
+		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+	}
+
+	// 创建顶点缓冲
+
+	{
+		VkBufferCreateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = sizeof(primitive_t) * 1024; // TODO: Dynamic size
+		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		auto result = vkCreateBuffer(device, &bufferInfo, nullptr, &m_VertexBuffer);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to create vertex buffer! %d", result);
+
+		VkMemoryRequirements memoryRequirements;
+		vkGetBufferMemoryRequirements(device, m_VertexBuffer, &memoryRequirements);
+		VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
+		uint32_t memoryTypeIndex = -1;
+		VkPhysicalDeviceMemoryProperties deviceMemoryProperties = {};
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+		for(uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; ++i)
+		{
+			// Resource must support this memory type
+			if ((memoryRequirements.memoryTypeBits & (1 << i)) == 0) continue;
+			// Mappable resource must be host visible
+			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0) continue;
+			// Mappable must also be host coherent.
+			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) continue;
+			// Found the first candidate memory type
+			if (memoryTypeIndex == -1)
+			{
+				memoryTypeIndex = i;
+				continue;
+			}
+			// All things equal favor the memory in the biggest heap
+			auto bestTypeHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex].size;
+			auto candidateHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[i].heapIndex].size;
+			if (bestTypeHeapSize < candidateHeapSize)
+			{
+				memoryTypeIndex = i;
+				continue;
+			}
+		}
+		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memoryRequirements.size;
 		allocInfo.memoryTypeIndex = memoryTypeIndex;
 		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_VertexBufferMemory);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate vertex buffer memory! %d", result);
@@ -375,17 +376,18 @@ CairoVKRender::~CairoVKRender()
 	auto descriptorPool = m_Device->m_DescriptorPool;
 	auto physicalDevice = m_Device->m_PhysicalDevice;
 
-	vkDestroyImageView(device, m_TextureView, nullptr); m_TextureView = nullptr;
-	vkDestroyImage(device, m_Texture, nullptr);	m_Texture = nullptr;
-	vkFreeMemory(device, m_TextureMemory, nullptr);	m_TextureMemory = nullptr;
+	vkDestroySampler(device, m_Sampler, nullptr); m_Sampler = VK_NULL_HANDLE;
+	vkDestroyImageView(device, m_TextureView, nullptr); m_TextureView = VK_NULL_HANDLE;
+	vkDestroyImage(device, m_Texture, nullptr);	m_Texture = VK_NULL_HANDLE;
+	vkFreeMemory(device, m_TextureMemory, nullptr);	m_TextureMemory = VK_NULL_HANDLE;
 
-	vkDestroyBuffer(device, m_VertexBuffer, nullptr); m_VertexBuffer = nullptr;
-	vkFreeMemory(device, m_VertexBufferMemory, nullptr); m_VertexBufferMemory = nullptr;
+	vkDestroyBuffer(device, m_VertexBuffer, nullptr); m_VertexBuffer = VK_NULL_HANDLE;
+	vkFreeMemory(device, m_VertexBufferMemory, nullptr); m_VertexBufferMemory = VK_NULL_HANDLE;
 
-	vkFreeDescriptorSets(device, descriptorPool, 1, &m_DescriptorSet); m_DescriptorSet = nullptr;
-	vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr); m_DescriptorSetLayout = nullptr;
-	vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr); m_PipelineLayout = nullptr;
-	vkDestroyPipeline(device, m_Pipeline, nullptr); m_Pipeline = nullptr;
+	vkFreeDescriptorSets(device, descriptorPool, 1, &m_DescriptorSet); m_DescriptorSet = VK_NULL_HANDLE;
+	vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr); m_DescriptorSetLayout = VK_NULL_HANDLE;
+	vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr); m_PipelineLayout = VK_NULL_HANDLE;
+	vkDestroyPipeline(device, m_Pipeline, nullptr); m_Pipeline = VK_NULL_HANDLE;
 }
 
 void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
@@ -406,7 +408,6 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 		auto width = painter->getWidth();
 		auto height = painter->getHeight();
 		auto pixels = painter->getPixels().data();
-		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
 
 		m_PrimitiveList.clear();
 		for (size_t k = 0; k < primitive.size(); ++k)
@@ -422,11 +423,41 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 		if (memory) ::memcpy(memory, m_PrimitiveList.data(), m_PrimitiveList.size() * sizeof(primitive_t));
 		vkUnmapMemory(device, vertexMemory);
 
+
+
+
+
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBuffer, nullptr);
+		VkDeviceSize offsets = 0;
+		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBuffer, &offsets);
+
+		// Set viewport dynamically
+		VkViewport vp
+		{
+			.width = (float)width,
+			.height = (float)height,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f
+		};
+		vkCmdSetViewport(cmdBuffer, 0, 1, &vp);
+
+		VkRect2D scissor
+		{
+			.extent = {
+				.width = (uint32_t)width,
+				.height = (uint32_t)height,
+			}
+		};
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+
+		vkCmdSetCullMode(cmdBuffer, VK_CULL_MODE_NONE);
+
+		vkCmdSetFrontFace(cmdBuffer, VK_FRONT_FACE_CLOCKWISE);
+
+		vkCmdSetPrimitiveTopology(cmdBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
 		vkCmdDraw(cmdBuffer, m_PrimitiveList.size(), 1, 0, 0);
 

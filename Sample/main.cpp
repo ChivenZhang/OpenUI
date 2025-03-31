@@ -46,18 +46,53 @@ int main()
 #endif
 
 #ifdef OPENUI_ENABLE_VULKAN
+	UIList<const char*> layers;
+	layers.push_back("VK_LAYER_KHRONOS_validation");
+
+	uint32_t count_instance_extensions = 0;
+	const char * const *instance_extensions = SDL_Vulkan_GetInstanceExtensions(&count_instance_extensions);
+	uint32_t count_extensions = count_instance_extensions + 1;
+	UIList<const char*> extensions(count_extensions);
+	extensions[0] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+	SDL_memcpy(&extensions[1], instance_extensions, count_instance_extensions * sizeof(const char*));
+
 	VkApplicationInfo appInfo = {};
 	VkInstanceCreateInfo instanceCreateInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.apiVersion = VK_API_VERSION_1_3;
 	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instanceCreateInfo.pApplicationInfo = &appInfo;
+	instanceCreateInfo.enabledLayerCount = layers.size();
+	instanceCreateInfo.ppEnabledLayerNames = layers.data();
+	instanceCreateInfo.enabledExtensionCount = count_extensions;
+	instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
 #ifdef __APPLE__
 	instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
-	instanceCreateInfo.ppEnabledExtensionNames = SDL_Vulkan_GetInstanceExtensions(&instanceCreateInfo.enabledExtensionCount);
 	VkInstance instance = VK_NULL_HANDLE;
-	vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+	auto result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+	if (result != VK_SUCCESS) UI_FATAL("vkCreateInstance failed");
+
+	auto pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+		vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+	if (!pfnVkCreateDebugUtilsMessengerEXT) UI_FATAL("vkCreateDebugUtilsMessengerEXT not found");
+
+	auto pfnVkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+		vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+	if (!pfnVkDestroyDebugUtilsMessengerEXT) UI_FATAL("vkDestroyDebugUtilsMessengerEXT not found");
+
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
+	debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	debugCreateInfo.pfnUserCallback = [](VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)->VkBool32
+	{
+		UI_ERROR("validation layer: %s", pCallbackData->pMessage);
+		return VK_FALSE;
+	};
+	VkDebugUtilsMessengerEXT messenger = VK_NULL_HANDLE;
+	result = pfnVkCreateDebugUtilsMessengerEXT(instance, &debugCreateInfo, nullptr, &messenger);
+	if (result != VK_SUCCESS) UI_FATAL("vkCreateDebugUtilsMessengerEXT failed");
 	{
 		auto device = UINew<SDL3VKDevice>(instance);
 		auto openui = device->getContext();
@@ -66,6 +101,7 @@ int main()
 		while (device->update());
 		device = nullptr;
 	}
+	pfnVkDestroyDebugUtilsMessengerEXT(instance, messenger, nullptr);
 	vkDestroyInstance(instance, nullptr);
 #endif
 

@@ -94,7 +94,6 @@ public:
 		}
 		if (physicalDevice == VK_NULL_HANDLE) UI_FATAL("Could not find a suitable physical device!");
 		m_PhysicalDevice = physicalDevice;
-
 		const char* requiredExtensions[]
 		{
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -104,6 +103,11 @@ public:
 #endif
 		};
 
+		constexpr VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_feature
+		{
+			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+			.dynamicRendering = VK_TRUE,
+		};
 		float queuePriority = 1.0f;
 		VkDeviceQueueCreateInfo deviceQueueCreateInfo = {};
 		deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -112,6 +116,7 @@ public:
 		deviceQueueCreateInfo.pQueuePriorities = &queuePriority;
 		VkDeviceCreateInfo deviceCreateInfo = {};
 		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		deviceCreateInfo.pNext = &dynamic_rendering_feature;
 		deviceCreateInfo.queueCreateInfoCount = 1;
 		deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
 		deviceCreateInfo.pEnabledFeatures = nullptr;
@@ -145,14 +150,19 @@ public:
 		if (result != VK_SUCCESS) UI_FATAL("Could not allocate command buffers!");
 		m_CommandBuffer = commandBuffer;
 
-		VkDescriptorPoolSize poolSize = {};
-		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSize.descriptorCount = 1000; // TODO: maxSets
+		VkDescriptorPoolSize poolSizes[] =
+		{
+			{VK_DESCRIPTOR_TYPE_SAMPLER, 8},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 8},
+			{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 8},
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8},
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 8},
+		};
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
 		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolCreateInfo.maxSets = 1000; // TODO: maxSets
-		descriptorPoolCreateInfo.poolSizeCount = 1;
-		descriptorPoolCreateInfo.pPoolSizes = &poolSize;
+		descriptorPoolCreateInfo.maxSets = 512;
+		descriptorPoolCreateInfo.poolSizeCount = sizeof(poolSizes) / sizeof(VkDescriptorPoolSize);
+		descriptorPoolCreateInfo.pPoolSizes = poolSizes;
 		descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 		result = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
@@ -206,6 +216,7 @@ public:
 		m_SwapchainImages.clear();
 		m_SwapchainFences.clear();
 		m_SwapchainViews.clear();
+		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr); m_Swapchain = VK_NULL_HANDLE;
 		vkDestroySemaphore(m_Device, m_SemaphoreImage, nullptr); m_SemaphoreImage = VK_NULL_HANDLE;
 		vkDestroySemaphore(m_Device, m_SemaphorePaint, nullptr); m_SemaphorePaint = VK_NULL_HANDLE;
 		vkDestroyPipelineCache(m_Device, m_PipelineCache, nullptr); m_PipelineCache = VK_NULL_HANDLE;
@@ -403,19 +414,19 @@ public:
 
 		uint32_t frameIndex = -1;
 		auto result = vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, m_SemaphoreImage, nullptr, &frameIndex);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			recreateSwapchain();
 			return true;
 		}
 		if (result != VK_SUBOPTIMAL_KHR && result != VK_SUCCESS) UI_FATAL("Failed to acquire swap chain image!");
-		result = vkWaitForFences(m_Device, 1, &m_SwapchainFences[frameIndex], VK_FALSE, UINT64_MAX);
+		result = vkWaitForFences(m_Device, 1, &m_SwapchainFences[frameIndex], VK_TRUE, UINT64_MAX);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to wait for swap chain image!");
 		result = vkResetFences(m_Device, 1, &m_SwapchainFences[frameIndex]);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to reset swap chain image!");
 
 		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.flags = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		result = vkBeginCommandBuffer(m_CommandBuffer, &beginInfo);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to begin command buffer!");
@@ -447,6 +458,23 @@ public:
 		openui->renderElement(client);
 
 		vkCmdEndRendering(m_CommandBuffer);
+
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = m_SwapchainImages[frameIndex];
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+		vkCmdPipelineBarrier(m_CommandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
 		result = vkEndCommandBuffer(m_CommandBuffer);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to end command buffer!");
 
@@ -454,7 +482,7 @@ public:
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = &m_SemaphoreImage;
-		VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		VkPipelineStageFlags waitDestStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		submitInfo.pWaitDstStageMask = &waitDestStageMask;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &m_CommandBuffer;
@@ -471,12 +499,16 @@ public:
 		presentInfo.pSwapchains = &m_Swapchain;
 		presentInfo.pImageIndices = &frameIndex;
 		result = vkQueuePresentKHR(m_Queue, &presentInfo);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			recreateSwapchain();
 			return true;
 		}
 		if (result != VK_SUCCESS) UI_FATAL("Failed to present swap chain image!");
+
+		result = vkQueueWaitIdle(m_Queue);
+		if (result != VK_SUCCESS) UI_FATAL("Failed to acquire swapchain image!");
+
 		return true;
 	}
 
@@ -485,14 +517,16 @@ public:
 		VkSurfaceCapabilitiesKHR surfaceCapabilities = {};
 		auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice, m_Surface, &surfaceCapabilities);
 		if (result != VK_SUCCESS) UI_FATAL("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
-		uint32_t surfaceFormatsCount = 0;
-		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &surfaceFormatsCount, nullptr);
-		UIList<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatsCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &surfaceFormatsCount, surfaceFormats.data());
 
 		int width = 0, height = 0;
 		SDL_GetWindowSizeInPixels(m_Window, &width, &height);
 		auto flags = SDL_GetWindowFlags(m_Window);
+
+		vkDeviceWaitIdle(m_Device);
+		uint32_t surfaceFormatsCount = 0;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &surfaceFormatsCount, nullptr);
+		UIList<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatsCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &surfaceFormatsCount, surfaceFormats.data());
 
 		for (size_t i=0; i<m_SwapchainFences.size(); ++i) vkDestroyFence(m_Device, m_SwapchainFences[i], nullptr);
 		for (size_t i=0; i<m_SwapchainViews.size(); ++i) vkDestroyImageView(m_Device, m_SwapchainViews[i], nullptr);
@@ -503,7 +537,7 @@ public:
 		VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
 		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainCreateInfo.surface = m_Surface;
-		swapchainCreateInfo.minImageCount = surfaceCapabilities.minImageCount + 1;
+		swapchainCreateInfo.minImageCount = 1;
 		swapchainCreateInfo.imageFormat = VK_FORMAT_R8G8B8A8_UNORM;
 		swapchainCreateInfo.imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 		swapchainCreateInfo.imageExtent.width = SDL_clamp((uint32_t)width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
@@ -517,10 +551,6 @@ public:
 		swapchainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		swapchainCreateInfo.clipped = VK_TRUE;
 		swapchainCreateInfo.oldSwapchain = m_Swapchain;
-		if (surfaceCapabilities.maxImageCount < swapchainCreateInfo.minImageCount && 0 < surfaceCapabilities.maxImageCount)
-		{
-			swapchainCreateInfo.minImageCount = surfaceCapabilities.maxImageCount;
-		}
 		for (auto i = 0; i < surfaceFormatsCount; i++)
 		{
 			if (surfaceFormats[i].format == VK_FORMAT_R8G8B8A8_UNORM)
@@ -569,6 +599,10 @@ public:
 			result = vkCreateFence(m_Device, &fenceCreateInfo, nullptr, &m_SwapchainFences[i]);
 			if (result != VK_SUCCESS) UI_FATAL("vkCreateFence failed");
 		}
+		m_SwapchainFormat = swapchainCreateInfo.imageFormat;
+
+		result = vkQueueWaitIdle(m_Queue);
+		if (result != VK_SUCCESS) UI_FATAL("Failed to acquire swapchain image!");
 	}
 
 protected:
@@ -584,6 +618,7 @@ protected:
 	VkPipelineCache m_PipelineCache;
 	VkSemaphore m_SemaphoreImage, m_SemaphorePaint;
 	VkSwapchainKHR m_Swapchain;
+	VkFormat m_SwapchainFormat;
 	UIList<VkImage> m_SwapchainImages;
 	UIList<VkImageView> m_SwapchainViews;
 	UIList<VkFence> m_SwapchainFences;

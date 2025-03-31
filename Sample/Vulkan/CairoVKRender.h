@@ -36,7 +36,7 @@ protected:
 	VkPipelineLayout m_PipelineLayout;
 	VkDescriptorSet m_DescriptorSet;
 	VkDescriptorSetLayout m_DescriptorSetLayout;
-	VkImage m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory;
+	VkImage m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory; VkSampler m_Sampler;
 	VkBuffer m_VertexBuffer; VkDeviceMemory m_VertexBufferMemory;
 	UIList<primitive_t> m_PrimitiveList;
 };
