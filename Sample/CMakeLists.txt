@@ -28,6 +28,8 @@ target_link_libraries(OpenUIDemo PRIVATE SDL3::SDL3)
 # https://cmake.org/cmake/help/latest/module/FindVulkan.html
 find_package(Vulkan REQUIRED)
 target_link_libraries(OpenUIDemo PRIVATE Vulkan::Vulkan)
+find_package(glslang CONFIG REQUIRED)
+target_link_libraries(OpenUIDemo PRIVATE glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV glslang::SPVRemapper)
 
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/cairo)

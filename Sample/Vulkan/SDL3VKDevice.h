@@ -13,9 +13,9 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <OpenUI/UIContext.h>
-#include "SDL3InputEnum.h"
 #include "CairoVKRender.h"
-#include "Cairo/CairoUIPainter.h"
+#include "../SDL3InputEnum.h"
+#include "../Cairo/CairoUIPainter.h"
 
 /// @brief
 class SDL3VKDevice
@@ -193,16 +193,19 @@ public:
 		UIConfig config{.DisplayScale = scale};
 		auto openui = UINew<UIContext>(config);
 		openui->setPainter(UINew<CairoUIPainter>(width, height));
-		openui->setRender(UINew<CairoVKRender>(width, height, device, pipelineCache, descriptorPool, commandBuffer));
+		openui->setRender(UINew<CairoVKRender>(width, height, this));
 		m_UIContext = openui;
 	}
 
 	~SDL3VKDevice()
 	{
 		vkDeviceWaitIdle(m_Device);
-		m_SwapchainImages.clear();
+		m_UIContext = nullptr;
 		for (size_t i=0; i<m_SwapchainFences.size(); ++i) vkDestroyFence(m_Device, m_SwapchainFences[i], nullptr);
+		for (size_t i=0; i<m_SwapchainViews.size(); ++i) vkDestroyImageView(m_Device, m_SwapchainViews[i], nullptr);
+		m_SwapchainImages.clear();
 		m_SwapchainFences.clear();
+		m_SwapchainViews.clear();
 		vkDestroySemaphore(m_Device, m_SemaphoreImage, nullptr); m_SemaphoreImage = VK_NULL_HANDLE;
 		vkDestroySemaphore(m_Device, m_SemaphorePaint, nullptr); m_SemaphorePaint = VK_NULL_HANDLE;
 		vkDestroyPipelineCache(m_Device, m_PipelineCache, nullptr); m_PipelineCache = VK_NULL_HANDLE;
@@ -212,7 +215,6 @@ public:
 		vkDestroyDevice(m_Device, nullptr); m_Device = VK_NULL_HANDLE;
 		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr); m_Surface = VK_NULL_HANDLE;
 		m_Instance = VK_NULL_HANDLE;
-		m_UIContext = nullptr;
 		SDL_DestroyWindow(m_Window); m_Window = VK_NULL_HANDLE;
 	}
 
@@ -418,54 +420,33 @@ public:
 		result = vkBeginCommandBuffer(m_CommandBuffer, &beginInfo);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to begin command buffer!");
 
-		VkImageMemoryBarrier barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = m_SwapchainImages[frameIndex];
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-		vkCmdPipelineBarrier(m_CommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		VkRect2D renderAreaExtent = {};
+		renderAreaExtent.offset.x = client.X;
+		renderAreaExtent.offset.y = client.Y;
+		renderAreaExtent.extent.width = client.W;
+		renderAreaExtent.extent.height = client.H;
 
-		VkClearColorValue clearColor = {};
-		auto currentTime = (double)SDL_GetPerformanceCounter() / SDL_GetPerformanceFrequency();
-		clearColor.float32[0] = (float)(0.5 + 0.5 * SDL_sin(currentTime));
-		clearColor.float32[1] = (float)(0.5 + 0.5 * SDL_sin(currentTime + SDL_PI_D * 2 / 3));
-		clearColor.float32[2] = (float)(0.5 + 0.5 * SDL_sin(currentTime + SDL_PI_D * 4 / 3));
-		clearColor.float32[3] = 0.5;
-		VkImageSubresourceRange clearRange = {};
-		clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		clearRange.baseMipLevel = 0;
-		clearRange.levelCount = 1;
-		clearRange.baseArrayLayer = 0;
-		clearRange.layerCount = 1;
-		vkCmdClearColorImage(m_CommandBuffer, m_SwapchainImages[frameIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &clearRange);
-
-		barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = m_SwapchainImages[frameIndex];
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-		vkCmdPipelineBarrier(m_CommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		VkRenderingInfo renderingInfo = {};
+		VkRenderingAttachmentInfo colorAttachment = {};
+		colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colorAttachment.imageView = m_SwapchainViews[frameIndex];
+		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.clearValue.color.float32[0] = 0.0f;
+		colorAttachment.clearValue.color.float32[1] = 0.0f;
+		colorAttachment.clearValue.color.float32[2] = 0.0f;
+		colorAttachment.clearValue.color.float32[3] = 1.0f;
+		renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		renderingInfo.renderArea = renderAreaExtent;
+		renderingInfo.layerCount = 1;
+		renderingInfo.colorAttachmentCount = 1;
+		renderingInfo.pColorAttachments = &colorAttachment;
+		vkCmdBeginRendering(m_CommandBuffer, &renderingInfo);
 
 		openui->renderElement(client);
 
+		vkCmdEndRendering(m_CommandBuffer);
 		result = vkEndCommandBuffer(m_CommandBuffer);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to end command buffer!");
 
@@ -513,9 +494,11 @@ public:
 		SDL_GetWindowSizeInPixels(m_Window, &width, &height);
 		auto flags = SDL_GetWindowFlags(m_Window);
 
-		m_SwapchainImages.clear();
 		for (size_t i=0; i<m_SwapchainFences.size(); ++i) vkDestroyFence(m_Device, m_SwapchainFences[i], nullptr);
+		for (size_t i=0; i<m_SwapchainViews.size(); ++i) vkDestroyImageView(m_Device, m_SwapchainViews[i], nullptr);
+		m_SwapchainImages.clear();
 		m_SwapchainFences.clear();
+		m_SwapchainViews.clear();
 
 		VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
 		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -559,6 +542,24 @@ public:
 		vkGetSwapchainImagesKHR(m_Device, swapchain, &swapchainImageCount, swapchainImages.data());
 		m_SwapchainImages = std::move(swapchainImages);
 
+		m_SwapchainViews.resize(m_SwapchainImages.size());
+		for (size_t i=0; i<m_SwapchainViews.size(); ++i)
+		{
+			VkImageViewCreateInfo viewInfo = {};
+			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			viewInfo.image = m_SwapchainImages[i];
+			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+			viewInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			viewInfo.subresourceRange.baseMipLevel = 0;
+			viewInfo.subresourceRange.levelCount = 1;
+			viewInfo.subresourceRange.baseArrayLayer = 0;
+			viewInfo.subresourceRange.layerCount = 1;
+			result = vkCreateImageView(m_Device, &viewInfo, nullptr, &m_SwapchainViews[i]);
+			if (result != VK_SUCCESS) UI_FATAL("vkCreateImageView failed");
+		}
+
 		m_SwapchainFences.resize(m_SwapchainImages.size());
 		for (size_t i=0; i<m_SwapchainFences.size(); ++i)
 		{
@@ -584,6 +585,9 @@ protected:
 	VkSemaphore m_SemaphoreImage, m_SemaphorePaint;
 	VkSwapchainKHR m_Swapchain;
 	UIList<VkImage> m_SwapchainImages;
+	UIList<VkImageView> m_SwapchainViews;
 	UIList<VkFence> m_SwapchainFences;
 	UIContextRef m_UIContext;
+
+	friend class CairoVKRender;
 };

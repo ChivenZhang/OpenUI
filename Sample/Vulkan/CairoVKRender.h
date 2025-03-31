@@ -11,6 +11,7 @@
 * =================================================*/
 #include <OpenUI/UIRender.h>
 #include <vulkan/vulkan_core.h>
+class SDL3VKDevice;
 
 class CairoVKRender : public UIRender
 {
@@ -22,21 +23,20 @@ public:
 	};
 
 public:
-	CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkPipelineCache pipelineCache, VkDescriptorPool descriptorPool, VkCommandBuffer commandBuffer);
+	CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice> device);
 	~CairoVKRender() override;
 	void render(UIRect client, UIListView<UIPrimitive> data) override;
-	void setOutputView(VkImageView value);
 
 protected:
-	VkDevice m_Device;
-	VkImageView m_ColorImageView;
-	VkCommandBuffer m_CommandBuffer;
+	VkShaderModule createShaderModule(VkDevice device, int32_t stage, const char* source);
+
+protected:
+	UIRaw<SDL3VKDevice> m_Device;
 	VkPipeline m_Pipeline;
 	VkPipelineLayout m_PipelineLayout;
-	VkDescriptorPool m_DescriptorPool;
 	VkDescriptorSet m_DescriptorSet;
 	VkDescriptorSetLayout m_DescriptorSetLayout;
-	VkImage m_TempImage; VkImageView m_TempImageView; VkDeviceMemory m_TempImageMemory;
+	VkImage m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory;
 	VkBuffer m_VertexBuffer; VkDeviceMemory m_VertexBufferMemory;
 	UIList<primitive_t> m_PrimitiveList;
 };

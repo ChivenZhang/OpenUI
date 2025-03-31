@@ -25,5 +25,8 @@
   }, {
     "name" : "vulkan",
     "version>=" : "2023-12-17"
+  }, {
+    "name" : "glslang",
+    "version>=" : "15.1.0"
   } ]
 }

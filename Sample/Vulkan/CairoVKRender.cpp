@@ -8,16 +8,18 @@
 * Created by ChivenZhang at 2025/03/30 15:07:30.
 *
 * =================================================*/
-#include <SDL3/SDL_timer.h>
+#include <glslang/Public/resource_limits_c.h>
+#include <glslang/Include/glslang_c_interface.h>
+#include "SDL3VKDevice.h"
 #include "CairoVKRender.h"
 #include "../Cairo/CairoUIPainter.h"
 
 static auto vsource = R"(
-#version 330
+#version 450
 layout (location = 0) in vec2 _point;
 layout (location = 1) in uint _index;
-out vec2 uv;
-flat out uint index;
+layout (location = 0) out vec2 uv;
+layout (location = 1) flat out uint index;
 void main()
 {
 	index = _index;
@@ -27,23 +29,27 @@ void main()
 )";
 
 static auto fsource = R"(
-#version 330
-in vec2 uv;
-flat in uint index;
+#version 450
+layout (location = 0) in vec2 uv;
+layout (location = 1) flat in uint index;
 layout (location = 0) out vec4 color;
-uniform sampler2D textureList[16];
+layout (binding = 0) uniform sampler2D textureList[16];
 void main()
 {
 	color = texture(textureList[index], uv);
 }
 )";
 
-CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, VkPipelineCache pipelineCache, VkDescriptorPool descriptorPool, VkCommandBuffer commandBuffer)
+CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice> _device)
 	:
-	m_Device(device),
-	m_DescriptorPool(descriptorPool),
-	m_CommandBuffer(commandBuffer)
+	m_Device(_device)
 {
+	auto device = _device->m_Device;
+	auto pipelineCache = _device->m_PipelineCache;
+	auto descriptorPool = _device->m_DescriptorPool;
+	auto physicalDevice = _device->m_PhysicalDevice;
+
+
 	// 创建描述符布局
 	
 	{
@@ -74,27 +80,20 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 		auto result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create pipeline layout! %d", result);
 	}
-
-	// 创建着色器模块
-
-	{
-		vkDestroyShaderModule(device, vertShaderModule, nullptr);
-		vkDestroyShaderModule(device, fragShaderModule, nullptr);
-	}
 	
 	// 创建管线
 
 	{
 		VkPipelineShaderStageCreateInfo shaderStages[2] = {};
 
-		VkShaderModule vertShaderModule = CairoUIPainter::createShaderModule(device, vsource);
+		VkShaderModule vertShaderModule = createShaderModule(device, GLSLANG_STAGE_VERTEX, vsource);
 		VkPipelineShaderStageCreateInfo& vertShaderStageInfo = shaderStages[0];
 		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 		vertShaderStageInfo.module = vertShaderModule;
 		vertShaderStageInfo.pName = "main";
 
-		VkShaderModule fragShaderModule = CairoUIPainter::createShaderModule(device, fsource);
+		VkShaderModule fragShaderModule = createShaderModule(device, GLSLANG_STAGE_FRAGMENT, fsource);
 		VkPipelineShaderStageCreateInfo& fragShaderStageInfo = shaderStages[1];
 		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -203,15 +202,6 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 		dynamicState.dynamicStateCount = 2;
 		dynamicState.pDynamicStates = dynamicStates;
 
-		VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
-		VkPipelineRenderingCreateInfo renderingCreateInfo = {};
-		renderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-		renderingCreateInfo.colorAttachmentCount = 1;
-		renderingCreateInfo.pColorAttachmentFormats = &colorFormat;
-		renderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
-		renderingCreateInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
-		pipelineInfo.pNext = &renderingCreateInfo;
-
 		VkGraphicsPipelineCreateInfo pipelineInfo = {};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		pipelineInfo.stageCount = 2;
@@ -226,9 +216,18 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 		pipelineInfo.pDynamicState = &dynamicState;
 		pipelineInfo.layout = m_PipelineLayout;
 
+		VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+		VkPipelineRenderingCreateInfo renderingCreateInfo = {};
+		renderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+		renderingCreateInfo.colorAttachmentCount = 1;
+		renderingCreateInfo.pColorAttachmentFormats = &colorFormat;
+		renderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+		renderingCreateInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
+		pipelineInfo.pNext = &renderingCreateInfo;
+
 		auto result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineInfo, nullptr, &m_Pipeline);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create graphics pipeline! %d", result);
-	
+
 		vkDestroyShaderModule(device, vertShaderModule, nullptr);
 		vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	}
@@ -251,16 +250,16 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		auto result = vkCreateImage(device, &imageInfo, nullptr, &m_TempImage);
+		auto result = vkCreateImage(device, &imageInfo, nullptr, &m_Texture);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create image! %d", result);
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device, m_TempImage, &memRequirements);
+		vkGetImageMemoryRequirements(device, m_Texture, &memRequirements);
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		uint32_t memoryTypeIndex = -1;
 		VkPhysicalDeviceMemoryProperties memProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 		for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
 		{
 			if((memRequirements.memoryTypeBits & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
@@ -271,26 +270,22 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 		}
 		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
 		allocInfo.memoryTypeIndex = memoryTypeIndex;
-		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_TempImageMemory);
+		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_TextureMemory);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate image memory! %d", result);
-		result = vkBindImageMemory(device, m_TempImage, m_TempImageMemory, 0);
+		result = vkBindImageMemory(device, m_Texture, m_TextureMemory, 0);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to bind image memory! %d", result);
 
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = m_TempImage;
+		viewInfo.image = m_Texture;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
-		result = vkCreateImageView(device, &viewInfo, nullptr, &m_TempImageView);
+		result = vkCreateImageView(device, &viewInfo, nullptr, &m_TextureView);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create image view! %d", result);
 	}
 	
@@ -307,14 +302,14 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 
 		VkDescriptorImageInfo imageInfo = {};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = m_TempImageView;
+		imageInfo.imageView = m_TextureView;
 
 		VkWriteDescriptorSet descriptorWrite = {};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite.dstSet = m_DescriptorSet;
 		descriptorWrite.dstBinding = 0;
 		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorCount = 16;
+		descriptorWrite.descriptorCount = 1;
 		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorWrite.pImageInfo = &imageInfo;
 		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
@@ -331,20 +326,37 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 		auto result = vkCreateBuffer(device, &bufferInfo, nullptr, &m_VertexBuffer);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create vertex buffer! %d", result);
 
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device, m_VertexBuffer, &memRequirements);
+		VkMemoryRequirements memoryRequirements;
+		vkGetBufferMemoryRequirements(device, m_VertexBuffer, &memoryRequirements);
+		VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.allocationSize = memoryRequirements.size;
 		uint32_t memoryTypeIndex = -1;
 		VkPhysicalDeviceMemoryProperties memProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
-		for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+		for(uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
 		{
-			if((memRequirements.memoryTypeBits & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+			// Resource must support this memory type
+			if ((memoryRequirements.memoryTypeBits & (1 << i)) == 0) continue;
+			// Mappable resource must be host visible
+			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0) continue;
+			// Mappable must also be host coherent.
+			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) continue;
+			// Found the first candidate memory type
+			if (memoryTypeIndex == -1)
 			{
 				memoryTypeIndex = i;
-				break;
+				continue;
+			}
+			// All things equal favor the memory in the biggest heap
+			auto bestTypeHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex].size;
+			auto candidateHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[i].heapIndex].size;
+			if (bestTypeHeapSize < candidateHeapSize)
+			{
+				memoryTypeIndex = i;
+				continue;
 			}
 		}
 		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
@@ -354,94 +366,37 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, VkDevice device, V
 		result = vkBindBufferMemory(device, m_VertexBuffer, m_VertexBufferMemory, 0);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to bind vertex buffer memory! %d", result);
 	}
-
-	// 创建颜色附件
-
-	{
-		VkImageCreateInfo imageInfo = {};
-		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = width;
-		imageInfo.extent.height = height;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
-		imageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		auto result = vkCreateImage(device, &imageInfo, nullptr, &m_ColorImage);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to create image! %d", result);
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device, m_ColorImage, &memRequirements);
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		uint32_t memoryTypeIndex = -1;
-		VkPhysicalDeviceMemoryProperties memProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
-		for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-		{
-			if((memRequirements.memoryTypeBits & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
-			{
-				memoryTypeIndex = i;
-				break;
-			}
-		}
-		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
-		allocInfo.memoryTypeIndex = memoryTypeIndex;
-		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_ColorImageMemory);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate image memory! %d", result);
-		result = vkBindImageMemory(device, m_ColorpImage, m_ColorImageMemory, 0);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to bind image memory! %d", result);
-
-		VkImageViewCreateInfo viewInfo = {};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = m_ColorImage;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-		result = vkCreateImageView(device, &viewInfo, nullptr, &m_ColorImageView);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to create image view! %d", result);
-	}
 }
 
 CairoVKRender::~CairoVKRender()
 {
-	vkDestroyImageView(m_Device, m_ColorImageView, nullptr); m_ColorImageView = nullptr;
-	vkDestroyImage(m_Device, m_ColorImage, nullptr); m_ColorImage = nullptr;
-	vkFreeMemory(m_Device, m_ColorImageMemory, nullptr); m_ColorImageMemory = nullptr;
+	auto device = m_Device->m_Device;
+	auto pipelineCache = m_Device->m_PipelineCache;
+	auto descriptorPool = m_Device->m_DescriptorPool;
+	auto physicalDevice = m_Device->m_PhysicalDevice;
 
-	vkDestroyImageView(m_Device, m_TempImageView, nullptr); m_TempImageView = nullptr;
-	vkDestroyImage(m_Device, m_TempImage, nullptr);	m_TempImage = nullptr;
-	vkFreeMemory(m_Device, m_TempImageMemory, nullptr);	m_TempImageMemory = nullptr;
+	vkDestroyImageView(device, m_TextureView, nullptr); m_TextureView = nullptr;
+	vkDestroyImage(device, m_Texture, nullptr);	m_Texture = nullptr;
+	vkFreeMemory(device, m_TextureMemory, nullptr);	m_TextureMemory = nullptr;
 
-	vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr); m_VertexBuffer = nullptr;
-	vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr); m_VertexBufferMemory = nullptr;
+	vkDestroyBuffer(device, m_VertexBuffer, nullptr); m_VertexBuffer = nullptr;
+	vkFreeMemory(device, m_VertexBufferMemory, nullptr); m_VertexBufferMemory = nullptr;
 
-	vkFreeDescriptorSets(m_Device, m_DescriptorPool, 1, &m_DescriptorSet); m_DescriptorSet = nullptr;
-	vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr); m_DescriptorSetLayout = nullptr;
-	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr); m_PipelineLayout = nullptr;
-	vkDestroyPipeline(m_Device, m_Pipeline, nullptr); m_Pipeline = nullptr;
+	vkFreeDescriptorSets(device, descriptorPool, 1, &m_DescriptorSet); m_DescriptorSet = nullptr;
+	vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr); m_DescriptorSetLayout = nullptr;
+	vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr); m_PipelineLayout = nullptr;
+	vkDestroyPipeline(device, m_Pipeline, nullptr); m_Pipeline = nullptr;
 }
 
 void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 {
-	auto cmdBuffer = m_CommandBuffer;
-
-	// 渲染几何图元到临时纹理
-
+	auto device = m_Device->m_Device;
+	auto vertexBuffer = m_VertexBuffer;
+	auto vertexMemory = m_VertexBufferMemory;
+	auto descriptorSet = m_DescriptorSet;
+	auto pipeline = m_Pipeline;
+	auto pipelineLayout = m_PipelineLayout;
+	auto cmdBuffer = m_Device->m_CommandBuffer;
 	for (size_t i = 0; i < data.size(); ++i)
 	{
 		auto primitive = data[i].Primitive;
@@ -460,54 +415,75 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 			m_PrimitiveList.push_back({primitive[k].P1.X, primitive[k].P1.Y, 0});
 			m_PrimitiveList.push_back({primitive[k].P2.X, primitive[k].P2.Y, 0});
 		}
+
+		uint8_t* memory = nullptr;
+		auto result = vkMapMemory(device, vertexMemory, 0, m_PrimitiveList.size() * sizeof(primitive_t), 0, (void**)&memory);
+		if (result != VK_SUCCESS) UI_FATAL("Failed to map vertex buffer! %d", result);
+		if (memory) ::memcpy(memory, m_PrimitiveList.data(), m_PrimitiveList.size() * sizeof(primitive_t));
+		vkUnmapMemory(device, vertexMemory);
+
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+
+		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBuffer, nullptr);
+
+		vkCmdDraw(cmdBuffer, m_PrimitiveList.size(), 1, 0, 0);
+
+		break;
 	}
-
-	VkRect2D renderAreaExtent = {};
-	renderAreaExtent.offset.x = client.x;
-	renderAreaExtent.offset.y = client.y;
-	renderAreaExtent.extent.width = client.width;
-	renderAreaExtent.extent.height = client.height;
-
-	VkRenderingAttachmentInfo colorAttachment = {};
-	colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	colorAttachment.imageView = m_ColorImageView;
-	colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.clearValue.color.float32[0] = 0.0f;
-	colorAttachment.clearValue.color.float32[1] = 0.0f;
-	colorAttachment.clearValue.color.float32[2] = 0.0f;
-	colorAttachment.clearValue.color.float32[3] = 1.0f;
-
-	VkRenderingInfo renderingInfo = {};
-	renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-	renderingInfo.renderArea = renderAreaExtent;
-	renderingInfo.layerCount = 1;
-	renderingInfo.colorAttachmentCount = 1;
-	renderingInfo.pColorAttachments = &colorAttachment;
-	vkCmdBeginRendering(cmdBuffer, &renderingInfo);
-
-	VkViewport viewport = {};
-	viewport.x = renderAreaExtent.offset.x;
-	viewport.y = renderAreaExtent.offset.y;
-	viewport.width = renderAreaExtent.extent.width;
-	viewport.height = -renderAreaExtent.extent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-
-	vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-	
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSet, 0, nullptr);
-	
-	vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_VertexBuffer, nullptr);
-	
-	vkCmdDraw(cmdBuffer, m_PrimitiveList.size(), 1, 0, 0);
-	
-	vkCmdEndRendering(cmdBuffer);
 }
 
-void CairoVKRender::setOutputView(VkImageView value)
+VkShaderModule CairoVKRender::createShaderModule(VkDevice device,  int32_t stage, const char* source)
 {
-	m_ColorImageView = value;
+	glslang_input_t input = {};
+	input.language = GLSLANG_SOURCE_GLSL;
+	input.stage = (glslang_stage_t)stage;
+	input.client = GLSLANG_CLIENT_VULKAN;
+	input.client_version = GLSLANG_TARGET_VULKAN_1_3;
+	input.target_language = GLSLANG_TARGET_SPV;
+	input.target_language_version = GLSLANG_TARGET_SPV_1_3;
+	input.code = source;
+	input.default_version = 100;
+	input.default_profile = GLSLANG_NO_PROFILE;
+	input.force_default_version_and_profile = false;
+	input.forward_compatible = false;
+	input.messages = GLSLANG_MSG_DEFAULT_BIT;
+	input.resource = glslang_default_resource();
+	auto shader = glslang_shader_create(&input);
+	if (!glslang_shader_preprocess(shader, &input))
+	{
+		UI_ERROR("%s", glslang_shader_get_info_log(shader));
+		glslang_shader_delete(shader);
+		UI_FATAL("failed to preprocess shader");
+	}
+	if (!glslang_shader_parse(shader, &input))
+	{
+		UI_ERROR("%s", glslang_shader_get_info_log(shader));
+		glslang_shader_delete(shader);
+		UI_FATAL("failed to parse shader");
+	}
+	auto program = glslang_program_create();
+	glslang_program_add_shader(program, shader);
+	if (!glslang_program_link(program, GLSLANG_MSG_SPV_RULES_BIT | GLSLANG_MSG_VULKAN_RULES_BIT))
+	{
+		glslang_program_delete(program);
+		glslang_shader_delete(shader);
+		UI_FATAL("cannot link program: %s", glslang_shader_get_info_log(shader));
+	}
+	glslang_program_SPIRV_generate(program, input.stage);
+	UIList<uint32_t> binary;
+	binary.resize(glslang_program_SPIRV_get_size(program));
+	glslang_program_SPIRV_get(program, binary.data());
+	glslang_program_delete(program);
+	glslang_shader_delete(shader);
+
+	VkShaderModuleCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = binary.size() * sizeof(uint32_t);
+	createInfo.pCode = binary.data();
+	VkShaderModule shaderModule = VK_NULL_HANDLE;
+	auto result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
+	if (result != VK_SUCCESS) UI_FATAL("cannot create shader module");
+	return shaderModule;
 }
