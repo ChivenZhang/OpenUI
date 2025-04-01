@@ -20,7 +20,9 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
         "OPENUI_ENABLE_SAMPLE": "ON",
-        "OPENUI_ENABLE_VULKAN": "ON"
+        "OPENUI_ENABLE_VULKAN": "ON",
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+        "VCPKG_DEFAULT_HOST_TRIPLET": "x64-mingw-dynamic"
       }
     },
     {

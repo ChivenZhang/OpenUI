@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "span": "cpp"
-    }
+    },
+    "C_Cpp.default.compilerPath": "D:/ChivenZhang/bin/msys64/mingw64/bin/g++.exe"
 }

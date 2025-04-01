@@ -49,7 +49,6 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 	auto descriptorPool = _device->m_DescriptorPool;
 	auto physicalDevice = _device->m_PhysicalDevice;
 
-
 	// 创建描述符布局
 	
 	{
@@ -74,7 +73,6 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-
 		auto result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create pipeline layout! %d", result);
 	}
@@ -139,15 +137,15 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		VkViewport viewportRect = {};
 		viewportRect.x = 0.0f;
 		viewportRect.y = 0.0f;
-		viewportRect.width = 1.0f;
-		viewportRect.height = 1.0f;
+		viewportRect.width = width;
+		viewportRect.height = height;
 		viewportRect.minDepth = 0.0f;
 		viewportRect.maxDepth = 1.0f;
 		VkRect2D scissorRect = {};
 		scissorRect.offset.x = 0;
 		scissorRect.offset.y = 0;
-		scissorRect.extent.width = 1;
-		scissorRect.extent.height = 1;
+		scissorRect.extent.width = width;
+		scissorRect.extent.height = height;
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		viewportState.viewportCount = 1;
 		viewportState.pViewports = &viewportRect;
@@ -367,6 +365,58 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		result = vkBindBufferMemory(device, m_VertexBuffer, m_VertexBufferMemory, 0);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to bind vertex buffer memory! %d", result);
 	}
+
+	// 创建上传缓冲区
+
+	{
+		VkBufferCreateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = 1920 * 1920;
+		bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		auto result = vkCreateBuffer(device, &bufferInfo, nullptr, &m_StageBuffer);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to create vertex buffer! %d", result);
+
+		VkMemoryRequirements memoryRequirements;
+		vkGetBufferMemoryRequirements(device, m_VertexBuffer, &memoryRequirements);
+		VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
+		uint32_t memoryTypeIndex = -1;
+		VkPhysicalDeviceMemoryProperties deviceMemoryProperties = {};
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+		for(uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; ++i)
+		{
+			// Resource must support this memory type
+			if ((memoryRequirements.memoryTypeBits & (1 << i)) == 0) continue;
+			// Mappable resource must be host visible
+			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0) continue;
+			// Mappable must also be host coherent.
+			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) continue;
+			// Found the first candidate memory type
+			if (memoryTypeIndex == -1)
+			{
+				memoryTypeIndex = i;
+				continue;
+			}
+			// All things equal favor the memory in the biggest heap
+			auto bestTypeHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex].size;
+			auto candidateHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[i].heapIndex].size;
+			if (bestTypeHeapSize < candidateHeapSize)
+			{
+				memoryTypeIndex = i;
+				continue;
+			}
+		}
+		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memoryRequirements.size;
+		allocInfo.memoryTypeIndex = memoryTypeIndex;
+		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_StageBufferMemory);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate vertex buffer memory! %d", result);
+		result = vkBindBufferMemory(device, m_StageBuffer, m_StageBufferMemory, 0);
+		if(result != VK_SUCCESS) UI_FATAL("Failed to bind vertex buffer memory! %d", result);
+	}
 }
 
 CairoVKRender::~CairoVKRender()
@@ -380,6 +430,9 @@ CairoVKRender::~CairoVKRender()
 	vkDestroyImageView(device, m_TextureView, nullptr); m_TextureView = VK_NULL_HANDLE;
 	vkDestroyImage(device, m_Texture, nullptr);	m_Texture = VK_NULL_HANDLE;
 	vkFreeMemory(device, m_TextureMemory, nullptr);	m_TextureMemory = VK_NULL_HANDLE;
+
+	vkDestroyBuffer(device, m_StageBuffer, nullptr); m_StageBuffer = VK_NULL_HANDLE;
+	vkFreeMemory(device, m_StageBufferMemory, nullptr); m_StageBufferMemory = VK_NULL_HANDLE;
 
 	vkDestroyBuffer(device, m_VertexBuffer, nullptr); m_VertexBuffer = VK_NULL_HANDLE;
 	vkFreeMemory(device, m_VertexBufferMemory, nullptr); m_VertexBufferMemory = VK_NULL_HANDLE;
@@ -409,6 +462,12 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 		auto height = painter->getHeight();
 		auto pixels = painter->getPixels().data();
 
+		if(1920 < width || 1920 < height)
+		{
+			UI_ERROR("CairoVKRender: Too large image size %d %d", width, height);
+			return;
+		}
+
 		m_PrimitiveList.clear();
 		for (size_t k = 0; k < primitive.size(); ++k)
 		{
@@ -417,15 +476,36 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 			m_PrimitiveList.push_back({primitive[k].P2.X, primitive[k].P2.Y, 0});
 		}
 
+		uint8_t* buffer = nullptr;
+		auto result = vkMapMemory(device, m_StageBufferMemory, 0, width * height * 4, 0, (void**)&buffer);
+		if (result != VK_SUCCESS) UI_FATAL("Failed to map vertex buffer! %d", result);
+		if (buffer) ::memcpy(buffer, pixels, width * height * 4);
+		vkUnmapMemory(device, m_StageBufferMemory);
+
 		uint8_t* memory = nullptr;
 		auto result = vkMapMemory(device, vertexMemory, 0, m_PrimitiveList.size() * sizeof(primitive_t), 0, (void**)&memory);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to map vertex buffer! %d", result);
 		if (memory) ::memcpy(memory, m_PrimitiveList.data(), m_PrimitiveList.size() * sizeof(primitive_t));
 		vkUnmapMemory(device, vertexMemory);
 
+		vkCmdCopyBufferToImage(cmdBuffer, m_StageBuffer, m_Texture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &m_TextureRegion);
 
-
-
+		VkImageMemoryBarrier imageBarrier = {};
+		imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		imageBarrier.image = m_Texture;
+		imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageBarrier.subresourceRange.baseMipLevel = 0;
+		imageBarrier.subresourceRange.levelCount = 1;
+		imageBarrier.subresourceRange.baseArrayLayer = 0;
+		imageBarrier.subresourceRange.layerCount = 1;
+		imageBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageBarrier.image = m_Texture;
+		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
@@ -434,7 +514,6 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 		VkDeviceSize offsets = 0;
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBuffer, &offsets);
 
-		// Set viewport dynamically
 		VkViewport vp
 		{
 			.width = (float)width,
