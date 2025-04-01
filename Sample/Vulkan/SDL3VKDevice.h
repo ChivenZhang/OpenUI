@@ -431,6 +431,9 @@ public:
 		result = vkBeginCommandBuffer(m_CommandBuffer, &beginInfo);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to begin command buffer!");
 
+		auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
+		UICast<CairoVKRender>(openui->getRender())->uploadTexture(w, h, (uint8_t*)pixels.data());
+
 		VkRect2D renderAreaExtent = {};
 		renderAreaExtent.offset.x = client.X;
 		renderAreaExtent.offset.y = client.Y;

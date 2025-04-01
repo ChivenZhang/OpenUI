@@ -23,7 +23,7 @@ layout (location = 1) flat out uint index;
 void main()
 {
 	index = _index;
-	uv = vec2(_point.x, 1.0-_point.y);
+	uv = vec2(_point.x, _point.y);
 	gl_Position = vec4(2*_point-1, 0.0, 1.0);
 }
 )";
@@ -36,7 +36,7 @@ layout (location = 0) out vec4 color;
 layout (binding = 0) uniform sampler2D textureList[16];
 void main()
 {
-	color = vec4(1,0,0,1);// texture(textureList[index], uv);
+	color = texture(textureList[index], uv);
 }
 )";
 
@@ -207,7 +207,7 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
-		imageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		imageInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -260,7 +260,7 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Texture;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		viewInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
@@ -371,14 +371,14 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 	{
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = 1920 * 1920;
+		bufferInfo.size = 1920 * 1920 * 4;
 		bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		auto result = vkCreateBuffer(device, &bufferInfo, nullptr, &m_StageBuffer);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create vertex buffer! %d", result);
 
 		VkMemoryRequirements memoryRequirements;
-		vkGetBufferMemoryRequirements(device, m_VertexBuffer, &memoryRequirements);
+		vkGetBufferMemoryRequirements(device, m_StageBuffer, &memoryRequirements);
 		VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
 		uint32_t memoryTypeIndex = -1;
@@ -476,36 +476,11 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 			m_PrimitiveList.push_back({primitive[k].P2.X, primitive[k].P2.Y, 0});
 		}
 
-		uint8_t* buffer = nullptr;
-		auto result = vkMapMemory(device, m_StageBufferMemory, 0, width * height * 4, 0, (void**)&buffer);
-		if (result != VK_SUCCESS) UI_FATAL("Failed to map vertex buffer! %d", result);
-		if (buffer) ::memcpy(buffer, pixels, width * height * 4);
-		vkUnmapMemory(device, m_StageBufferMemory);
-
 		uint8_t* memory = nullptr;
 		auto result = vkMapMemory(device, vertexMemory, 0, m_PrimitiveList.size() * sizeof(primitive_t), 0, (void**)&memory);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to map vertex buffer! %d", result);
 		if (memory) ::memcpy(memory, m_PrimitiveList.data(), m_PrimitiveList.size() * sizeof(primitive_t));
 		vkUnmapMemory(device, vertexMemory);
-
-		vkCmdCopyBufferToImage(cmdBuffer, m_StageBuffer, m_Texture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &m_TextureRegion);
-
-		VkImageMemoryBarrier imageBarrier = {};
-		imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		imageBarrier.image = m_Texture;
-		imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageBarrier.subresourceRange.baseMipLevel = 0;
-		imageBarrier.subresourceRange.levelCount = 1;
-		imageBarrier.subresourceRange.baseArrayLayer = 0;
-		imageBarrier.subresourceRange.layerCount = 1;
-		imageBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		imageBarrier.image = m_Texture;
-		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
@@ -542,6 +517,65 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 
 		break;
 	}
+}
+
+void CairoVKRender::uploadTexture(int32_t width, int32_t height, uint8_t* pixels)
+{
+	auto device = m_Device->m_Device;
+	auto vertexBuffer = m_VertexBuffer;
+	auto vertexMemory = m_VertexBufferMemory;
+	auto descriptorSet = m_DescriptorSet;
+	auto pipeline = m_Pipeline;
+	auto pipelineLayout = m_PipelineLayout;
+	auto cmdBuffer = m_Device->m_CommandBuffer;
+
+	uint8_t* buffer = nullptr;
+	auto result = vkMapMemory(device, m_StageBufferMemory, 0, width * height * 4, 0, (void**)&buffer);
+	if (result != VK_SUCCESS) UI_FATAL("Failed to map vertex buffer! %d", result);
+	if (buffer) ::memcpy(buffer, pixels, width * height * 4);
+	vkUnmapMemory(device, m_StageBufferMemory);
+
+	VkImageMemoryBarrier imageBarrier = {};
+	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageBarrier.image = m_Texture;
+	imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageBarrier.subresourceRange.baseMipLevel = 0;
+	imageBarrier.subresourceRange.levelCount = 1;
+	imageBarrier.subresourceRange.baseArrayLayer = 0;
+	imageBarrier.subresourceRange.layerCount = 1;
+	imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	imageBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+	imageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imageBarrier.image = m_Texture;
+	vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+	VkBufferImageCopy region{};
+	region.bufferOffset = 0;
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.mipLevel = 0;
+	region.imageSubresource.layerCount = 1;
+	region.imageExtent = { (uint32_t)width, (uint32_t)height, 1 };
+	vkCmdCopyBufferToImage(cmdBuffer, m_StageBuffer, m_Texture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	imageBarrier = {};
+	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageBarrier.image = m_Texture;
+	imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageBarrier.subresourceRange.baseMipLevel = 0;
+	imageBarrier.subresourceRange.levelCount = 1;
+	imageBarrier.subresourceRange.baseArrayLayer = 0;
+	imageBarrier.subresourceRange.layerCount = 1;
+	imageBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imageBarrier.image = m_Texture;
+	vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 }
 
 VkShaderModule CairoVKRender::createShaderModule(VkDevice device,  int32_t stage, const char* source)
