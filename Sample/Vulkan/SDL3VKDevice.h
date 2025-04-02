@@ -9,16 +9,16 @@
 * Created by ChivenZhang at 2025/03/29 14:16:58.
 *
 * =================================================*/
-#include <vulkan/vulkan.h>
 #include <SDL3/SDL.h>
+#include <vulkan/vulkan.h>
 #include <SDL3/SDL_vulkan.h>
-#include <OpenUI/UIContext.h>
+#include <OpenUI/UIDevice.h>
 #include "CairoVKRender.h"
 #include "../SDL3InputEnum.h"
 #include "../Cairo/CairoUIPainter.h"
 
 /// @brief
-class SDL3VKDevice
+class SDL3VKDevice : public UIDevice
 {
 public:
 	SDL3VKDevice(VkInstance instance)
@@ -207,7 +207,7 @@ public:
 		m_UIContext = openui;
 	}
 
-	~SDL3VKDevice()
+	~SDL3VKDevice() override
 	{
 		vkDeviceWaitIdle(m_Device);
 		m_UIContext = nullptr;
@@ -234,12 +234,12 @@ public:
 		return m_Window;
 	}
 
-	UIContextRaw getContext() const
+	UIContextRaw getContext() const override
 	{
 		return m_UIContext.get();
 	}
 
-	bool update()
+	bool update() override
 	{
 		auto window = getWindow();
 		auto openui = getContext();

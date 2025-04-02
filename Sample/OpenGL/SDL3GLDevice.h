@@ -11,13 +11,13 @@
 * =================================================*/
 #include <gl/glew.h>
 #include <SDL3/SDL.h>
-#include <OpenUI/UIContext.h>
-#include "SDL3InputEnum.h"
+#include <OpenUI/UIDevice.h>
 #include "CairoGLRender.h"
-#include "Cairo/CairoUIPainter.h"
+#include "../Cairo/CairoUIPainter.h"
+#include "../SDL3InputEnum.h"
 
 /// @brief 
-class SDL3GLDevice
+class SDL3GLDevice : public UIDevice
 {
 public:
 	SDL3GLDevice()
@@ -62,7 +62,7 @@ public:
 		m_UIContext = openui;
 	}
 
-	~SDL3GLDevice()
+	~SDL3GLDevice() override
 	{
 		m_UIContext = nullptr;
 		SDL_GL_DestroyContext(m_Context);
@@ -74,12 +74,12 @@ public:
 		return m_Window;
 	}
 
-	UIContextRaw getContext() const
+	UIContextRaw getContext() const override
 	{
 		return m_UIContext.get();
 	}
 
-	bool update()
+	bool update() override
 	{
 		auto openui = getContext();
 		auto window = getWindow();
