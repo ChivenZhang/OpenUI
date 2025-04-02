@@ -11,11 +11,11 @@ add_executable (OpenUIDemo
 		main.cpp
 		SDL3InputEnum.cpp
 		SDL3InputEnum.h
+		Cairo/CairoUIPainter.cpp
+		Cairo/CairoUIPainter.h
 		Metal/CairoMTRender.cpp
 		Metal/CairoMTRender.h
 		Metal/SDL3MTDevice.h
-		Cairo/CairoUIPainter.cpp
-		Cairo/CairoUIPainter.h
 		D3D12/CairoDXRender.cpp
 		D3D12/CairoDXRender.h
 		D3D12/SDL3DXDevice.h
