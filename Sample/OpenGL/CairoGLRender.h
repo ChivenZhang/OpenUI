@@ -9,6 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_OPENGL
 #include <OpenUI/UIRender.h>
 
 class CairoGLRender : public UIRender
@@ -32,3 +33,4 @@ protected:
 	uint32_t m_NativeTexture;
 	UIList<primitive_t> m_PrimitiveList;
 };
+#endif

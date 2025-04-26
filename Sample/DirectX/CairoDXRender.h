@@ -9,6 +9,7 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_DIRECTX
 #include <OpenUI/UIRender.h>
 #include <vulkan/vulkan_core.h>
 class SDL3DXDevice;
@@ -42,3 +43,4 @@ protected:
 	VkImage m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory; VkSampler m_Sampler;
 	UIList<primitive_t> m_PrimitiveList;
 };
+#endif

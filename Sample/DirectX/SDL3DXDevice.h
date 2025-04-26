@@ -9,6 +9,7 @@
 * Created by ChivenZhang at 2025/03/29 14:16:58.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_DIRECTX
 #include <SDL3/SDL.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -629,3 +630,4 @@ protected:
 
 	friend class CairoDXRender;
 };
+#endif

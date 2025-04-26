@@ -8,6 +8,7 @@
 * Created by ChivenZhang at 2025/03/30 15:07:30.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_VULKAN
 #include <glslang/Public/resource_limits_c.h>
 #include <glslang/Include/glslang_c_interface.h>
 #include "SDL3VKDevice.h"
@@ -788,3 +789,4 @@ VkShaderModule CairoVKRender::createShaderModule(VkDevice device,  int32_t stage
 	if (result != VK_SUCCESS) UI_FATAL("cannot create shader module");
 	return shaderModule;
 }
+#endif

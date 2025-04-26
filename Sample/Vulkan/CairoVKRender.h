@@ -9,6 +9,7 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_VULKAN
 #include <OpenUI/UIRender.h>
 #include <vulkan/vulkan_core.h>
 class SDL3VKDevice;
@@ -43,3 +44,4 @@ protected:
 	uint32_t m_Width, m_Height;
 	UIList<primitive_t> m_PrimitiveList;
 };
+#endif

@@ -8,6 +8,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_OPENGL
 #include <gl/glew.h>
 #include "CairoGLRender.h"
 #include "../Cairo/CairoUIPainter.h"
@@ -151,3 +152,4 @@ void CairoGLRender::render(UIRect client, UIListView<UIPrimitive> data)
 	glBindVertexArray(0);
 	glUseProgram(0);
 }
+#endif

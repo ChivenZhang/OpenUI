@@ -9,6 +9,7 @@
 * Created by ChivenZhang at 2025/03/29 14:16:23.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_OPENGL
 #include <gl/glew.h>
 #include <SDL3/SDL.h>
 #include <OpenUI/UIDevice.h>
@@ -270,3 +271,4 @@ protected:
 	SDL_GLContext m_Context;
 	UIContextRef m_UIContext;
 };
+#endif

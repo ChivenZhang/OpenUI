@@ -6,6 +6,9 @@ endif ()
 if(OPENUI_ENABLE_VULKAN)
 	add_definitions(-DOPENUI_ENABLE_VULKAN)
 endif ()
+if(OPENUI_ENABLE_DIRECTX)
+	add_definitions(-DOPENUI_ENABLE_DIRECTX)
+endif ()
 
 add_executable (OpenUIDemo
 		main.cpp
@@ -31,14 +34,31 @@ add_executable (OpenUIDemo
 )
 add_dependencies(OpenUIDemo OpenUI)
 
-find_package(GLEW REQUIRED)
-target_link_libraries(OpenUIDemo PRIVATE GLEW::GLEW)
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(OpenUIDemo PRIVATE SDL3::SDL3)
+if(OPENUI_ENABLE_OPENGL)
+	find_package(GLEW REQUIRED)
+	target_link_libraries(OpenUIDemo PRIVATE GLEW::GLEW)
+endif()
+if(OPENUI_ENABLE_VULKAN)
 # https://cmake.org/cmake/help/latest/module/FindVulkan.html
-find_package(Vulkan REQUIRED)
-target_link_libraries(OpenUIDemo PRIVATE Vulkan::Vulkan)
-find_package(glslang CONFIG REQUIRED)
+	find_package(Vulkan REQUIRED)
+	target_link_libraries(OpenUIDemo PRIVATE Vulkan::Vulkan)
+endif()
+if(OPENUI_ENABLE_DIRECTX)
+	find_package(directx-headers CONFIG REQUIRED)
+	find_package(directx12-agility CONFIG REQUIRED)
+	target_link_libraries(OpenUIDemo PRIVATE Microsoft::DirectX-Headers Microsoft::DirectX-Guids Microsoft::DirectX12-Agility dxgi)
+	if(TARGET Microsoft::DirectX12-Agility)
+		file(MAKE_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12")
+		add_custom_command(TARGET OpenUIDemo POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PROPERTY:Microsoft::DirectX12-Core,IMPORTED_LOCATION_RELEASE> $<TARGET_FILE_DIR:OpenUIDemo>/D3D12
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PROPERTY:Microsoft::DirectX12-Layers,IMPORTED_LOCATION_DEBUG> $<TARGET_FILE_DIR:OpenUIDemo>/D3D12
+			COMMAND_EXPAND_LISTS
+		)
+	endif()
+endif()
+	find_package(glslang CONFIG REQUIRED)
 target_link_libraries(OpenUIDemo PRIVATE glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV glslang::SPVRemapper)
 
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
