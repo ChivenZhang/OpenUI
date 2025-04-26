@@ -28,5 +28,11 @@
   }, {
     "name" : "glslang",
     "version>=" : "15.1.0"
+  }, {
+    "name" : "directx12-agility",
+    "version>=" : "1.615.0"
+  }, {
+    "name" : "directx-headers",
+    "version>=" : "1.615.0"
   } ]
 }

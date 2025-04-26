@@ -19,9 +19,10 @@
 #include "OpenGL/SDL3GLDevice.h"
 #endif
 #ifdef OPENUI_ENABLE_VULKAN
-#include <vulkan/vulkan.h>
-#include <SDL3/SDL_vulkan.h>
 #include "Vulkan/SDL3VKDevice.h"
+#endif
+#ifdef OPENUI_ENABLE_DIRECTX
+#include "DirectX/SDL3DXDevice.h"
 #endif
 
 void business(UIContextRaw context, SDL_Window* window);
@@ -105,6 +106,32 @@ int main()
 	}
 	pfnVkDestroyDebugUtilsMessengerEXT(instance, messenger, nullptr);
 	vkDestroyInstance(instance, nullptr);
+	SDL_Quit();
+#endif
+
+#ifdef OPENUI_ENABLE_DIRECTX
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
+	uint32_t factoryFlags = 0;
+	ComPtr<ID3D12Debug> debug;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debug))))
+	{
+		debug->EnableDebugLayer();
+		factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+	}
+	ComPtr<IDXGIFactory4> instance;
+	if (FAILED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&instance))))
+	{
+		UI_FATAL("CreateDXGIFactory2 failed");
+	}
+	{
+		auto device = UINew<SDL3DXDevice>(instance);
+		auto openui = device->getContext();
+		auto window = device->getWindow();
+		business(openui, window);
+		while (device->update());
+		device = nullptr;
+	}
 	SDL_Quit();
 #endif
 

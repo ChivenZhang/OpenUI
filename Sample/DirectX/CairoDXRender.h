@@ -11,7 +11,10 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_DIRECTX
 #include <OpenUI/UIRender.h>
-#include <vulkan/vulkan_core.h>
+#include <d3d12.h>
+#include <dxgi1_6.h>
+#include <wrl.h>
+using Microsoft::WRL::ComPtr;
 class SDL3DXDevice;
 
 class CairoDXRender : public UIRender
@@ -30,17 +33,17 @@ public:
 	void uploadTexture(int32_t width, int32_t height, uint8_t* pixels);
 
 protected:
-	VkShaderModule createShaderModule(VkDevice device, int32_t stage, const char* source);
+	ComPtr<ID3D12Resource> createShaderModule(VkDevice device, int32_t stage, const char* source);
 
 protected:
 	UIRaw<SDL3DXDevice> m_Device;
-	VkPipeline m_Pipeline;
+	ComPtr<ID3D12PipelineState> m_Pipeline;
 	VkPipelineLayout m_PipelineLayout;
 	VkDescriptorSet m_DescriptorSet;
 	VkDescriptorSetLayout m_DescriptorSetLayout;
 	VkBuffer m_StageBuffer; VkDeviceMemory m_StageBufferMemory;
 	VkBuffer m_VertexBuffer; VkDeviceMemory m_VertexBufferMemory;
-	VkImage m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory; VkSampler m_Sampler;
+	ComPtr<ID3D12Resource> m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory; VkSampler m_Sampler;
 	UIList<primitive_t> m_PrimitiveList;
 };
 #endif

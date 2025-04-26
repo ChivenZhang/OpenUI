@@ -11,6 +11,7 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_VULKAN
 #include <SDL3/SDL.h>
+#include <vulkan/vulkan.h>
 #include <SDL3/SDL_vulkan.h>
 #include <OpenUI/UIDevice.h>
 #include "CairoVKRender.h"
@@ -207,7 +208,7 @@ public:
 		vkDestroyDevice(m_Device, nullptr); m_Device = VK_NULL_HANDLE;
 		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr); m_Surface = VK_NULL_HANDLE;
 		m_Instance = VK_NULL_HANDLE;
-		SDL_DestroyWindow(m_Window); m_Window = VK_NULL_HANDLE;
+		SDL_DestroyWindow(m_Window); m_Window = nullptr;
 	}
 
 	SDL_Window* getWindow() const
@@ -392,6 +393,7 @@ public:
 		openui->updateElement(::clock() * 0.001f, client);
 
 		// Output frame to screen
+
 		auto result = vkWaitForFences(m_Device, 1, &m_SwapchainFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 		if (result != VK_SUCCESS) UI_FATAL("Failed to wait for swap chain image!");
 		result = vkResetFences(m_Device, 1, &m_SwapchainFences[m_CurrentFrame]);
