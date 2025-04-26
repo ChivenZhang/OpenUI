@@ -464,9 +464,8 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 
 		auto width = painter->getWidth();
 		auto height = painter->getHeight();
-		auto pixels = painter->getPixels().data();
 
-		if(1920 < width || 1920 < height)
+		if(m_Width < width || m_Height < height)
 		{
 			UI_ERROR("CairoVKRender: Too large image size %d %d", width, height);
 			return;
@@ -543,91 +542,148 @@ void CairoVKRender::uploadTexture(int32_t width, int32_t height, uint8_t* pixels
 		vkDestroyImageView(device, m_TextureView, nullptr); m_TextureView = VK_NULL_HANDLE;
 		vkDestroyImage(device, m_Texture, nullptr);	m_Texture = VK_NULL_HANDLE;
 		vkFreeMemory(device, m_TextureMemory, nullptr);	m_TextureMemory = VK_NULL_HANDLE;
+		vkDestroyBuffer(device, m_StageBuffer, nullptr); m_StageBuffer = VK_NULL_HANDLE;
+		vkFreeMemory(device, m_StageBufferMemory, nullptr); m_StageBufferMemory = VK_NULL_HANDLE;
 
-		VkImageCreateInfo imageInfo = {};
-		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = width;
-		imageInfo.extent.height = height;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
-		imageInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
-		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		result = vkCreateImage(device, &imageInfo, nullptr, &m_Texture);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to create image! %d", result);
-
-		VkMemoryRequirements memoryRequirements;
-		vkGetImageMemoryRequirements(device, m_Texture, &memoryRequirements);
-		VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
-		uint32_t memoryTypeIndex = -1;
-		VkPhysicalDeviceMemoryProperties deviceMemoryProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
-		for(uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; ++i)
 		{
-			// Resource must support this memory type
-			if ((memoryRequirements.memoryTypeBits & (1 << i)) == 0) continue;
-			// Mappable resource must be host visible
-			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0) continue;
-			// Mappable must also be host coherent.
-			if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) continue;
-			// Found the first candidate memory type
-			if (memoryTypeIndex == -1)
+			VkImageCreateInfo imageInfo = {};
+			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			imageInfo.imageType = VK_IMAGE_TYPE_2D;
+			imageInfo.extent.width = m_Width = width;
+			imageInfo.extent.height = m_Height = height;
+			imageInfo.extent.depth = 1;
+			imageInfo.mipLevels = 1;
+			imageInfo.arrayLayers = 1;
+			imageInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
+			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			result = vkCreateImage(device, &imageInfo, nullptr, &m_Texture);
+			if(result != VK_SUCCESS) UI_FATAL("Failed to create image! %d", result);
+
+			VkMemoryRequirements memoryRequirements;
+			vkGetImageMemoryRequirements(device, m_Texture, &memoryRequirements);
+			VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
+			uint32_t memoryTypeIndex = -1;
+			VkPhysicalDeviceMemoryProperties deviceMemoryProperties = {};
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+			for(uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; ++i)
 			{
-				memoryTypeIndex = i;
-				continue;
+				// Resource must support this memory type
+				if ((memoryRequirements.memoryTypeBits & (1 << i)) == 0) continue;
+				// Mappable resource must be host visible
+				if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0) continue;
+				// Mappable must also be host coherent.
+				if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) continue;
+				// Found the first candidate memory type
+				if (memoryTypeIndex == -1)
+				{
+					memoryTypeIndex = i;
+					continue;
+				}
+				// All things equal favor the memory in the biggest heap
+				auto bestTypeHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex].size;
+				auto candidateHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[i].heapIndex].size;
+				if (bestTypeHeapSize < candidateHeapSize)
+				{
+					memoryTypeIndex = i;
+					continue;
+				}
 			}
-			// All things equal favor the memory in the biggest heap
-			auto bestTypeHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex].size;
-			auto candidateHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[i].heapIndex].size;
-			if (bestTypeHeapSize < candidateHeapSize)
-			{
-				memoryTypeIndex = i;
-				continue;
-			}
+			if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
+			VkMemoryAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memoryRequirements.size;
+			allocInfo.memoryTypeIndex = memoryTypeIndex;
+			result = vkAllocateMemory(device, &allocInfo, nullptr, &m_TextureMemory);
+			if(result != VK_SUCCESS) UI_FATAL("Failed to allocate image memory! %d", result);
+			result = vkBindImageMemory(device, m_Texture, m_TextureMemory, 0);
+			if(result != VK_SUCCESS) UI_FATAL("Failed to bind image memory! %d", result);
 		}
-		if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memoryRequirements.size;
-		allocInfo.memoryTypeIndex = memoryTypeIndex;
-		result = vkAllocateMemory(device, &allocInfo, nullptr, &m_TextureMemory);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to allocate image memory! %d", result);
-		result = vkBindImageMemory(device, m_Texture, m_TextureMemory, 0);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to bind image memory! %d", result);
 
-		VkImageViewCreateInfo viewInfo = {};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = m_Texture;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-		result = vkCreateImageView(device, &viewInfo, nullptr, &m_TextureView);
-		if(result != VK_SUCCESS) UI_FATAL("Failed to create image view! %d", result);
+		{
+			VkImageViewCreateInfo viewInfo = {};
+			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			viewInfo.image = m_Texture;
+			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			viewInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
+			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			viewInfo.subresourceRange.baseMipLevel = 0;
+			viewInfo.subresourceRange.levelCount = 1;
+			viewInfo.subresourceRange.baseArrayLayer = 0;
+			viewInfo.subresourceRange.layerCount = 1;
+			result = vkCreateImageView(device, &viewInfo, nullptr, &m_TextureView);
+			if(result != VK_SUCCESS) UI_FATAL("Failed to create image view! %d", result);
+		}
 
-		VkDescriptorImageInfo imageInfo2 = {};
-		imageInfo2.sampler = m_Sampler;
-		imageInfo2.imageView = m_TextureView;
-		imageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		{
+			VkDescriptorImageInfo imageInfo2 = {};
+			imageInfo2.sampler = m_Sampler;
+			imageInfo2.imageView = m_TextureView;
+			imageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkWriteDescriptorSet descriptorWrite = {};
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = m_DescriptorSet;
+			descriptorWrite.dstBinding = 0;
+			descriptorWrite.dstArrayElement = 0;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.pImageInfo = &imageInfo2;
+			vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+		}
 
-		VkWriteDescriptorSet descriptorWrite = {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = m_DescriptorSet;
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pImageInfo = &imageInfo2;
-		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+		{
+			VkBufferCreateInfo bufferInfo = {};
+			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufferInfo.size = 1920 * 1920 * 4;
+			bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			result = vkCreateBuffer(device, &bufferInfo, nullptr, &m_StageBuffer);
+			if(result != VK_SUCCESS) UI_FATAL("Failed to create vertex buffer! %d", result);
+
+			VkMemoryRequirements memoryRequirements;
+			vkGetBufferMemoryRequirements(device, m_StageBuffer, &memoryRequirements);
+			VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalMemoryProperties);
+			uint32_t memoryTypeIndex = -1;
+			VkPhysicalDeviceMemoryProperties deviceMemoryProperties = {};
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+			for(uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; ++i)
+			{
+				// Resource must support this memory type
+				if ((memoryRequirements.memoryTypeBits & (1 << i)) == 0) continue;
+				// Mappable resource must be host visible
+				if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0) continue;
+				// Mappable must also be host coherent.
+				if ((physicalMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) continue;
+				// Found the first candidate memory type
+				if (memoryTypeIndex == -1)
+				{
+					memoryTypeIndex = i;
+					continue;
+				}
+				// All things equal favor the memory in the biggest heap
+				auto bestTypeHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex].size;
+				auto candidateHeapSize = physicalMemoryProperties.memoryHeaps[physicalMemoryProperties.memoryTypes[i].heapIndex].size;
+				if (bestTypeHeapSize < candidateHeapSize)
+				{
+					memoryTypeIndex = i;
+					continue;
+				}
+			}
+			if(memoryTypeIndex == -1) UI_FATAL("Failed to find suitable memory type!");
+			VkMemoryAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memoryRequirements.size;
+			allocInfo.memoryTypeIndex = memoryTypeIndex;
+			result = vkAllocateMemory(device, &allocInfo, nullptr, &m_StageBufferMemory);
+			if(result != VK_SUCCESS) UI_FATAL("Failed to allocate vertex buffer memory! %d", result);
+			result = vkBindBufferMemory(device, m_StageBuffer, m_StageBufferMemory, 0);
+			if(result != VK_SUCCESS) UI_FATAL("Failed to bind vertex buffer memory! %d", result);
+		}
 	}
 
 	uint8_t* buffer = nullptr;
