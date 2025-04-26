@@ -28,10 +28,9 @@ void business(UIContextRaw context, SDL_Window* window);
 
 int main()
 {
-	SDL_Init(SDL_INIT_VIDEO);
-	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
-
 #ifdef OPENUI_ENABLE_OPENGL
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");	
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -43,9 +42,12 @@ int main()
 		while (device->update());
 		device = nullptr;
 	}
+	SDL_Quit();
 #endif
 
 #ifdef OPENUI_ENABLE_VULKAN
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
 	UIList<const char*> layers;
 	layers.push_back("VK_LAYER_KHRONOS_validation");
 
@@ -103,9 +105,9 @@ int main()
 	}
 	pfnVkDestroyDebugUtilsMessengerEXT(instance, messenger, nullptr);
 	vkDestroyInstance(instance, nullptr);
+	SDL_Quit();
 #endif
 
-	SDL_Quit();
 	return 0;
 }
 

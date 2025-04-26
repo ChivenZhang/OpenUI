@@ -29,6 +29,7 @@ add_library(OpenUI STATIC
      "UICheck.h"
      "UICombo.h"
      "UIContext.h"
+     "UIDevice.h"
      "UIEdit.h"
      "UIElement.h"
      "UIEvent.h"

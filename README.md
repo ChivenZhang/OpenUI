@@ -33,6 +33,8 @@ button->setText("button");
 - [x] 字体布局排版
 - [x] 外部事件处理
 - [x] OpenGL渲染后端
+- [x] Vulkan渲染后端
+- [ ] D3D12 渲染后端
 - [ ] 三维控件框架
 
 ## How to install
