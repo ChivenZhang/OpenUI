@@ -21,16 +21,15 @@
 class SDL3VKDevice : public UIDevice
 {
 public:
-	SDL3VKDevice(VkInstance instance)
+	explicit SDL3VKDevice(VkInstance instance)
 		:
 		m_Instance(instance)
 	{
 		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 		if (window == nullptr)
 		{
-			UI_ERROR("Window could not be created! SDL_Error: %s", SDL_GetError());
 			SDL_Quit();
-			UI_FATAL("GLEW could not be initialized!");
+			UI_FATAL("Could not create window!");
 		}
 		m_Window = window;
 
@@ -38,7 +37,7 @@ public:
 		if (SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface) == false)
 		{
 			SDL_Quit();
-			UI_FATAL("Could not create Vulkan surface!");
+			UI_FATAL("Could not create vulkan surface!");
 		}
 		m_Surface = surface;
 
