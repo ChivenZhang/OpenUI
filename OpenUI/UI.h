@@ -139,7 +139,7 @@ std::fprintf(TARGET, "%s:%d\n" "%s " #LEVEL " %d --- " FORMAT "\n\n", __FILE__, 
 #endif
 
 #ifndef UI_FATAL
-#	define UI_FATAL(FORMAT, ...) do{ UI_FORMAT(stderr, FORMAT, FATAL, ##__VA_ARGS__); std::abort(); } while(0)
+#	define UI_FATAL(FORMAT, ...) do{ UI_FORMAT(stderr, FORMAT, FATAL, ##__VA_ARGS__); std::exit(-1); } while(0)
 #endif
 
 #ifndef UI_PRINT
