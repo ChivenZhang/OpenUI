@@ -10,6 +10,8 @@ if(OPENUI_ENABLE_DIRECTX)
 	add_definitions(-DOPENUI_ENABLE_DIRECTX -DNOMINMAX)
 endif ()
 
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
 add_executable (OpenUIDemo
 		main.cpp
 		SDL3InputEnum.cpp
@@ -19,9 +21,9 @@ add_executable (OpenUIDemo
 		Metal/CairoMTRender.cpp
 		Metal/CairoMTRender.h
 		Metal/SDL3MTDevice.h
-		D3D12/CairoDXRender.cpp
-		D3D12/CairoDXRender.h
-		D3D12/SDL3DXDevice.h
+		DirectX/CairoDXRender.cpp
+		DirectX/CairoDXRender.h
+		DirectX/SDL3DXDevice.h
 		OpenGL/CairoGLRender.cpp
 		OpenGL/CairoGLRender.h
 		OpenGL/SDL3GLDevice.h

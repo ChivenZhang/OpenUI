@@ -33,17 +33,17 @@ public:
 	void uploadTexture(int32_t width, int32_t height, uint8_t* pixels);
 
 protected:
-	ComPtr<ID3D12Resource> createShaderModule(VkDevice device, int32_t stage, const char* source);
+	ComPtr<ID3DBlob> createShaderModule(ComPtr<ID3D12Device> device, int32_t stage, const char* source);
 
 protected:
 	UIRaw<SDL3DXDevice> m_Device;
 	ComPtr<ID3D12PipelineState> m_Pipeline;
-	VkPipelineLayout m_PipelineLayout;
-	VkDescriptorSet m_DescriptorSet;
-	VkDescriptorSetLayout m_DescriptorSetLayout;
-	VkBuffer m_StageBuffer; VkDeviceMemory m_StageBufferMemory;
-	VkBuffer m_VertexBuffer; VkDeviceMemory m_VertexBufferMemory;
-	ComPtr<ID3D12Resource> m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory; VkSampler m_Sampler;
+	//VkPipelineLayout m_PipelineLayout;
+	//VkDescriptorSet m_DescriptorSet;
+	//VkDescriptorSetLayout m_DescriptorSetLayout;
+	ComPtr<ID3D12Resource> m_StageBuffer;
+	ComPtr<ID3D12Resource> m_VertexBuffer;
+	// ComPtr<ID3D12Resource> m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory; VkSampler m_Sampler;
 	UIList<primitive_t> m_PrimitiveList;
 };
 #endif

@@ -182,6 +182,7 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		VkGraphicsPipelineCreateInfo pipelineInfo = {};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		pipelineInfo.pNext = &renderingCreateInfo;
+		pipelineInfo.layout = m_PipelineLayout;
 		pipelineInfo.stageCount = sizeof(shaderStages) / sizeof(VkPipelineShaderStageCreateInfo);
 		pipelineInfo.pStages = shaderStages;
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
@@ -191,7 +192,6 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		pipelineInfo.pMultisampleState = &multisampling;
 		pipelineInfo.pColorBlendState = &colorBlending;
 		pipelineInfo.pDynamicState = &dynamicState;
-		pipelineInfo.layout = m_PipelineLayout;
 		auto result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineInfo, nullptr, &m_Pipeline);
 		if(result != VK_SUCCESS) UI_FATAL("Failed to create graphics pipeline! %d", result);
 
