@@ -118,6 +118,17 @@ int main()
 	{
 		debug->EnableDebugLayer();
 		factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+
+		ComPtr<ID3D12Debug1> debug1{};
+		if (SUCCEEDED(debug->QueryInterface<ID3D12Debug1>(&debug1)))
+		{
+			debug1->SetEnableGPUBasedValidation(true);
+		}
+		ComPtr<ID3D12Debug2> debug2{};
+		if (SUCCEEDED(debug->QueryInterface<ID3D12Debug2>(&debug2)))
+		{
+			debug2->SetGPUBasedValidationFlags(D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING);
+		}
 	}
 	ComPtr<IDXGIFactory4> instance;
 	if (FAILED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&instance))))

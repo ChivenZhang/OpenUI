@@ -53,6 +53,20 @@ public:
 		result = m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_SwapchainFence));
 		if (result != S_OK) UI_FATAL("CreateFence failed");
 
+		if (instance->GetCreationFlags() & DXGI_CREATE_FACTORY_DEBUG)
+		{
+			ComPtr<ID3D12InfoQueue1> infoQueue;
+			result = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+			if (result != S_OK) UI_FATAL("QueryInterface failed");
+			result = infoQueue->RegisterMessageCallback([](D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID id, const char* message, void *context)
+			{
+				if (severity == D3D12_MESSAGE_SEVERITY_WARNING) UI_WARN("%s", message);
+				else if (severity == D3D12_MESSAGE_SEVERITY_ERROR) UI_ERROR("%s", message);
+				else UI_INFO("%s", message);
+			}, D3D12_MESSAGE_CALLBACK_FLAG_NONE, this, &m_MessageCookie);
+			if (result != S_OK) UI_FATAL("RegisterMessageCallback failed");
+		}
+
 		m_SwapchainEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		if (m_SwapchainEvent == nullptr) UI_FATAL("CreateEvent failed");
 
@@ -68,9 +82,6 @@ public:
 
 		result = m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandPool.Get(), nullptr, IID_PPV_ARGS(&m_CommandBuffer));
 		if (result != S_OK) UI_FATAL("Could not create command list!");
-
-		result = m_CommandPool->Reset();
-		if (result != S_OK) UI_FATAL("Could not reset command allocator!");
 
 		DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
 		swapchainDesc.BufferCount = 3;
@@ -113,6 +124,15 @@ public:
 		{
 			m_SwapchainFence->SetEventOnCompletion(m_CurrentFrame, m_SwapchainEvent);
 			WaitForSingleObject(m_SwapchainEvent, INFINITE);
+		}
+
+		if (m_Instance->GetCreationFlags() & DXGI_CREATE_FACTORY_DEBUG)
+		{
+			ComPtr<ID3D12InfoQueue1> infoQueue;
+			result = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+			if (result != S_OK) UI_FATAL("QueryInterface failed");
+			result = infoQueue->UnregisterMessageCallback(m_MessageCookie);
+			if (result != S_OK) UI_FATAL("UnregisterMessageCallback failed");
 		}
 
 		m_UIContext = nullptr;
@@ -313,12 +333,6 @@ public:
 
 		auto imageIndex = m_Swapchain->GetCurrentBackBufferIndex();
 
-		auto result = m_CommandPool->Reset();
-		if (result != S_OK) UI_FATAL("Failed to reset command pool!");
-
-		result = m_CommandBuffer->Reset(m_CommandPool.Get(), nullptr);
-		if (result != S_OK) UI_FATAL("Failed to reset command buffer!");
-
 		// auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
 		// UICast<CairoDXRender>(openui->getRender())->uploadTexture(w, h, (uint8_t*)pixels.data());
 
@@ -344,13 +358,13 @@ public:
 		m_CommandBuffer->ResourceBarrier(1, &barrier);
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_DescriptorPool->GetCPUDescriptorHandleForHeapStart(), imageIndex, m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
-		float clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f};
+		float clearColor[] = {0.3f, 0.3f, 0.8f, 1.0f};
 		m_CommandBuffer->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_SwapchainImages[imageIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		m_CommandBuffer->ResourceBarrier(1, &barrier);
 
-		result = m_CommandBuffer->Close();
+		auto result = m_CommandBuffer->Close();
 		if (result != S_OK) UI_FATAL("Failed to end command buffer!");
 
 		ID3D12CommandList* commandLists[] = { m_CommandBuffer.Get() };
@@ -370,6 +384,12 @@ public:
 			m_SwapchainFence->SetEventOnCompletion(m_CurrentFrame, m_SwapchainEvent);
 			WaitForSingleObject(m_SwapchainEvent, INFINITE);
 		}
+
+		result = m_CommandPool->Reset();
+		if (result != S_OK) UI_FATAL("Failed to reset command pool!");
+
+		result = m_CommandBuffer->Reset(m_CommandPool.Get(), nullptr);
+		if (result != S_OK) UI_FATAL("Failed to reset command buffer!");
 		return true;
 	}
 
@@ -427,6 +447,7 @@ protected:
 	UIList<ComPtr<ID3D12Resource>> m_SwapchainImages;
 	ComPtr<ID3D12Fence> m_SwapchainFence;
 	HANDLE m_SwapchainEvent;
+	DWORD m_MessageCookie;
 	UIContextRef m_UIContext;
 
 	friend class CairoDXRender;

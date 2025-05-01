@@ -434,9 +434,9 @@ public:
 		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachment.clearValue.color.float32[0] = 0.0f;
-		colorAttachment.clearValue.color.float32[1] = 0.0f;
-		colorAttachment.clearValue.color.float32[2] = 0.0f;
+		colorAttachment.clearValue.color.float32[0] = 0.3f;
+		colorAttachment.clearValue.color.float32[1] = 0.3f;
+		colorAttachment.clearValue.color.float32[2] = 0.8f;
 		colorAttachment.clearValue.color.float32[3] = 1.0f;
 		renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 		renderingInfo.renderArea = renderAreaExtent;
