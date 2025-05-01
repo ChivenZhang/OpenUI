@@ -283,6 +283,7 @@ void CairoDXRender::uploadTexture(int32_t width, int32_t height, uint8_t* pixels
 	if (width != m_Width || height != m_Height)
 	{
 		m_Texture = nullptr;
+		m_StageBuffer = nullptr;
 
 		auto heapDesc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 		D3D12_RESOURCE_DESC textureDesc = {};
@@ -310,6 +311,18 @@ void CairoDXRender::uploadTexture(int32_t width, int32_t height, uint8_t* pixels
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 		device->CreateShaderResourceView(m_Texture.Get(), &srvDesc, m_DescriptorSet->GetCPUDescriptorHandleForHeapStart());
+
+		auto uploadSize = GetRequiredIntermediateSize(m_Texture.Get(), 0, 1);
+		heapDesc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadSize);
+		result = device->CreateCommittedResource(
+			&heapDesc,
+			D3D12_HEAP_FLAG_NONE,
+			&bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_StageBuffer));
+		if (result != S_OK) UI_FATAL("Failed to create vertex buffer!");
 	}
 
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_Texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
