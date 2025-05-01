@@ -52,7 +52,7 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 	auto descriptorPool = _device->m_DescriptorPool;
 	auto physicalDevice = _device->m_PhysicalDevice;
 
-	// 创建描述符布局
+	// 创建描述符集布局
 	
 	{
 		VkDescriptorSetLayoutBinding binding = {};
@@ -290,7 +290,7 @@ CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice
 		if (result != VK_SUCCESS) UI_FATAL("Failed to create texture sampler! %d", result);
 	}
 	
-	// 创建描述符
+	// 创建描述符集
 
 	{
 		VkDescriptorSetAllocateInfo allocInfo = {};
@@ -621,10 +621,10 @@ void CairoVKRender::uploadTexture(int32_t width, int32_t height, uint8_t* pixels
 		}
 
 		{
-			VkDescriptorImageInfo imageInfo2 = {};
-			imageInfo2.sampler = m_Sampler;
-			imageInfo2.imageView = m_TextureView;
-			imageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.sampler = m_Sampler;
+			imageInfo.imageView = m_TextureView;
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			VkWriteDescriptorSet descriptorWrite = {};
 			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrite.dstSet = m_DescriptorSet;
@@ -632,7 +632,7 @@ void CairoVKRender::uploadTexture(int32_t width, int32_t height, uint8_t* pixels
 			descriptorWrite.dstArrayElement = 0;
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pImageInfo = &imageInfo2;
+			descriptorWrite.pImageInfo = &imageInfo;
 			vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 		}
 

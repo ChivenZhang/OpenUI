@@ -52,7 +52,7 @@ endif()
 if(OPENUI_ENABLE_DIRECTX)
 	find_package(directx-headers CONFIG REQUIRED)
 	find_package(directx12-agility CONFIG REQUIRED)
-	target_link_libraries(OpenUIDemo PRIVATE Microsoft::DirectX-Headers Microsoft::DirectX-Guids Microsoft::DirectX12-Agility dxgi)
+	target_link_libraries(OpenUIDemo PRIVATE Microsoft::DirectX-Headers Microsoft::DirectX-Guids Microsoft::DirectX12-Agility dxgi d3dcompiler)
 	if(TARGET Microsoft::DirectX12-Agility)
 		file(MAKE_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12")
 		add_custom_command(TARGET OpenUIDemo POST_BUILD

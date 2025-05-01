@@ -26,7 +26,7 @@ public:
 		:
 		m_Instance(instance)
 	{
-		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
 		if (window == nullptr)
 		{
 			SDL_Quit();
@@ -182,6 +182,8 @@ public:
 		openui->setPainter(UINew<CairoUIPainter>(width, height));
 		openui->setRender(UINew<CairoVKRender>(width, height, this));
 		m_UIContext = openui;
+
+		SDL_ShowWindow(window);
 	}
 
 	~SDL3VKDevice() override

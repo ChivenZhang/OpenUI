@@ -38,12 +38,13 @@ protected:
 protected:
 	UIRaw<SDL3DXDevice> m_Device;
 	ComPtr<ID3D12PipelineState> m_Pipeline;
-	//VkPipelineLayout m_PipelineLayout;
-	//VkDescriptorSet m_DescriptorSet;
-	//VkDescriptorSetLayout m_DescriptorSetLayout;
+	ComPtr<ID3D12RootSignature> m_PipelineLayout;
+	ComPtr<ID3D12DescriptorHeap> m_DescriptorSet;
 	ComPtr<ID3D12Resource> m_StageBuffer;
 	ComPtr<ID3D12Resource> m_VertexBuffer;
-	// ComPtr<ID3D12Resource> m_Texture; VkImageView m_TextureView; VkDeviceMemory m_TextureMemory; VkSampler m_Sampler;
+	ComPtr<ID3D12Resource> m_Texture;
+	// m_Sampler;
+	uint32_t m_Width, m_Height;
 	UIList<primitive_t> m_PrimitiveList;
 };
 #endif

@@ -333,33 +333,20 @@ public:
 
 		auto imageIndex = m_Swapchain->GetCurrentBackBufferIndex();
 
-		// auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
-		// UICast<CairoDXRender>(openui->getRender())->uploadTexture(w, h, (uint8_t*)pixels.data());
-
-		D3D12_VIEWPORT viewport;
-		viewport.TopLeftX = client.X;
-		viewport.TopLeftY = client.Y;
-		viewport.Width = client.W;
-		viewport.Height = client.H;
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		m_CommandBuffer->RSSetViewports(1, &viewport);
-
-		CD3DX12_RECT scissor;
-		scissor.left = (int32_t)client.X;
-		scissor.top = (int32_t)client.Y;
-		scissor.right = (int32_t)(client.X + client.W);
-		scissor.bottom = (int32_t)(client.Y + client.H);
-		m_CommandBuffer->RSSetScissorRects(1, &scissor);
-
-		// openui->renderElement(client);
+		auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
+		UICast<CairoDXRender>(openui->getRender())->uploadTexture(w, h, (uint8_t*)pixels.data());
 
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_SwapchainImages[imageIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		m_CommandBuffer->ResourceBarrier(1, &barrier);
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_DescriptorPool->GetCPUDescriptorHandleForHeapStart(), imageIndex, m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+
+		m_CommandBuffer->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
 		float clearColor[] = {0.3f, 0.3f, 0.8f, 1.0f};
 		m_CommandBuffer->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+		openui->renderElement(client);
 
 		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_SwapchainImages[imageIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		m_CommandBuffer->ResourceBarrier(1, &barrier);

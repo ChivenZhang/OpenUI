@@ -23,7 +23,7 @@ class SDL3GLDevice : public UIDevice
 public:
 	SDL3GLDevice()
 	{
-		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
 		if (window == nullptr)
 		{
 			UI_ERROR("Window could not be created! SDL_Error: %s", SDL_GetError());
@@ -61,6 +61,8 @@ public:
 		openui->setPainter(UINew<CairoUIPainter>(w, h));
 		openui->setRender(UINew<CairoGLRender>(w, h));
 		m_UIContext = openui;
+
+		SDL_ShowWindow(window);
 	}
 
 	~SDL3GLDevice() override
@@ -262,7 +264,6 @@ public:
 		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
 		openui->renderElement(client);
 		SDL_GL_SwapWindow(window);
-
 		return true;
 	}
 
