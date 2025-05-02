@@ -9,7 +9,12 @@ endif ()
 if(OPENUI_ENABLE_DIRECTX)
 	add_definitions(-DOPENUI_ENABLE_DIRECTX -DNOMINMAX)
 endif ()
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+if(OPENUI_ENABLE_METAL)
+	add_definitions(-DOPENUI_ENABLE_METAL)
+endif ()
+if(CMAKE_HOST_WIN32)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
 
 add_executable (OpenUIDemo
 		main.cpp
@@ -65,6 +70,20 @@ if(TARGET Microsoft::DirectX12-Agility)
 endif()
 endif()
 
+if(OPENUI_ENABLE_METAL)
+target_include_directories(OpenUIDemo PUBLIC
+		"${CMAKE_CURRENT_SOURCE_DIR}/Metal/metal-cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Metal/metal-cpp-extensions"
+)
+target_link_libraries(OpenUIDemo PRIVATE
+		"-framework Metal"
+		"-framework MetalKit"
+		"-framework AppKit"
+		"-framework Foundation"
+		"-framework QuartzCore"
+)
+endif()
+
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/cairo)
 target_include_directories(OpenUIDemo PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/harfbuzz)
@@ -85,7 +104,6 @@ target_link_libraries(OpenUIDemo PRIVATE OpenUI
 		glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
 		harfbuzz-subset harfbuzz intl MachineIndependent OSDependent
 		pango-1.0 pangocairo-1.0 pangoft2-1.0 pcre2-8 pcre2-16 pcre2-32 pcre2-posix pixman-1
-		png png16d z
 )
 else()
 target_link_libraries(OpenUIDemo PRIVATE OpenUI

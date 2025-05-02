@@ -43,7 +43,6 @@ protected:
 	ComPtr<ID3D12Resource> m_StageBuffer;
 	ComPtr<ID3D12Resource> m_VertexBuffer;
 	ComPtr<ID3D12Resource> m_Texture;
-	// m_Sampler;
 	uint32_t m_Width, m_Height;
 	UIList<primitive_t> m_PrimitiveList;
 };

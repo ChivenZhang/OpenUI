@@ -24,6 +24,9 @@
 #ifdef OPENUI_ENABLE_DIRECTX
 #include "DirectX/SDL3DXDevice.h"
 #endif
+#ifdef OPENUI_ENABLE_METAL
+#include "Metal/SDL3MTDevice.h"
+#endif
 
 void business(UIContextRaw context, SDL_Window* window);
 
@@ -137,6 +140,19 @@ int main()
 	}
 	{
 		auto device = UINew<SDL3DXDevice>(instance);
+		auto openui = device->getContext();
+		auto window = device->getWindow();
+		business(openui, window);
+		while (device->update());
+		device = nullptr;
+	}
+	SDL_Quit();
+#endif
+
+#ifdef OPENUI_ENABLE_METAL
+	SDL_Init(SDL_INIT_VIDEO);
+	{
+		auto device = UINew<SDL3MTDevice>();
 		auto openui = device->getContext();
 		auto window = device->getWindow();
 		business(openui, window);
