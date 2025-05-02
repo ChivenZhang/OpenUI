@@ -3,9 +3,6 @@
   "version-string" : "1.0.0",
   "builtin-baseline" : "478939b61bfc6aa9faf4ab18b5e2495f18ac1fea",
   "dependencies" : [ {
-    "name" : "yoga",
-    "version>=" : "3.1.0"
-  }, {
     "name" : "sdl3",
     "version>=" : "3.1.6-preview#2",
     "default-features" : false,
@@ -20,19 +17,27 @@
     "name" : "gperf",
     "version>=" : "3.1#7"
   }, {
+    "name" : "libiconv",
+    "version>=" : "1.17#5"
+  }, {
     "name" : "pango",
     "version>=" : "1.56.1#1"
-  }, {
-    "name" : "vulkan",
-    "version>=" : "2023-12-17"
   }, {
     "name" : "glslang",
     "version>=" : "15.1.0"
   }, {
+    "name" : "vulkan",
+    "version>=" : "2023-12-17"
+  }, {
     "name" : "directx12-agility",
-    "version>=" : "1.615.0"
+    "version>=" : "1.615.0",
+    "platform" : "windows"
   }, {
     "name" : "directx-headers",
-    "version>=" : "1.615.0"
+    "version>=" : "1.615.0",
+    "platform" : "windows"
+  }, {
+    "name" : "yoga",
+    "version>=" : "3.2.1"
   } ]
 }
