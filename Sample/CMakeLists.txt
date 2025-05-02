@@ -81,7 +81,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 target_link_libraries(OpenUIDemo PRIVATE OpenUI
 		brotlicommon brotlidec brotlienc bz2d iconv
 		cairo cairo-gobject cairo-script-interpreter
-		expat ffi fontconfig freetyped fribidi GenericCodeGen
+		ffi fontconfig freetyped fribidi GenericCodeGen
 		glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
 		harfbuzz-subset harfbuzz intl MachineIndependent OSDependent
 		pango-1.0 pangocairo-1.0 pangoft2-1.0 pcre2-8 pcre2-16 pcre2-32 pcre2-posix pixman-1
@@ -91,12 +91,15 @@ else()
 target_link_libraries(OpenUIDemo PRIVATE OpenUI
 		brotlicommon brotlidec brotlienc bz2 iconv
 		cairo cairo-gobject cairo-script-interpreter
-		expat ffi fontconfig freetype fribidi GenericCodeGen
+		ffi fontconfig freetype fribidi GenericCodeGen
 		glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
 		harfbuzz-subset harfbuzz intl MachineIndependent OSDependent
 		pango-1.0 pangocairo-1.0 pangoft2-1.0 pcre2-8 pcre2-16 pcre2-32 pcre2-posix pixman-1
-		png png16 z
 )
+endif()
+
+if(CMAKE_HOST_APPLE)
+target_link_libraries(OpenUIDemo PRIVATE expat png png16 z)
 endif()
 
 if(CMAKE_HOST_WIN32)
