@@ -468,7 +468,7 @@ void CairoVKRender::render(UIRect client, UIListView<UIPrimitive> data)
 
 		if(m_Width < width || m_Height < height)
 		{
-			UI_ERROR("CairoVKRender: Too large image size %d %d", width, height);
+			UI_ERROR("Too large image size %d %d", width, height);
 			return;
 		}
 

@@ -2,7 +2,7 @@
 //
 // Foundation/NSArray.hpp
 //
-// Copyright 2020-2024 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 
 #include "NSObject.hpp"
 #include "NSTypes.hpp"
-#include "NSEnumerator.hpp"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -44,9 +43,8 @@ public:
     Array*        init(const class Coder* pCoder);
 
     template <class _Object = Object>
-    _Object*            object(UInteger index) const;
-    UInteger            count() const;
-    Enumerator<Object>* objectEnumerator() const;
+    _Object* object(UInteger index) const;
+    UInteger count() const;
 };
 }
 
@@ -112,13 +110,6 @@ template <class _Object>
 _NS_INLINE _Object* NS::Array::object(UInteger index) const
 {
     return Object::sendMessage<_Object*>(this, _NS_PRIVATE_SEL(objectAtIndex_), index);
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-_NS_INLINE NS::Enumerator<NS::Object>* NS::Array::objectEnumerator() const
-{
-    return NS::Object::sendMessage<Enumerator<NS::Object>*>(this, _NS_PRIVATE_SEL(objectEnumerator));
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

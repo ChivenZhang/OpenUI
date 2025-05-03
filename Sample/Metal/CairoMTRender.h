@@ -11,12 +11,13 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_METAL
 #include <OpenUI/UIRender.h>
+#include <Metal/Metal.hpp>
 class SDL3MTDevice;
 
 class CairoMTRender : public UIRender
 {
 public:
-    using primitive_t = struct primitive_t
+    struct alignas(16) primitive_t
     {
         float X = 0, Y = 0;
         uint32_t Index = 0;
@@ -29,10 +30,15 @@ public:
     void uploadTexture(int32_t width, int32_t height, uint8_t* pixels);
 
 protected:
-    void* createShaderModule(void* device, int32_t stage, const char* source);
+    MTL::Function* createShaderModule(MTL::Device* device, int32_t stage, const char* source);
 
 protected:
     UIRaw<SDL3MTDevice> m_Device;
+    MTL::RenderPipelineState* m_RenderPipeline;
+    MTL::Library* m_ShaderLibrary;
+    MTL::Buffer* m_VertexBuffer;
+    MTL::Buffer* m_StageBuffer;
+    MTL::Texture* m_Texture;
     uint32_t m_Width, m_Height;
     UIList<primitive_t> m_PrimitiveList;
 };

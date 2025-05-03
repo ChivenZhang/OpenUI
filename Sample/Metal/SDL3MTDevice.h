@@ -10,12 +10,7 @@
 *
 * =================================================*/
 #ifdef OPENUI_ENABLE_METAL
-#define NS_PRIVATE_IMPLEMENTATION
-#define MTL_PRIVATE_IMPLEMENTATION
-#define MTK_PRIVATE_IMPLEMENTATION
-#define CA_PRIVATE_IMPLEMENTATION
 #include <Metal/Metal.hpp>
-#include <MetalKit/MTKView.hpp>
 #include <QuartzCore/CAMetalLayer.hpp>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_metal.h>
@@ -305,11 +300,13 @@ public:
 		dispatch_semaphore_wait(m_Semaphore, DISPATCH_TIME_FOREVER);
 
 		auto renderPassDescriptor = MTL::RenderPassDescriptor::renderPassDescriptor();
+		renderPassDescriptor->setRenderTargetWidth(width);
+		renderPassDescriptor->setRenderTargetHeight(height);
 		renderPassDescriptor->colorAttachments()->object(0)->setTexture(drawable->texture());
 		renderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionClear);
 		renderPassDescriptor->colorAttachments()->object(0)->setStoreAction(MTL::StoreActionStore);
 		renderPassDescriptor->colorAttachments()->object(0)->setClearColor(MTL::ClearColor(0.3, 0.3, 0.8, 1.0));
-        auto renderEncoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
+        auto renderEncoder = m_RenderCommandEncoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
 
 		auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
 		UICast<CairoMTRender>(openui->getRender())->uploadTexture(width, height, (uint8_t*)pixels.data());
@@ -318,7 +315,8 @@ public:
 
 		renderEncoder->endEncoding();
 		commandBuffer->presentDrawable(drawable);
-		commandBuffer->addCompletedHandler([=](MTL::CommandBuffer* buffer) {
+		commandBuffer->addCompletedHandler([this](MTL::CommandBuffer* buffer)
+		{
 			dispatch_semaphore_signal(m_Semaphore);
 		});
         commandBuffer->commit();
@@ -339,6 +337,7 @@ protected:
 	MTL::Device* m_Device;
 	MTL::CommandQueue* m_Queue;
 	MTL::CommandBuffer* m_CommandBuffer;
+	MTL::RenderCommandEncoder* m_RenderCommandEncoder;
 	dispatch_semaphore_t m_Semaphore;
 	int m_CurrentFrame = 0;
 	UIContextRef m_UIContext;

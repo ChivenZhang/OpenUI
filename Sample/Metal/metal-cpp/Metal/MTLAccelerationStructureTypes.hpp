@@ -2,7 +2,7 @@
 //
 // Metal/MTLAccelerationStructureTypes.hpp
 //
-// Copyright 2020-2024 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,9 +33,6 @@
 
 namespace MTL
 {
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnested-anon-types"
 struct PackedFloat3
 {
     PackedFloat3();
@@ -56,7 +53,6 @@ struct PackedFloat3
         float elements[3];
     };
 } _MTL_PACKED;
-#pragma clang diagnostic pop
 
 struct PackedFloat4x3
 {
@@ -78,42 +74,6 @@ struct AxisAlignedBoundingBox
     PackedFloat3 min;
     PackedFloat3 max;
 } _MTL_PACKED;
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnested-anon-types"
-struct PackedFloatQuaternion
-{
-    PackedFloatQuaternion();
-    PackedFloatQuaternion(float x, float y, float z, float w);
-
-    float&       operator[](int idx);
-    const float& operator[](int idx) const;
-
-    union 
-    {
-        struct
-        {
-            float x;
-            float y;
-            float z;
-            float w;
-        };
-
-        float elements[4];
-    };
-    
-} _MTL_PACKED;
-#pragma clang diagnostic pop
-
-struct ComponentTransform
-{
-    PackedFloat3          scale;
-    PackedFloat3          shear;
-    PackedFloat3          pivot;
-    PackedFloatQuaternion rotation;
-    PackedFloat3          translation;
-} _MTL_PACKED;
-
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -204,40 +164,6 @@ _MTL_INLINE MTL::AxisAlignedBoundingBox::AxisAlignedBoundingBox(PackedFloat3 _mi
     : min(_min)
     , max(_max)
 {
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-_MTL_INLINE MTL::PackedFloatQuaternion::PackedFloatQuaternion()
-    : x(0.0f)
-    , y(0.0f)
-    , z(0.0f)
-    , w(0.0f)
-{
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-_MTL_INLINE MTL::PackedFloatQuaternion::PackedFloatQuaternion(float x, float y, float z, float w)
-    : x(x)
-    , y(y)
-    , z(z)
-    , w(w)
-{
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-_MTL_INLINE float& MTL::PackedFloatQuaternion::operator[](int idx)
-{
-    return elements[idx];
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-_MTL_INLINE const float& MTL::PackedFloatQuaternion::operator[](int idx) const
-{
-    return elements[idx];
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

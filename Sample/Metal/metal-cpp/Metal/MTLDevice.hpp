@@ -2,7 +2,7 @@
 //
 // Metal/MTLDevice.hpp
 //
-// Copyright 2020-2024 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -67,8 +67,8 @@ _MTL_ENUM(NS::UInteger, FeatureSet) {
     FeatureSet_OSX_GPUFamily1_v1 = 10000,
     FeatureSet_macOS_GPUFamily1_v2 = 10001,
     FeatureSet_OSX_GPUFamily1_v2 = 10001,
-    FeatureSet_macOS_ReadWriteTextureTier2 = 10002,
     FeatureSet_OSX_ReadWriteTextureTier2 = 10002,
+    FeatureSet_macOS_ReadWriteTextureTier2 = 10002,
     FeatureSet_macOS_GPUFamily1_v3 = 10003,
     FeatureSet_macOS_GPUFamily1_v4 = 10004,
     FeatureSet_macOS_GPUFamily2_v1 = 10005,
@@ -94,7 +94,6 @@ _MTL_ENUM(NS::Integer, GPUFamily) {
     GPUFamilyApple6 = 1006,
     GPUFamilyApple7 = 1007,
     GPUFamilyApple8 = 1008,
-    GPUFamilyApple9 = 1009,
     GPUFamilyMac1 = 2001,
     GPUFamilyMac2 = 2002,
     GPUFamilyCommon1 = 3001,
@@ -115,7 +114,6 @@ _MTL_ENUM(NS::UInteger, DeviceLocation) {
 _MTL_OPTIONS(NS::UInteger, PipelineOption) {
     PipelineOptionNone = 0,
     PipelineOptionArgumentInfo = 1,
-    PipelineOptionBindingInfo = 1,
     PipelineOptionBufferTypeInfo = 2,
     PipelineOptionFailOnBinaryArchiveMiss = 4,
 };
@@ -316,13 +314,9 @@ public:
 
     NS::UInteger                    currentAllocatedSize() const;
 
-    class LogState*                 newLogState(const class LogStateDescriptor* descriptor, NS::Error** error);
-
     class CommandQueue*             newCommandQueue();
 
     class CommandQueue*             newCommandQueue(NS::UInteger maxCommandBufferCount);
-
-    class CommandQueue*             newCommandQueue(const class CommandQueueDescriptor* descriptor);
 
     MTL::SizeAndAlign               heapTextureSizeAndAlign(const class TextureDescriptor* desc);
 
@@ -504,8 +498,6 @@ public:
     void                            setShouldMaximizeConcurrentCompilation(bool shouldMaximizeConcurrentCompilation);
 
     NS::UInteger                    maximumConcurrentCompilationTaskCount() const;
-
-    class ResidencySet*             newResidencySet(const class ResidencySetDescriptor* desc, NS::Error** error);
 };
 
 }
@@ -636,11 +628,11 @@ _NS_EXPORT MTL::Device* MTL::CreateSystemDefaultDevice()
 
 _NS_EXPORT NS::Array* MTL::CopyAllDevices()
 {
-#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 180000) || (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101100)
+#if TARGET_OS_OSX
     return ::MTLCopyAllDevices();
 #else
     return nullptr;
-#endif // __IPHONE_18
+#endif // TARGET_OS_OSX
 }
 
 _NS_EXPORT NS::Array* MTL::CopyAllDevicesWithObserver(NS::Object** pOutObserver, DeviceNotificationHandlerBlock handler)
@@ -664,7 +656,6 @@ _NS_EXPORT NS::Array* MTL::CopyAllDevicesWithObserver(NS::Object** pOutObserver,
 
 _NS_EXPORT void MTL::RemoveDeviceObserver(const NS::Object* pObserver)
 {
-    (void)pObserver;
 #if TARGET_OS_OSX
     ::MTLRemoveDeviceObserver(pObserver);
 #endif // TARGET_OS_OSX
@@ -877,12 +868,6 @@ _MTL_INLINE NS::UInteger MTL::Device::currentAllocatedSize() const
     return Object::sendMessage<NS::UInteger>(this, _MTL_PRIVATE_SEL(currentAllocatedSize));
 }
 
-// method: newLogStateWithDescriptor:error:
-_MTL_INLINE MTL::LogState* MTL::Device::newLogState(const MTL::LogStateDescriptor* descriptor, NS::Error** error)
-{
-    return Object::sendMessage<MTL::LogState*>(this, _MTL_PRIVATE_SEL(newLogStateWithDescriptor_error_), descriptor, error);
-}
-
 // method: newCommandQueue
 _MTL_INLINE MTL::CommandQueue* MTL::Device::newCommandQueue()
 {
@@ -893,12 +878,6 @@ _MTL_INLINE MTL::CommandQueue* MTL::Device::newCommandQueue()
 _MTL_INLINE MTL::CommandQueue* MTL::Device::newCommandQueue(NS::UInteger maxCommandBufferCount)
 {
     return Object::sendMessage<MTL::CommandQueue*>(this, _MTL_PRIVATE_SEL(newCommandQueueWithMaxCommandBufferCount_), maxCommandBufferCount);
-}
-
-// method: newCommandQueueWithDescriptor:
-_MTL_INLINE MTL::CommandQueue* MTL::Device::newCommandQueue(const MTL::CommandQueueDescriptor* descriptor)
-{
-    return Object::sendMessage<MTL::CommandQueue*>(this, _MTL_PRIVATE_SEL(newCommandQueueWithDescriptor_), descriptor);
 }
 
 // method: heapTextureSizeAndAlignWithDescriptor:
@@ -1444,10 +1423,4 @@ _MTL_INLINE void MTL::Device::setShouldMaximizeConcurrentCompilation(bool should
 _MTL_INLINE NS::UInteger MTL::Device::maximumConcurrentCompilationTaskCount() const
 {
     return Object::sendMessage<NS::UInteger>(this, _MTL_PRIVATE_SEL(maximumConcurrentCompilationTaskCount));
-}
-
-// method: newResidencySetWithDescriptor:error:
-_MTL_INLINE MTL::ResidencySet* MTL::Device::newResidencySet(const MTL::ResidencySetDescriptor* desc, NS::Error** error)
-{
-    return Object::sendMessage<MTL::ResidencySet*>(this, _MTL_PRIVATE_SEL(newResidencySetWithDescriptor_error_), desc, error);
 }
