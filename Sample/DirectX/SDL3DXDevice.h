@@ -324,9 +324,9 @@ public:
 
 		// Update layout and paint
 
-		int w, h;
-		SDL_GetWindowSize(window, &w, &h);
-		UIRect client{0, 0, (float)w, (float)h};
+		int width, height;
+		SDL_GetWindowSize(window, &width, &height);
+		UIRect client{0, 0, (float)width, (float)height};
 		openui->updateElement(::clock() * 0.001f, client);
 
 		// Output frame to screen
@@ -334,7 +334,7 @@ public:
 		auto imageIndex = m_Swapchain->GetCurrentBackBufferIndex();
 
 		auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
-		UICast<CairoDXRender>(openui->getRender())->uploadTexture(w, h, (uint8_t*)pixels.data());
+		UICast<CairoDXRender>(openui->getRender())->uploadTexture(width, height, (uint8_t*)pixels.data());
 
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_SwapchainImages[imageIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		m_CommandBuffer->ResourceBarrier(1, &barrier);

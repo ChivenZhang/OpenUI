@@ -131,6 +131,8 @@ public:
 	{
 		auto window = getWindow();
 		auto openui = getContext();
+		auto drawable = m_Swapchain->nextDrawable();
+		auto commandBuffer = m_CommandBuffer = m_Queue->commandBuffer();
 
 		// Send events to OpenUI
 
@@ -302,9 +304,6 @@ public:
 
 		dispatch_semaphore_wait(m_Semaphore, DISPATCH_TIME_FOREVER);
 
-		auto commandBuffer = m_CommandBuffer = m_Queue->commandBuffer();
-
-		auto drawable = m_Swapchain->nextDrawable();
 		auto renderPassDescriptor = MTL::RenderPassDescriptor::renderPassDescriptor();
 		renderPassDescriptor->colorAttachments()->object(0)->setTexture(drawable->texture());
 		renderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionClear);

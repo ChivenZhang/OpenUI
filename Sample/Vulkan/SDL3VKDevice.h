@@ -389,9 +389,9 @@ public:
 
 		// Update layout and paint
 
-		int w, h;
-		SDL_GetWindowSize(window, &w, &h);
-		UIRect client{0, 0, (float)w, (float)h};
+		int width, height;
+		SDL_GetWindowSize(window, &width, &height);
+		UIRect client{0, 0, (float)width, (float)height};
 		openui->updateElement(::clock() * 0.001f, client);
 
 		// Output frame to screen
@@ -421,7 +421,7 @@ public:
 		if (result != VK_SUCCESS) UI_FATAL("Failed to begin command buffer!");
 
 		auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
-		UICast<CairoVKRender>(openui->getRender())->uploadTexture(w, h, (uint8_t*)pixels.data());
+		UICast<CairoVKRender>(openui->getRender())->uploadTexture(width, height, (uint8_t*)pixels.data());
 
 		VkRect2D renderAreaExtent = {};
 		renderAreaExtent.offset.x = client.X;

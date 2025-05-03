@@ -247,9 +247,9 @@ public:
 
 		// Update layout and paint
 
-		int w, h;
-		SDL_GetWindowSize(window, &w, &h);
-		UIRect client{0, 0, (float)w, (float)h};
+		int width, height;
+		SDL_GetWindowSize(window, &width, &height);
+		UIRect client{0, 0, (float)width, (float)height};
 		openui->updateElement(::clock() * 0.001f, client);
 
 		// Output frame to screen
