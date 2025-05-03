@@ -34,13 +34,14 @@ button->setText("button");
 - [x] 外部事件处理
 - [x] OpenGL渲染后端
 - [x] Vulkan渲染后端
-- [ ] D3D12 渲染后端
+- [x] D3D12 渲染后端
+- [x] Metal 渲染后端
 - [ ] 三维控件框架
 
 ## How to install
 * Add "VCPKG_ROOT_CUSTOM" to environment.
-* Run [VCPKG](https://learn.microsoft.com/zh-cn/vcpkg/get_started/overview) in the project directory.
-* Use [CMAKE](https://cmake.org/getting-started/) to open CMakeLists.txt and build it.
+* Run [VCPKG](https://learn.microsoft.com/zh-cn/vcpkg/get_started/overview) in manifest mode.
+* Use [CMAKE](https://cmake.org/getting-started/) to build project.
 * See "Sample/main.cpp" for more details.
 
 # Presentation
@@ -48,4 +49,3 @@ button->setText("button");
 <div align="center">
   <img src="Sample.png" style="width:100%;" alt="描述文字" />
 </div>
-<p>兴趣讨论QQ群：1006760893</p>
