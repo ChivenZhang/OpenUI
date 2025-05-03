@@ -2,7 +2,7 @@
 //
 // Metal/MTLArgument.hpp
 //
-// Copyright 2020-2023 Apple Inc.
+// Copyright 2020-2024 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -157,11 +157,11 @@ _MTL_ENUM(NS::UInteger, ArgumentType) {
 };
 
 _MTL_ENUM(NS::UInteger, BindingAccess) {
-    ArgumentAccessReadOnly = 0,
     BindingAccessReadOnly = 0,
-    ArgumentAccessReadWrite = 1,
     BindingAccessReadWrite = 1,
     BindingAccessWriteOnly = 2,
+    ArgumentAccessReadOnly = 0,
+    ArgumentAccessReadWrite = 1,
     ArgumentAccessWriteOnly = 2,
 };
 
