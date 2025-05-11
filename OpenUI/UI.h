@@ -627,9 +627,24 @@ struct UIPen
 		DashDotDotLine,
 		CustomDashLine,
 	};
+	using cap_style_t = enum
+	{
+		FlatCap = 0,
+		SquareCap,
+		RoundCap,
+	};
+	using join_style_t = enum
+	{
+		MiterJoin = 0,
+		BevelJoin,
+		RoundJoin,
+	};
 	style_t Style = style_t::SolidLine;
+	cap_style_t CapStyle = cap_style_t::SquareCap;
+	join_style_t JoinStyle = join_style_t::BevelJoin;
 	UIColor Color = UIColor{ 0, 0, 0, 1 };
-	float Width = 2.0f;
+	float Width = 2.0f, DashOffset = 0.0f, MiterLimit = 10.0f;
+	float DashPattern[12] = {};
 };
 static constexpr UIPen UINoPen
 {
