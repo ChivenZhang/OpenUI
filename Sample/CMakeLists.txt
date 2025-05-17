@@ -117,7 +117,7 @@ target_link_libraries(OpenUIDemo PRIVATE OpenUI
 endif()
 
 if(CMAKE_HOST_APPLE)
-target_link_libraries(OpenUIDemo PRIVATE expat png png16 z)
+target_link_libraries(OpenUIDemo PRIVATE expat GenericCodeGen MachineIndependent OSDependent pcre2-8 pcre2-16 pcre2-32 pcre2-posix png png16 z)
 endif()
 
 if(CMAKE_HOST_WIN32)
