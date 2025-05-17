@@ -13,5 +13,3 @@ add_subdirectory(OpenUI)
 if(OPENUI_ENABLE_SAMPLE)
 add_subdirectory(Sample)
 endif()
-
-file(CREATE_LINK ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/etc/fonts ${CMAKE_BINARY_DIR}/fonts SYMBOLIC)
