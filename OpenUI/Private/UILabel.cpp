@@ -16,7 +16,7 @@
 #include <stb_image_resize2.h>
 
 /// @brief 
-class UILabelPrivate : public UIElementPrivate
+class UILabelPrivate : public UIWidgetPrivate
 {
 public:
 	UILabelStyle Style;
@@ -31,7 +31,7 @@ public:
 
 UILabel::UILabel(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateLabel = new UILabelPrivate;
 
@@ -133,7 +133,7 @@ void UILabel::layout(UIRect client)
 
 void UILabel::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 
 	painter->setPen(UINoPen);
 	if (getEnable() == false)
@@ -204,7 +204,7 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 
 void UILabel::repaint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::repaint(client, painter);
+	UIWidget::repaint(client, painter);
 
 	painter->setBrush(UINoBrush);
 	if (getEnable() == false)
@@ -356,7 +356,7 @@ UIString UILabelFactory::getTagName() const
 	return "label";
 }
 
-UIElementRef UILabelFactory::getElement(UIString style) const
+UIWidgetRef UILabelFactory::getElement(UIString style) const
 {
 	auto result = UINew<UILabel>(getContext());
 	result->setStyleText(style);

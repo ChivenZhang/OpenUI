@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 #include "UIScrollBar.h"
 
@@ -21,7 +21,7 @@ struct UIScrollStyle
 };
 
 /// @brief Scroll
-class OPENUI_API UIScroll : public UIElement
+class OPENUI_API UIScroll : public UIWidget
 {
 public:
 	using policy_t = enum
@@ -38,9 +38,9 @@ public:
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
 	void repaint(UIRect client, UIPainterRaw painter) override;
-	bool addElement(UIElementRef value) override;
-	bool removeElement(UIElementRef value) override;
-	void removeElement() override;
+	bool addWidget(UIWidgetRef value) override;
+	bool removeWidget(UIWidgetRef value) override;
+	void removeWidget() override;
 
 	UIScrollStyle getStyle() const;
 	void setStyle(UIScrollStyle value);
@@ -61,13 +61,13 @@ public:
 
 	UIScrollBarRaw getHorizontalBar() const;
 	UIScrollBarRaw getVerticalBar() const;
-	UIElementRaw getContentView() const;
+	UIWidgetRaw getContentView() const;
 
 protected:
 	void wheelEvent(UIMouseWheelEventRaw event) override;
 
 private:
-	UIElementPrivateRaw m_PrivateScroll;
+	UIWidgetPrivateRaw m_PrivateScroll;
 };
 using UIScrollRef = UIRef<UIScroll>;
 using UIScrollRaw = UIRaw<UIScroll>;
@@ -77,5 +77,5 @@ class OPENUI_API UIScrollFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

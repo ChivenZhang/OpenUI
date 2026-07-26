@@ -11,7 +11,7 @@
 #include "../UIBuilder.h"
 #include "../UIParser.h"
 
-class UIBuilderPrivate : public UIElementPrivate
+class UIBuilderPrivate : public UIWidgetPrivate
 {
 public:
 	UIContextRaw Context;
@@ -54,10 +54,10 @@ void UIBuilder::removeFactory()
 	PRIVATE()->FactoryMap.clear();
 }
 
-UIElementRef UIBuilder::buildElement(UIString html, UIString css) const
+UIWidgetRef UIBuilder::buildElement(UIString html, UIString css) const
 {
 	UIParser parser;
 	auto element = parser.parse(html, css);
 
-	return UIElementRef();
+	return UIWidgetRef();
 }

@@ -13,7 +13,7 @@
 
 struct UIContextElement
 {
-	UIElementRef Element;
+	UIWidgetRef Element;
 	int32_t ZOrder;
 };
 
@@ -24,11 +24,11 @@ public:
 	UIRenderRef Render;
 	UIPainterRef Painter;
 	UIBuilderRef Builder;
-	UIElementRaw Focus;
+	UIWidgetRaw Focus;
 	bool NeedLayout = true, NeedPaint = true;
 	UIList<UIPrimitive> RenderList;
-	UIList<UIElementRaw> AnimateList;
-	UIList<UIElementRef> TopLevelView;
+	UIList<UIWidgetRaw> AnimateList;
+	UIList<UIWidgetRef> TopLevelView;
 	UIList<UIContextElement> TopLevelList;
 };
 
@@ -78,17 +78,17 @@ UIBuilderRaw UIContext::getBuilder() const
 	return PRIVATE()->Builder.get();
 }
 
-UIElementRaw UIContext::getFocus() const
+UIWidgetRaw UIContext::getFocus() const
 {
 	return PRIVATE()->Focus;
 }
 
-void UIContext::setFocus(UIElementRaw value)
+void UIContext::setFocus(UIWidgetRaw value)
 {
 	PRIVATE()->Focus = value;
 }
 
-void UIContext::setAnimate(UIElementRaw value, bool animate)
+void UIContext::setAnimate(UIWidgetRaw value, bool animate)
 {
 	if (animate)
 	{
@@ -105,8 +105,8 @@ void UIContext::setAnimate(UIElementRaw value, bool animate)
 
 void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
 {
-	UILambda<void(UIElementRaw)> foreach_func;
-	foreach_func = [&](UIElementRaw element)
+	UILambda<void(UIWidgetRaw)> foreach_func;
+	foreach_func = [&](UIWidgetRaw element)
 	{
 		if (element->getVisible() == false) return;
 		if (element->getEventFilter())
@@ -117,7 +117,7 @@ void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
 		{
 			if (element->filter(element, event)) return;
 		}
-		auto childList = element->getChildren();
+		auto childList = element->getWidgets();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get());
 		if (event->Accept == false) element->handle(sender, event);
 	};
@@ -133,7 +133,7 @@ void UIContext::postEvent(UIReactorRef sender, UIEventRef event)
 {
 }
 
-bool UIContext::addElement(UIElementRef value, int32_t zorder)
+bool UIContext::addElement(UIWidgetRef value, int32_t zorder)
 {
 	if (value == nullptr) return false;
 	auto result = std::find_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextElement const& e)-> bool { return e.Element == value; });
@@ -150,7 +150,7 @@ bool UIContext::addElement(UIElementRef value, int32_t zorder)
 	return true;
 }
 
-bool UIContext::removeElement(UIElementRef value)
+bool UIContext::removeElement(UIWidgetRef value)
 {
 	auto result = std::remove_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextElement const& e)-> bool { return e.Element == value; });
 	if (result == PRIVATE()->TopLevelList.end()) return false;
@@ -176,13 +176,13 @@ void UIContext::removeElement()
 	layoutElement();
 }
 
-bool UIContext::existElement(UIElementRef value) const
+bool UIContext::existElement(UIWidgetRef value) const
 {
 	auto result = std::find(PRIVATE()->TopLevelView.begin(), PRIVATE()->TopLevelView.end(), value);
 	return result != PRIVATE()->TopLevelView.end();
 }
 
-UIListView<const UIElementRef> UIContext::getElement() const
+UIListView<const UIWidgetRef> UIContext::getElement() const
 {
 	return PRIVATE()->TopLevelView;
 }
@@ -198,18 +198,18 @@ bool UIContext::layoutElement(UIRect client)
 	if (PRIVATE()->NeedLayout == false) return false;
 	PRIVATE()->NeedLayout = false;
 
-	UILambda<void(UIElementRaw, UIRect)> arrange_func;
-	arrange_func = [&](UIElementRaw element, UIRect client)
+	UILambda<void(UIWidgetRaw, UIRect)> arrange_func;
+	arrange_func = [&](UIWidgetRaw element, UIRect client)
 	{
 		element->arrange(element->getBounds());
-		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		for (size_t i = 0; i < element->getWidgets().size(); ++i)
 		{
-			arrange_func(element->getChildren()[i].get(), element->getBounds());
+			arrange_func(element->getWidgets()[i].get(), element->getBounds());
 		}
 	};
 
-	UILambda<YGNodeRef(UIElementRaw, UIRect)> foreach_func;
-	foreach_func = [&](UIElementRaw element, UIRect client)-> YGNodeRef
+	UILambda<YGNodeRef(UIWidgetRaw, UIRect)> foreach_func;
+	foreach_func = [&](UIWidgetRaw element, UIRect client)-> YGNodeRef
 	{
 		auto node = YGNodeNew();
 
@@ -519,29 +519,29 @@ bool UIContext::layoutElement(UIRect client)
 		YGNodeStyleSetFlexGrow(node, element->getFlexGrow());
 		YGNodeStyleSetFlexShrink(node, element->getFlexShrink());
 
-		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		for (size_t i = 0; i < element->getWidgets().size(); ++i)
 		{
-			auto child = foreach_func(element->getChildren()[i].get(), client);
+			auto child = foreach_func(element->getWidgets()[i].get(), client);
 			YGNodeInsertChild(node, child, YGNodeGetChildCount(node));
 		}
 		return node;
 	};
 
-	UILambda<void(YGNodeRef, UIElementRaw, UIRect)> layout_func;
-	layout_func = [&](YGNodeRef node, UIElementRaw element, UIRect client)
+	UILambda<void(YGNodeRef, UIWidgetRaw, UIRect)> layout_func;
+	layout_func = [&](YGNodeRef node, UIWidgetRaw element, UIRect client)
 	{
 		element->setLocalBounds({YGNodeLayoutGetLeft(node), YGNodeLayoutGetTop(node), YGNodeLayoutGetWidth(node), YGNodeLayoutGetHeight(node)});
 		element->setBounds({client.X + element->getLocalBounds().X, client.Y + element->getLocalBounds().Y, element->getLocalBounds().W, element->getLocalBounds().H});
 		element->setViewport({UINAN, UINAN, UINAN, UINAN});
 
-		for (size_t i = 0; i < YGNodeGetChildCount(node) && i < element->getChildren().size(); ++i)
+		for (size_t i = 0; i < YGNodeGetChildCount(node) && i < element->getWidgets().size(); ++i)
 		{
-			layout_func(YGNodeGetChild(node, i), element->getChildren()[i].get(), element->getBounds());
+			layout_func(YGNodeGetChild(node, i), element->getWidgets()[i].get(), element->getBounds());
 		}
 	};
 
-	UILambda<void(UIElementRaw, UIRect, UIRect)> relayout_func;
-	relayout_func = [&](UIElementRaw element, UIRect client, UIRect viewport)
+	UILambda<void(UIWidgetRaw, UIRect, UIRect)> relayout_func;
+	relayout_func = [&](UIWidgetRaw element, UIRect client, UIRect viewport)
 	{
 		if (std::isnan(element->getViewport().X) ||
 			std::isnan(element->getViewport().Y) ||
@@ -552,15 +552,15 @@ bool UIContext::layoutElement(UIRect client)
 		element->layout(element->getBounds());
 		element->setBounds({client.X + element->getLocalBounds().X, client.Y + element->getLocalBounds().Y, element->getLocalBounds().W, element->getLocalBounds().H});
 		element->setViewport(UIOverlap(element->getViewport(), element->getBounds()));
-		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		for (size_t i = 0; i < element->getWidgets().size(); ++i)
 		{
 			auto bounds = element->getBounds();
-			auto childBounds = element->getChildren()[i]->getLocalBounds();
-			element->getChildren()[i]->setBounds({bounds.X + childBounds.X, bounds.Y + childBounds.Y, childBounds.W, childBounds.H});
+			auto childBounds = element->getWidgets()[i]->getLocalBounds();
+			element->getWidgets()[i]->setBounds({bounds.X + childBounds.X, bounds.Y + childBounds.Y, childBounds.W, childBounds.H});
 		}
-		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		for (size_t i = 0; i < element->getWidgets().size(); ++i)
 		{
-			relayout_func(element->getChildren()[i].get(), element->getBounds(), element->getViewport());
+			relayout_func(element->getWidgets()[i].get(), element->getBounds(), element->getViewport());
 		}
 	};
 
@@ -588,12 +588,12 @@ bool UIContext::paintElement(UIRect client)
 	if (PRIVATE()->NeedPaint == false) return false;
 	PRIVATE()->NeedPaint = false;
 
-	UILambda<void(UIElementRaw, UIRect, UIPainterRaw)> foreach_func;
-	foreach_func = [&](UIElementRaw element, UIRect client, UIPainterRaw painter)
+	UILambda<void(UIWidgetRaw, UIRect, UIPainterRaw)> foreach_func;
+	foreach_func = [&](UIWidgetRaw element, UIRect client, UIPainterRaw painter)
 	{
 		if (element->getVisible() == false || painter == nullptr) return;
 		element->paint(client, painter);
-		auto childList = element->getChildren();
+		auto childList = element->getWidgets();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds(), painter);
 		element->repaint(client, painter);
 	};

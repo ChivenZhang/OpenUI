@@ -12,7 +12,7 @@
 #include "../UIContext.h"
 #include "UIPieceTable.h"
 
-class UIInputPrivate : public UIElementPrivate
+class UIInputPrivate : public UIWidgetPrivate
 {
 public:
 	UIInputStyle Style;
@@ -38,7 +38,7 @@ public:
 
 UIInput::UIInput(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateInput = new UIInputPrivate;
 	PRIVATE()->PieceTable = UINew<UIPieceTable>();
@@ -88,7 +88,7 @@ void UIInput::layout(UIRect client)
 
 void UIInput::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(UINoPen);
 	painter->setBrush(PRIVATE()->Style.Background.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
@@ -116,7 +116,7 @@ void UIInput::paint(UIRect client, UIPainterRaw painter)
 
 void UIInput::repaint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::repaint(client, painter);
+	UIWidget::repaint(client, painter);
 	painter->setPen(PRIVATE()->Style.Background.Pen);
 	painter->setBrush(UINoBrush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
@@ -504,7 +504,7 @@ UIString UIInputFactory::getTagName() const
 	return "input";
 }
 
-UIElementRef UIInputFactory::getElement(UIString style) const
+UIWidgetRef UIInputFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIInput>(getContext());
 	result->setStyleText(style);

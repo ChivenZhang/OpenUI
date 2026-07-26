@@ -11,7 +11,7 @@
 #include "../UIScroll.h"
 #include "../UIContext.h"
 
-class UIScrollPrivate : public UIElementPrivate
+class UIScrollPrivate : public UIWidgetPrivate
 {
 public:
 	UIScroll::policy_t HorizontalPolicy = UIScroll::PolicyAsNeeded;
@@ -24,12 +24,12 @@ public:
 
 UIScroll::UIScroll(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateScroll = new UIScrollPrivate;
 
 	PRIVATE()->HorizontalScrollBar = UINew<UIScrollBar>(context);
-	addElement(PRIVATE()->HorizontalScrollBar);
+	addWidget(PRIVATE()->HorizontalScrollBar);
 	PRIVATE()->HorizontalScrollBar->setFixedHeight(12);
 	PRIVATE()->HorizontalScrollBar->setMinWidth(12);
 	PRIVATE()->HorizontalScrollBar->setOrientation(UI::Horizontal);
@@ -40,7 +40,7 @@ UIScroll::UIScroll(UIContextRaw context)
 	PRIVATE()->HorizontalScrollBar->getHandle()->setStyle(style);
 
 	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(context);
-	addElement(PRIVATE()->VerticalScrollBar);
+	addWidget(PRIVATE()->VerticalScrollBar);
 	PRIVATE()->VerticalScrollBar->setFixedWidth(12);
 	PRIVATE()->VerticalScrollBar->setMinHeight(12);
 	PRIVATE()->VerticalScrollBar->setOrientation(UI::Vertical);
@@ -66,18 +66,18 @@ void UIScroll::arrange(UIRect client)
 	PRIVATE()->VerticalScrollBar->setFixedWidth(12 * getContext()->getConfig().DisplayScale);
 	PRIVATE()->VerticalScrollBar->setMinHeight(12 * getContext()->getConfig().DisplayScale);
 
-	if (2 < getChildren().size())
+	if (2 < getWidgets().size())
 	{
-		getChildren()[2]->setFixedPos(0, 0);
-		getChildren()[2]->setPositionType(UI::PositionAbsolute);
+		getWidgets()[2]->setFixedPos(0, 0);
+		getWidgets()[2]->setPositionType(UI::PositionAbsolute);
 	}
 }
 
 void UIScroll::layout(UIRect client)
 {
-	if (2 < getChildren().size())
+	if (2 < getWidgets().size())
 	{
-		auto content = getChildren()[2];
+		auto content = getWidgets()[2];
 
 		auto showH = false, showV = false;
 		switch (PRIVATE()->HorizontalPolicy)
@@ -172,7 +172,7 @@ void UIScroll::layout(UIRect client)
 
 void UIScroll::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(UINoPen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
@@ -180,29 +180,29 @@ void UIScroll::paint(UIRect client, UIPainterRaw painter)
 
 void UIScroll::repaint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::repaint(client, painter);
+	UIWidget::repaint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(UINoBrush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
-bool UIScroll::addElement(UIElementRef value)
+bool UIScroll::addWidget(UIWidgetRef value)
 {
-	removeElement();
-	return UIElement::addElement(value);
+	removeWidget();
+	return UIWidget::addWidget(value);
 }
 
-bool UIScroll::removeElement(UIElementRef value)
+bool UIScroll::removeWidget(UIWidgetRef value)
 {
-	if (getChildren().size() <= 2 || getChildren()[2] != value) return false;
-	return UIElement::removeElement(value);
+	if (getWidgets().size() <= 2 || getWidgets()[2] != value) return false;
+	return UIWidget::removeWidget(value);
 }
 
-void UIScroll::removeElement()
+void UIScroll::removeWidget()
 {
-	UIList<UIElementRef> result;
-	for (size_t i = 2; i < getChildren().size(); ++i) result.push_back(getChildren()[i]);
-	for (size_t i = 0; i < result.size(); ++i) removeElement(result[i]);
+	UIList<UIWidgetRef> result;
+	for (size_t i = 2; i < getWidgets().size(); ++i) result.push_back(getWidgets()[i]);
+	for (size_t i = 0; i < result.size(); ++i) removeWidget(result[i]);
 }
 
 UIScrollStyle UIScroll::getStyle() const
@@ -271,9 +271,9 @@ UIScrollBarRaw UIScroll::getVerticalBar() const
 	return PRIVATE()->VerticalScrollBar.get();
 }
 
-UIElementRaw UIScroll::getContentView() const
+UIWidgetRaw UIScroll::getContentView() const
 {
-	return (2 < getChildren().size()) ? getChildren()[2].get() : nullptr;
+	return (2 < getWidgets().size()) ? getWidgets()[2].get() : nullptr;
 }
 
 void UIScroll::wheelEvent(UIMouseWheelEventRaw event)
@@ -293,7 +293,7 @@ UIString UIScrollFactory::getTagName() const
 	return "scroll";
 }
 
-UIElementRef UIScrollFactory::getElement(UIString style) const
+UIWidgetRef UIScrollFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIScroll>(getContext());
 	result->setStyleText(style);

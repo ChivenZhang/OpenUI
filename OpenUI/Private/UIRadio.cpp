@@ -12,7 +12,7 @@
 #include "../UIContext.h"
 
 /// @brief 
-class UIRadioPrivate : public UIElementPrivate
+class UIRadioPrivate : public UIWidgetPrivate
 {
 public:
 	UIRadioStyle Style;
@@ -31,7 +31,7 @@ public:
 
 UIRadio::UIRadio(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateRadio = new UIRadioPrivate;
 
@@ -43,13 +43,13 @@ UIRadio::UIRadio(UIContextRaw context)
 	PRIVATE()->SelfGroup = UINew<UIRadioGroup>();
 
 	PRIVATE()->Button = UINew<UIButton>(context);
-	addElement(PRIVATE()->Button);
+	addWidget(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize(16, 16);
 	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
 	PRIVATE()->Button->setCheckable(true);
 
 	PRIVATE()->Label = UINew<UILabel>(context);
-	addElement(PRIVATE()->Label);
+	addWidget(PRIVATE()->Label);
 
 	{
 		PRIVATE()->Style.Round = { 4,4 };
@@ -127,7 +127,7 @@ void UIRadio::layout(UIRect client)
 
 void UIRadio::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 }
 
 UIString UIRadio::getText() const
@@ -279,7 +279,7 @@ UIString UIRadioFactory::getTagName() const
 	return "radio";
 }
 
-UIElementRef UIRadioFactory::getElement(UIString style) const
+UIWidgetRef UIRadioFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIRadio>(getContext());
 	result->setStyleText(style);

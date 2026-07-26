@@ -8,17 +8,17 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "../UIElement.h"
+#include "../UIWidget.h"
 #include "../UIContext.h"
 #include "../UIPainter.h"
 #include <yoga/Yoga.h>
 
-class UIElementPrivateData : public UIElementPrivate
+class UIWidgetPrivateData : public UIWidgetPrivate
 {
 public:
 	UIString Identity;
-	UIElementRaw Parent = nullptr;
-	UIList<UIElementRef> Children;
+	UIWidgetRaw Parent = nullptr;
+	UIList<UIWidgetRef> Children;
 	UIFilterRaw Filter = nullptr;
 	UIContextRaw Context = nullptr;
 	UIPointUV3 Primitive[2];
@@ -26,6 +26,9 @@ public:
 	UI::DisplayType DisplayType = UI::DisplayFlex;
 	UI::PositionType PositionType = UI::PositionRelative;
 	UIValue2F Position{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
+	float Scale = 1.0f;
+	float Rotate = 0.0f;
+	UIFloat2 Translate;
 	UIValueF MinWidth = { UINAN, 0 }, MinHeight = { UINAN, 0 };
 	UIValueF MaxWidth = { UINAN, 0 }, MaxHeight = { UINAN, 0 };
 	UIValueF FixedWidth = { UINAN, 0 }, FixedHeight = { UINAN, 0 };
@@ -54,79 +57,79 @@ public:
 	// int32_t Order;
 	UI::AlignSelf AlignSelf = UI::AlignAuto;
 };
-#define PRIVATE() ((UIElementPrivateData*) m_Private)
+#define PRIVATE() ((UIWidgetPrivateData*) m_Private)
 
-UIElement::UIElement(UIContextRaw context)
+UIWidget::UIWidget(UIContextRaw context)
 {
-	m_Private = new UIElementPrivateData;
+	m_Private = new UIWidgetPrivateData;
 
 	PRIVATE()->Context = context;
 }
 
-UIElement::~UIElement()
+UIWidget::~UIWidget()
 {
 	if (getContext()) getContext()->setAnimate(this, false);
 	delete m_Private; m_Private = nullptr;
 }
 
-UIString UIElement::getID() const
+UIString UIWidget::getID() const
 {
 	return PRIVATE()->Identity;
 }
 
-void UIElement::setID(UIString value)
+void UIWidget::setID(UIString value)
 {
 	PRIVATE()->Identity = value;
 }
 
-UIElementRaw UIElement::getParent() const
+UIWidgetRaw UIWidget::getParent() const
 {
 	return PRIVATE()->Parent;
 }
 
-UIListView<const UIElementRef> UIElement::getChildren() const
+UIListView<const UIWidgetRef> UIWidget::getWidgets() const
 {
 	return PRIVATE()->Children;
 }
 
-UIFilterRaw UIElement::getEventFilter() const
+UIFilterRaw UIWidget::getEventFilter() const
 {
 	return PRIVATE()->Filter;
 }
 
-void UIElement::setEventFilter(UIFilterRaw value)
+void UIWidget::setEventFilter(UIFilterRaw value)
 {
 	PRIVATE()->Filter = value;
 }
 
-UIString UIElement::getStyleText() const
+UIString UIWidget::getStyleText() const
 {
 	return UIString();
 }
 
-void UIElement::setStyleText(UIString value)
+void UIWidget::setStyleText(UIString value)
 {
 }
 
-UIString UIElement::getStyleText(UIString name) const
-{
-	return UIString();
-}
-
-void UIElement::setStyleText(UIString name, UIString value)
-{
-}
-
-UIString UIElement::getAttribute(UIString name) const
+UIString UIWidget::getStyleText(UIString name) const
 {
 	return UIString();
 }
 
-void UIElement::setAttribute(UIString name, UIString value)
+void UIWidget::setStyleText(UIString name, UIString value)
 {
 }
 
-UIListView<const UIPointUV3> UIElement::getPrimitive() const
+UIString UIWidget::getAttribute(UIString name) const
+{
+	return UIString();
+}
+
+void UIWidget::setAttribute(UIString name, UIString value)
+{
+}
+
+UIListView<const UIPointUV3> UIWidget::getPrimitive() const
 {
 	auto viewport = UIOverlap(getViewport(), getBounds());
 	PRIVATE()->Primitive[0].P0 = { viewport.X, viewport.Y };
@@ -138,7 +141,7 @@ UIListView<const UIPointUV3> UIElement::getPrimitive() const
 	return PRIVATE()->Primitive;
 }
 
-bool UIElement::addElement(UIElementRef value)
+bool UIWidget::addWidget(UIWidgetRef value)
 {
 	if (value == nullptr || value.get() == this) return false;
 	auto result = std::find(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
@@ -149,7 +152,7 @@ bool UIElement::addElement(UIElementRef value)
 	return true;
 }
 
-bool UIElement::removeElement(UIElementRef value)
+bool UIWidget::removeWidget(UIWidgetRef value)
 {
 	auto result = std::remove(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
 	if (result == PRIVATE()->Children.end()) return false;
@@ -160,7 +163,7 @@ bool UIElement::removeElement(UIElementRef value)
 	return true;
 }
 
-void UIElement::removeElement()
+void UIWidget::removeWidget()
 {
 	if (getContext()) getContext()->layoutElement();
 	for (size_t i = 0; i < PRIVATE()->Children.size(); ++i)
@@ -171,80 +174,80 @@ void UIElement::removeElement()
 	PRIVATE()->Children.clear();
 }
 
-UIElementRef UIElement::getElementByID(UIString identity) const
+UIWidgetRef UIWidget::findWidget(UIString identity) const
 {
-	return getElement([=](UIElementRef element)->bool { return element->getID() == identity; });
+	return findWidget([=](UIWidgetRef element)->bool { return element->getID() == identity; });
 }
 
-UIList<UIElementRef> UIElement::getElementsByID(UIString identity) const
+UIList<UIWidgetRef> UIWidget::findWidgets(UIString identity) const
 {
-	return getElements([=](UIElementRef element)->bool { return element->getID() == identity; });
+	return findWidgets([=](UIWidgetRef element)->bool { return element->getID() == identity; });
 }
 
-UIElementRef UIElement::getElement(UILambda<bool(UIElementRef)> selector) const
+UIWidgetRef UIWidget::findWidget(UILambda<bool(UIWidgetRef)> selector) const
 {
-	UIElementRef result;
-	UILambda<bool(UIElementRef)> foreach_func;
-	foreach_func = [&](UIElementRef element)->bool {
+	UIWidgetRef result;
+	UILambda<bool(UIWidgetRef)> foreach_func;
+	foreach_func = [&](UIWidgetRef element)->bool {
 		if (selector && selector(element))
 		{
 			result = element;
 			return false;
 		}
-		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		for (size_t i = 0; i < element->getWidgets().size(); ++i)
 		{
-			if (foreach_func(element->getChildren()[i]) == false) return false;
+			if (foreach_func(element->getWidgets()[i]) == false) return false;
 		}
 		return true;
 		};
-	foreach_func(std::const_pointer_cast<UIElement>(this->shared_from_this()));
+	foreach_func(std::const_pointer_cast<UIWidget>(this->shared_from_this()));
 	return result;
 }
 
-UIList<UIElementRef> UIElement::getElements(UILambda<bool(UIElementRef)> selector) const
+UIList<UIWidgetRef> UIWidget::findWidgets(UILambda<bool(UIWidgetRef)> selector) const
 {
-	UIList<UIElementRef> result;
-	UILambda<void(UIElementRef)> foreach_func;
-	foreach_func = [&](UIElementRef element) {
+	UIList<UIWidgetRef> result;
+	UILambda<void(UIWidgetRef)> foreach_func;
+	foreach_func = [&](UIWidgetRef element) {
 		if (selector && selector(element))
 		{
 			result.push_back(element);
 		}
-		for (size_t i = 0; i < element->getChildren().size(); ++i)
+		for (size_t i = 0; i < element->getWidgets().size(); ++i)
 		{
-			foreach_func(element->getChildren()[i]);
+			foreach_func(element->getWidgets()[i]);
 		}
 		};
-	foreach_func(std::const_pointer_cast<UIElement>(this->shared_from_this()));
+	foreach_func(std::const_pointer_cast<UIWidget>(this->shared_from_this()));
 	return result;
 }
 
-void UIElement::arrange(UIRect client)
+void UIWidget::arrange(UIRect client)
 {
 }
 
-void UIElement::layout(UIRect client)
+void UIWidget::layout(UIRect client)
 {
 }
 
-void UIElement::paint(UIRect client, UIPainterRaw painter)
-{
-	auto viewport = getViewport();
-	painter->setClipRect(viewport.X, viewport.Y, viewport.W, viewport.H);
-}
-
-void UIElement::repaint(UIRect client, UIPainterRaw painter)
+void UIWidget::paint(UIRect client, UIPainterRaw painter)
 {
 	auto viewport = getViewport();
 	painter->setClipRect(viewport.X, viewport.Y, viewport.W, viewport.H);
 }
 
-bool UIElement::filter(UIReactorRaw source, UIEventRaw event)
+void UIWidget::repaint(UIRect client, UIPainterRaw painter)
+{
+	auto viewport = getViewport();
+	painter->setClipRect(viewport.X, viewport.Y, viewport.W, viewport.H);
+}
+
+bool UIWidget::filter(UIReactorRaw source, UIEventRaw event)
 {
 	return false;
 }
 
-void UIElement::handle(UIReactorRaw source, UIEventRaw event)
+void UIWidget::handle(UIReactorRaw source, UIEventRaw event)
 {
 	switch (event->Type)
 	{
@@ -339,517 +342,547 @@ void UIElement::handle(UIReactorRaw source, UIEventRaw event)
 	}
 }
 
-bool UIElement::getEnable() const
+bool UIWidget::getEnable() const
 {
 	return PRIVATE()->Enable;
 }
 
-void UIElement::setEnable(bool value)
+void UIWidget::setEnable(bool value)
 {
 	PRIVATE()->Enable = value;
 }
 
-bool UIElement::getVisible() const
+bool UIWidget::getVisible() const
 {
 	return PRIVATE()->Visible;
 }
 
-void UIElement::setVisible(bool value)
+void UIWidget::setVisible(bool value)
 {
 	PRIVATE()->Visible = value;
 }
 
-bool UIElement::getAnimate() const
+bool UIWidget::getAnimate() const
 {
 	return PRIVATE()->Animate;
 }
 
-void UIElement::setAnimate(bool value)
+void UIWidget::setAnimate(bool value)
 {
 	PRIVATE()->Animate = value;
 	if (getContext()) getContext()->setAnimate(this, value);
 }
 
-UIRect UIElement::getBounds() const
+UIRect UIWidget::getBounds() const
 {
 	return PRIVATE()->ClientRect;
 }
 
-void UIElement::setBounds(UIRect value)
+void UIWidget::setBounds(UIRect value)
 {
 	PRIVATE()->ClientRect = value;
 }
 
-UIRect UIElement::getViewport() const
+UIRect UIWidget::getViewport() const
 {
 	return PRIVATE()->ViewRect;
 }
 
-void UIElement::setViewport(UIRect value)
+void UIWidget::setViewport(UIRect value)
 {
 	PRIVATE()->ViewRect = value;
 }
 
-UIRect UIElement::getLocalBounds() const
+UIRect UIWidget::getLocalBounds() const
 {
 	return PRIVATE()->LocalRect;
 }
 
-void UIElement::setLocalBounds(UIRect value)
+void UIWidget::setLocalBounds(UIRect value)
 {
 	PRIVATE()->LocalRect = value;
 }
 
-float UIElement::getPosX() const
+float UIWidget::getScale() const
+{
+	return PRIVATE()->Scale;
+}
+
+void UIWidget::setScale(float value)
+{
+	PRIVATE()->Scale = value;
+}
+
+float UIWidget::getRotate() const
+{
+	return PRIVATE()->Rotate;
+}
+
+void UIWidget::setRotate(float value)
+{
+	PRIVATE()->Rotate = value;
+}
+
+UIFloat2 UIWidget::getTranslate() const
+{
+	return PRIVATE()->Translate;
+}
+
+void UIWidget::setTranslate(UIFloat2 value)
+{
+	PRIVATE()->Translate = value;
+}
+
+float UIWidget::getPosX() const
 {
 	return getBounds().X;
 }
 
-float UIElement::getPosY() const
+float UIWidget::getPosY() const
 {
 	return getBounds().Y;
 }
 
-UIFloat2 UIElement::getPos() const
+UIFloat2 UIWidget::getPos() const
 {
 	return UIFloat2{ getPosX(), getPosY() };
 }
 
-float UIElement::getLocalX() const
+float UIWidget::getLocalX() const
 {
 	return 0.0f;
 }
 
-float UIElement::getLocalY() const
+float UIWidget::getLocalY() const
 {
 	return 0.0f;
 }
 
-UIFloat2 UIElement::getLocalPos() const
+UIFloat2 UIWidget::getLocalPos() const
 {
 	return UIFloat2();
 }
 
-float UIElement::getWidth() const
+float UIWidget::getWidth() const
 {
 	return getBounds().W;
 }
 
-float UIElement::getHeight() const
+float UIWidget::getHeight() const
 {
 	return getBounds().H;
 }
 
-UIFloat2 UIElement::getSize() const
+UIFloat2 UIWidget::getSize() const
 {
 	return UIFloat2{ getWidth(), getHeight() };
 }
 
-bool UIElement::inBounds(UIFloat2 pos)
+bool UIWidget::inBounds(UIFloat2 pos)
 {
 	return inBounds(pos.X, pos.Y);
 }
 
-bool UIElement::inBounds(float x, float y)
+bool UIWidget::inBounds(float x, float y)
 {
 	auto viewport = UIOverlap(getViewport(), getBounds());
 	return (viewport.X <= x && x <= viewport.X + viewport.W
 		&& viewport.Y <= y && y <= viewport.Y + viewport.H);
 }
 
-UI::DisplayType UIElement::getDisplayType() const
+UI::DisplayType UIWidget::getDisplayType() const
 {
 	return PRIVATE()->DisplayType;
 }
 
-void UIElement::setDisplayType(UI::DisplayType value)
+void UIWidget::setDisplayType(UI::DisplayType value)
 {
 	PRIVATE()->DisplayType = value;
 }
 
-UI::PositionType UIElement::getPositionType() const
+UI::PositionType UIWidget::getPositionType() const
 {
 	return PRIVATE()->PositionType;
 }
 
-void UIElement::setPositionType(UI::PositionType value)
+void UIWidget::setPositionType(UI::PositionType value)
 {
 	PRIVATE()->PositionType = value;
 }
 
-UIValueF UIElement::getFixedPosX() const
+UIValueF UIWidget::getFixedPosX() const
 {
 	return PRIVATE()->Position[0];
 }
 
-void UIElement::setFixedPosX(UIValueF value)
+void UIWidget::setFixedPosX(UIValueF value)
 {
 	PRIVATE()->Position[0] = value;
 }
 
-UIValueF UIElement::getFixedPosY() const
+UIValueF UIWidget::getFixedPosY() const
 {
 	return PRIVATE()->Position[1];
 }
 
-void UIElement::setFixedPosY(UIValueF value)
+void UIWidget::setFixedPosY(UIValueF value)
 {
 	PRIVATE()->Position[1] = value;
 }
 
-UIValue2F UIElement::getFixedPos() const
+UIValue2F UIWidget::getFixedPos() const
 {
 	return PRIVATE()->Position;
 }
 
-void UIElement::setFixedPos(UIValueF left, UIValueF top)
+void UIWidget::setFixedPos(UIValueF left, UIValueF top)
 {
 	setFixedPosX(left);
 	setFixedPosY(top);
 }
 
-UIValueF UIElement::getMinWidth() const
+UIValueF UIWidget::getMinWidth() const
 {
 	return PRIVATE()->MinWidth;
 }
 
-void UIElement::setMinWidth(UIValueF value)
+void UIWidget::setMinWidth(UIValueF value)
 {
 	PRIVATE()->MinWidth = value;
 }
 
-UIValueF UIElement::getMaxWidth() const
+UIValueF UIWidget::getMaxWidth() const
 {
 	return PRIVATE()->MaxWidth;
 }
 
-void UIElement::setMaxWidth(UIValueF value)
+void UIWidget::setMaxWidth(UIValueF value)
 {
 	PRIVATE()->MaxWidth = value;
 }
 
-UIValueF UIElement::getFixedWidth() const
+UIValueF UIWidget::getFixedWidth() const
 {
 	return PRIVATE()->FixedWidth;
 }
 
-void UIElement::setFixedWidth(UIValueF value)
+void UIWidget::setFixedWidth(UIValueF value)
 {
 	PRIVATE()->FixedWidth = value;
 }
 
-UIValueF UIElement::getMinHeight() const
+UIValueF UIWidget::getMinHeight() const
 {
 	return PRIVATE()->MinHeight;
 }
 
-void UIElement::setMinHeight(UIValueF value)
+void UIWidget::setMinHeight(UIValueF value)
 {
 	PRIVATE()->MinHeight = value;
 }
 
-UIValueF UIElement::getMaxHeight() const
+UIValueF UIWidget::getMaxHeight() const
 {
 	return PRIVATE()->MaxHeight;
 }
 
-void UIElement::setMaxHeight(UIValueF value)
+void UIWidget::setMaxHeight(UIValueF value)
 {
 	PRIVATE()->MaxHeight = value;
 }
 
-UIValueF UIElement::getFixedHeight() const
+UIValueF UIWidget::getFixedHeight() const
 {
 	return PRIVATE()->FixedHeight;
 }
 
-void UIElement::setFixedHeight(UIValueF value)
+void UIWidget::setFixedHeight(UIValueF value)
 {
 	PRIVATE()->FixedHeight = value;
 }
 
-UIValue2F UIElement::getMinSize() const
+UIValue2F UIWidget::getMinSize() const
 {
 	return UIValue2F{ PRIVATE()->MinWidth, PRIVATE()->MinHeight };
 }
 
-void UIElement::setMinSize(UIValueF width, UIValueF height)
+void UIWidget::setMinSize(UIValueF width, UIValueF height)
 {
 	setMinWidth(width);
 	setMinHeight(height);
 }
 
-UIValue2F UIElement::getMaxSize() const
+UIValue2F UIWidget::getMaxSize() const
 {
 	return UIValue2F{ PRIVATE()->MaxWidth, PRIVATE()->MaxHeight };
 }
 
-void UIElement::setMaxSize(UIValueF width, UIValueF height)
+void UIWidget::setMaxSize(UIValueF width, UIValueF height)
 {
 	setMaxWidth(width);
 	setMaxHeight(height);
 }
 
-UIValue2F UIElement::getFixedSize() const
+UIValue2F UIWidget::getFixedSize() const
 {
 	return UIValue2F{ PRIVATE()->FixedWidth, PRIVATE()->FixedHeight };
 }
 
-void UIElement::setFixedSize(UIValueF width, UIValueF height)
+void UIWidget::setFixedSize(UIValueF width, UIValueF height)
 {
 	setFixedWidth(width);
 	setFixedHeight(height);
 }
 
-UIValue4F UIElement::getBorder() const
+UIValue4F UIWidget::getBorder() const
 {
 	return PRIVATE()->Border;
 }
 
-void UIElement::setBorder(UIValue4F value)
+void UIWidget::setBorder(UIValue4F value)
 {
 	PRIVATE()->Border = value;
 }
 
-UIValue4F UIElement::getMargin() const
+UIValue4F UIWidget::getMargin() const
 {
 	return PRIVATE()->Margin;
 }
 
-void UIElement::setMargin(UIValue4F value)
+void UIWidget::setMargin(UIValue4F value)
 {
 	PRIVATE()->Margin = value;
 }
 
-UIValue4F UIElement::getPadding() const
+UIValue4F UIWidget::getPadding() const
 {
 	return PRIVATE()->Padding;
 }
 
-void UIElement::setPadding(UIValue4F value)
+void UIWidget::setPadding(UIValue4F value)
 {
 	PRIVATE()->Padding = value;
 }
 
-UIValue2F UIElement::getSpacing() const
+UIValue2F UIWidget::getSpacing() const
 {
 	return PRIVATE()->Spacing;
 }
 
-void UIElement::setSpacing(UIValue2F value)
+void UIWidget::setSpacing(UIValue2F value)
 {
 	PRIVATE()->Spacing = value;
 }
 
-UI::FlexDirection UIElement::getFlexDirection() const
+UI::FlexDirection UIWidget::getFlexDirection() const
 {
 	return PRIVATE()->FlexFlow.FlexDirection;
 }
 
-void UIElement::setFlexDirection(UI::FlexDirection value)
+void UIWidget::setFlexDirection(UI::FlexDirection value)
 {
 	PRIVATE()->FlexFlow.FlexDirection = value;
 }
 
-UI::FlexWrap UIElement::getFlexWrap() const
+UI::FlexWrap UIWidget::getFlexWrap() const
 {
 	return PRIVATE()->FlexFlow.FlexWrap;
 }
 
-void UIElement::setFlexWrap(UI::FlexWrap value)
+void UIWidget::setFlexWrap(UI::FlexWrap value)
 {
 	PRIVATE()->FlexFlow.FlexWrap = value;
 }
 
-UI::JustifyContent UIElement::getJustifyContent() const
+UI::JustifyContent UIWidget::getJustifyContent() const
 {
 	return PRIVATE()->JustifyContent;
 }
 
-void UIElement::setJustifyContent(UI::JustifyContent value)
+void UIWidget::setJustifyContent(UI::JustifyContent value)
 {
 	PRIVATE()->JustifyContent = value;
 }
 
-UI::AlignItems UIElement::getAlignItems() const
+UI::AlignItems UIWidget::getAlignItems() const
 {
 	return PRIVATE()->AlignItems;
 }
 
-void UIElement::setAlignItems(UI::AlignItems value)
+void UIWidget::setAlignItems(UI::AlignItems value)
 {
 	PRIVATE()->AlignItems = value;
 }
 
-UI::AlignContent UIElement::getAlignContent() const
+UI::AlignContent UIWidget::getAlignContent() const
 {
 	return PRIVATE()->AlignContent;
 }
 
-void UIElement::setAlignContent(UI::AlignContent value)
+void UIWidget::setAlignContent(UI::AlignContent value)
 {
 	PRIVATE()->AlignContent = value;
 }
 
-void UIElement::setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap)
+void UIWidget::setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap)
 {
 	setFlexDirection(direction);
 	setFlexWrap(wrap);
 }
 
-UI::FlexGrow UIElement::getFlexGrow() const
+UI::FlexGrow UIWidget::getFlexGrow() const
 {
 	return PRIVATE()->Flex.FlexGrow;
 }
 
-void UIElement::setFlexGrow(UI::FlexGrow value)
+void UIWidget::setFlexGrow(UI::FlexGrow value)
 {
 	PRIVATE()->Flex.FlexGrow = value;
 }
 
-UI::FlexShrink UIElement::getFlexShrink() const
+UI::FlexShrink UIWidget::getFlexShrink() const
 {
 	return PRIVATE()->Flex.FlexShrink;
 }
 
-void UIElement::setFlexShrink(UI::FlexShrink value)
+void UIWidget::setFlexShrink(UI::FlexShrink value)
 {
 	PRIVATE()->Flex.FlexShrink = value;
 }
 
-UI::FlexBasis UIElement::getFlexBasis() const
+UI::FlexBasis UIWidget::getFlexBasis() const
 {
 	return PRIVATE()->Flex.FlexBasis;
 }
 
-void UIElement::setFlexBasis(UI::FlexBasis value)
+void UIWidget::setFlexBasis(UI::FlexBasis value)
 {
 	PRIVATE()->Flex.FlexBasis = value;
 }
 
-UI::AlignSelf UIElement::getAlignSelf() const
+UI::AlignSelf UIWidget::getAlignSelf() const
 {
 	return PRIVATE()->AlignSelf;
 }
 
-void UIElement::setAlignSelf(UI::AlignSelf value)
+void UIWidget::setAlignSelf(UI::AlignSelf value)
 {
 	PRIVATE()->AlignSelf = value;
 }
 
-void UIElement::setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis)
+void UIWidget::setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis)
 {
 	setFlexGrow(grow);
 	setFlexShrink(shrink);
 	setFlexBasis(basis);
 }
 
-void UIElement::closeEvent(UICloseEventRaw event)
+void UIWidget::closeEvent(UICloseEventRaw event)
 {
 }
 
-void UIElement::dragEnterEvent(UIDragEnterEventRaw event)
+void UIWidget::dragEnterEvent(UIDragEnterEventRaw event)
 {
 }
 
-void UIElement::dragLeaveEvent(UIDragLeaveEventRaw event)
+void UIWidget::dragLeaveEvent(UIDragLeaveEventRaw event)
 {
 }
 
-void UIElement::dragMoveEvent(UIDragMoveEventRaw event)
+void UIWidget::dragMoveEvent(UIDragMoveEventRaw event)
 {
 }
 
-void UIElement::dropEvent(UIDropEventRaw event)
+void UIWidget::dropEvent(UIDropEventRaw event)
 {
 }
 
-void UIElement::enterEvent(UIMouseEventRaw event)
+void UIWidget::enterEvent(UIMouseEventRaw event)
 {
 }
 
-void UIElement::focusInEvent(UIFocusEventRaw event)
+void UIWidget::focusInEvent(UIFocusEventRaw event)
 {
 }
 
-void UIElement::focusOutEvent(UIFocusEventRaw event)
+void UIWidget::focusOutEvent(UIFocusEventRaw event)
 {
 }
 
-void UIElement::hideEvent(UIHideEventRaw event)
+void UIWidget::hideEvent(UIHideEventRaw event)
 {
 }
 
-void UIElement::inputEvent(UITextInputEventRaw event)
+void UIWidget::inputEvent(UITextInputEventRaw event)
 {
 }
 
-void UIElement::keyPressEvent(UIKeyEventRaw event)
+void UIWidget::keyPressEvent(UIKeyEventRaw event)
 {
 }
 
-void UIElement::keyReleaseEvent(UIKeyEventRaw event)
+void UIWidget::keyReleaseEvent(UIKeyEventRaw event)
 {
 }
 
-void UIElement::leaveEvent(UIMouseEventRaw event)
+void UIWidget::leaveEvent(UIMouseEventRaw event)
 {
 }
 
-void UIElement::mouseDoubleEvent(UIMouseEventRaw event)
+void UIWidget::mouseDoubleEvent(UIMouseEventRaw event)
 {
 }
 
-void UIElement::mouseMoveEvent(UIMouseEventRaw event)
+void UIWidget::mouseMoveEvent(UIMouseEventRaw event)
 {
 }
 
-void UIElement::mousePressEvent(UIMouseEventRaw event)
+void UIWidget::mousePressEvent(UIMouseEventRaw event)
 {
 }
 
-void UIElement::mouseReleaseEvent(UIMouseEventRaw event)
+void UIWidget::mouseReleaseEvent(UIMouseEventRaw event)
 {
 }
 
-void UIElement::moveEvent(UIMoveEventRaw event)
+void UIWidget::moveEvent(UIMoveEventRaw event)
 {
 }
 
-void UIElement::resizeEvent(UIResizeEventRaw event)
+void UIWidget::resizeEvent(UIResizeEventRaw event)
 {
 }
 
-void UIElement::showEvent(UIShowEventRaw event)
+void UIWidget::showEvent(UIShowEventRaw event)
 {
 }
 
-void UIElement::tabletEvent(UIMouseTabletEventRaw event)
+void UIWidget::tabletEvent(UIMouseTabletEventRaw event)
 {
 }
 
-void UIElement::wheelEvent(UIMouseWheelEventRaw event)
+void UIWidget::wheelEvent(UIMouseWheelEventRaw event)
 {
 }
 
-void UIElement::timerEvent(UITimerEventRaw event)
+void UIWidget::timerEvent(UITimerEventRaw event)
 {
 }
 
-UIContextRaw UIElement::getContext() const
+UIContextRaw UIWidget::getContext() const
 {
 	return PRIVATE()->Context;
 }
 
-void UIElement::setContext(UIContextRaw value)
+void UIWidget::setContext(UIContextRaw value)
 {
 	if (getContext()) getContext()->setAnimate(this, false);
 	PRIVATE()->Context = value;
 	if (getContext()) getContext()->setAnimate(this, getAnimate());
-	for (size_t i = 0; i < getChildren().size(); ++i) getChildren()[i]->setContext(value);
+	for (size_t i = 0; i < getWidgets().size(); ++i) getWidgets()[i]->setContext(value);
 }
 
-void UIElement::setParent(UIElementRaw value)
+void UIWidget::setParent(UIWidgetRaw value)
 {
 	if (value == this) return;
 	PRIVATE()->Parent = value;

@@ -10,7 +10,7 @@
 * =================================================*/
 #include "../UILine.h"
 
-class UILinePrivate : public UIElementPrivate
+class UILinePrivate : public UIWidgetPrivate
 {
 public:
 	UILineStyle Style;
@@ -19,7 +19,7 @@ public:
 
 UIHLine::UIHLine(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateLine = new UILinePrivate;
 }
@@ -31,7 +31,7 @@ UIHLine::~UIHLine()
 
 void UIHLine::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawLine(client.X + 1, client.Y + client.H * 0.5f, client.X + 1 + client.W - 2, client.Y + client.H * 0.5f);
@@ -52,7 +52,7 @@ UIString UIHLineFactory::getTagName() const
 	return "hline";
 }
 
-UIElementRef UIHLineFactory::getElement(UIString style) const
+UIWidgetRef UIHLineFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIHLine>(getContext());
 	result->setStyleText(style);
@@ -61,7 +61,7 @@ UIElementRef UIHLineFactory::getElement(UIString style) const
 
 UIVLine::UIVLine(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateLine = new UILinePrivate;
 }
@@ -73,7 +73,7 @@ UIVLine::~UIVLine()
 
 void UIVLine::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawLine(client.X + client.W * 0.5f, client.Y + 1, client.X + client.W * 0.5f, client.Y + 1 + client.H - 2);
@@ -94,7 +94,7 @@ UIString UIVLineFactory::getTagName() const
 	return "vline";
 }
 
-UIElementRef UIVLineFactory::getElement(UIString style) const
+UIWidgetRef UIVLineFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIVLine>(getContext());
 	result->setStyleText(style);

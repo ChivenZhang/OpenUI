@@ -13,87 +13,28 @@
 #include "UIPainter.h"
 #include "UISignal.h"
 
-class UIElement;
-using UIElementRef = UIRef<UIElement>;
-using UIElementRaw = UIRaw<UIElement>;
-
-class UIElementPrivate {};
-using UIElementPrivateRaw = UIRaw<UIElementPrivate>;
-
 class UIContext;
+using UIContextRef = UIRef<UIContext>;
 using UIContextRaw = UIRaw<UIContext>;
 
-namespace UI
-{
-	enum DisplayType
-	{
-		DisplayFlex,
-		DisplayNone,
-	};
+class UIWidget;
+using UIWidgetRef = UIRef<UIWidget>;
+using UIWidgetRaw = UIRaw<UIWidget>;
 
-	enum PositionType
-	{
-		PositionStatic,
-		PositionRelative,
-		PositionAbsolute,
-	};
+class UIWidgetPrivate {};
+using UIWidgetPrivateRaw = UIRaw<UIWidgetPrivate>;
 
-	enum AlignItems
-	{
-		AlignAuto,
-		AlignFlexStart,
-		AlignCenter,
-		AlignFlexEnd,
-		AlignStretch,
-		AlignBaseline,
-		AlignSpaceBetween,
-		AlignSpaceAround,
-		AlignSpaceEvenly,
-	};
-	enum FlexDirection
-	{
-		FlexDirectionColumn,
-		FlexDirectionColumnReverse,
-		FlexDirectionRow,
-		FlexDirectionRowReverse,
-	};
-	enum FlexWrap
-	{
-		FlexNoWrap,
-		FlexDoWrap,
-		FlexWrapReverse,
-	};
-	using AlignContent = AlignItems;
-	enum JustifyContent
-	{
-		JustifyFlexStart,
-		JustifyCenter,
-		JustifyFlexEnd,
-		JustifySpaceBetween,
-		JustifySpaceAround,
-		JustifySpaceEvenly,
-	};
-
-	using FlexGrow = UIValueF;
-	using FlexBasis = UIValueF;
-	using FlexShrink = UIValueF;
-	using AlignSelf = AlignItems;
-
-	enum ValueUnit : uint8_t { UnitNone = 0, UnitPoint, UnitPercent, UnitAuto, };
-
-	enum Orientation : uint8_t { Horizontal = 0, Vertical = 1, };
-};
-
-/// @brief Base interface of element
-class OPENUI_API UIElement : public UIReactor, public UIHandler, public UIFilter, public std::enable_shared_from_this<UIElement>
+/// @brief Base interface of widget
+class OPENUI_API UIWidget : public UIReactor, public UIHandler, public UIFilter, public std::enable_shared_from_this<UIWidget>
 {
 public:
-	explicit UIElement(UIContextRaw context);
-	~UIElement() override;
+	explicit UIWidget(UIContextRaw context);
+	~UIWidget() override;
 	UIString getID() const;
 	void setID(UIString value);
-	UIElementRaw getParent() const;
-	UIListView<const UIElementRef> getChildren() const;
+	UIWidgetRaw getParent() const;
+	UIListView<const UIWidgetRef> getWidgets() const;
+
 	virtual UIFilterRaw getEventFilter() const;
 	virtual void setEventFilter(UIFilterRaw value);
 	virtual UIString getStyleText() const;
@@ -103,13 +44,16 @@ public:
 	virtual UIString getAttribute(UIString name) const;
 	virtual void setAttribute(UIString name, UIString value);
 	virtual UIListView<const UIPointUV3> getPrimitive() const;
-	virtual bool addElement(UIElementRef value);
-	virtual bool removeElement(UIElementRef value);
-	virtual void removeElement();
-	virtual UIElementRef getElementByID(UIString identity) const;
-	virtual UIList<UIElementRef> getElementsByID(UIString identity) const;
-	virtual UIElementRef getElement(UILambda<bool(UIElementRef)> selector) const;
-	virtual UIList<UIElementRef> getElements(UILambda<bool(UIElementRef)> selector) const;
+	virtual bool addWidget(UIWidgetRef value);
+	virtual bool removeWidget(UIWidgetRef value);
+	virtual void removeWidget();
+	virtual UIWidgetRef findWidget(UIString identity) const;
+	virtual UIList<UIWidgetRef> findWidgets(UIString identity) const;
+	virtual UIWidgetRef findWidget(UILambda<bool(UIWidgetRef)> selector) const;
+	virtual UIList<UIWidgetRef> findWidgets(UILambda<bool(UIWidgetRef)> selector) const;
+
+	// ==================================== Arrange ===================================
+
 	virtual void arrange(UIRect client);
 	virtual void layout(UIRect client);
 	virtual void paint(UIRect client, UIPainterRaw painter);
@@ -117,7 +61,7 @@ public:
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
 	virtual void handle(UIReactorRaw source, UIEventRaw event) final override;
 
-	// =================================
+	// ====================================Attribute===================================
 
 	virtual bool getEnable() const;
 	virtual void setEnable(bool value);
@@ -131,6 +75,12 @@ public:
 	virtual void setViewport(UIRect value);
 	virtual UIRect getLocalBounds() const;
 	virtual void setLocalBounds(UIRect value);
+	virtual float getScale() const;
+	virtual void setScale(float value);
+	virtual float getRotate() const;
+	virtual void setRotate(float value);
+	virtual UIFloat2 getTranslate() const;
+	virtual void setTranslate(UIFloat2 value);
 	virtual float getPosX() const;
 	virtual float getPosY() const;
 	virtual UIFloat2 getPos() const;
@@ -142,6 +92,8 @@ public:
 	virtual UIFloat2 getSize() const;
 	virtual bool inBounds(UIFloat2 pos);
 	virtual bool inBounds(float x, float y);
+
+	// =================================Flex Layout======================================
 
 	virtual UI::DisplayType getDisplayType() const;
 	virtual void setDisplayType(UI::DisplayType value);
@@ -233,9 +185,9 @@ protected:
 
 private:
 	virtual void setContext(UIContextRaw value);
-	virtual void setParent(UIElementRaw value);
+	virtual void setParent(UIWidgetRaw value);
 
 private:
 	friend class UIContext;
-	UIElementPrivateRaw m_Private;
+	UIRaw<UIWidgetPrivate> m_Private;
 };

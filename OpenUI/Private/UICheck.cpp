@@ -11,7 +11,7 @@
 #include "../UICheck.h"
 #include "../UIContext.h"
 
-class UICheckPrivate : public UIElementPrivate
+class UICheckPrivate : public UIWidgetPrivate
 {
 public:
 	UICheckStyle Style;
@@ -29,7 +29,7 @@ public:
 
 UICheck::UICheck(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateCheck = new UICheckPrivate;
 
@@ -39,7 +39,7 @@ UICheck::UICheck(UIContextRaw context)
 	hovered = &PRIVATE()->OnHovered;
 
 	PRIVATE()->Button = UINew<UIButton>(context);
-	addElement(PRIVATE()->Button);
+	addWidget(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize(16, 16);
 	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
 	PRIVATE()->Button->setCheckable(true);
@@ -59,7 +59,7 @@ UICheck::UICheck(UIContextRaw context)
 	}
 
 	PRIVATE()->Label = UINew<UILabel>(context);
-	addElement(PRIVATE()->Label);
+	addWidget(PRIVATE()->Label);
 	{
 		auto style = PRIVATE()->Label->getStyle();
 		style.Normal.Background.Pen = style.Hover.Background.Pen = { .Style = UIPen::NoPen, };
@@ -117,7 +117,7 @@ void UICheck::layout(UIRect client)
 
 void UICheck::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 }
 
 UIString UICheck::getText() const
@@ -249,7 +249,7 @@ UIString UICheckFactory::getTagName() const
 	return "check";
 }
 
-UIElementRef UICheckFactory::getElement(UIString style) const
+UIWidgetRef UICheckFactory::getElement(UIString style) const
 {
 	auto result = UINew<UICheck>(getContext());
 	result->setStyleText(style);

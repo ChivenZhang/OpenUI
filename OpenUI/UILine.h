@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 
 /// @brief 
@@ -20,7 +20,7 @@ struct UILineStyle
 };
 
 /// @brief HLine
-class OPENUI_API UIHLine : public UIElement
+class OPENUI_API UIHLine : public UIWidget
 {
 public:
 	explicit UIHLine(UIContextRaw context);
@@ -31,11 +31,11 @@ public:
 	void setStyle(UILineStyle value);
 
 private:
-	UIElementPrivateRaw m_PrivateLine;
+	UIWidgetPrivateRaw m_PrivateLine;
 };
 
 /// @brief VLine
-class OPENUI_API UIVLine : public UIElement
+class OPENUI_API UIVLine : public UIWidget
 {
 public:
 	explicit UIVLine(UIContextRaw context);
@@ -46,7 +46,7 @@ public:
 	void setStyle(UILineStyle value);
 
 private:
-	UIElementPrivateRaw m_PrivateLine;
+	UIWidgetPrivateRaw m_PrivateLine;
 };
 
 /// @brief HLine factory
@@ -54,7 +54,7 @@ class UIHLineFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };
 
 /// @brief VLine factory
@@ -62,5 +62,5 @@ class UIVLineFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

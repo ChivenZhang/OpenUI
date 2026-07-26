@@ -11,7 +11,7 @@
 #include "../UIVBox.h"
 
 /// @brief 
-class UIVBoxPrivate : public UIElementPrivate
+class UIVBoxPrivate : public UIWidgetPrivate
 {
 public:
 	UIVBoxStyle Style;
@@ -20,7 +20,7 @@ public:
 
 UIVBox::UIVBox(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateVBox = new UIVBoxPrivate;
 }
@@ -37,9 +37,9 @@ void UIVBox::arrange(UIRect client)
 	this->setFlexDirection(UI::FlexDirectionColumn);
 	this->setJustifyContent(UI::JustifySpaceEvenly);
 
-	for (size_t i = 0; i < getChildren().size(); ++i)
+	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
-		auto child = getChildren()[i];
+		auto child = getWidgets()[i];
 		if (child->getFixedHeight().Unit == UI::UnitNone) child->setFlexGrow(1.0f);
 		else child->setFlexGrow(0.0f);
 		if (child->getFixedWidth().Unit == UI::UnitNone) child->setAlignSelf(UI::AlignStretch);
@@ -49,7 +49,7 @@ void UIVBox::arrange(UIRect client)
 
 void UIVBox::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(UINoPen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
@@ -57,7 +57,7 @@ void UIVBox::paint(UIRect client, UIPainterRaw painter)
 
 void UIVBox::repaint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::repaint(client, painter);
+	UIWidget::repaint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(UINoBrush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
@@ -78,7 +78,7 @@ UIString UIVBoxFactory::getTagName() const
 	return "vbox";
 }
 
-UIElementRef UIVBoxFactory::getElement(UIString style) const
+UIWidgetRef UIVBoxFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIVBox>(getContext());
 	result->setStyleText(style);

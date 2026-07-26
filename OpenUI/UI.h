@@ -881,6 +881,67 @@ using UIValue2F = UIArray<UIValueF, 2>;
 using UIValue3F = UIArray<UIValueF, 3>;
 using UIValue4F = UIArray<UIValueF, 4>;
 
+namespace UI
+{
+	enum DisplayType
+	{
+		DisplayFlex,
+		DisplayNone,
+	};
+
+	enum PositionType
+	{
+		PositionStatic,
+		PositionRelative,
+		PositionAbsolute,
+	};
+
+	enum AlignItems
+	{
+		AlignAuto,
+		AlignFlexStart,
+		AlignCenter,
+		AlignFlexEnd,
+		AlignStretch,
+		AlignBaseline,
+		AlignSpaceBetween,
+		AlignSpaceAround,
+		AlignSpaceEvenly,
+	};
+	enum FlexDirection
+	{
+		FlexDirectionColumn,
+		FlexDirectionColumnReverse,
+		FlexDirectionRow,
+		FlexDirectionRowReverse,
+	};
+	enum FlexWrap
+	{
+		FlexNoWrap,
+		FlexDoWrap,
+		FlexWrapReverse,
+	};
+	using AlignContent = AlignItems;
+	enum JustifyContent
+	{
+		JustifyFlexStart,
+		JustifyCenter,
+		JustifyFlexEnd,
+		JustifySpaceBetween,
+		JustifySpaceAround,
+		JustifySpaceEvenly,
+	};
+
+	using FlexGrow = UIValueF;
+	using FlexBasis = UIValueF;
+	using FlexShrink = UIValueF;
+	using AlignSelf = AlignItems;
+
+	enum ValueUnit : uint8_t { UnitNone = 0, UnitPoint, UnitPercent, UnitAuto, };
+
+	enum Orientation : uint8_t { Horizontal = 0, Vertical = 1, };
+};
+
 inline UIRect UIOverlap(UIRect const& viewport, UIRect const& client)
 {
 	// 计算两个矩形的右下角坐标  

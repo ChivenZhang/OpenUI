@@ -11,7 +11,7 @@
 #include "../UIScrollBar.h"
 #include "../UIContext.h"
 
-class UIScrollBarPrivate : public UIElementPrivate
+class UIScrollBarPrivate : public UIWidgetPrivate
 {
 public:
 	UIFloat2 MousePos;
@@ -31,7 +31,7 @@ public:
 
 UIScrollBar::UIScrollBar(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateScrollBar = new UIScrollBarPrivate;
 
@@ -42,7 +42,7 @@ UIScrollBar::UIScrollBar(UIContextRaw context)
 	rangeChanged = &PRIVATE()->OnRangeChanged;
 
 	PRIVATE()->Handle = UINew<UIButton>(context);
-	addElement(PRIVATE()->Handle);
+	addWidget(PRIVATE()->Handle);
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });
 	PRIVATE()->Handle->released->connect(this, [=]() {
@@ -136,17 +136,17 @@ void UIScrollBar::layout(UIRect client)
 
 void UIScrollBar::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2);
 }
 
-void UIScrollBar::removeElement()
+void UIScrollBar::removeWidget()
 {
-	UIList<UIElementRef> result;
-	for (size_t i = 1; i < getChildren().size(); ++i) result.push_back(getChildren()[i]);
-	for (size_t i = 0; i < result.size(); ++i) removeElement(result[i]);
+	UIList<UIWidgetRef> result;
+	for (size_t i = 1; i < getWidgets().size(); ++i) result.push_back(getWidgets()[i]);
+	for (size_t i = 0; i < result.size(); ++i) removeWidget(result[i]);
 }
 
 UI::Orientation UIScrollBar::getOrientation() const
@@ -221,7 +221,7 @@ UIString UIScrollBarFactory::getTagName() const
 	return "scrollbar";
 }
 
-UIElementRef UIScrollBarFactory::getElement(UIString style) const
+UIWidgetRef UIScrollBarFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIScrollBar>(getContext());
 	result->setStyleText(style);

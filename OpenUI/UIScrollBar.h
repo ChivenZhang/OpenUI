@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 #include "UIButton.h"
 
@@ -21,7 +21,7 @@ struct UIScrollBarStyle
 };
 
 /// @brief Scroll bar
-class OPENUI_API UIScrollBar : public UIElement
+class OPENUI_API UIScrollBar : public UIWidget
 {
 public:
 	explicit UIScrollBar(UIContextRaw context);
@@ -29,8 +29,8 @@ public:
 	bool filter(UIReactorRaw source, UIEventRaw event) override;
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	using UIElement::removeElement;
-	void removeElement() override;
+	using UIWidget::removeWidget;
+	void removeWidget() override;
 
 	UI::Orientation getOrientation() const;
 	void setOrientation(UI::Orientation value);
@@ -59,7 +59,7 @@ public:
 	UISignalAsRaw<int32_t /*min*/, int32_t /*max*/> rangeChanged;
 
 private:
-	UIElementPrivateRaw m_PrivateScrollBar;
+	UIWidgetPrivateRaw m_PrivateScrollBar;
 };
 using UIScrollBarRef = UIRef<UIScrollBar>;
 using UIScrollBarRaw = UIRaw<UIScrollBar>;
@@ -69,5 +69,5 @@ class OPENUI_API UIScrollBarFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 
 /// @brief 
@@ -29,7 +29,7 @@ struct UIInputStyle
 };
 
 /// @brief Input
-class OPENUI_API UIInput : public UIElement
+class OPENUI_API UIInput : public UIWidget
 {
 public:
 	enum echo_t
@@ -110,7 +110,7 @@ public:
 	UISignalAsRaw<UIString const& /*text*/> textCopied;
 
 private:
-	UIElementPrivateRaw m_PrivateInput;
+	UIWidgetPrivateRaw m_PrivateInput;
 };
 
 /// @brief Input factory
@@ -118,5 +118,5 @@ class OPENUI_API UIInputFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

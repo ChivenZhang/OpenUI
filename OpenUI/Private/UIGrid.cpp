@@ -17,11 +17,11 @@ struct UIGridItem
 };
 
 /// @brief 
-class UIGridPrivate : public UIElementPrivate
+class UIGridPrivate : public UIWidgetPrivate
 {
 public:
 	UIGridStyle Style;
-	UIMap<UIElementRaw, UIGridItem> GridItemMap;
+	UIMap<UIWidgetRaw, UIGridItem> GridItemMap;
 	UIList<uint32_t> RowStretch, ColumnStretch;
 	UIList<float> RowPercent, ColumnPercent, RowSummary, ColumnSummary;
 };
@@ -29,7 +29,7 @@ public:
 
 UIGrid::UIGrid(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateGrid = new UIGridPrivate;
 
@@ -44,13 +44,13 @@ UIGrid::~UIGrid()
 
 void UIGrid::arrange(UIRect client)
 {
-	for (size_t i = 0; i < getChildren().size(); ++i)
+	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
-		getChildren()[i]->setDisplayType(UI::DisplayNone);
-		auto result = PRIVATE()->GridItemMap.find(getChildren()[i].get());
+		getWidgets()[i]->setDisplayType(UI::DisplayNone);
+		auto result = PRIVATE()->GridItemMap.find(getWidgets()[i].get());
 		if (result == PRIVATE()->GridItemMap.end())
 		{
-			getChildren()[i]->setDisplayType(UI::DisplayNone);
+			getWidgets()[i]->setDisplayType(UI::DisplayNone);
 		}
 		else
 		{
@@ -64,17 +64,17 @@ void UIGrid::arrange(UIRect client)
 			for (size_t k = 0; k < rowSpan && row + k < getColumnCount(); ++k) height += PRIVATE()->RowPercent[row + k];
 			for (size_t k = 0; k < colSpan && col + k < getColumnCount(); ++k) width += PRIVATE()->ColumnPercent[col + k];
 
-			getChildren()[i]->setDisplayType(UI::DisplayFlex);
-			getChildren()[i]->setPositionType(UI::PositionAbsolute);
-			getChildren()[i]->setFixedPos(UIValueF(posX, UI::UnitPercent), UIValueF(posY, UI::UnitPercent));
-			getChildren()[i]->setFixedSize(UIValueF(width, UI::UnitPercent), UIValueF(height, UI::UnitPercent));
+			getWidgets()[i]->setDisplayType(UI::DisplayFlex);
+			getWidgets()[i]->setPositionType(UI::PositionAbsolute);
+			getWidgets()[i]->setFixedPos(UIValueF(posX, UI::UnitPercent), UIValueF(posY, UI::UnitPercent));
+			getWidgets()[i]->setFixedSize(UIValueF(width, UI::UnitPercent), UIValueF(height, UI::UnitPercent));
 		}
 	}
 }
 
 void UIGrid::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(UINoPen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
@@ -82,36 +82,36 @@ void UIGrid::paint(UIRect client, UIPainterRaw painter)
 
 void UIGrid::repaint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::repaint(client, painter);
+	UIWidget::repaint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(UINoBrush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
-bool UIGrid::addElement(UIElementRef value)
+bool UIGrid::addWidget(UIWidgetRef value)
 {
-	auto result = UIElement::addElement(value);
+	auto result = UIWidget::addWidget(value);
 	if (result) PRIVATE()->GridItemMap.emplace(value.get(), UIGridItem{ 0,0,1,1 });
 	return result;
 }
 
-bool UIGrid::addElement(UIElementRef value, uint32_t row, uint32_t column, uint32_t rowSpan, uint32_t columnSpan)
+bool UIGrid::addElement(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan, uint32_t columnSpan)
 {
-	auto result = UIElement::addElement(value);
+	auto result = UIWidget::addWidget(value);
 	if (result) PRIVATE()->GridItemMap.emplace(value.get(), UIGridItem{ row, column, rowSpan, columnSpan });
 	return result;
 }
 
-bool UIGrid::removeElement(UIElementRef value)
+bool UIGrid::removeWidget(UIWidgetRef value)
 {
-	auto result = UIElement::removeElement(value);
+	auto result = UIWidget::removeWidget(value);
 	if (result) PRIVATE()->GridItemMap.erase(value.get());
 	return result;
 }
 
-void UIGrid::removeElement()
+void UIGrid::removeWidget()
 {
-	UIElement::removeElement();
+	UIWidget::removeWidget();
 	PRIVATE()->GridItemMap.clear();
 }
 
@@ -258,7 +258,7 @@ UIString UIGridFactory::getTagName() const
 	return "grid";
 }
 
-UIElementRef UIGridFactory::getElement(UIString style) const
+UIWidgetRef UIGridFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIGrid>(getContext());
 	result->setStyleText(style);

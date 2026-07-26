@@ -20,7 +20,7 @@ public:
 	virtual bool addFactory(UIFactoryRef value);
 	virtual bool removeFactory(UIString name);
 	virtual void removeFactory();
-	virtual UIElementRef buildElement(UIString html, UIString css = UIString()) const;
+	virtual UIWidgetRef buildElement(UIString html, UIString css = UIString()) const;
 
 	template<class T, class... Args>
 	UIRef<T> create(Args... args)
@@ -29,7 +29,7 @@ public:
 	}
 
 private:
-	UIElementPrivateRaw m_Private;
+	UIWidgetPrivateRaw m_Private;
 };
 using UIBuilderRaw = UIRaw<UIBuilder>;
 using UIBuilderRef = UIRef<UIBuilder>;

@@ -176,14 +176,14 @@ void business(UIContextRaw context, SDL_Window* window)
 	//if (false)
 	{
 		auto scroll = builder->create<UIScroll>();
-		layout->addElement(scroll);
+		layout->addWidget(scroll);
 		scroll->setFixedSize(300 * scale, 200 * scale);
 		scroll->setHorizontalValue(150);
 		scroll->setVerticallValue(150);
 		//if (false)
 		{
 			auto label = builder->create<UILabel>();
-			scroll->addElement(label);
+			scroll->addWidget(label);
 			label->setFixedSize(300 * scale, 300 * scale);
 			label->setScaledContents(UILabel::ScaleKeepRatio);
 			int img_width, img_height, channels;
@@ -196,59 +196,59 @@ void business(UIContextRaw context, SDL_Window* window)
 	//if (false)
 	{
 		auto vbox = builder->create<UIVBox>();
-		layout->addElement(vbox);
+		layout->addWidget(vbox);
 		vbox->setFixedSize(200 * scale, 200 * scale);
 		{
 			auto button = builder->create<UIButton>();
-			vbox->addElement(button);
+			vbox->addWidget(button);
 			button->setText("Button0");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			vbox->addElement(button);
+			vbox->addWidget(button);
 			button->setText("Button1");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			vbox->addElement(button);
+			vbox->addWidget(button);
 			button->setText("Button2");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			vbox->addElement(button);
+			vbox->addWidget(button);
 			button->setText("Button3");
 		}
 	}
 	//if (false)
 	{
 		auto hbox = builder->create<UIHBox>();
-		layout->addElement(hbox);
+		layout->addWidget(hbox);
 		hbox->setFixedSize(250 * scale, 200 * scale);
 		{
 			auto button = builder->create<UIButton>();
-			hbox->addElement(button);
+			hbox->addWidget(button);
 			button->setText("Button0");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			hbox->addElement(button);
+			hbox->addWidget(button);
 			button->setText("Button1");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			hbox->addElement(button);
+			hbox->addWidget(button);
 			button->setText("Button2");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			hbox->addElement(button);
+			hbox->addWidget(button);
 			button->setText("Button3");
 		}
 	}
 	//if (false)
 	{
 		auto grid = builder->create<UIGrid>();
-		layout->addElement(grid);
+		layout->addWidget(grid);
 		grid->setRowStretch({ 1,1,1 });
 		grid->setColumnStretch({ 1,1,1 });
 		grid->setFixedSize(200 * scale, 200 * scale);
@@ -276,37 +276,37 @@ void business(UIContextRaw context, SDL_Window* window)
 	//if (false)
 	{
 		auto group = builder->create<UIVBox>();
-		layout->addElement(group);
+		layout->addWidget(group);
 		group->setFixedSize(200 * scale, 200 * scale);
 		{
 			auto radio = builder->create<UIRadio>();
-			group->addElement(radio);
+			group->addWidget(radio);
 			radio->setFixedSize(100 * scale, 30 * scale);
 			radio->setText("Radio");
 			radio->setChecked(true);
 
 			auto radio0 = builder->create<UIRadio>();
-			group->addElement(radio0);
+			group->addWidget(radio0);
 			radio0->setFixedSize(100 * scale, 30 * scale);
 			radio0->setText("Radio");
 			radio0->setExclusive(radio->getExclusive());
 
 			auto radio1 = builder->create<UIRadio>();
-			group->addElement(radio1);
+			group->addWidget(radio1);
 			radio1->setFixedSize(100 * scale, 30 * scale);
 			radio1->setText("Radio");
 			radio1->setExclusive(radio->getExclusive());
 		}
 		{
 			auto check = builder->create<UICheck>();
-			group->addElement(check);
+			group->addWidget(check);
 			check->setFixedSize(100 * scale, 30 * scale);
 			check->setText("Check");
 			check->setChecked(true);
 		}
 		{
 			auto check = builder->create<UICheck>();
-			group->addElement(check);
+			group->addWidget(check);
 			check->setFixedSize(100 * scale, 30 * scale);
 			check->setText("Check");
 		}
@@ -314,21 +314,21 @@ void business(UIContextRaw context, SDL_Window* window)
 	//if (false)
 	{
 		auto label = builder->create<UILabel>();
-		layout->addElement(label);
+		layout->addWidget(label);
 		label->setFixedSize(100 * scale, 30 * scale);
 		label->setText("Label");
 	}
 	//if (false)
 	{
 		auto button = builder->create<UIButton>();
-		layout->addElement(button);
+		layout->addWidget(button);
 		button->setFixedSize(100 * scale, 30 * scale);
 		button->setText("Button");
 	}
 	//if (false)
 	{
 		auto slider = builder->create<UISlider>();
-		layout->addElement(slider);
+		layout->addWidget(slider);
 		slider->setFixedSize(100 * scale, 30 * scale);
 		slider->setRange(0, 100 * scale);
 		slider->setValue(25 * scale);
@@ -336,7 +336,7 @@ void business(UIContextRaw context, SDL_Window* window)
 	//if (false)
 	{
 		auto slider = builder->create<UISlider>();
-		layout->addElement(slider);
+		layout->addWidget(slider);
 		slider->setOrientation(UI::Vertical);
 		slider->setFixedSize(30 * scale, 100 * scale);
 		slider->setRange(0, 100 * scale);
@@ -345,19 +345,19 @@ void business(UIContextRaw context, SDL_Window* window)
 	//if(false)
 	{
 		auto hline = builder->create<UIHLine>();
-		layout->addElement(hline);
+		layout->addWidget(hline);
 		hline->setFixedSize(100 * scale, 30 * scale);
 	}
 	//if(false)
 	{
 		auto vline = builder->create<UIVLine>();
-		layout->addElement(vline);
+		layout->addWidget(vline);
 		vline->setFixedSize(30 * scale, 100 * scale);
 	}
 	//if (false)
 	{
 		auto combo = builder->create<UICombo>();
-		layout->addElement(combo);
+		layout->addWidget(combo);
 		combo->setFixedSize(100 * scale, 30 * scale);
 		combo->setMaxCount(4);
 		combo->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
@@ -367,7 +367,7 @@ void business(UIContextRaw context, SDL_Window* window)
 			});
 
 		auto combo2 = builder->create<UICombo>();
-		layout->addElement(combo2);
+		layout->addWidget(combo2);
 		combo2->setFixedSize(100 * scale, 30 * scale);
 		combo2->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
 		combo2->setCurrentText("黄金糕");
@@ -378,7 +378,7 @@ void business(UIContextRaw context, SDL_Window* window)
 	// if(false)
 	{
 		auto input = builder->create<UIInput>();
-		layout->addElement(input);
+		layout->addWidget(input);
 		input->setFixedSize(100 * scale, 30 * scale);
 		input->setText("Hello,OpenUI");
 		input->editingStarted->connect(nullptr, [=](UIRect rect) {

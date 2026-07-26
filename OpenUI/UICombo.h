@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 #include "UIButton.h"
 
@@ -82,7 +82,7 @@ struct UIComboStyle
 };
 
 /// @brief Combo
-class OPENUI_API UICombo : public UIElement
+class OPENUI_API UICombo : public UIWidget
 {
 public:
 	explicit UICombo(UIContextRaw context);
@@ -120,7 +120,7 @@ public:
 	UISignalAsRaw<UIString /*text*/> textHighlighted;
 
 private:
-	UIElementPrivateRaw m_PrivateCombo;
+	UIWidgetPrivateRaw m_PrivateCombo;
 };
 using UIComboRef = UIRef<UICombo>;
 using UIComboRaw = UIRaw<UICombo>;
@@ -130,5 +130,5 @@ class OPENUI_API UIComboFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

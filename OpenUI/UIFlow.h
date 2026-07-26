@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 
 /// @brief 
@@ -20,7 +20,7 @@ struct UIFlowStyle
 };
 
 /// @brief Flow
-class OPENUI_API UIFlow : public UIElement
+class OPENUI_API UIFlow : public UIWidget
 {
 public:
 	explicit UIFlow(UIContextRaw context);
@@ -32,7 +32,7 @@ public:
 	void setStyle(UIFlowStyle value);
 
 private:
-	UIElementPrivateRaw m_PrivateFlow;
+	UIWidgetPrivateRaw m_PrivateFlow;
 };
 
 /// @brief Flow factory
@@ -40,5 +40,5 @@ class OPENUI_API UIFlowFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 
 /// @brief 
@@ -33,7 +33,7 @@ struct UILabelStyle
 };
 
 /// @brief Label
-class OPENUI_API UILabel : public UIElement
+class OPENUI_API UILabel : public UIWidget
 {
 public:
 	using scale_t = enum
@@ -79,7 +79,7 @@ public:
 	UISignalAsRaw<UIString> linkActivated;
 
 private:
-	UIElementPrivateRaw m_PrivateLabel;
+	UIWidgetPrivateRaw m_PrivateLabel;
 };
 using UILabelRef = UIRef<UILabel>;
 using UILabelRaw = UIRaw<UILabel>;
@@ -89,5 +89,5 @@ class OPENUI_API UILabelFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

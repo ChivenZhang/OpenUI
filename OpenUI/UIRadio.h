@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 #include "UIButton.h"
 #include "UILabel.h"
@@ -32,7 +32,7 @@ using UIRadioGroupRef = UIRef<UIRadioGroup>;
 using UIRadioGroupRaw = UIRaw<UIRadioGroup>;
 
 /// @brief Radio
-class OPENUI_API UIRadio : public UIElement
+class OPENUI_API UIRadio : public UIWidget
 {
 public:
 	explicit UIRadio(UIContextRaw context);
@@ -71,7 +71,7 @@ public:
 	UISignalAsRaw<> hovered;
 
 private:
-	UIElementPrivateRaw m_PrivateRadio;
+	UIWidgetPrivateRaw m_PrivateRadio;
 };
 using UIRadioRef = UIRef<UIRadio>;
 using UIRadioRaw = UIRaw<UIRadio>;
@@ -89,5 +89,5 @@ class OPENUI_API UIRadioFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

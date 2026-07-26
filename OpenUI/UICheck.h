@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 #include "UIButton.h"
 #include "UILabel.h"
@@ -28,7 +28,7 @@ struct UICheckStyle
 };
 
 /// @brief Check
-class OPENUI_API UICheck : public UIElement
+class OPENUI_API UICheck : public UIWidget
 {
 public:
 	explicit UICheck(UIContextRaw context);
@@ -64,7 +64,7 @@ public:
 	UISignalAsRaw<> hovered;
 
 private:
-	UIElementPrivateRaw m_PrivateCheck;
+	UIWidgetPrivateRaw m_PrivateCheck;
 };
 using UICheckRef = UIRef<UICheck>;
 using UICheckRaw = UIRaw<UICheck>;
@@ -74,5 +74,5 @@ class OPENUI_API UICheckFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIPainter.h"
 #include "UIRender.h"
 #include "UIBuilder.h"
@@ -42,16 +42,16 @@ public:
 	UIRenderRaw getRender() const;
 	void setRender(UIRenderRef value);
 	UIBuilderRaw getBuilder() const;
-	UIElementRaw getFocus() const;
-	void setFocus(UIElementRaw value);
-	void setAnimate(UIElementRaw value, bool animate);
+	UIWidgetRaw getFocus() const;
+	void setFocus(UIWidgetRaw value);
+	void setAnimate(UIWidgetRaw value, bool animate);
 	void sendEvent(UIReactorRaw sender, UIEventRaw event);
 	void postEvent(UIReactorRef sender, UIEventRef event);
-	bool addElement(UIElementRef value, int32_t zorder = 0);
-	bool removeElement(UIElementRef value);
+	bool addElement(UIWidgetRef value, int32_t zorder = 0);
+	bool removeElement(UIWidgetRef value);
 	void removeElement();
-	bool existElement(UIElementRef value) const;
-	UIListView<const UIElementRef> getElement() const;
+	bool existElement(UIWidgetRef value) const;
+	UIListView<const UIWidgetRef> getElement() const;
 	void layoutElement();
 	bool layoutElement(UIRect client);
 	void paintElement();

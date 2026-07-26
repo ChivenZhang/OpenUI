@@ -12,7 +12,7 @@
 #include "../UIContext.h"
 
 /// @brief 
-class UISliderPrivate : public UIElementPrivate
+class UISliderPrivate : public UIWidgetPrivate
 {
 public:
 	UIFloat2 MousePos;
@@ -34,7 +34,7 @@ public:
 
 UISlider::UISlider(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateSlider = new UISliderPrivate;
 
@@ -45,7 +45,7 @@ UISlider::UISlider(UIContextRaw context)
 	rangeChanged = &PRIVATE()->OnRangeChanged;
 
 	PRIVATE()->Handle = UINew<UIButton>(context);
-	addElement(PRIVATE()->Handle);
+	addWidget(PRIVATE()->Handle);
 	PRIVATE()->Handle->setFixedSize(16, 16);
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });
@@ -142,7 +142,7 @@ void UISlider::layout(UIRect client)
 
 void UISlider::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 
@@ -156,11 +156,11 @@ void UISlider::paint(UIRect client, UIPainterRaw painter)
 	}
 }
 
-void UISlider::removeElement()
+void UISlider::removeWidget()
 {
-	UIList<UIElementRef> result;
-	for (size_t i = 1; i < getChildren().size(); ++i) result.push_back(getChildren()[i]);
-	for (size_t i = 0; i < result.size(); ++i) removeElement(result[i]);
+	UIList<UIWidgetRef> result;
+	for (size_t i = 1; i < getWidgets().size(); ++i) result.push_back(getWidgets()[i]);
+	for (size_t i = 0; i < result.size(); ++i) removeWidget(result[i]);
 }
 
 UI::Orientation UISlider::getOrientation() const
@@ -255,7 +255,7 @@ UIString UISliderFactory::getTagName() const
 	return "slider";
 }
 
-UIElementRef UISliderFactory::getElement(UIString style) const
+UIWidgetRef UISliderFactory::getElement(UIString style) const
 {
 	auto result = UINew<UISlider>(getContext());
 	result->setStyleText(style);

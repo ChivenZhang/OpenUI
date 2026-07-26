@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 #include "UIButton.h"
 
@@ -21,7 +21,7 @@ struct UISliderStyle
 };
 
 /// @brief Handle
-class OPENUI_API UISlider : public UIElement
+class OPENUI_API UISlider : public UIWidget
 {
 public:
 	enum ticks_t
@@ -41,8 +41,8 @@ public:
 	bool filter(UIReactorRaw source, UIEventRaw event) override;
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	using UIElement::removeElement;
-	void removeElement() override;
+	using UIWidget::removeWidget;
+	void removeWidget() override;
 
 	UI::Orientation getOrientation() const;
 	void setOrientation(UI::Orientation value);
@@ -77,7 +77,7 @@ public:
 	UISignalAsRaw<int32_t /*min*/, int32_t /*max*/> rangeChanged;
 
 private:
-	UIElementPrivateRaw m_PrivateSlider;
+	UIWidgetPrivateRaw m_PrivateSlider;
 };
 using UISliderRef = UIRef<UISlider>;
 using UISliderRaw = UIRaw<UISlider>;
@@ -87,5 +87,5 @@ class OPENUI_API UISliderFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

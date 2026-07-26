@@ -10,8 +10,8 @@
 *
 * =================================================*/
 #include "UI.h"
-class UIElement;
-using UIElementRaw = UIRaw<UIElement>;
+class UIWidget;
+using UIWidgetRaw = UIRaw<UIWidget>;
 
 /// @brief Base interface of signals.
 class UISignal
@@ -26,9 +26,9 @@ template <class... T>
 class UISignalAs : public UISignal
 {
 public:
-	virtual uint32_t connect(UIElementRaw owner, UILambda<void(T...)> slot);
-	virtual void disconnect(UIElementRaw owner, uint32_t handle);
-	virtual void disconnect(UIElementRaw owner);
+	virtual uint32_t connect(UIWidgetRaw owner, UILambda<void(T...)> slot);
+	virtual void disconnect(UIWidgetRaw owner, uint32_t handle);
+	virtual void disconnect(UIWidgetRaw owner);
 	virtual void disconnect();
 	virtual void signal(T... args);
 
@@ -38,7 +38,7 @@ private:
 	{
 		bool Dirty = false;
 		uint32_t Handle = 0;
-		UIElementRaw Owner = nullptr;
+		UIWidgetRaw Owner = nullptr;
 		UILambda<void(T...)> Lambda;
 	};
 	using UISignalSlotRef = UIRef<UISignalSlot>;
@@ -46,7 +46,7 @@ private:
 };
 
 template<class ...T>
-inline uint32_t UISignalAs<T...>::connect(UIElementRaw owner, UILambda<void(T...)> slot)
+inline uint32_t UISignalAs<T...>::connect(UIWidgetRaw owner, UILambda<void(T...)> slot)
 {
 	auto handle = ++this->m_SlotID;
 	auto element = UINew<UISignalSlot>();
@@ -58,7 +58,7 @@ inline uint32_t UISignalAs<T...>::connect(UIElementRaw owner, UILambda<void(T...
 }
 
 template<class ...T>
-inline void UISignalAs<T...>::disconnect(UIElementRaw owner, uint32_t handle)
+inline void UISignalAs<T...>::disconnect(UIWidgetRaw owner, uint32_t handle)
 {
 	auto& connectList = this->m_SlotList;
 	for (size_t i = 0; i < connectList.size(); ++i)
@@ -72,7 +72,7 @@ inline void UISignalAs<T...>::disconnect(UIElementRaw owner, uint32_t handle)
 }
 
 template<class ...T>
-inline void UISignalAs<T...>::disconnect(UIElementRaw owner)
+inline void UISignalAs<T...>::disconnect(UIWidgetRaw owner)
 {
 	auto& connectList = this->m_SlotList;
 	for (size_t i = 0; i < connectList.size(); ++i)
@@ -131,9 +131,9 @@ template <>
 class UISignalAs<void> : public UISignal
 {
 public:
-	virtual uint32_t connect(UIElementRaw owner, UILambda<void()> slot);
-	virtual void disconnect(UIElementRaw owner, uint32_t handle);
-	virtual void disconnect(UIElementRaw owner);
+	virtual uint32_t connect(UIWidgetRaw owner, UILambda<void()> slot);
+	virtual void disconnect(UIWidgetRaw owner, uint32_t handle);
+	virtual void disconnect(UIWidgetRaw owner);
 	virtual void disconnect();
 	virtual void signal();
 
@@ -143,14 +143,14 @@ private:
 	{
 		bool Dirty = false;
 		uint32_t Handle = 0;
-		UIElementRaw Owner = nullptr;
+		UIWidgetRaw Owner = nullptr;
 		UILambda<void()> Lambda;
 	};
 	using UISignalSlotVoidRef = UIRef<UISignalSlot>;
 	UIList<UISignalSlotVoidRef> m_SlotList;
 };
 
-inline uint32_t UISignalAs<void>::connect(UIElementRaw owner, UILambda<void()> slot)
+inline uint32_t UISignalAs<void>::connect(UIWidgetRaw owner, UILambda<void()> slot)
 {
 	auto handle = ++this->m_SlotID;
 	auto element = UINew<UISignalSlot>();
@@ -161,7 +161,7 @@ inline uint32_t UISignalAs<void>::connect(UIElementRaw owner, UILambda<void()> s
 	return handle;
 }
 
-inline void UISignalAs<void>::disconnect(UIElementRaw owner, uint32_t handle)
+inline void UISignalAs<void>::disconnect(UIWidgetRaw owner, uint32_t handle)
 {
 	auto& connectList = this->m_SlotList;
 	for (size_t i = 0; i < connectList.size(); ++i)
@@ -174,7 +174,7 @@ inline void UISignalAs<void>::disconnect(UIElementRaw owner, uint32_t handle)
 	}
 }
 
-inline void UISignalAs<void>::disconnect(UIElementRaw owner)
+inline void UISignalAs<void>::disconnect(UIWidgetRaw owner)
 {
 	auto& connectList = this->m_SlotList;
 	for (size_t i = 0; i < connectList.size(); ++i)

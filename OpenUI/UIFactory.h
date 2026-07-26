@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 
 /// @brief Base interface of factories
 class OPENUI_API UIFactory
@@ -23,7 +23,7 @@ public:
 
 	virtual UIString getTagName() const = 0;
 
-	virtual UIElementRef getElement(UIString style) const = 0;
+	virtual UIWidgetRef getElement(UIString style) const = 0;
 
 protected:
 	UIContextRaw m_Context;

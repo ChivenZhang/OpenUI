@@ -10,7 +10,7 @@
 * =================================================*/
 #include "../UIFlow.h"
 
-class UIFlowPrivateData : public UIElementPrivate
+class UIFlowPrivateData : public UIWidgetPrivate
 {
 public:
 	UIFlowStyle Style;
@@ -19,7 +19,7 @@ public:
 
 UIFlow::UIFlow(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateFlow = new UIFlowPrivateData;
 }
@@ -37,9 +37,9 @@ void UIFlow::arrange(UIRect client)
 	this->setFlexDirection(UI::FlexDirectionRow);
 	this->setJustifyContent(UI::JustifyFlexStart);
 
-	for (size_t i = 0; i < getChildren().size(); ++i)
+	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
-		auto child = getChildren()[i];
+		auto child = getWidgets()[i];
 		if (child->getFixedWidth().Unit == UI::UnitNone) child->setFlexGrow(1.0f);
 		else child->setFlexGrow(0.0f);
 		if (child->getFixedHeight().Unit == UI::UnitNone) child->setAlignSelf(UI::AlignStretch);
@@ -49,7 +49,7 @@ void UIFlow::arrange(UIRect client)
 
 void UIFlow::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2);
@@ -70,7 +70,7 @@ UIString UIFlowFactory::getTagName() const
 	return "flow";
 }
 
-UIElementRef UIFlowFactory::getElement(UIString style) const
+UIWidgetRef UIFlowFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIFlow>(getContext());
 	result->setStyleText(style);

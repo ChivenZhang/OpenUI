@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 
 /// @brief 
@@ -20,7 +20,7 @@ struct UIGridStyle
 };
 
 /// @brief Grid
-class OPENUI_API UIGrid : public UIElement
+class OPENUI_API UIGrid : public UIWidget
 {
 public:
 	explicit UIGrid(UIContextRaw context);
@@ -29,10 +29,10 @@ public:
 	void paint(UIRect client, UIPainterRaw painter) override;
 	void repaint(UIRect client, UIPainterRaw painter) override;
 
-	bool addElement(UIElementRef value) override;
-	bool addElement(UIElementRef value, uint32_t row, uint32_t column, uint32_t rowSpan = 1, uint32_t columnSpan = 1);
-	bool removeElement(UIElementRef value) override;
-	void removeElement() override;
+	bool addWidget(UIWidgetRef value) override;
+	bool addElement(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan = 1, uint32_t columnSpan = 1);
+	bool removeWidget(UIWidgetRef value) override;
+	void removeWidget() override;
 
 	UIGridStyle getStyle() const;
 	void setStyle(UIGridStyle value);
@@ -48,7 +48,7 @@ public:
 	void setColumnStretch(UIList<uint32_t> stretch);
 
 private:
-	UIElementPrivateRaw m_PrivateGrid;
+	UIWidgetPrivateRaw m_PrivateGrid;
 };
 
 /// @brief Grid factory
@@ -56,5 +56,5 @@ class OPENUI_API UIGridFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

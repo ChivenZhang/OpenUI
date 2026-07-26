@@ -11,7 +11,7 @@
 #include "../UIButton.h"
 #include "../UIContext.h"
 
-class UIButtonPrivate : public UIElementPrivate
+class UIButtonPrivate : public UIWidgetPrivate
 {
 public:
 	UIButtonStyle Style;
@@ -30,7 +30,7 @@ public:
 
 UIButton::UIButton(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateButton = new UIButtonPrivate;
 
@@ -41,7 +41,7 @@ UIButton::UIButton(UIContextRaw context)
 	toggled = &PRIVATE()->OnToggled;
 
 	PRIVATE()->Label = UINew<UILabel>(context);
-	addElement(PRIVATE()->Label);
+	addWidget(PRIVATE()->Label);
 
 	setStyle(PRIVATE()->Style);
 }
@@ -61,7 +61,7 @@ void UIButton::arrange(UIRect client)
 
 void UIButton::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 
 	painter->setPen(UINoPen);
 	if (getEnable() == false)
@@ -90,7 +90,7 @@ void UIButton::paint(UIRect client, UIPainterRaw painter)
 
 void UIButton::repaint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::repaint(client, painter);
+	UIWidget::repaint(client, painter);
 
 	painter->setBrush(UINoBrush);
 	if (getEnable() == false)
@@ -248,7 +248,7 @@ UIString UIButtonFactory::getTagName() const
 	return "button";
 }
 
-UIElementRef UIButtonFactory::getElement(UIString style) const
+UIWidgetRef UIButtonFactory::getElement(UIString style) const
 {
 	auto result = UINew<UIButton>(getContext());
 	result->setStyleText(style);

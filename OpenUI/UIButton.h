@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 #include "UILabel.h"
 
@@ -67,7 +67,7 @@ struct UIButtonStyle
 };
 
 /// @brief Button
-class OPENUI_API UIButton : public UIElement
+class OPENUI_API UIButton : public UIWidget
 {
 public:
 	explicit UIButton(UIContextRaw context);
@@ -108,7 +108,7 @@ public:
 	UISignalAsRaw<bool /*checked*/> toggled;
 
 private:
-	UIElementPrivateRaw m_PrivateButton;
+	UIWidgetPrivateRaw m_PrivateButton;
 };
 using UIButtonRef = UIRef<UIButton>;
 using UIButtonRaw = UIRaw<UIButton>;
@@ -118,5 +118,5 @@ class OPENUI_API UIButtonFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

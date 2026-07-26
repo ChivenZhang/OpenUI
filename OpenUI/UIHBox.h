@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIElement.h"
+#include "UIWidget.h"
 #include "UIFactory.h"
 
 /// @brief 
@@ -20,7 +20,7 @@ struct UIHBoxStyle
 };
 
 /// @brief HBox
-class OPENUI_API UIHBox : public UIElement
+class OPENUI_API UIHBox : public UIWidget
 {
 public:
 	explicit UIHBox(UIContextRaw context);
@@ -33,7 +33,7 @@ public:
 	void setStyle(UIHBoxStyle value);
 
 private:
-	UIElementPrivateRaw m_PrivateHbox;
+	UIWidgetPrivateRaw m_PrivateHbox;
 };
 
 /// @brief HBox factory
@@ -41,5 +41,5 @@ class OPENUI_API UIHBoxFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIElementRef getElement(UIString style) const override;
+	UIWidgetRef getElement(UIString style) const override;
 };

@@ -13,7 +13,7 @@
 #include "../UIScroll.h"
 #include "../UIContext.h"
 
-class UIComboPrivate : public UIElementPrivate
+class UIComboPrivate : public UIWidgetPrivate
 {
 public:
 	int32_t Index = -1;
@@ -35,7 +35,7 @@ public:
 
 UICombo::UICombo(UIContextRaw context)
 	:
-	UIElement(context)
+	UIWidget(context)
 {
 	m_PrivateCombo = new UIComboPrivate;
 
@@ -47,7 +47,7 @@ UICombo::UICombo(UIContextRaw context)
 	textHighlighted = &PRIVATE()->OnTextHighlighted;
 
 	PRIVATE()->Button = UINew<UIButton>(context);
-	addElement(PRIVATE()->Button);
+	addWidget(PRIVATE()->Button);
 	PRIVATE()->Popup = UINew<UIScroll>(context);
 	PRIVATE()->Popup->setEventFilter(this);
 	setStyle(PRIVATE()->Style);
@@ -87,14 +87,14 @@ void UICombo::arrange(UIRect client)
 	{
 		content->setFixedWidth(0);
 		content->setFixedHeight(0);
-		for (size_t i = 0; content && i < content->getChildren().size(); ++i)
+		for (size_t i = 0; content && i < content->getWidgets().size(); ++i)
 		{
-			auto itemWidget = UICast<UIButton>(content->getChildren()[i]);
+			auto itemWidget = UICast<UIButton>(content->getWidgets()[i]);
 			auto textRect = painter->boundingRect(0, 0, FLT_MAX, FLT_MAX, itemWidget->getText(), 0);
 
-			content->getChildren()[i]->setFlexGrow(1);
-			content->getChildren()[i]->setMinWidth(textRect.W);
-			content->getChildren()[i]->setMinHeight(textRect.H);
+			content->getWidgets()[i]->setFlexGrow(1);
+			content->getWidgets()[i]->setMinWidth(textRect.W);
+			content->getWidgets()[i]->setMinHeight(textRect.H);
 			content->setFixedWidth(std::max(content->getFixedWidth().Value, textRect.W + 8 + 20));
 			content->setFixedHeight(content->getFixedHeight() + textRect.H);
 
@@ -123,12 +123,12 @@ void UICombo::layout(UIRect client)
 
 void UICombo::paint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::paint(client, painter);
+	UIWidget::paint(client, painter);
 }
 
 void UICombo::repaint(UIRect client, UIPainterRaw painter)
 {
-	UIElement::repaint(client, painter);
+	UIWidget::repaint(client, painter);
 
 	painter->setPen(PRIVATE()->Style.Button.Normal.Pen);
 	painter->drawLine(client.X + client.W - 20, client.Y + (client.H - 5) * 0.5f, client.X + client.W - 15, client.Y + (client.H + 5) * 0.5f);
@@ -143,15 +143,15 @@ UIStringList const& UICombo::getItems() const
 void UICombo::setItems(UIStringList const& texts)
 {
 	PRIVATE()->Items = texts;
-	PRIVATE()->Popup->removeElement();
+	PRIVATE()->Popup->removeWidget();
 	auto itemsWidget = UINew<UIVBox>(getContext());
-	PRIVATE()->Popup->addElement(itemsWidget);
+	PRIVATE()->Popup->addWidget(itemsWidget);
 
 	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
 	{
 		auto text = PRIVATE()->Items[i];
 		auto button = UINew<UIButton>(getContext());
-		itemsWidget->addElement(button);
+		itemsWidget->addWidget(button);
 		button->setText(text);
 		button->setStyle(PRIVATE()->Style.Items);
 		button->getLabel()->setMargin({ 8, 0, 20, 0 });
@@ -239,9 +239,9 @@ void UICombo::setStyle(UIComboStyle value)
 	PRIVATE()->Button->setStyle(PRIVATE()->Style.Button);
 
 	auto contentWidget = PRIVATE()->Popup->getContentView();
-	for (size_t i = 0; contentWidget && i < contentWidget->getChildren().size(); ++i)
+	for (size_t i = 0; contentWidget && i < contentWidget->getWidgets().size(); ++i)
 	{
-		auto itemWidget = UICast<UIButton>(contentWidget->getChildren()[i]);
+		auto itemWidget = UICast<UIButton>(contentWidget->getWidgets()[i]);
 		if (itemWidget == nullptr) continue;
 		itemWidget->setStyle(PRIVATE()->Style.Items);
 		itemWidget->getLabel()->setStyle(PRIVATE()->Style.Items.Label);
@@ -281,7 +281,7 @@ UIString UIComboFactory::getTagName() const
 	return "combo";
 }
 
-UIElementRef UIComboFactory::getElement(UIString style) const
+UIWidgetRef UIComboFactory::getElement(UIString style) const
 {
 	auto result = UINew<UICombo>(getContext());
 	result->setStyleText(style);
