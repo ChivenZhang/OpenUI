@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UICheck.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 
 class UICheckPrivate : public UIWidgetPrivate
 {
@@ -27,9 +27,9 @@ public:
 };
 #define PRIVATE() ((UICheckPrivate*) m_PrivateCheck)
 
-UICheck::UICheck(UIContextRaw context)
+UICheck::UICheck(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateCheck = new UICheckPrivate;
 
@@ -38,7 +38,7 @@ UICheck::UICheck(UIContextRaw context)
 	released = &PRIVATE()->OnReleased;
 	hovered = &PRIVATE()->OnHovered;
 
-	PRIVATE()->Button = UINew<UIButton>(context);
+	PRIVATE()->Button = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize(16, 16);
 	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
@@ -58,7 +58,7 @@ UICheck::UICheck(UIContextRaw context)
 		PRIVATE()->Button->setStyle(style);
 	}
 
-	PRIVATE()->Label = UINew<UILabel>(context);
+	PRIVATE()->Label = UINew<UILabel>(canvas);
 	addWidget(PRIVATE()->Label);
 	{
 		auto style = PRIVATE()->Label->getStyle();
@@ -105,10 +105,10 @@ void UICheck::arrange(UIRect client)
 	PRIVATE()->Label->setFlexGrow(1);
 	PRIVATE()->Label->setAlignSelf(UI::AlignStretch);
 
-	auto painter = getContext()->getPainter();
+	auto painter = getCanvas()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;
-	PRIVATE()->Button->setFixedSize(fontSize * getContext()->getConfig().DisplayScale, fontSize * getContext()->getConfig().DisplayScale);
-	PRIVATE()->Button->setMargin({ 8 * getContext()->getConfig().DisplayScale, 0, 8 * getContext()->getConfig().DisplayScale, 0 });
+	PRIVATE()->Button->setFixedSize(fontSize * getCanvas()->getConfig().DisplayScale, fontSize * getCanvas()->getConfig().DisplayScale);
+	PRIVATE()->Button->setMargin({ 8 * getCanvas()->getConfig().DisplayScale, 0, 8 * getCanvas()->getConfig().DisplayScale, 0 });
 }
 
 void UICheck::layout(UIRect client)
@@ -151,7 +151,7 @@ void UICheck::setChecked(bool value)
 	PRIVATE()->Button->setChecked(value);
 	if (PRIVATE()->Checked) PRIVATE()->Button->setText("✔");
 	else PRIVATE()->Button->setText("");
-	if (getContext()) getContext()->paintWidget();
+	if (getCanvas()) getCanvas()->paintWidget();
 }
 
 UIButtonRaw UICheck::getButton() const
@@ -177,7 +177,7 @@ void UICheck::mouseDoubleEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getContext()) getContext()->paintWidget();
+			if (getCanvas()) getCanvas()->paintWidget();
 		}
 	}
 }
@@ -195,7 +195,7 @@ void UICheck::mousePressEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getContext()) getContext()->paintWidget();
+			if (getCanvas()) getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -210,7 +210,7 @@ void UICheck::mouseReleaseEvent(UIMouseEventRaw event)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
-			if (getContext()) getContext()->paintWidget();
+			if (getCanvas()) getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -225,12 +225,12 @@ void UICheck::mouseMoveEvent(UIMouseEventRaw event)
 	{
 		PRIVATE()->Hovered = true;
 		PRIVATE()->OnHovered.signal();
-		if (getContext()) getContext()->paintWidget();
+		if (getCanvas()) getCanvas()->paintWidget();
 	}
 	else
 	{
 		PRIVATE()->Hovered = false;
-		if (getContext()) getContext()->paintWidget();
+		if (getCanvas()) getCanvas()->paintWidget();
 	}
 }
 
@@ -241,7 +241,7 @@ void UICheck::enterEvent(UIMouseEventRaw event)
 void UICheck::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
-	if (getContext()) getContext()->paintWidget();
+	if (getCanvas()) getCanvas()->paintWidget();
 }
 
 UIString UICheckFactory::getTagName() const

@@ -85,7 +85,7 @@ struct UIComboStyle
 class OPENUI_API UICombo : public UIWidget
 {
 public:
-	explicit UICombo(UIContextRaw context);
+	explicit UICombo(UICanvasRaw canvas);
 	~UICombo() override;
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;

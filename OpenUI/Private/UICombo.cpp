@@ -11,7 +11,7 @@
 #include "../UICombo.h"
 #include "../UIVBox.h"
 #include "../UIScroll.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 
 class UIComboPrivate : public UIWidgetPrivate
 {
@@ -33,9 +33,9 @@ public:
 };
 #define PRIVATE() ((UIComboPrivate*)m_PrivateCombo)
 
-UICombo::UICombo(UIContextRaw context)
+UICombo::UICombo(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateCombo = new UIComboPrivate;
 
@@ -46,9 +46,9 @@ UICombo::UICombo(UIContextRaw context)
 	textActivated = &PRIVATE()->OnTextActivated;
 	textHighlighted = &PRIVATE()->OnTextHighlighted;
 
-	PRIVATE()->Button = UINew<UIButton>(context);
+	PRIVATE()->Button = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Button);
-	PRIVATE()->Popup = UINew<UIScroll>(context);
+	PRIVATE()->Popup = UINew<UIScroll>(canvas);
 	PRIVATE()->Popup->setEventFilter(this);
 	setStyle(PRIVATE()->Style);
 
@@ -58,7 +58,7 @@ UICombo::UICombo(UIContextRaw context)
 		PRIVATE()->Popup->setFixedPos(posX, posY);
 		PRIVATE()->Popup->getHorizontalBar()->setValue(0);
 		PRIVATE()->Popup->getVerticalBar()->setValue(0);
-		getContext()->addWidget(PRIVATE()->Popup, 1);
+		getCanvas()->addWidget(PRIVATE()->Popup, 1);
 		});
 }
 
@@ -79,7 +79,7 @@ void UICombo::arrange(UIRect client)
 	PRIVATE()->Popup->setPositionType(UI::PositionAbsolute);
 	PRIVATE()->Popup->setFixedHeight(0);
 
-	auto painter = getContext()->getPainter();
+	auto painter = getCanvas()->getPainter();
 	painter->setFont(PRIVATE()->Style.Button.Label.Normal.Foreground.Font);
 
 	auto content = PRIVATE()->Popup->getContentView();
@@ -144,13 +144,13 @@ void UICombo::setItems(UIStringList const& texts)
 {
 	PRIVATE()->Items = texts;
 	PRIVATE()->Popup->removeWidget();
-	auto itemsWidget = UINew<UIVBox>(getContext());
+	auto itemsWidget = UINew<UIVBox>(getCanvas());
 	PRIVATE()->Popup->addWidget(itemsWidget);
 
 	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
 	{
 		auto text = PRIVATE()->Items[i];
-		auto button = UINew<UIButton>(getContext());
+		auto button = UINew<UIButton>(getCanvas());
 		itemsWidget->addWidget(button);
 		button->setText(text);
 		button->setStyle(PRIVATE()->Style.Items);
@@ -165,7 +165,7 @@ void UICombo::setItems(UIStringList const& texts)
 			auto oldIndex = PRIVATE()->Index;
 			PRIVATE()->Index = (int32_t)i;
 			PRIVATE()->Button->setText(text);
-			getContext()->removeWidget(PRIVATE()->Popup);
+			getCanvas()->removeWidget(PRIVATE()->Popup);
 			PRIVATE()->OnTextActivated.signal(text);
 			if (PRIVATE()->Index != oldIndex)
 			{
@@ -259,7 +259,7 @@ bool UICombo::filter(UIReactorRaw source, UIEventRaw event)
 		auto viewport = PRIVATE()->Popup->getViewport();
 		if (UIBounds(UIOverlap(client, viewport), event2->X, event2->Y) == false)
 		{
-			getContext()->removeWidget(PRIVATE()->Popup);
+			getCanvas()->removeWidget(PRIVATE()->Popup);
 		}
 	} break;
 	case UIHash("DoubleClick"):
@@ -269,7 +269,7 @@ bool UICombo::filter(UIReactorRaw source, UIEventRaw event)
 		auto viewport = PRIVATE()->Popup->getViewport();
 		if (UIBounds(UIOverlap(client, viewport), event2->X, event2->Y) == false)
 		{
-			getContext()->removeWidget(PRIVATE()->Popup);
+			getCanvas()->removeWidget(PRIVATE()->Popup);
 		}
 	} break;
 	}

@@ -10,13 +10,13 @@
 * =================================================*/
 #include "../UIFactory.h"
 
-UIFactory::UIFactory(UIContextRaw context)
+UIFactory::UIFactory(UICanvasRaw canvas)
 	:
-	m_Context(context)
+	m_Context(canvas)
 {
 }
 
-UIContextRaw UIFactory::getContext() const
+UICanvasRaw UIFactory::getContext() const
 {
 	return m_Context;
 }

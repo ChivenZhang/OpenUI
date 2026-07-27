@@ -24,7 +24,7 @@ struct UIScrollBarStyle
 class OPENUI_API UIScrollBar : public UIWidget
 {
 public:
-	explicit UIScrollBar(UIContextRaw context);
+	explicit UIScrollBar(UICanvasRaw canvas);
 	~UIScrollBar() override;
 	bool filter(UIReactorRaw source, UIEventRaw event) override;
 	void layout(UIRect client) override;

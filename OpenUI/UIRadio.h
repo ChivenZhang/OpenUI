@@ -35,7 +35,7 @@ using UIRadioGroupRaw = UIRaw<UIRadioGroup>;
 class OPENUI_API UIRadio : public UIWidget
 {
 public:
-	explicit UIRadio(UIContextRaw context);
+	explicit UIRadio(UICanvasRaw canvas);
 	~UIRadio() override;
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;

@@ -15,18 +15,18 @@
 class OPENUI_API UIFactory
 {
 public:
-	UIFactory(UIContextRaw context);
+	UIFactory(UICanvasRaw canvas);
 
 	virtual ~UIFactory() = default;
 
-	virtual UIContextRaw getContext() const;
+	virtual UICanvasRaw getContext() const;
 
 	virtual UIString getTagName() const = 0;
 
 	virtual UIWidgetRef newWidget(UIString style) const = 0;
 
 protected:
-	UIContextRaw m_Context;
+	UICanvasRaw m_Context;
 };
 using UIFactoryRef = UIRef<UIFactory>;
 using UIFactoryRaw = UIRaw<UIFactory>;

@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UIInput.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 #include "UIPieceTable.h"
 
 class UIInputPrivate : public UIWidgetPrivate
@@ -36,9 +36,9 @@ public:
 };
 #define PRIVATE() ((UIInputPrivate*) m_PrivateInput)
 
-UIInput::UIInput(UIContextRaw context)
+UIInput::UIInput(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateInput = new UIInputPrivate;
 	PRIVATE()->PieceTable = UINew<UIPieceTable>();
@@ -67,7 +67,7 @@ void UIInput::arrange(UIRect client)
 void UIInput::layout(UIRect client)
 {
 	UIRect cursorRect;
-	auto painter = getContext()->getPainter();
+	auto painter = getCanvas()->getPainter();
 	painter->setFont(PRIVATE()->Style.Foreground.Font);
 	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 
@@ -190,7 +190,7 @@ int32_t UIInput::getCursorPosition() const
 int32_t UIInput::getCursorPosition(int32_t x, int32_t y) const
 {
 	int32_t cursor = -1;
-	auto painter = getContext()->getPainter();
+	auto painter = getCanvas()->getPainter();
 	painter->setFont(PRIVATE()->Style.Foreground.Font);
 	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, x, y, &cursor);
 	return cursor;
@@ -198,7 +198,7 @@ int32_t UIInput::getCursorPosition(int32_t x, int32_t y) const
 
 void UIInput::setCursorPosition(int32_t value)
 {
-	auto painter = getContext()->getPainter();
+	auto painter = getCanvas()->getPainter();
 	PRIVATE()->Cursor = std::clamp<int32_t>(value, 0, PRIVATE()->Text.length());
 }
 
@@ -217,11 +217,11 @@ void UIInput::getSelection(int32_t& start, int32_t& length) const
 
 void UIInput::setSelection(int32_t start, int32_t length)
 {
-	auto painter = getContext()->getPainter();
+	auto painter = getCanvas()->getPainter();
 	PRIVATE()->CursorStart = std::clamp<int32_t>(start, 0, PRIVATE()->Text.size());
 	PRIVATE()->Cursor = std::clamp<int32_t>(start + std::max<int32_t>(0, length), 0, PRIVATE()->Text.size());
 
-	if (getContext()) getContext()->layoutWidget();
+	if (getCanvas()) getCanvas()->layoutWidget();
 }
 
 UIString UIInput::getText() const
@@ -289,7 +289,7 @@ void UIInput::deselect()
 {
 	PRIVATE()->CursorStart = -1;
 
-	if (getContext()) getContext()->layoutWidget();
+	if (getCanvas()) getCanvas()->layoutWidget();
 }
 
 void UIInput::insert(UIString const& text)
@@ -413,12 +413,12 @@ void UIInput::keyPressEvent(UIKeyEventRaw event)
 	{
 		cut();
 	}
-	getContext()->paintWidget();
+	getCanvas()->paintWidget();
 }
 
 void UIInput::inputEvent(UITextInputEventRaw event)
 {
-	if (getContext()->getFocus() == this)
+	if (getCanvas()->getFocus() == this)
 	{
 		if (event->Done)
 		{
@@ -428,12 +428,12 @@ void UIInput::inputEvent(UITextInputEventRaw event)
 			insert(event->Text);
 			deselect();
 			UIRect cursorRect;
-			auto painter = getContext()->getPainter();
+			auto painter = getCanvas()->getPainter();
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 		}
-		getContext()->paintWidget();
+		getCanvas()->paintWidget();
 	}
 }
 
@@ -449,20 +449,20 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 		if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 		{
 			UIRect cursorRect;
-			auto painter = getContext()->getPainter();
+			auto painter = getCanvas()->getPainter();
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
 			PRIVATE()->MousePress = true;
-			getContext()->paintWidget();
+			getCanvas()->paintWidget();
 
-			getContext()->setFocus(this);
+			getCanvas()->setFocus(this);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 		}
 	}
 	else
 	{
-		getContext()->setFocus(nullptr);
+		getCanvas()->setFocus(nullptr);
 	}
 }
 
@@ -476,7 +476,7 @@ void UIInput::mouseReleaseEvent(UIMouseEventRaw event)
 			PRIVATE()->CursorStart = -1;
 			PRIVATE()->Selection = {};
 
-			getContext()->paintWidget();
+			getCanvas()->paintWidget();
 		}
 	}
 }
@@ -488,13 +488,13 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 		if (PRIVATE()->MousePress)
 		{
 			auto viewport = UIOverlap(getViewport(), getBounds());
-			auto painter = getContext()->getPainter();
+			auto painter = getCanvas()->getPainter();
 			painter->setFont(PRIVATE()->Style.Foreground.Font);
 			auto boundRect = painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor);
 			if (event->X < viewport.X && boundRect.X < viewport.X) PRIVATE()->SelectOffset += 1;
 			if (event->X > (viewport.X + viewport.W) && boundRect.X + boundRect.W > (viewport.X + viewport.W)) PRIVATE()->SelectOffset -= 1;
 
-			if (getContext()) getContext()->layoutWidget();
+			if (getCanvas()) getCanvas()->layoutWidget();
 		}
 	}
 }

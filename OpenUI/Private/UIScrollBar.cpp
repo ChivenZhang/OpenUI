@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UIScrollBar.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 
 class UIScrollBarPrivate : public UIWidgetPrivate
 {
@@ -29,9 +29,9 @@ public:
 };
 #define PRIVATE() ((UIScrollBarPrivate*)m_PrivateScrollBar)
 
-UIScrollBar::UIScrollBar(UIContextRaw context)
+UIScrollBar::UIScrollBar(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateScrollBar = new UIScrollBarPrivate;
 
@@ -41,7 +41,7 @@ UIScrollBar::UIScrollBar(UIContextRaw context)
 	valueChanged = &PRIVATE()->OnValueChanged;
 	rangeChanged = &PRIVATE()->OnRangeChanged;
 
-	PRIVATE()->Handle = UINew<UIButton>(context);
+	PRIVATE()->Handle = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Handle);
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });
@@ -101,7 +101,7 @@ bool UIScrollBar::filter(UIReactorRaw source, UIEventRaw _event)
 			PRIVATE()->OnSliderMoved.signal(PRIVATE()->Value);
 			if (PRIVATE()->Tracking) if (PRIVATE()->Value != oldValue) PRIVATE()->OnValueChanged.signal(PRIVATE()->Value);
 
-			if (getContext()) getContext()->layoutWidget();
+			if (getCanvas()) getCanvas()->layoutWidget();
 		}
 	} break;
 	}

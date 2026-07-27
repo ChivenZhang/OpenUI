@@ -35,7 +35,7 @@ public:
 	};
 
 public:
-	explicit UISlider(UIContextRaw context);
+	explicit UISlider(UICanvasRaw canvas);
 	~UISlider() override;
 	void arrange(UIRect client) override;
 	bool filter(UIReactorRaw source, UIEventRaw event) override;

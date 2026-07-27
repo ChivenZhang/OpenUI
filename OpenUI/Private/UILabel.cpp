@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UILabel.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -29,9 +29,9 @@ public:
 };
 #define PRIVATE() ((UILabelPrivate*)m_PrivateLabel)
 
-UILabel::UILabel(UIContextRaw context)
+UILabel::UILabel(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateLabel = new UILabelPrivate;
 
@@ -284,7 +284,7 @@ void UILabel::setPixmap(UIImage image)
 		PRIVATE()->PixelScaled.clear();
 		PRIVATE()->ImageScaled = UIImage{};
 	}
-	getContext()->paintWidget();
+	getCanvas()->paintWidget();
 }
 
 UILabel::scale_t UILabel::getScaledContents() const
@@ -295,7 +295,7 @@ UILabel::scale_t UILabel::getScaledContents() const
 void UILabel::setScaledContents(scale_t value)
 {
 	PRIVATE()->ScaledContents = value;
-	getContext()->paintWidget();
+	getCanvas()->paintWidget();
 }
 
 void UILabel::mouseDoubleEvent(UIMouseEventRaw event)

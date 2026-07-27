@@ -57,7 +57,7 @@ public:
 		// Initialize OpenUI context
 
 		UIConfig config{.DisplayScale = scale};
-		auto openui = UINew<UIContext>(config);
+		auto openui = UINew<UICanvas>(config);
 		openui->setPainter(UINew<CairoUIPainter>(w, h));
 		openui->setRender(UINew<CairoGLRender>(w, h));
 		m_UIContext = openui;
@@ -77,7 +77,7 @@ public:
 		return m_Window;
 	}
 
-	UIContextRaw getContext() const override
+	UICanvasRaw getContext() const override
 	{
 		return m_UIContext.get();
 	}
@@ -270,6 +270,6 @@ public:
 protected:
 	SDL_Window* m_Window;
 	SDL_GLContext m_Context;
-	UIContextRef m_UIContext;
+	UICanvasRef m_UIContext;
 };
 #endif

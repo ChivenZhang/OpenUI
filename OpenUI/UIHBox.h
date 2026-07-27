@@ -23,7 +23,7 @@ struct UIHBoxStyle
 class OPENUI_API UIHBox : public UIWidget
 {
 public:
-	explicit UIHBox(UIContextRaw context);
+	explicit UIHBox(UICanvasRaw canvas);
 	~UIHBox() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;

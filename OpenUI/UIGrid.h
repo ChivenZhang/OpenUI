@@ -23,7 +23,7 @@ struct UIGridStyle
 class OPENUI_API UIGrid : public UIWidget
 {
 public:
-	explicit UIGrid(UIContextRaw context);
+	explicit UIGrid(UICanvasRaw canvas);
 	~UIGrid() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;

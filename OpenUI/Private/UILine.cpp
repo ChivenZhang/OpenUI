@@ -17,9 +17,9 @@ public:
 };
 #define PRIVATE() ((UILinePrivate*)m_PrivateLine)
 
-UIHLine::UIHLine(UIContextRaw context)
+UIHLine::UIHLine(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateLine = new UILinePrivate;
 }
@@ -59,9 +59,9 @@ UIWidgetRef UIHLineFactory::newWidget(UIString style) const
 	return result;
 }
 
-UIVLine::UIVLine(UIContextRaw context)
+UIVLine::UIVLine(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateLine = new UILinePrivate;
 }

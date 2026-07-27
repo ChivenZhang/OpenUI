@@ -17,9 +17,9 @@ public:
 };
 #define PRIVATE() ((UIFlowPrivateData*) m_PrivateFlow)
 
-UIFlow::UIFlow(UIContextRaw context)
+UIFlow::UIFlow(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateFlow = new UIFlowPrivateData;
 }

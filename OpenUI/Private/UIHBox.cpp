@@ -18,9 +18,9 @@ public:
 };
 #define PRIVATE() ((UIHboxPrivateData*) m_PrivateHbox)
 
-UIHBox::UIHBox(UIContextRaw context)
+UIHBox::UIHBox(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateHbox = new UIHboxPrivateData;
 }

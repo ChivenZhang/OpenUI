@@ -27,9 +27,9 @@ public:
 };
 #define PRIVATE() ((UIGridPrivate*) m_PrivateGrid)
 
-UIGrid::UIGrid(UIContextRaw context)
+UIGrid::UIGrid(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateGrid = new UIGridPrivate;
 

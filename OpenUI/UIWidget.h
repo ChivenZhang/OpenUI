@@ -13,9 +13,9 @@
 #include "UIPainter.h"
 #include "UISignal.h"
 
-class UIContext;
-using UIContextRef = UIRef<UIContext>;
-using UIContextRaw = UIRaw<UIContext>;
+class UICanvas;
+using UICanvasRef = UIRef<UICanvas>;
+using UICanvasRaw = UIRaw<UICanvas>;
 
 class UIWidget;
 using UIWidgetRef = UIRef<UIWidget>;
@@ -28,7 +28,7 @@ using UIWidgetPrivateRaw = UIRaw<UIWidgetPrivate>;
 class OPENUI_API UIWidget : public UIReactor, public UIHandler, public UIFilter, public std::enable_shared_from_this<UIWidget>
 {
 public:
-	explicit UIWidget(UIContextRaw context);
+	explicit UIWidget(UICanvasRaw canvas);
 	~UIWidget() override;
 	UIString getID() const;
 	void setID(UIString value);
@@ -181,13 +181,13 @@ protected:
 	virtual void timerEvent(UITimerEventRaw event);
 
 protected:
-	UIContextRaw getContext() const;
+	UICanvasRaw getCanvas() const;
 
 private:
-	virtual void setContext(UIContextRaw value);
+	virtual void setContext(UICanvasRaw value);
 	virtual void setParent(UIWidgetRaw value);
 
 private:
-	friend class UIContext;
+	friend class UICanvas;
 	UIRaw<UIWidgetPrivate> m_Private;
 };

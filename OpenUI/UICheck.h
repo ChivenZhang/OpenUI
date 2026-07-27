@@ -31,7 +31,7 @@ struct UICheckStyle
 class OPENUI_API UICheck : public UIWidget
 {
 public:
-	explicit UICheck(UIContextRaw context);
+	explicit UICheck(UICanvasRaw canvas);
 	~UICheck() override;
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;

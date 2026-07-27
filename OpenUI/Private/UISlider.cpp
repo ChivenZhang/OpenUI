@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UISlider.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 
 /// @brief 
 class UISliderPrivate : public UIWidgetPrivate
@@ -32,9 +32,9 @@ public:
 };
 #define PRIVATE() ((UISliderPrivate*)m_PrivateSlider)
 
-UISlider::UISlider(UIContextRaw context)
+UISlider::UISlider(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateSlider = new UISliderPrivate;
 
@@ -44,7 +44,7 @@ UISlider::UISlider(UIContextRaw context)
 	valueChanged = &PRIVATE()->OnValueChanged;
 	rangeChanged = &PRIVATE()->OnRangeChanged;
 
-	PRIVATE()->Handle = UINew<UIButton>(context);
+	PRIVATE()->Handle = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Handle);
 	PRIVATE()->Handle->setFixedSize(16, 16);
 
@@ -62,7 +62,7 @@ UISlider::~UISlider()
 
 void UISlider::arrange(UIRect client)
 {
-	PRIVATE()->Handle->setFixedSize(16 * getContext()->getConfig().DisplayScale, 16 * getContext()->getConfig().DisplayScale);
+	PRIVATE()->Handle->setFixedSize(16 * getCanvas()->getConfig().DisplayScale, 16 * getCanvas()->getConfig().DisplayScale);
 }
 
 bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
@@ -109,7 +109,7 @@ bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
 			PRIVATE()->OnSliderMoved.signal(PRIVATE()->Value);
 			if (PRIVATE()->Tracking) if (PRIVATE()->Value != oldValue) PRIVATE()->OnValueChanged.signal(PRIVATE()->Value);
 
-			if (getContext()) getContext()->layoutWidget();
+			if (getCanvas()) getCanvas()->layoutWidget();
 		}
 	} break;
 	}

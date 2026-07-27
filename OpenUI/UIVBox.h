@@ -23,7 +23,7 @@ struct UIVBoxStyle
 class OPENUI_API UIVBox : public UIWidget
 {
 public:
-	explicit UIVBox(UIContextRaw context);
+	explicit UIVBox(UICanvasRaw canvas);
 	~UIVBox() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;

@@ -14,18 +14,18 @@
 class OPENUI_API UIBuilder
 {
 public:
-	UIBuilder(UIContextRaw context);
+	UIBuilder(UICanvasRaw canvas);
 	virtual ~UIBuilder();
-	UIContextRaw getContext() const;
+	UICanvasRaw getCanvas() const;
 	virtual bool addFactory(UIFactoryRef value);
 	virtual bool removeFactory(UIString name);
 	virtual void removeFactory();
-	virtual UIWidgetRef buildWidget(UIString html, UIString css = UIString()) const;
+	virtual UIWidgetRef buildWidget(UIString html, UIString css) const;
 
 	template<class T, class... Args>
 	UIRef<T> create(Args... args)
 	{
-		return UINew<T>(getContext(), std::forward<Args>(args)...);
+		return UINew<T>(getCanvas(), std::forward<Args>(args)...);
 	}
 
 private:

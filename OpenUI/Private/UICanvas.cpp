@@ -8,16 +8,16 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "../UIContext.h"
+#include "../UICanvas.h"
 #include <yoga/Yoga.h>
 
-struct UIContextWidget
+struct UITopLevelWidget
 {
 	UIWidgetRef Widget;
 	int32_t ZOrder;
 };
 
-class UIContextPrivateData : public UIContextPrivate
+class UICanvasPrivateData : public UICanvasPrivate
 {
 public:
 	UIConfig Config;
@@ -29,65 +29,65 @@ public:
 	UIList<UIPrimitive> RenderList;
 	UIList<UIWidgetRaw> AnimateList;
 	UIList<UIWidgetRef> TopLevelView;
-	UIList<UIContextWidget> TopLevelList;
+	UIList<UITopLevelWidget> TopLevelList;
 };
-#define PRIVATE() ((UIContextPrivateData*) m_Private)
+#define PRIVATE() ((UICanvasPrivateData*) m_Private)
 
-UIContext::UIContext(UIConfig config)
+UICanvas::UICanvas(UIConfig config)
 {
-	m_Private = new UIContextPrivateData;
+	m_Private = new UICanvasPrivateData;
 
 	PRIVATE()->Config = config;
 	PRIVATE()->Builder = UINew<UIBuilder>(this);
 }
 
-UIContext::~UIContext()
+UICanvas::~UICanvas()
 {
 	delete m_Private;
 	m_Private = nullptr;
 }
 
-UIConfig const& UIContext::getConfig() const
+UIConfig const& UICanvas::getConfig() const
 {
 	return PRIVATE()->Config;
 }
 
-UIPainterRaw UIContext::getPainter() const
+UIPainterRaw UICanvas::getPainter() const
 {
 	return PRIVATE()->Painter.get();
 }
 
-void UIContext::setPainter(UIPainterRef value)
+void UICanvas::setPainter(UIPainterRef value)
 {
 	PRIVATE()->Painter = value;
 }
 
-UIRenderRaw UIContext::getRender() const
+UIRenderRaw UICanvas::getRender() const
 {
 	return PRIVATE()->Render.get();
 }
 
-void UIContext::setRender(UIRenderRef value)
+void UICanvas::setRender(UIRenderRef value)
 {
 	PRIVATE()->Render = value;
 }
 
-UIBuilderRaw UIContext::getBuilder() const
+UIBuilderRaw UICanvas::getBuilder() const
 {
 	return PRIVATE()->Builder.get();
 }
 
-UIWidgetRaw UIContext::getFocus() const
+UIWidgetRaw UICanvas::getFocus() const
 {
 	return PRIVATE()->Focus;
 }
 
-void UIContext::setFocus(UIWidgetRaw value)
+void UICanvas::setFocus(UIWidgetRaw value)
 {
 	PRIVATE()->Focus = value;
 }
 
-void UIContext::setAnimate(UIWidgetRaw value, bool animate)
+void UICanvas::setAnimate(UIWidgetRaw value, bool animate)
 {
 	if (animate)
 	{
@@ -102,7 +102,7 @@ void UIContext::setAnimate(UIWidgetRaw value, bool animate)
 	}
 }
 
-void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
+void UICanvas::sendEvent(UIReactorRaw sender, UIEventRaw event)
 {
 	UILambda<void(UIWidgetRaw)> foreach_func;
 	foreach_func = [&](UIWidgetRaw element)
@@ -128,20 +128,20 @@ void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
 	}
 }
 
-void UIContext::postEvent(UIReactorRef sender, UIEventRef event)
+void UICanvas::postEvent(UIReactorRef sender, UIEventRef event)
 {
 }
 
-bool UIContext::addWidget(UIWidgetRef value, int32_t zorder)
+bool UICanvas::addWidget(UIWidgetRef value, int32_t zorder)
 {
 	if (value == nullptr) return false;
-	auto result = std::find_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextWidget const& e)-> bool { return e.Widget == value; });
+	auto result = std::find_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UITopLevelWidget const& e)-> bool { return e.Widget == value; });
 	if (result == PRIVATE()->TopLevelList.end())
 		PRIVATE()->TopLevelList.push_back({value, zorder});
 	else result->ZOrder = zorder;
 	value->setContext(this);
 	value->setParent(nullptr);
-	std::sort(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [](UIContextWidget const& a, UIContextWidget const& b) { return a.ZOrder < b.ZOrder; });
+	std::sort(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [](UITopLevelWidget const& a, UITopLevelWidget const& b) { return a.ZOrder < b.ZOrder; });
 	PRIVATE()->TopLevelView.resize(PRIVATE()->TopLevelList.size());
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 		PRIVATE()->TopLevelView[i] = PRIVATE()->TopLevelList[i].Widget;
@@ -149,9 +149,9 @@ bool UIContext::addWidget(UIWidgetRef value, int32_t zorder)
 	return true;
 }
 
-bool UIContext::removeWidget(UIWidgetRef value)
+bool UICanvas::removeWidget(UIWidgetRef value)
 {
-	auto result = std::remove_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextWidget const& e)-> bool { return e.Widget == value; });
+	auto result = std::remove_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UITopLevelWidget const& e)-> bool { return e.Widget == value; });
 	if (result == PRIVATE()->TopLevelList.end()) return false;
 	PRIVATE()->TopLevelList.erase(result, PRIVATE()->TopLevelList.end());
 	PRIVATE()->TopLevelView.resize(PRIVATE()->TopLevelList.size());
@@ -163,7 +163,7 @@ bool UIContext::removeWidget(UIWidgetRef value)
 	return true;
 }
 
-void UIContext::removeWidget()
+void UICanvas::removeWidget()
 {
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
@@ -175,24 +175,24 @@ void UIContext::removeWidget()
 	layoutWidget();
 }
 
-bool UIContext::existWidget(UIWidgetRef value) const
+bool UICanvas::existWidget(UIWidgetRef value) const
 {
 	auto result = std::find(PRIVATE()->TopLevelView.begin(), PRIVATE()->TopLevelView.end(), value);
 	return result != PRIVATE()->TopLevelView.end();
 }
 
-UIListView<const UIWidgetRef> UIContext::getWidget() const
+UIListView<const UIWidgetRef> UICanvas::getWidget() const
 {
 	return PRIVATE()->TopLevelView;
 }
 
-void UIContext::layoutWidget()
+void UICanvas::layoutWidget()
 {
 	PRIVATE()->NeedLayout = true;
 	paintWidget();
 }
 
-bool UIContext::layoutWidget(UIRect client)
+bool UICanvas::layoutWidget(UIRect client)
 {
 	if (PRIVATE()->NeedLayout == false) return false;
 	PRIVATE()->NeedLayout = false;
@@ -577,12 +577,12 @@ bool UIContext::layoutWidget(UIRect client)
 	return true;
 }
 
-void UIContext::paintWidget()
+void UICanvas::paintWidget()
 {
 	PRIVATE()->NeedPaint = true;
 }
 
-bool UIContext::paintWidget(UIRect client)
+bool UICanvas::paintWidget(UIRect client)
 {
 	if (PRIVATE()->NeedPaint == false) return false;
 	PRIVATE()->NeedPaint = false;
@@ -604,7 +604,7 @@ bool UIContext::paintWidget(UIRect client)
 	return true;
 }
 
-void UIContext::renderWidget(UIRect client)
+void UICanvas::renderWidget(UIRect client)
 {
 	if (getPainter() && getRender())
 	{
@@ -620,7 +620,7 @@ void UIContext::renderWidget(UIRect client)
 	}
 }
 
-void UIContext::animateWidget(float time)
+void UICanvas::animateWidget(float time)
 {
 	for (size_t i = 0; i < PRIVATE()->AnimateList.size(); ++i)
 	{
@@ -630,7 +630,7 @@ void UIContext::animateWidget(float time)
 	}
 }
 
-void UIContext::updateWidget(float time, UIRect client)
+void UICanvas::updateWidget(float time, UIRect client)
 {
 	animateWidget(time);
 	layoutWidget(client);

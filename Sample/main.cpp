@@ -1,5 +1,5 @@
 #include <SDL3/SDL.h>
-#include "OpenUI/UIContext.h"
+#include "OpenUI/UICanvas.h"
 #include "OpenUI/UIBuilder.h"
 #include "OpenUI/UIHBox.h"
 #include "OpenUI/UIVBox.h"
@@ -28,7 +28,7 @@
 #include "Metal/SDL3MTDevice.h"
 #endif
 
-void business(UIContextRaw context, SDL_Window* window);
+void sample(UICanvasRaw context, SDL_Window* window);
 
 int main()
 {
@@ -42,7 +42,7 @@ int main()
 		auto device = UINew<SDL3GLDevice>();
 		auto openui = device->getContext();
 		auto window = device->getWindow();
-		business(openui, window);
+		sample(openui, window);
 		while (device->update());
 		device = nullptr;
 	}
@@ -103,7 +103,7 @@ int main()
 		auto device = UINew<SDL3VKDevice>(instance);
 		auto openui = device->getContext();
 		auto window = device->getWindow();
-		business(openui, window);
+		sample(openui, window);
 		while (device->update());
 		device = nullptr;
 	}
@@ -142,7 +142,7 @@ int main()
 		auto device = UINew<SDL3DXDevice>(instance);
 		auto openui = device->getContext();
 		auto window = device->getWindow();
-		business(openui, window);
+		sample(openui, window);
 		while (device->update());
 		device = nullptr;
 	}
@@ -155,7 +155,7 @@ int main()
 		auto device = UINew<SDL3MTDevice>();
 		auto openui = device->getContext();
 		auto window = device->getWindow();
-		business(openui, window);
+		sample(openui, window);
 		while (device->update());
 		device = nullptr;
 	}
@@ -165,7 +165,7 @@ int main()
 	return 0;
 }
 
-void business(UIContextRaw context, SDL_Window* window)
+void sample(UICanvasRaw context, SDL_Window* window)
 {
 	auto builder = context->getBuilder();
 	auto scale = context->getConfig().DisplayScale;

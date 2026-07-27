@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UIRadio.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 
 /// @brief 
 class UIRadioPrivate : public UIWidgetPrivate
@@ -29,9 +29,9 @@ public:
 };
 #define PRIVATE() ((UIRadioPrivate*) m_PrivateRadio)
 
-UIRadio::UIRadio(UIContextRaw context)
+UIRadio::UIRadio(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateRadio = new UIRadioPrivate;
 
@@ -42,13 +42,13 @@ UIRadio::UIRadio(UIContextRaw context)
 
 	PRIVATE()->SelfGroup = UINew<UIRadioGroup>();
 
-	PRIVATE()->Button = UINew<UIButton>(context);
+	PRIVATE()->Button = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize(16, 16);
 	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
 	PRIVATE()->Button->setCheckable(true);
 
-	PRIVATE()->Label = UINew<UILabel>(context);
+	PRIVATE()->Label = UINew<UILabel>(canvas);
 	addWidget(PRIVATE()->Label);
 
 	{
@@ -112,12 +112,12 @@ void UIRadio::arrange(UIRect client)
 	PRIVATE()->Label->setFlexGrow(1);
 	PRIVATE()->Label->setAlignSelf(UI::AlignStretch);
 
-	auto painter = getContext()->getPainter();
+	auto painter = getCanvas()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;
-	PRIVATE()->Button->setFixedSize(fontSize * getContext()->getConfig().DisplayScale, fontSize * getContext()->getConfig().DisplayScale);
-	PRIVATE()->Button->setMargin({ 8 * getContext()->getConfig().DisplayScale, 0, 8 * getContext()->getConfig().DisplayScale, 0 });
+	PRIVATE()->Button->setFixedSize(fontSize * getCanvas()->getConfig().DisplayScale, fontSize * getCanvas()->getConfig().DisplayScale);
+	PRIVATE()->Button->setMargin({ 8 * getCanvas()->getConfig().DisplayScale, 0, 8 * getCanvas()->getConfig().DisplayScale, 0 });
 	auto style = PRIVATE()->Button->getStyle();
-	style.Round = { (fontSize * getContext()->getConfig().DisplayScale * 0.5f + 1) , (fontSize * getContext()->getConfig().DisplayScale * 0.5f + 1) };
+	style.Round = { (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) , (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) };
 	PRIVATE()->Button->setStyle(style);
 }
 
@@ -245,7 +245,7 @@ void UIRadio::mouseReleaseEvent(UIMouseEventRaw event)
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
 
-			getContext()->paintWidget();
+			getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}

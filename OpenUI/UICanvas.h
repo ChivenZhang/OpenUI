@@ -22,19 +22,19 @@ public:
 };
 
 /// @brief 
-class UIContextPrivate
+class UICanvasPrivate
 {
 public:
-	virtual ~UIContextPrivate() = default;
+	virtual ~UICanvasPrivate() = default;
 };
-using UIContextPrivateRaw = UIRaw<UIContextPrivate>;
+using UIContextPrivateRaw = UIRaw<UICanvasPrivate>;
 
 /// @brief 
-class OPENUI_API UIContext
+class OPENUI_API UICanvas
 {
 public:
-	explicit UIContext(UIConfig config = {});
-	~UIContext();
+	explicit UICanvas(UIConfig config = {});
+	~UICanvas();
 	UIConfig const& getConfig() const;
 	UIPainterRaw getPainter() const;
 	void setPainter(UIPainterRef value);
@@ -62,5 +62,5 @@ public:
 private:
 	UIContextPrivateRaw m_Private;
 };
-using UIContextRef = UIRef<UIContext>;
-using UIContextRaw = UIRaw<UIContext>;
+using UICanvasRef = UIRef<UICanvas>;
+using UICanvasRaw = UIRaw<UICanvas>;

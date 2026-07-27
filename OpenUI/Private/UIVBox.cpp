@@ -18,9 +18,9 @@ public:
 };
 #define PRIVATE() ((UIVBoxPrivate*) m_PrivateVBox)
 
-UIVBox::UIVBox(UIContextRaw context)
+UIVBox::UIVBox(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateVBox = new UIVBoxPrivate;
 }

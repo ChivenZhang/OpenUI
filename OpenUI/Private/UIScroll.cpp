@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UIScroll.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 
 class UIScrollPrivate : public UIWidgetPrivate
 {
@@ -22,13 +22,13 @@ public:
 };
 #define PRIVATE() ((UIScrollPrivate*)m_PrivateScroll)
 
-UIScroll::UIScroll(UIContextRaw context)
+UIScroll::UIScroll(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateScroll = new UIScrollPrivate;
 
-	PRIVATE()->HorizontalScrollBar = UINew<UIScrollBar>(context);
+	PRIVATE()->HorizontalScrollBar = UINew<UIScrollBar>(canvas);
 	addWidget(PRIVATE()->HorizontalScrollBar);
 	PRIVATE()->HorizontalScrollBar->setFixedHeight(12);
 	PRIVATE()->HorizontalScrollBar->setMinWidth(12);
@@ -39,7 +39,7 @@ UIScroll::UIScroll(UIContextRaw context)
 	style.Normal.Pen = UIFramePen;
 	PRIVATE()->HorizontalScrollBar->getHandle()->setStyle(style);
 
-	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(context);
+	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(canvas);
 	addWidget(PRIVATE()->VerticalScrollBar);
 	PRIVATE()->VerticalScrollBar->setFixedWidth(12);
 	PRIVATE()->VerticalScrollBar->setMinHeight(12);
@@ -60,11 +60,11 @@ void UIScroll::arrange(UIRect client)
 {
 	this->setJustifyContent(UI::JustifyFlexEnd);
 
-	PRIVATE()->HorizontalScrollBar->setFixedHeight(12 * getContext()->getConfig().DisplayScale);
-	PRIVATE()->HorizontalScrollBar->setMinWidth(12 * getContext()->getConfig().DisplayScale);
+	PRIVATE()->HorizontalScrollBar->setFixedHeight(12 * getCanvas()->getConfig().DisplayScale);
+	PRIVATE()->HorizontalScrollBar->setMinWidth(12 * getCanvas()->getConfig().DisplayScale);
 
-	PRIVATE()->VerticalScrollBar->setFixedWidth(12 * getContext()->getConfig().DisplayScale);
-	PRIVATE()->VerticalScrollBar->setMinHeight(12 * getContext()->getConfig().DisplayScale);
+	PRIVATE()->VerticalScrollBar->setFixedWidth(12 * getCanvas()->getConfig().DisplayScale);
+	PRIVATE()->VerticalScrollBar->setMinHeight(12 * getCanvas()->getConfig().DisplayScale);
 
 	if (2 < getWidgets().size())
 	{
@@ -284,7 +284,7 @@ void UIScroll::wheelEvent(UIMouseWheelEventRaw event)
 		getVerticalBar()->setValue(getVerticalBar()->getValue() - event->AngleY * getVerticalBar()->getSingleStep());
 		event->Accept = true;
 
-		if (getContext()) getContext()->layoutWidget();
+		if (getCanvas()) getCanvas()->layoutWidget();
 	}
 }
 

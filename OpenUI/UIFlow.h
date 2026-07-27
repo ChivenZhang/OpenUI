@@ -23,7 +23,7 @@ struct UIFlowStyle
 class OPENUI_API UIFlow : public UIWidget
 {
 public:
-	explicit UIFlow(UIContextRaw context);
+	explicit UIFlow(UICanvasRaw canvas);
 	~UIFlow() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;

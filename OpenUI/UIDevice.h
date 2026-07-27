@@ -8,7 +8,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIContext.h"
+#include "UICanvas.h"
 
 class UIDevicePrivate {};
 using UIDevicePrivateRaw = UIRaw<UIDevicePrivate>;
@@ -18,6 +18,6 @@ class OPENUI_API UIDevice
 {
 public:
     virtual ~UIDevice() = default;
-    virtual UIContextRaw getContext() const = 0;
+    virtual UICanvasRaw getContext() const = 0;
     virtual bool update() = 0;
 };

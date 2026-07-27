@@ -70,7 +70,7 @@ struct UIButtonStyle
 class OPENUI_API UIButton : public UIWidget
 {
 public:
-	explicit UIButton(UIContextRaw context);
+	explicit UIButton(UICanvasRaw canvas);
 	~UIButton() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;

@@ -32,7 +32,7 @@ public:
 	};
 
 public:
-	explicit UIScroll(UIContextRaw context);
+	explicit UIScroll(UICanvasRaw canvas);
 	~UIScroll() override;
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;

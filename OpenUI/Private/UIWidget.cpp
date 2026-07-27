@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UIWidget.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 #include "../UIPainter.h"
 #include <yoga/Yoga.h>
 
@@ -20,7 +20,7 @@ public:
 	UIWidgetRaw Parent = nullptr;
 	UIList<UIWidgetRef> Children;
 	UIFilterRaw Filter = nullptr;
-	UIContextRaw Context = nullptr;
+	UICanvasRaw Canvas = nullptr;
 	UIPointUV3 Primitive[2];
 
 	UI::DisplayType DisplayType = UI::DisplayFlex;
@@ -59,16 +59,16 @@ public:
 };
 #define PRIVATE() ((UIWidgetPrivateData*) m_Private)
 
-UIWidget::UIWidget(UIContextRaw context)
+UIWidget::UIWidget(UICanvasRaw canvas)
 {
 	m_Private = new UIWidgetPrivateData;
 
-	PRIVATE()->Context = context;
+	PRIVATE()->Canvas = canvas;
 }
 
 UIWidget::~UIWidget()
 {
-	if (getContext()) getContext()->setAnimate(this, false);
+	if (getCanvas()) getCanvas()->setAnimate(this, false);
 	delete m_Private; m_Private = nullptr;
 }
 
@@ -146,9 +146,9 @@ bool UIWidget::addWidget(UIWidgetRef value)
 	if (value == nullptr || value.get() == this) return false;
 	auto result = std::find(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
 	if (result == PRIVATE()->Children.end()) PRIVATE()->Children.push_back(value);
-	value->setContext(getContext());
+	value->setContext(getCanvas());
 	value->setParent(this);
-	if (getContext()) getContext()->layoutWidget();
+	if (getCanvas()) getCanvas()->layoutWidget();
 	return true;
 }
 
@@ -157,7 +157,7 @@ bool UIWidget::removeWidget(UIWidgetRef value)
 	auto result = std::remove(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
 	if (result == PRIVATE()->Children.end()) return false;
 	PRIVATE()->Children.erase(result, PRIVATE()->Children.end());
-	if (getContext()) getContext()->layoutWidget();
+	if (getCanvas()) getCanvas()->layoutWidget();
 	value->setContext(nullptr);
 	value->setParent(nullptr);
 	return true;
@@ -165,7 +165,7 @@ bool UIWidget::removeWidget(UIWidgetRef value)
 
 void UIWidget::removeWidget()
 {
-	if (getContext()) getContext()->layoutWidget();
+	if (getCanvas()) getCanvas()->layoutWidget();
 	for (size_t i = 0; i < PRIVATE()->Children.size(); ++i)
 	{
 		PRIVATE()->Children[i]->setContext(nullptr);
@@ -370,7 +370,7 @@ bool UIWidget::getAnimate() const
 void UIWidget::setAnimate(bool value)
 {
 	PRIVATE()->Animate = value;
-	if (getContext()) getContext()->setAnimate(this, value);
+	if (getCanvas()) getCanvas()->setAnimate(this, value);
 }
 
 UIRect UIWidget::getBounds() const
@@ -869,16 +869,16 @@ void UIWidget::timerEvent(UITimerEventRaw event)
 {
 }
 
-UIContextRaw UIWidget::getContext() const
+UICanvasRaw UIWidget::getCanvas() const
 {
-	return PRIVATE()->Context;
+	return PRIVATE()->Canvas;
 }
 
-void UIWidget::setContext(UIContextRaw value)
+void UIWidget::setContext(UICanvasRaw value)
 {
-	if (getContext()) getContext()->setAnimate(this, false);
-	PRIVATE()->Context = value;
-	if (getContext()) getContext()->setAnimate(this, getAnimate());
+	if (getCanvas()) getCanvas()->setAnimate(this, false);
+	PRIVATE()->Canvas = value;
+	if (getCanvas()) getCanvas()->setAnimate(this, getAnimate());
 	for (size_t i = 0; i < getWidgets().size(); ++i) getWidgets()[i]->setContext(value);
 }
 

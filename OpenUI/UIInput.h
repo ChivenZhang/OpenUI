@@ -41,7 +41,7 @@ public:
 	};
 
 public:
-	explicit UIInput(UIContextRaw context);
+	explicit UIInput(UICanvasRaw canvas);
 	~UIInput() override;
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;

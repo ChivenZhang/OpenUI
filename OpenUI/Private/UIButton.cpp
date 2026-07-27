@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../UIButton.h"
-#include "../UIContext.h"
+#include "../UICanvas.h"
 
 class UIButtonPrivate : public UIWidgetPrivate
 {
@@ -28,9 +28,9 @@ public:
 };
 #define PRIVATE() ((UIButtonPrivate*) m_PrivateButton)
 
-UIButton::UIButton(UIContextRaw context)
+UIButton::UIButton(UICanvasRaw canvas)
 	:
-	UIWidget(context)
+	UIWidget(canvas)
 {
 	m_PrivateButton = new UIButtonPrivate;
 
@@ -40,7 +40,7 @@ UIButton::UIButton(UIContextRaw context)
 	hovered = &PRIVATE()->OnHovered;
 	toggled = &PRIVATE()->OnToggled;
 
-	PRIVATE()->Label = UINew<UILabel>(context);
+	PRIVATE()->Label = UINew<UILabel>(canvas);
 	addWidget(PRIVATE()->Label);
 
 	setStyle(PRIVATE()->Style);
@@ -179,7 +179,7 @@ void UIButton::mouseDoubleEvent(UIMouseEventRaw event)
 			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getContext()) getContext()->paintWidget();
+			if (getCanvas()) getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -196,7 +196,7 @@ void UIButton::mousePressEvent(UIMouseEventRaw event)
 			if (PRIVATE()->Checkable) PRIVATE()->Checked = !PRIVATE()->Checked;
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getContext()) getContext()->paintWidget();
+			if (getCanvas()) getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -211,7 +211,7 @@ void UIButton::mouseReleaseEvent(UIMouseEventRaw event)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
-			if (getContext()) getContext()->paintWidget();
+			if (getCanvas()) getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -224,12 +224,12 @@ void UIButton::mouseMoveEvent(UIMouseEventRaw event)
 	{
 		PRIVATE()->Hovered = true;
 		PRIVATE()->OnHovered.signal();
-		if (getContext()) getContext()->paintWidget();
+		if (getCanvas()) getCanvas()->paintWidget();
 	}
 	else
 	{
 		PRIVATE()->Hovered = false;
-		if (getContext()) getContext()->paintWidget();
+		if (getCanvas()) getCanvas()->paintWidget();
 	}
 }
 
@@ -240,7 +240,7 @@ void UIButton::enterEvent(UIMouseEventRaw event)
 void UIButton::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
-	if (getContext()) getContext()->paintWidget();
+	if (getCanvas()) getCanvas()->paintWidget();
 }
 
 UIString UIButtonFactory::getTagName() const

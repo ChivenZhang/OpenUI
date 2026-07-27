@@ -14,16 +14,16 @@
 class UIBuilderPrivate : public UIWidgetPrivate
 {
 public:
-	UIContextRaw Context;
+	UICanvasRaw Canvas;
 	UIStringMap<UIFactoryRef> FactoryMap;
 };
 #define PRIVATE() ((UIBuilderPrivate*) m_Private)
 
-UIBuilder::UIBuilder(UIContextRaw context)
+UIBuilder::UIBuilder(UICanvasRaw canvas)
 {
 	m_Private = new UIBuilderPrivate;
 
-	PRIVATE()->Context = context;
+	PRIVATE()->Canvas = canvas;
 }
 
 UIBuilder::~UIBuilder()
@@ -32,9 +32,9 @@ UIBuilder::~UIBuilder()
 	m_Private = nullptr;
 }
 
-UIContextRaw UIBuilder::getContext() const
+UICanvasRaw UIBuilder::getCanvas() const
 {
-	return PRIVATE()->Context;
+	return PRIVATE()->Canvas;
 }
 
 bool UIBuilder::addFactory(UIFactoryRef value)

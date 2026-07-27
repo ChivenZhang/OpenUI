@@ -45,7 +45,7 @@ public:
 	};
 
 public:
-	explicit UILabel(UIContextRaw context);
+	explicit UILabel(UICanvasRaw canvas);
 	~UILabel() override;
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;

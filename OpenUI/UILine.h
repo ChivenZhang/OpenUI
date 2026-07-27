@@ -23,7 +23,7 @@ struct UILineStyle
 class OPENUI_API UIHLine : public UIWidget
 {
 public:
-	explicit UIHLine(UIContextRaw context);
+	explicit UIHLine(UICanvasRaw canvas);
 	~UIHLine() override;
 	void paint(UIRect client, UIPainterRaw painter) override;
 
@@ -38,7 +38,7 @@ private:
 class OPENUI_API UIVLine : public UIWidget
 {
 public:
-	explicit UIVLine(UIContextRaw context);
+	explicit UIVLine(UICanvasRaw canvas);
 	~UIVLine() override;
 	void paint(UIRect client, UIPainterRaw painter) override;
 
