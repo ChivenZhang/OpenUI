@@ -95,7 +95,7 @@ bool UIGrid::addWidget(UIWidgetRef value)
 	return result;
 }
 
-bool UIGrid::addElement(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan, uint32_t columnSpan)
+bool UIGrid::addWidget(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan, uint32_t columnSpan)
 {
 	auto result = UIWidget::addWidget(value);
 	if (result) PRIVATE()->GridItemMap.emplace(value.get(), UIGridItem{ row, column, rowSpan, columnSpan });
@@ -258,7 +258,7 @@ UIString UIGridFactory::getTagName() const
 	return "grid";
 }
 
-UIWidgetRef UIGridFactory::getElement(UIString style) const
+UIWidgetRef UIGridFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIGrid>(getContext());
 	result->setStyleText(style);

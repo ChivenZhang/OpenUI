@@ -284,7 +284,7 @@ void UIScroll::wheelEvent(UIMouseWheelEventRaw event)
 		getVerticalBar()->setValue(getVerticalBar()->getValue() - event->AngleY * getVerticalBar()->getSingleStep());
 		event->Accept = true;
 
-		if (getContext()) getContext()->layoutElement();
+		if (getContext()) getContext()->layoutWidget();
 	}
 }
 
@@ -293,7 +293,7 @@ UIString UIScrollFactory::getTagName() const
 	return "scroll";
 }
 
-UIWidgetRef UIScrollFactory::getElement(UIString style) const
+UIWidgetRef UIScrollFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIScroll>(getContext());
 	result->setStyleText(style);

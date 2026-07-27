@@ -69,5 +69,5 @@ class OPENUI_API UIScrollBarFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIWidgetRef getElement(UIString style) const override;
+	UIWidgetRef newWidget(UIString style) const override;
 };

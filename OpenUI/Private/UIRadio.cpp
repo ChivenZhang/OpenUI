@@ -245,7 +245,7 @@ void UIRadio::mouseReleaseEvent(UIMouseEventRaw event)
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
 
-			getContext()->paintElement();
+			getContext()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -279,7 +279,7 @@ UIString UIRadioFactory::getTagName() const
 	return "radio";
 }
 
-UIWidgetRef UIRadioFactory::getElement(UIString style) const
+UIWidgetRef UIRadioFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIRadio>(getContext());
 	result->setStyleText(style);

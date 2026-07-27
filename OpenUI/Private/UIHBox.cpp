@@ -78,7 +78,7 @@ UIString UIHBoxFactory::getTagName() const
 	return "hbox";
 }
 
-UIWidgetRef UIHBoxFactory::getElement(UIString style) const
+UIWidgetRef UIHBoxFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIHBox>(getContext());
 	result->setStyleText(style);

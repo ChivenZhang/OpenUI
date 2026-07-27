@@ -148,7 +148,7 @@ bool UIWidget::addWidget(UIWidgetRef value)
 	if (result == PRIVATE()->Children.end()) PRIVATE()->Children.push_back(value);
 	value->setContext(getContext());
 	value->setParent(this);
-	if (getContext()) getContext()->layoutElement();
+	if (getContext()) getContext()->layoutWidget();
 	return true;
 }
 
@@ -157,7 +157,7 @@ bool UIWidget::removeWidget(UIWidgetRef value)
 	auto result = std::remove(PRIVATE()->Children.begin(), PRIVATE()->Children.end(), value);
 	if (result == PRIVATE()->Children.end()) return false;
 	PRIVATE()->Children.erase(result, PRIVATE()->Children.end());
-	if (getContext()) getContext()->layoutElement();
+	if (getContext()) getContext()->layoutWidget();
 	value->setContext(nullptr);
 	value->setParent(nullptr);
 	return true;
@@ -165,7 +165,7 @@ bool UIWidget::removeWidget(UIWidgetRef value)
 
 void UIWidget::removeWidget()
 {
-	if (getContext()) getContext()->layoutElement();
+	if (getContext()) getContext()->layoutWidget();
 	for (size_t i = 0; i < PRIVATE()->Children.size(); ++i)
 	{
 		PRIVATE()->Children[i]->setContext(nullptr);

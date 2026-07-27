@@ -216,7 +216,7 @@ public:
 				break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 				{
-					openui->layoutElement();
+					openui->layoutWidget();
 					UICast<CairoUIPainter>(openui->getPainter())->resize(event.window.data1, event.window.data2);
 					UIResizeEvent event2(event.window.data1, event.window.data2);
 					openui->sendEvent(nullptr, &event2);
@@ -250,7 +250,7 @@ public:
 		int width, height;
 		SDL_GetWindowSize(window, &width, &height);
 		UIRect client{0, 0, (float)width, (float)height};
-		openui->updateElement(::clock() * 0.001f, client);
+		openui->updateWidget(::clock() * 0.001f, client);
 
 		// Output frame to screen
 
@@ -262,7 +262,7 @@ public:
 		glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glViewport((int32_t)client.X, (int32_t)client.Y, (int32_t)client.W, (int32_t)client.H);
-		openui->renderElement(client);
+		openui->renderWidget(client);
 		SDL_GL_SwapWindow(window);
 		return true;
 	}

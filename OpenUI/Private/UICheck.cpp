@@ -151,7 +151,7 @@ void UICheck::setChecked(bool value)
 	PRIVATE()->Button->setChecked(value);
 	if (PRIVATE()->Checked) PRIVATE()->Button->setText("✔");
 	else PRIVATE()->Button->setText("");
-	if (getContext()) getContext()->paintElement();
+	if (getContext()) getContext()->paintWidget();
 }
 
 UIButtonRaw UICheck::getButton() const
@@ -177,7 +177,7 @@ void UICheck::mouseDoubleEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getContext()) getContext()->paintElement();
+			if (getContext()) getContext()->paintWidget();
 		}
 	}
 }
@@ -195,7 +195,7 @@ void UICheck::mousePressEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getContext()) getContext()->paintElement();
+			if (getContext()) getContext()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -210,7 +210,7 @@ void UICheck::mouseReleaseEvent(UIMouseEventRaw event)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
-			if (getContext()) getContext()->paintElement();
+			if (getContext()) getContext()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -225,12 +225,12 @@ void UICheck::mouseMoveEvent(UIMouseEventRaw event)
 	{
 		PRIVATE()->Hovered = true;
 		PRIVATE()->OnHovered.signal();
-		if (getContext()) getContext()->paintElement();
+		if (getContext()) getContext()->paintWidget();
 	}
 	else
 	{
 		PRIVATE()->Hovered = false;
-		if (getContext()) getContext()->paintElement();
+		if (getContext()) getContext()->paintWidget();
 	}
 }
 
@@ -241,7 +241,7 @@ void UICheck::enterEvent(UIMouseEventRaw event)
 void UICheck::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
-	if (getContext()) getContext()->paintElement();
+	if (getContext()) getContext()->paintWidget();
 }
 
 UIString UICheckFactory::getTagName() const
@@ -249,7 +249,7 @@ UIString UICheckFactory::getTagName() const
 	return "check";
 }
 
-UIWidgetRef UICheckFactory::getElement(UIString style) const
+UIWidgetRef UICheckFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UICheck>(getContext());
 	result->setStyleText(style);

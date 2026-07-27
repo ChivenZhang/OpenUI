@@ -27,7 +27,6 @@ class UIContextPrivate
 public:
 	virtual ~UIContextPrivate() = default;
 };
-
 using UIContextPrivateRaw = UIRaw<UIContextPrivate>;
 
 /// @brief 
@@ -47,24 +46,18 @@ public:
 	void setAnimate(UIWidgetRaw value, bool animate);
 	void sendEvent(UIReactorRaw sender, UIEventRaw event);
 	void postEvent(UIReactorRef sender, UIEventRef event);
-	bool addElement(UIWidgetRef value, int32_t zorder = 0);
-	bool removeElement(UIWidgetRef value);
-	void removeElement();
-	bool existElement(UIWidgetRef value) const;
-	UIListView<const UIWidgetRef> getElement() const;
-	void layoutElement();
-	bool layoutElement(UIRect client);
-	void paintElement();
-	bool paintElement(UIRect client);
-	void renderElement(UIRect client);
-	void animateElement(float time);
-
-	void updateElement(float time, UIRect client)
-	{
-		animateElement(time);
-		layoutElement(client);
-		paintElement(client);
-    }
+	bool addWidget(UIWidgetRef value, int32_t zorder = 0);
+	bool removeWidget(UIWidgetRef value);
+	void removeWidget();
+	bool existWidget(UIWidgetRef value) const;
+	UIListView<const UIWidgetRef> getWidget() const;
+	void layoutWidget();
+	bool layoutWidget(UIRect client);
+	void paintWidget();
+	bool paintWidget(UIRect client);
+	void renderWidget(UIRect client);
+	void animateWidget(float time);
+	void updateWidget(float time, UIRect client);
 
 private:
 	UIContextPrivateRaw m_Private;

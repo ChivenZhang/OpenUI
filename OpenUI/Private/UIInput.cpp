@@ -221,7 +221,7 @@ void UIInput::setSelection(int32_t start, int32_t length)
 	PRIVATE()->CursorStart = std::clamp<int32_t>(start, 0, PRIVATE()->Text.size());
 	PRIVATE()->Cursor = std::clamp<int32_t>(start + std::max<int32_t>(0, length), 0, PRIVATE()->Text.size());
 
-	if (getContext()) getContext()->layoutElement();
+	if (getContext()) getContext()->layoutWidget();
 }
 
 UIString UIInput::getText() const
@@ -289,7 +289,7 @@ void UIInput::deselect()
 {
 	PRIVATE()->CursorStart = -1;
 
-	if (getContext()) getContext()->layoutElement();
+	if (getContext()) getContext()->layoutWidget();
 }
 
 void UIInput::insert(UIString const& text)
@@ -413,7 +413,7 @@ void UIInput::keyPressEvent(UIKeyEventRaw event)
 	{
 		cut();
 	}
-	getContext()->paintElement();
+	getContext()->paintWidget();
 }
 
 void UIInput::inputEvent(UITextInputEventRaw event)
@@ -433,7 +433,7 @@ void UIInput::inputEvent(UITextInputEventRaw event)
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 		}
-		getContext()->paintElement();
+		getContext()->paintWidget();
 	}
 }
 
@@ -454,7 +454,7 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
 			PRIVATE()->MousePress = true;
-			getContext()->paintElement();
+			getContext()->paintWidget();
 
 			getContext()->setFocus(this);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
@@ -476,7 +476,7 @@ void UIInput::mouseReleaseEvent(UIMouseEventRaw event)
 			PRIVATE()->CursorStart = -1;
 			PRIVATE()->Selection = {};
 
-			getContext()->paintElement();
+			getContext()->paintWidget();
 		}
 	}
 }
@@ -494,7 +494,7 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 			if (event->X < viewport.X && boundRect.X < viewport.X) PRIVATE()->SelectOffset += 1;
 			if (event->X > (viewport.X + viewport.W) && boundRect.X + boundRect.W > (viewport.X + viewport.W)) PRIVATE()->SelectOffset -= 1;
 
-			if (getContext()) getContext()->layoutElement();
+			if (getContext()) getContext()->layoutWidget();
 		}
 	}
 }
@@ -504,7 +504,7 @@ UIString UIInputFactory::getTagName() const
 	return "input";
 }
 
-UIWidgetRef UIInputFactory::getElement(UIString style) const
+UIWidgetRef UIInputFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIInput>(getContext());
 	result->setStyleText(style);

@@ -30,7 +30,7 @@ public:
 	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	bool addWidget(UIWidgetRef value) override;
-	bool addElement(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan = 1, uint32_t columnSpan = 1);
+	bool addWidget(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan = 1, uint32_t columnSpan = 1);
 	bool removeWidget(UIWidgetRef value) override;
 	void removeWidget() override;
 
@@ -56,5 +56,5 @@ class OPENUI_API UIGridFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIWidgetRef getElement(UIString style) const override;
+	UIWidgetRef newWidget(UIString style) const override;
 };

@@ -58,7 +58,7 @@ UICombo::UICombo(UIContextRaw context)
 		PRIVATE()->Popup->setFixedPos(posX, posY);
 		PRIVATE()->Popup->getHorizontalBar()->setValue(0);
 		PRIVATE()->Popup->getVerticalBar()->setValue(0);
-		getContext()->addElement(PRIVATE()->Popup, 1);
+		getContext()->addWidget(PRIVATE()->Popup, 1);
 		});
 }
 
@@ -165,7 +165,7 @@ void UICombo::setItems(UIStringList const& texts)
 			auto oldIndex = PRIVATE()->Index;
 			PRIVATE()->Index = (int32_t)i;
 			PRIVATE()->Button->setText(text);
-			getContext()->removeElement(PRIVATE()->Popup);
+			getContext()->removeWidget(PRIVATE()->Popup);
 			PRIVATE()->OnTextActivated.signal(text);
 			if (PRIVATE()->Index != oldIndex)
 			{
@@ -259,7 +259,7 @@ bool UICombo::filter(UIReactorRaw source, UIEventRaw event)
 		auto viewport = PRIVATE()->Popup->getViewport();
 		if (UIBounds(UIOverlap(client, viewport), event2->X, event2->Y) == false)
 		{
-			getContext()->removeElement(PRIVATE()->Popup);
+			getContext()->removeWidget(PRIVATE()->Popup);
 		}
 	} break;
 	case UIHash("DoubleClick"):
@@ -269,7 +269,7 @@ bool UICombo::filter(UIReactorRaw source, UIEventRaw event)
 		auto viewport = PRIVATE()->Popup->getViewport();
 		if (UIBounds(UIOverlap(client, viewport), event2->X, event2->Y) == false)
 		{
-			getContext()->removeElement(PRIVATE()->Popup);
+			getContext()->removeWidget(PRIVATE()->Popup);
 		}
 	} break;
 	}
@@ -281,7 +281,7 @@ UIString UIComboFactory::getTagName() const
 	return "combo";
 }
 
-UIWidgetRef UIComboFactory::getElement(UIString style) const
+UIWidgetRef UIComboFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UICombo>(getContext());
 	result->setStyleText(style);

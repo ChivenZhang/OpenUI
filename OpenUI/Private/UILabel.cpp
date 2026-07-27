@@ -284,7 +284,7 @@ void UILabel::setPixmap(UIImage image)
 		PRIVATE()->PixelScaled.clear();
 		PRIVATE()->ImageScaled = UIImage{};
 	}
-	getContext()->paintElement();
+	getContext()->paintWidget();
 }
 
 UILabel::scale_t UILabel::getScaledContents() const
@@ -295,7 +295,7 @@ UILabel::scale_t UILabel::getScaledContents() const
 void UILabel::setScaledContents(scale_t value)
 {
 	PRIVATE()->ScaledContents = value;
-	getContext()->paintElement();
+	getContext()->paintWidget();
 }
 
 void UILabel::mouseDoubleEvent(UIMouseEventRaw event)
@@ -356,7 +356,7 @@ UIString UILabelFactory::getTagName() const
 	return "label";
 }
 
-UIWidgetRef UILabelFactory::getElement(UIString style) const
+UIWidgetRef UILabelFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UILabel>(getContext());
 	result->setStyleText(style);

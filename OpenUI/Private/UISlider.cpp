@@ -109,7 +109,7 @@ bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
 			PRIVATE()->OnSliderMoved.signal(PRIVATE()->Value);
 			if (PRIVATE()->Tracking) if (PRIVATE()->Value != oldValue) PRIVATE()->OnValueChanged.signal(PRIVATE()->Value);
 
-			if (getContext()) getContext()->layoutElement();
+			if (getContext()) getContext()->layoutWidget();
 		}
 	} break;
 	}
@@ -255,7 +255,7 @@ UIString UISliderFactory::getTagName() const
 	return "slider";
 }
 
-UIWidgetRef UISliderFactory::getElement(UIString style) const
+UIWidgetRef UISliderFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UISlider>(getContext());
 	result->setStyleText(style);

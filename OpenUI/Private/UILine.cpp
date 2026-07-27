@@ -52,7 +52,7 @@ UIString UIHLineFactory::getTagName() const
 	return "hline";
 }
 
-UIWidgetRef UIHLineFactory::getElement(UIString style) const
+UIWidgetRef UIHLineFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIHLine>(getContext());
 	result->setStyleText(style);
@@ -94,7 +94,7 @@ UIString UIVLineFactory::getTagName() const
 	return "vline";
 }
 
-UIWidgetRef UIVLineFactory::getElement(UIString style) const
+UIWidgetRef UIVLineFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIVLine>(getContext());
 	result->setStyleText(style);

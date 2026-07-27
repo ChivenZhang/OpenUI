@@ -171,7 +171,7 @@ void business(UIContextRaw context, SDL_Window* window)
 	auto scale = context->getConfig().DisplayScale;
 
 	auto layout = builder->create<UIFlow>();
-	context->addElement(layout);
+	context->addWidget(layout);
 
 	//if (false)
 	{
@@ -254,22 +254,22 @@ void business(UIContextRaw context, SDL_Window* window)
 		grid->setFixedSize(200 * scale, 200 * scale);
 		{
 			auto button = builder->create<UIButton>();
-			grid->addElement(button, 0, 0, 2, 2);
+			grid->addWidget(button, 0, 0, 2, 2);
 			button->setText("Button0");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			grid->addElement(button, 0, 2, 3, 1);
+			grid->addWidget(button, 0, 2, 3, 1);
 			button->setText("Button1");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			grid->addElement(button, 2, 0, 1, 1);
+			grid->addWidget(button, 2, 0, 1, 1);
 			button->setText("Button2");
 		}
 		{
 			auto button = builder->create<UIButton>();
-			grid->addElement(button, 2, 1, 1, 1);
+			grid->addWidget(button, 2, 1, 1, 1);
 			button->setText("Button3");
 		}
 	}

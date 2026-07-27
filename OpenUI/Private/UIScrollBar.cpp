@@ -101,7 +101,7 @@ bool UIScrollBar::filter(UIReactorRaw source, UIEventRaw _event)
 			PRIVATE()->OnSliderMoved.signal(PRIVATE()->Value);
 			if (PRIVATE()->Tracking) if (PRIVATE()->Value != oldValue) PRIVATE()->OnValueChanged.signal(PRIVATE()->Value);
 
-			if (getContext()) getContext()->layoutElement();
+			if (getContext()) getContext()->layoutWidget();
 		}
 	} break;
 	}
@@ -221,7 +221,7 @@ UIString UIScrollBarFactory::getTagName() const
 	return "scrollbar";
 }
 
-UIWidgetRef UIScrollBarFactory::getElement(UIString style) const
+UIWidgetRef UIScrollBarFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIScrollBar>(getContext());
 	result->setStyleText(style);

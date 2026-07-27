@@ -78,7 +78,7 @@ UIString UIVBoxFactory::getTagName() const
 	return "vbox";
 }
 
-UIWidgetRef UIVBoxFactory::getElement(UIString style) const
+UIWidgetRef UIVBoxFactory::newWidget(UIString style) const
 {
 	auto result = UINew<UIVBox>(getContext());
 	result->setStyleText(style);

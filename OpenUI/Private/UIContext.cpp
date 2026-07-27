@@ -11,13 +11,13 @@
 #include "../UIContext.h"
 #include <yoga/Yoga.h>
 
-struct UIContextElement
+struct UIContextWidget
 {
-	UIWidgetRef Element;
+	UIWidgetRef Widget;
 	int32_t ZOrder;
 };
 
-class UIContextData : public UIContextPrivate
+class UIContextPrivateData : public UIContextPrivate
 {
 public:
 	UIConfig Config;
@@ -29,14 +29,13 @@ public:
 	UIList<UIPrimitive> RenderList;
 	UIList<UIWidgetRaw> AnimateList;
 	UIList<UIWidgetRef> TopLevelView;
-	UIList<UIContextElement> TopLevelList;
+	UIList<UIContextWidget> TopLevelList;
 };
-
-#define PRIVATE() ((UIContextData*) m_Private)
+#define PRIVATE() ((UIContextPrivateData*) m_Private)
 
 UIContext::UIContext(UIConfig config)
 {
-	m_Private = new UIContextData;
+	m_Private = new UIContextPrivateData;
 
 	PRIVATE()->Config = config;
 	PRIVATE()->Builder = UINew<UIBuilder>(this);
@@ -123,7 +122,7 @@ void UIContext::sendEvent(UIReactorRaw sender, UIEventRaw event)
 	};
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		auto element = PRIVATE()->TopLevelList[PRIVATE()->TopLevelList.size() - 1 - i].Element.get();
+		auto element = PRIVATE()->TopLevelList[PRIVATE()->TopLevelList.size() - 1 - i].Widget.get();
 		foreach_func(element);
 		break;
 	}
@@ -133,67 +132,67 @@ void UIContext::postEvent(UIReactorRef sender, UIEventRef event)
 {
 }
 
-bool UIContext::addElement(UIWidgetRef value, int32_t zorder)
+bool UIContext::addWidget(UIWidgetRef value, int32_t zorder)
 {
 	if (value == nullptr) return false;
-	auto result = std::find_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextElement const& e)-> bool { return e.Element == value; });
+	auto result = std::find_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextWidget const& e)-> bool { return e.Widget == value; });
 	if (result == PRIVATE()->TopLevelList.end())
 		PRIVATE()->TopLevelList.push_back({value, zorder});
 	else result->ZOrder = zorder;
 	value->setContext(this);
 	value->setParent(nullptr);
-	std::sort(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [](UIContextElement const& a, UIContextElement const& b) { return a.ZOrder < b.ZOrder; });
+	std::sort(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [](UIContextWidget const& a, UIContextWidget const& b) { return a.ZOrder < b.ZOrder; });
 	PRIVATE()->TopLevelView.resize(PRIVATE()->TopLevelList.size());
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
-		PRIVATE()->TopLevelView[i] = PRIVATE()->TopLevelList[i].Element;
-	layoutElement();
+		PRIVATE()->TopLevelView[i] = PRIVATE()->TopLevelList[i].Widget;
+	layoutWidget();
 	return true;
 }
 
-bool UIContext::removeElement(UIWidgetRef value)
+bool UIContext::removeWidget(UIWidgetRef value)
 {
-	auto result = std::remove_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextElement const& e)-> bool { return e.Element == value; });
+	auto result = std::remove_if(PRIVATE()->TopLevelList.begin(), PRIVATE()->TopLevelList.end(), [=](UIContextWidget const& e)-> bool { return e.Widget == value; });
 	if (result == PRIVATE()->TopLevelList.end()) return false;
 	PRIVATE()->TopLevelList.erase(result, PRIVATE()->TopLevelList.end());
 	PRIVATE()->TopLevelView.resize(PRIVATE()->TopLevelList.size());
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
-		PRIVATE()->TopLevelView[i] = PRIVATE()->TopLevelList[i].Element;
+		PRIVATE()->TopLevelView[i] = PRIVATE()->TopLevelList[i].Widget;
 	value->setContext(nullptr);
 	value->setParent(nullptr);
-	layoutElement();
+	layoutWidget();
 	return true;
 }
 
-void UIContext::removeElement()
+void UIContext::removeWidget()
 {
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		PRIVATE()->TopLevelList[i].Element->setContext(nullptr);
-		PRIVATE()->TopLevelList[i].Element->setParent(nullptr);
+		PRIVATE()->TopLevelList[i].Widget->setContext(nullptr);
+		PRIVATE()->TopLevelList[i].Widget->setParent(nullptr);
 	}
 	PRIVATE()->TopLevelList.clear();
 	PRIVATE()->TopLevelView.clear();
-	layoutElement();
+	layoutWidget();
 }
 
-bool UIContext::existElement(UIWidgetRef value) const
+bool UIContext::existWidget(UIWidgetRef value) const
 {
 	auto result = std::find(PRIVATE()->TopLevelView.begin(), PRIVATE()->TopLevelView.end(), value);
 	return result != PRIVATE()->TopLevelView.end();
 }
 
-UIListView<const UIWidgetRef> UIContext::getElement() const
+UIListView<const UIWidgetRef> UIContext::getWidget() const
 {
 	return PRIVATE()->TopLevelView;
 }
 
-void UIContext::layoutElement()
+void UIContext::layoutWidget()
 {
 	PRIVATE()->NeedLayout = true;
-	paintElement();
+	paintWidget();
 }
 
-bool UIContext::layoutElement(UIRect client)
+bool UIContext::layoutWidget(UIRect client)
 {
 	if (PRIVATE()->NeedLayout == false) return false;
 	PRIVATE()->NeedLayout = false;
@@ -566,24 +565,24 @@ bool UIContext::layoutElement(UIRect client)
 
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		arrange_func(PRIVATE()->TopLevelList[i].Element.get(), client);
+		arrange_func(PRIVATE()->TopLevelList[i].Widget.get(), client);
 
-		auto root = foreach_func(PRIVATE()->TopLevelList[i].Element.get(), client);
+		auto root = foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), client);
 		YGNodeCalculateLayout(root, client.W, client.H, YGDirectionLTR);
-		layout_func(root, PRIVATE()->TopLevelList[i].Element.get(), client);
+		layout_func(root, PRIVATE()->TopLevelList[i].Widget.get(), client);
 		YGNodeFreeRecursive(root);
 
-		relayout_func(PRIVATE()->TopLevelList[i].Element.get(), client, client);
+		relayout_func(PRIVATE()->TopLevelList[i].Widget.get(), client, client);
 	}
 	return true;
 }
 
-void UIContext::paintElement()
+void UIContext::paintWidget()
 {
 	PRIVATE()->NeedPaint = true;
 }
 
-bool UIContext::paintElement(UIRect client)
+bool UIContext::paintWidget(UIRect client)
 {
 	if (PRIVATE()->NeedPaint == false) return false;
 	PRIVATE()->NeedPaint = false;
@@ -600,12 +599,12 @@ bool UIContext::paintElement(UIRect client)
 
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		foreach_func(PRIVATE()->TopLevelList[i].Element.get(), PRIVATE()->TopLevelList[i].Element->getBounds(), getPainter());
+		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getBounds(), getPainter());
 	}
 	return true;
 }
 
-void UIContext::renderElement(UIRect client)
+void UIContext::renderWidget(UIRect client)
 {
 	if (getPainter() && getRender())
 	{
@@ -621,7 +620,7 @@ void UIContext::renderElement(UIRect client)
 	}
 }
 
-void UIContext::animateElement(float time)
+void UIContext::animateWidget(float time)
 {
 	for (size_t i = 0; i < PRIVATE()->AnimateList.size(); ++i)
 	{
@@ -629,4 +628,11 @@ void UIContext::animateElement(float time)
 		UITimerEvent event(time);
 		PRIVATE()->AnimateList[i]->timerEvent(&event);
 	}
+}
+
+void UIContext::updateWidget(float time, UIRect client)
+{
+	animateWidget(time);
+	layoutWidget(client);
+	paintWidget(client);
 }
