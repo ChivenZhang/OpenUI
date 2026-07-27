@@ -12,6 +12,7 @@
 #include "UIEvent.h"
 #include "UIPainter.h"
 #include "UISignal.h"
+#include "UIStyle.h"
 
 class UICanvas;
 using UICanvasRef = UIRef<UICanvas>;
@@ -154,6 +155,11 @@ public:
 	virtual UI::AlignSelf getAlignSelf() const;
 	virtual void setAlignSelf(UI::AlignSelf value);
 	virtual void setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis);
+
+	// =================================CSS Style======================================
+
+	virtual UIStyleRaw getStyleSheet() const;
+	virtual void setStyleSheet(UIStyleRef value);
 
 protected:
 	virtual void closeEvent(UICloseEventRaw event);

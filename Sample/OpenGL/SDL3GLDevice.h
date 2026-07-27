@@ -77,14 +77,14 @@ public:
 		return m_Window;
 	}
 
-	UICanvasRaw getContext() const override
+	UICanvasRaw getCanvas() const override
 	{
 		return m_UIContext.get();
 	}
 
 	bool update() override
 	{
-		auto openui = getContext();
+		auto openui = getCanvas();
 		auto window = getWindow();
 
 		// Send events to OpenUI

@@ -20,6 +20,6 @@ class WebGLDevice : public UIDevice
 public:
     WebGLDevice(){}
     ~WebGLDevice() override {}
-    UICanvasRaw getContext() const override { return nullptr;}
+    UICanvasRaw getCanvas() const override { return nullptr;}
     bool update() override { return false;}
 };

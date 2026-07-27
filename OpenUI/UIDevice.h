@@ -18,6 +18,6 @@ class OPENUI_API UIDevice
 {
 public:
     virtual ~UIDevice() = default;
-    virtual UICanvasRaw getContext() const = 0;
+    virtual UICanvasRaw getCanvas() const = 0;
     virtual bool update() = 0;
 };

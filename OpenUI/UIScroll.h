@@ -57,7 +57,7 @@ public:
 	void setHorizontalValue(float value);
 
 	float getVerticalValue() const;
-	void setVerticallValue(float value);
+	void setVerticalValue(float value);
 
 	UIScrollBarRaw getHorizontalBar() const;
 	UIScrollBarRaw getVerticalBar() const;

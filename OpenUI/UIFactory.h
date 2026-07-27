@@ -15,7 +15,7 @@
 class OPENUI_API UIFactory
 {
 public:
-	UIFactory(UICanvasRaw canvas);
+	explicit UIFactory(UICanvasRaw canvas);
 
 	virtual ~UIFactory() = default;
 

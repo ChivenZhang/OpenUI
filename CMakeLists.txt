@@ -9,6 +9,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(OPENUI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "OpenUI Source Path")
 option(OPENUI_ENABLE_SAMPLE "Enable Sample Compile" OFF)
 
+if(MSVC)
+    add_compile_options(/utf-8)
+else()
+    add_compile_options(-finput-charset=UTF-8)
+endif()
+
 include_directories(${OPENUI_SOURCE_DIR})
 add_subdirectory(OpenUI)
 if(OPENUI_ENABLE_SAMPLE)

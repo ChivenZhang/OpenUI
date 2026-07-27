@@ -23,6 +23,8 @@ public:
 	UICanvasRaw Canvas = nullptr;
 	UIPointUV3 Primitive[2];
 
+	// =============================Flex Layout==========================
+
 	UI::DisplayType DisplayType = UI::DisplayFlex;
 	UI::PositionType PositionType = UI::PositionRelative;
 	UIValue2F Position{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
@@ -56,6 +58,10 @@ public:
 	} Flex;
 	// int32_t Order;
 	UI::AlignSelf AlignSelf = UI::AlignAuto;
+
+	// ==============================CSS Style===========================
+
+	UIStyleRef Style;
 };
 #define PRIVATE() ((UIWidgetPrivateData*) m_Private)
 
@@ -775,6 +781,16 @@ void UIWidget::setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis b
 	setFlexGrow(grow);
 	setFlexShrink(shrink);
 	setFlexBasis(basis);
+}
+
+UIStyleRaw UIWidget::getStyleSheet() const
+{
+	return PRIVATE()->Style.get();
+}
+
+void UIWidget::setStyleSheet(UIStyleRef value)
+{
+	PRIVATE()->Style = value;
 }
 
 void UIWidget::closeEvent(UICloseEventRaw event)

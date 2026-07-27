@@ -632,7 +632,7 @@ void UICanvas::animateWidget(float time)
 
 void UICanvas::updateWidget(float time, UIRect client)
 {
-	animateWidget(time);
 	layoutWidget(client);
+	animateWidget(time);
 	paintWidget(client);
 }

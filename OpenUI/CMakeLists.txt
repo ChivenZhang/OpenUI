@@ -51,6 +51,7 @@ add_library(OpenUI STATIC
      "UISplit.h"
      "UIVBox.h"
         Private/UIFactory.cpp
+        UIStyle.h
 )
 
 find_package(yoga CONFIG REQUIRED)

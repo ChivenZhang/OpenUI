@@ -256,7 +256,7 @@ float UIScroll::getVerticalValue() const
 	return getVerticalBar()->getValue();
 }
 
-void UIScroll::setVerticallValue(float value)
+void UIScroll::setVerticalValue(float value)
 {
 	getVerticalBar()->setValue(value);
 }

@@ -40,7 +40,7 @@ int main()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	{
 		auto device = UINew<SDL3GLDevice>();
-		auto openui = device->getContext();
+		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);
 		while (device->update());
@@ -179,7 +179,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 		layout->addWidget(scroll);
 		scroll->setFixedSize(300 * scale, 200 * scale);
 		scroll->setHorizontalValue(150);
-		scroll->setVerticallValue(150);
+		scroll->setVerticalValue(150);
 		//if (false)
 		{
 			auto label = builder->create<UILabel>();
@@ -360,7 +360,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 		layout->addWidget(combo);
 		combo->setFixedSize(100 * scale, 30 * scale);
 		combo->setMaxCount(4);
-		combo->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
+		combo->setItems({ (char*)u8"黄金糕狮子头螺蛳粉", (char*)u8"黄金糕", (char*)u8"狮子头", (char*)u8"螺蛳粉", (char*)u8"蚵仔煎", (char*)u8"双皮奶", (char*)u8"龙须面" });
 		combo->setCurrentIndex(0);
 		combo->currentTextChanged->connect(nullptr, [](UIString text) {
 			printf("combo1 %s\n", text.c_str());
@@ -369,8 +369,8 @@ void sample(UICanvasRaw context, SDL_Window* window)
 		auto combo2 = builder->create<UICombo>();
 		layout->addWidget(combo2);
 		combo2->setFixedSize(100 * scale, 30 * scale);
-		combo2->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
-		combo2->setCurrentText("黄金糕");
+		combo2->setItems({ (char*)u8"黄金糕狮子头螺蛳粉", (char*)u8"黄金糕", (char*)u8"狮子头", (char*)u8"螺蛳粉", (char*)u8"蚵仔煎", (char*)u8"双皮奶", (char*)u8"龙须面" });
+		combo2->setCurrentText((char*)u8"黄金糕");
 		combo2->currentTextChanged->connect(nullptr, [](UIString text) {
 			printf("combo2 %s\n", text.c_str());
 			});
