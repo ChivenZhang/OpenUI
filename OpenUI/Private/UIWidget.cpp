@@ -783,12 +783,12 @@ void UIWidget::setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis b
 	setFlexBasis(basis);
 }
 
-UIStyleRaw UIWidget::getStyleSheet() const
+UIStyleRaw UIWidget::getStyles() const
 {
 	return PRIVATE()->Style.get();
 }
 
-void UIWidget::setStyleSheet(UIStyleRef value)
+void UIWidget::setStyles(UIStyleRef value)
 {
 	PRIVATE()->Style = value;
 }

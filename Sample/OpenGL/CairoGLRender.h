@@ -15,7 +15,7 @@
 class CairoGLRender : public UIRender
 {
 public:
-	using primitive_t = struct primitive_t
+	struct primitive_t
 	{
 		float X = 0, Y = 0;
 		uint32_t Index = 0;

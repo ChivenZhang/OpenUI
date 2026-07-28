@@ -64,102 +64,114 @@ public:
 
 	// ====================================Attribute===================================
 
-	virtual bool getEnable() const;
-	virtual void setEnable(bool value);
-	virtual bool getVisible() const;
-	virtual void setVisible(bool value);
-	virtual bool getAnimate() const;
-	virtual void setAnimate(bool value);
-	virtual UIRect getBounds() const;
-	virtual void setBounds(UIRect value);
-	virtual UIRect getViewport() const;
-	virtual void setViewport(UIRect value);
-	virtual UIRect getLocalBounds() const;
-	virtual void setLocalBounds(UIRect value);
-	virtual float getScale() const;
-	virtual void setScale(float value);
-	virtual float getRotate() const;
-	virtual void setRotate(float value);
-	virtual UIFloat2 getTranslate() const;
-	virtual void setTranslate(UIFloat2 value);
-	virtual float getPosX() const;
-	virtual float getPosY() const;
-	virtual UIFloat2 getPos() const;
-	virtual float getLocalX() const;
-	virtual float getLocalY() const;
-	virtual UIFloat2 getLocalPos() const;
-	virtual float getWidth() const;
-	virtual float getHeight() const;
-	virtual UIFloat2 getSize() const;
-	virtual bool inBounds(UIFloat2 pos);
-	virtual bool inBounds(float x, float y);
+	bool getEnable() const;
+	void setEnable(bool value);
+	bool getVisible() const;
+	void setVisible(bool value);
+	bool getAnimate() const;
+	void setAnimate(bool value);
+	UIRect getBounds() const;
+	void setBounds(UIRect value);
+	UIRect getViewport() const;
+	void setViewport(UIRect value);
+	UIRect getLocalBounds() const;
+	void setLocalBounds(UIRect value);
+	float getScale() const;
+	void setScale(float value);
+	float getRotate() const;
+	void setRotate(float value);
+	UIFloat2 getTranslate() const;
+	void setTranslate(UIFloat2 value);
+	float getPosX() const;
+	float getPosY() const;
+	UIFloat2 getPos() const;
+	float getLocalX() const;
+	float getLocalY() const;
+	UIFloat2 getLocalPos() const;
+	float getWidth() const;
+	float getHeight() const;
+	UIFloat2 getSize() const;
+	bool inBounds(UIFloat2 pos);
+	bool inBounds(float x, float y);
 
 	// =================================Flex Layout======================================
 
-	virtual UI::DisplayType getDisplayType() const;
-	virtual void setDisplayType(UI::DisplayType value);
-	virtual UI::PositionType getPositionType() const;
-	virtual void setPositionType(UI::PositionType value);
-	virtual UIValueF getFixedPosX() const;
-	virtual void setFixedPosX(UIValueF value);
-	virtual UIValueF getFixedPosY() const;
-	virtual void setFixedPosY(UIValueF value);
-	virtual UIValue2F getFixedPos() const;
-	virtual void setFixedPos(UIValueF left, UIValueF top);
-	virtual UIValueF getMinWidth() const;
-	virtual void setMinWidth(UIValueF value);
-	virtual UIValueF getMaxWidth() const;
-	virtual void setMaxWidth(UIValueF value);
-	virtual UIValueF getFixedWidth() const;
-	virtual void setFixedWidth(UIValueF value);
-	virtual UIValueF getMinHeight() const;
-	virtual void setMinHeight(UIValueF value);
-	virtual UIValueF getMaxHeight() const;
-	virtual void setMaxHeight(UIValueF value);
-	virtual UIValueF getFixedHeight() const;
-	virtual void setFixedHeight(UIValueF value);
-	virtual UIValue2F getMinSize() const;
-	virtual void setMinSize(UIValueF width, UIValueF height);
-	virtual UIValue2F getMaxSize() const;
-	virtual void setMaxSize(UIValueF width, UIValueF height);
-	virtual UIValue2F getFixedSize() const;
-	virtual void setFixedSize(UIValueF width, UIValueF height);
+	UI::DisplayType getDisplayType() const;
+	void setDisplayType(UI::DisplayType value);
+	UI::PositionType getPositionType() const;
+	void setPositionType(UI::PositionType value);
+	UIValueF getFixedPosX() const;
+	void setFixedPosX(UIValueF value);
+	UIValueF getFixedPosY() const;
+	void setFixedPosY(UIValueF value);
+	UIValue2F getFixedPos() const;
+	void setFixedPos(UIValueF left, UIValueF top);
+	UIValueF getMinWidth() const;
+	void setMinWidth(UIValueF value);
+	UIValueF getMaxWidth() const;
+	void setMaxWidth(UIValueF value);
+	UIValueF getFixedWidth() const;
+	void setFixedWidth(UIValueF value);
+	UIValueF getMinHeight() const;
+	void setMinHeight(UIValueF value);
+	UIValueF getMaxHeight() const;
+	void setMaxHeight(UIValueF value);
+	UIValueF getFixedHeight() const;
+	void setFixedHeight(UIValueF value);
+	UIValue2F getMinSize() const;
+	void setMinSize(UIValueF width, UIValueF height);
+	UIValue2F getMaxSize() const;
+	void setMaxSize(UIValueF width, UIValueF height);
+	UIValue2F getFixedSize() const;
+	void setFixedSize(UIValueF width, UIValueF height);
 
-	virtual UIValue4F getBorder() const;
-	virtual void setBorder(UIValue4F value);
-	virtual UIValue4F getMargin() const;
-	virtual void setMargin(UIValue4F value);
-	virtual UIValue4F getPadding() const;
-	virtual void setPadding(UIValue4F value);
-	virtual UIValue2F getSpacing() const;
-	virtual void setSpacing(UIValue2F value);
+	UIValue4F getBorder() const;
+	void setBorder(UIValue4F value);
+	UIValue4F getMargin() const;
+	void setMargin(UIValue4F value);
+	UIValue4F getPadding() const;
+	void setPadding(UIValue4F value);
+	UIValue2F getSpacing() const;
+	void setSpacing(UIValue2F value);
 
-	virtual UI::FlexDirection getFlexDirection() const;
-	virtual void setFlexDirection(UI::FlexDirection value);
-	virtual UI::FlexWrap getFlexWrap() const;
-	virtual void setFlexWrap(UI::FlexWrap value);
-	virtual UI::JustifyContent getJustifyContent() const;
-	virtual void setJustifyContent(UI::JustifyContent value);
-	virtual UI::AlignItems getAlignItems() const;
-	virtual void setAlignItems(UI::AlignItems value);
-	virtual UI::AlignContent getAlignContent() const;
-	virtual void setAlignContent(UI::AlignContent value);
-	virtual void setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap);
+	UI::FlexDirection getFlexDirection() const;
+	void setFlexDirection(UI::FlexDirection value);
+	UI::FlexWrap getFlexWrap() const;
+	void setFlexWrap(UI::FlexWrap value);
+	UI::JustifyContent getJustifyContent() const;
+	void setJustifyContent(UI::JustifyContent value);
+	UI::AlignItems getAlignItems() const;
+	void setAlignItems(UI::AlignItems value);
+	UI::AlignContent getAlignContent() const;
+	void setAlignContent(UI::AlignContent value);
+	void setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap);
 
-	virtual UI::FlexGrow getFlexGrow() const;
-	virtual void setFlexGrow(UI::FlexGrow value);
-	virtual UI::FlexShrink getFlexShrink() const;
-	virtual void setFlexShrink(UI::FlexShrink value);
-	virtual UI::FlexBasis getFlexBasis() const;
-	virtual void setFlexBasis(UI::FlexBasis value);
-	virtual UI::AlignSelf getAlignSelf() const;
-	virtual void setAlignSelf(UI::AlignSelf value);
-	virtual void setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis);
+	UI::FlexGrow getFlexGrow() const;
+	void setFlexGrow(UI::FlexGrow value);
+	UI::FlexShrink getFlexShrink() const;
+	void setFlexShrink(UI::FlexShrink value);
+	UI::FlexBasis getFlexBasis() const;
+	void setFlexBasis(UI::FlexBasis value);
+	UI::AlignSelf getAlignSelf() const;
+	void setAlignSelf(UI::AlignSelf value);
+	void setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis);
 
 	// =================================CSS Style======================================
 
-	virtual UIStyleRaw getStyleSheet() const;
-	virtual void setStyleSheet(UIStyleRef value);
+	UIStyleRaw getStyles() const;
+	void setStyles(UIStyleRef value);
+
+	template<class T>
+	T const& getStyle(UIString const& key) const
+	{
+		return getStyles()->getStyle<T>(key);
+	}
+
+	template<class T>
+	void setStyle(UIString const& key, T const& value) const
+	{
+		getStyles()->setStyle<T>(key, value);
+	}
 
 protected:
 	virtual void closeEvent(UICloseEventRaw event);
@@ -190,8 +202,8 @@ protected:
 	UICanvasRaw getCanvas() const;
 
 private:
-	virtual void setContext(UICanvasRaw value);
-	virtual void setParent(UIWidgetRaw value);
+	void setContext(UICanvasRaw value);
+	void setParent(UIWidgetRaw value);
 
 private:
 	friend class UICanvas;
