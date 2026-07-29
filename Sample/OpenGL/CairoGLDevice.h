@@ -9,7 +9,7 @@
 * Created by ChivenZhang at 2025/03/29 14:16:23.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_OPENGL
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
 #include <gl/glew.h>
 #include <SDL3/SDL.h>
 #include <OpenUI/UIDevice.h>
@@ -18,10 +18,10 @@
 #include "../SDL3InputEnum.h"
 
 /// @brief 
-class SDL3GLDevice : public UIDevice
+class CairoGLDevice : public UIDevice
 {
 public:
-	SDL3GLDevice()
+	CairoGLDevice()
 	{
 		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
 		if (window == nullptr)
@@ -65,7 +65,7 @@ public:
 		SDL_ShowWindow(window);
 	}
 
-	~SDL3GLDevice() override
+	~CairoGLDevice() override
 	{
 		m_UICanvas = nullptr;
 		SDL_GL_DestroyContext(m_Context);

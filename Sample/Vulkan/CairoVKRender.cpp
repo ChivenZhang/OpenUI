@@ -8,10 +8,10 @@
 * Created by ChivenZhang at 2025/03/30 15:07:30.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_VULKAN
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
 #include <glslang/Public/resource_limits_c.h>
 #include <glslang/Include/glslang_c_interface.h>
-#include "SDL3VKDevice.h"
+#include "CairoVKDevice.h"
 #include "CairoVKRender.h"
 #include "../Cairo/CairoUIPainter.h"
 
@@ -41,7 +41,7 @@ void main()
 }
 )";
 
-CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice> _device)
+CairoVKRender::CairoVKRender(uint32_t width, uint32_t height, UIRaw<CairoVKDevice> _device)
 	:
 	m_Device(_device),
 	m_Width(width),

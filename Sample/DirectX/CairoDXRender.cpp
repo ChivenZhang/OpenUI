@@ -8,8 +8,8 @@
 * Created by ChivenZhang at 2025/03/30 15:07:30.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_DIRECTX
-#include "SDL3DXDevice.h"
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
+#include "CairoDXDevice.h"
 #include "CairoDXRender.h"
 #include "../Cairo/CairoUIPainter.h"
 #include <d3dcompiler.h>
@@ -40,7 +40,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 }
 )";
 
-CairoDXRender::CairoDXRender(uint32_t width, uint32_t height, UIRaw<SDL3DXDevice> _device)
+CairoDXRender::CairoDXRender(uint32_t width, uint32_t height, UIRaw<CairoDXDevice> _device)
 	:
 	m_Device(_device),
 	m_Width(width),

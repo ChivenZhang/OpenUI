@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_OPENGL
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
 #include <OpenUI/UIRender.h>
 
 class CairoGLRender : public UIRender

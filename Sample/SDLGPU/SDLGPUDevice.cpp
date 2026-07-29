@@ -11,7 +11,6 @@
 #ifdef OPENUI_ENABLE_SDLGPU
 #include "SDLGPUDevice.h"
 #include <SDL3/SDL.h>
-
 #include "SDLGPUPainter.h"
 #include "SDLGPURender.h"
 #include "Sample/SDL3InputEnum.h"

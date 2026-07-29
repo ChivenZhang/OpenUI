@@ -9,10 +9,10 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_METAL
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
 #include <OpenUI/UIRender.h>
 #include <Metal/Metal.hpp>
-class SDL3MTDevice;
+class CairoMTDevice;
 
 class CairoMTRender : public UIRender
 {
@@ -24,7 +24,7 @@ public:
     };
 
 public:
-    CairoMTRender(uint32_t width, uint32_t height, UIRaw<SDL3MTDevice> device);
+    CairoMTRender(uint32_t width, uint32_t height, UIRaw<CairoMTDevice> device);
     ~CairoMTRender() override;
     void render(UIRect client, UIListView<UIPrimitive> data) override;
     void uploadTexture(int32_t width, int32_t height, uint8_t* pixels);
@@ -33,7 +33,7 @@ protected:
     MTL::Function* createShaderModule(MTL::Device* device, int32_t stage, const char* source);
 
 protected:
-    UIRaw<SDL3MTDevice> m_Device;
+    UIRaw<CairoMTDevice> m_Device;
     MTL::RenderPipelineState* m_RenderPipeline;
     MTL::Library* m_ShaderLibrary;
     MTL::Buffer* m_VertexBuffer;

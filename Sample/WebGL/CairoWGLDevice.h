@@ -11,15 +11,14 @@
 * =================================================*/
 #include <SDL3/SDL.h>
 #include <OpenUI/UIDevice.h>
-#include "CairoWGLRender.h"
 
 /// @brief 
-class WebGLDevice : public UIDevice
+class CairoWGLDevice : public UIDevice
 {
     // TODO: Implement WebGL device
 public:
-    WebGLDevice(){}
-    ~WebGLDevice() override {}
+    CairoWGLDevice(){}
+    ~CairoWGLDevice() override {}
     UICanvasRaw getCanvas() const override { return nullptr;}
     bool update() override { return false;}
 };

@@ -9,7 +9,7 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_METAL
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
 #include <Metal/Metal.hpp>
 #include <QuartzCore/CAMetalLayer.hpp>
 #include <SDL3/SDL.h>
@@ -20,10 +20,10 @@
 #include "../Cairo/CairoUIPainter.h"
 
 /// @brief
-class SDL3MTDevice
+class CairoMTDevice
 {
 public:
-	explicit SDL3MTDevice()
+	explicit CairoMTDevice()
 	{
 		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_METAL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
 		if (window == nullptr)
@@ -103,7 +103,7 @@ public:
 		SDL_ShowWindow(window);
 	}
 
-	~SDL3MTDevice()
+	~CairoMTDevice()
 	{
 		m_UICanvas = nullptr;
 		m_Queue->release(); m_Queue = nullptr;

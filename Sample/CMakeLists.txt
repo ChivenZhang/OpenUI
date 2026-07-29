@@ -15,6 +15,9 @@ endif ()
 if(OPENUI_ENABLE_SDLGPU)
 	add_definitions(-DOPENUI_ENABLE_SDLGPU)
 endif ()
+if(OPENUI_ENABLE_CAIRO)
+	add_definitions(-DOPENUI_ENABLE_CAIRO)
+endif ()
 if(CMAKE_HOST_WIN32)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
@@ -27,19 +30,19 @@ add_executable (Sample
 		Cairo/CairoUIPainter.h
 		Metal/CairoMTRender.cpp
 		Metal/CairoMTRender.h
-		Metal/SDL3MTDevice.h
+		Metal/CairoMTDevice.h
 		DirectX/CairoDXRender.cpp
 		DirectX/CairoDXRender.h
-		DirectX/SDL3DXDevice.h
+		DirectX/CairoDXDevice.h
 		OpenGL/CairoGLRender.cpp
 		OpenGL/CairoGLRender.h
-		OpenGL/SDL3GLDevice.h
+		OpenGL/CairoGLDevice.h
 		Vulkan/CairoVKRender.cpp
 		Vulkan/CairoVKRender.h
-		Vulkan/SDL3VKDevice.h
+		Vulkan/CairoVKDevice.h
 		WebGL/CairoWGLRender.cpp
 		WebGL/CairoWGLRender.h
-		WebGL/WebGLDevice.h
+		WebGL/CairoWGLDevice.h
         SDLGPU/SDLGPURender.cpp
         SDLGPU/SDLGPURender.h
 		SDLGPU/SDLGPUDevice.h
@@ -109,23 +112,35 @@ else()
 target_link_directories(Sample PRIVATE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
 
+if(OPENUI_ENABLE_CAIRO)
+	if(CMAKE_BUILD_TYPE MATCHES Debug)
+	target_link_libraries(Sample PRIVATE OpenUI
+			cairo cairo-gobject cairo-script-interpreter
+			pango-1.0 pangocairo-1.0 pangoft2-1.0 pixman-1
+			brotlicommon brotlidec brotlienc bz2d iconv
+			ffi fontconfig freetyped fribidi
+			glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
+			harfbuzz-subset harfbuzz intl
+	)
+	else()
+	target_link_libraries(Sample PRIVATE OpenUI
+			cairo cairo-gobject cairo-script-interpreter
+			pango-1.0 pangocairo-1.0 pangoft2-1.0 pixman-1
+			brotlicommon brotlidec brotlienc bz2 iconv
+			ffi fontconfig freetype fribidi
+			glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
+			harfbuzz-subset harfbuzz intl
+	)
+	endif()
+endif()
+
 if(CMAKE_BUILD_TYPE MATCHES Debug)
 target_link_libraries(Sample PRIVATE OpenUI
-		brotlicommon brotlidec brotlienc bz2d iconv
-		cairo cairo-gobject cairo-script-interpreter
-		ffi fontconfig freetyped fribidi
-		glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
-		harfbuzz-subset harfbuzz intl
-		pango-1.0 pangocairo-1.0 pangoft2-1.0 pixman-1
+
 )
 else()
 target_link_libraries(Sample PRIVATE OpenUI
-		brotlicommon brotlidec brotlienc bz2 iconv
-		cairo cairo-gobject cairo-script-interpreter
-		ffi fontconfig freetype fribidi
-		glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
-		harfbuzz-subset harfbuzz intl
-		pango-1.0 pangocairo-1.0 pangoft2-1.0 pixman-1
+
 )
 endif()
 
@@ -134,8 +149,13 @@ target_link_libraries(Sample PRIVATE expat GenericCodeGen MachineIndependent OSD
 endif()
 
 if(CMAKE_HOST_WIN32)
+if(OPENUI_ENABLE_CAIRO)
 target_link_libraries(Sample PRIVATE pangowin32-1.0 Ws2_32 Dwrite)
 endif()
+endif()
 
+if(OPENUI_ENABLE_CAIRO)
 file(COPY ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/etc/fonts DESTINATION ${CMAKE_BINARY_DIR})
+endif()
+
 endif()

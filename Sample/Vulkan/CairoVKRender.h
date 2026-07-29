@@ -9,10 +9,10 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_VULKAN
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
 #include <OpenUI/UIRender.h>
 #include <vulkan/vulkan_core.h>
-class SDL3VKDevice;
+class CairoVKDevice;
 
 class CairoVKRender : public UIRender
 {
@@ -24,7 +24,7 @@ public:
 	};
 
 public:
-	CairoVKRender(uint32_t width, uint32_t height, UIRaw<SDL3VKDevice> device);
+	CairoVKRender(uint32_t width, uint32_t height, UIRaw<CairoVKDevice> device);
 	~CairoVKRender() override;
 	void render(UIRect client, UIListView<UIPrimitive> data) override;
 	void uploadTexture(int32_t width, int32_t height, uint8_t* pixels);
@@ -33,7 +33,7 @@ protected:
 	VkShaderModule createShaderModule(VkDevice device, int32_t stage, const char* source);
 
 protected:
-	UIRaw<SDL3VKDevice> m_Device;
+	UIRaw<CairoVKDevice> m_Device;
 	VkPipeline m_Pipeline;
 	VkPipelineLayout m_PipelineLayout;
 	VkDescriptorSet m_DescriptorSet;

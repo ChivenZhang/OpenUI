@@ -8,6 +8,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_CAIRO
 #include "CairoUIPainter.h"
 #include <cairo/cairo.h>
 #include <pango/pangocairo.h>
@@ -697,3 +698,4 @@ void CairoUIPainter::resize(uint32_t width, uint32_t height)
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_description_free(font_desc);
 }
+#endif

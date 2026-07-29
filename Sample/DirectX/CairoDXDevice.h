@@ -9,7 +9,7 @@
 * Created by ChivenZhang at 2025/03/29 14:16:58.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_DIRECTX
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
 #include <SDL3/SDL.h>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
@@ -22,10 +22,10 @@ using Microsoft::WRL::ComPtr;
 #include "../Cairo/CairoUIPainter.h"
 
 /// @brief
-class SDL3DXDevice
+class CairoDXDevice
 {
 public:
-	explicit SDL3DXDevice(ComPtr<IDXGIFactory4> instance)
+	explicit CairoDXDevice(ComPtr<IDXGIFactory4> instance)
 		:
 		m_Instance(instance)
 	{
@@ -115,7 +115,7 @@ public:
 		SDL_ShowWindow(window);
 	}
 
-	~SDL3DXDevice()
+	~CairoDXDevice()
 	{
 		m_CurrentFrame += 1;
 		auto result = m_Queue->Signal(m_SwapchainFence.Get(), m_CurrentFrame);

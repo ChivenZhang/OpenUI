@@ -8,12 +8,12 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_METAL
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
 #define MTK_PRIVATE_IMPLEMENTATION
 #define CA_PRIVATE_IMPLEMENTATION
-#include "SDL3MTDevice.h"
+#include "CairoMTDevice.h"
 #include "CairoMTRender.h"
 
 static auto source = R"(
@@ -52,7 +52,7 @@ half4 fragment PSMain(PSInput input [[stage_in]], texture2d< half, access::sampl
 }
 )";
 
-CairoMTRender::CairoMTRender(uint32_t width, uint32_t height, UIRaw<SDL3MTDevice> _device)
+CairoMTRender::CairoMTRender(uint32_t width, uint32_t height, UIRaw<CairoMTDevice> _device)
     :
     m_Width(width),
     m_Height(height),

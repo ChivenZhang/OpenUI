@@ -9,7 +9,7 @@
 * Created by ChivenZhang at 2025/03/29 14:16:58.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_VULKAN
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
 #include <SDL3/SDL.h>
 #include <vulkan/vulkan.h>
 #include <SDL3/SDL_vulkan.h>
@@ -19,10 +19,10 @@
 #include "../Cairo/CairoUIPainter.h"
 
 /// @brief
-class SDL3VKDevice : public UIDevice
+class CairoVKDevice : public UIDevice
 {
 public:
-	explicit SDL3VKDevice(VkInstance instance)
+	explicit CairoVKDevice(VkInstance instance)
 		:
 		m_Instance(instance)
 	{
@@ -186,7 +186,7 @@ public:
 		SDL_ShowWindow(window);
 	}
 
-	~SDL3VKDevice() override
+	~CairoVKDevice() override
 	{
 		auto result = vkQueueWaitIdle(m_Queue);
 		if (result != VK_SUCCESS) UI_FATAL("Could not wait on queue!");

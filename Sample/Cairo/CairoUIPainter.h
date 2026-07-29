@@ -9,6 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
+#ifdef OPENUI_ENABLE_CAIRO
 #include <OpenUI/UIPainter.h>
 
 class CairoUIPainter : public UIPainter
@@ -61,3 +62,4 @@ public:
 private:
 	UIPainterPrivateRaw m_Private;
 };
+#endif

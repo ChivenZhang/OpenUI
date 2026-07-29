@@ -15,17 +15,17 @@
 #include "OpenUI/UILine.h"
 #include "OpenUI/UIInput.h"
 #include <stb_image.h>
-#ifdef OPENUI_ENABLE_OPENGL
-#include "OpenGL/SDL3GLDevice.h"
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
+#include "OpenGL/CairoGLDevice.h"
 #endif
-#ifdef OPENUI_ENABLE_VULKAN
-#include "Vulkan/SDL3VKDevice.h"
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
+#include "Vulkan/CairoVKDevice.h"
 #endif
-#ifdef OPENUI_ENABLE_DIRECTX
-#include "DirectX/SDL3DXDevice.h"
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
+#include "DirectX/CairoDXDevice.h"
 #endif
-#ifdef OPENUI_ENABLE_METAL
-#include "Metal/SDL3MTDevice.h"
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
+#include "Metal/CairoMTDevice.h"
 #endif
 #ifdef OPENUI_ENABLE_SDLGPU
 #include "SDLGPU/SDLGPUDevice.h"
@@ -35,14 +35,14 @@ void sample(UICanvasRaw context, SDL_Window* window);
 
 int main()
 {
-#ifdef OPENUI_ENABLE_OPENGL
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");	
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	{
-		auto device = UINew<SDL3GLDevice>();
+		auto device = UINew<CairoGLDevice>();
 		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);
@@ -52,7 +52,7 @@ int main()
 	SDL_Quit();
 #endif
 
-#ifdef OPENUI_ENABLE_VULKAN
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
 	UIList<const char*> layers;
@@ -103,7 +103,7 @@ int main()
 	result = pfnVkCreateDebugUtilsMessengerEXT(instance, &debugCreateInfo, nullptr, &messenger);
 	if (result != VK_SUCCESS) UI_FATAL("vkCreateDebugUtilsMessengerEXT failed");
 	{
-		auto device = UINew<SDL3VKDevice>(instance);
+		auto device = UINew<CairoVKDevice>(instance);
 		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);
@@ -115,7 +115,7 @@ int main()
 	SDL_Quit();
 #endif
 
-#ifdef OPENUI_ENABLE_DIRECTX
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
 	uint32_t factoryFlags = 0;
@@ -142,7 +142,7 @@ int main()
 		UI_FATAL("CreateDXGIFactory2 failed");
 	}
 	{
-		auto device = UINew<SDL3DXDevice>(instance);
+		auto device = UINew<CairoDXDevice>(instance);
 		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);
@@ -152,10 +152,10 @@ int main()
 	SDL_Quit();
 #endif
 
-#ifdef OPENUI_ENABLE_METAL
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
 	SDL_Init(SDL_INIT_VIDEO);
 	{
-		auto device = UINew<SDL3MTDevice>();
+		auto device = UINew<CairoMTDevice>();
 		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);

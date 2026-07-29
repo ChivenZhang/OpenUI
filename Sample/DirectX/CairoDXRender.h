@@ -9,13 +9,13 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_DIRECTX
+#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
 #include <OpenUI/UIRender.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wrl.h>
 using Microsoft::WRL::ComPtr;
-class SDL3DXDevice;
+class CairoDXDevice;
 
 class CairoDXRender : public UIRender
 {
@@ -27,7 +27,7 @@ public:
 	};
 
 public:
-	CairoDXRender(uint32_t width, uint32_t height, UIRaw<SDL3DXDevice> device);
+	CairoDXRender(uint32_t width, uint32_t height, UIRaw<CairoDXDevice> device);
 	~CairoDXRender() override;
 	void render(UIRect client, UIListView<UIPrimitive> data) override;
 	void uploadTexture(int32_t width, int32_t height, uint8_t* pixels);
@@ -36,7 +36,7 @@ protected:
 	ComPtr<ID3DBlob> createShaderModule(ComPtr<ID3D12Device> device, int32_t stage, const char* source);
 
 protected:
-	UIRaw<SDL3DXDevice> m_Device;
+	UIRaw<CairoDXDevice> m_Device;
 	ComPtr<ID3D12PipelineState> m_Pipeline;
 	ComPtr<ID3D12RootSignature> m_PipelineLayout;
 	ComPtr<ID3D12DescriptorHeap> m_DescriptorSet;
