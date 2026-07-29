@@ -53,6 +53,8 @@ add_library(OpenUI STATIC
         Private/UIFactory.cpp
         UIStyle.h
         Private/UIStyle.cpp
+        UIShader.h
+        Private/UIShader.cpp
 )
 
 find_package(yoga CONFIG REQUIRED)

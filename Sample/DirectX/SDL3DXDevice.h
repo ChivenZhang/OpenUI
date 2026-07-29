@@ -16,7 +16,7 @@
 #include <dxgi1_6.h>
 #include <wrl.h>
 using Microsoft::WRL::ComPtr;
-#include <OpenUI/UIContext.h>
+#include <OpenUI/UICanvas.h>
 #include "CairoDXRender.h"
 #include "../SDL3InputEnum.h"
 #include "../Cairo/CairoUIPainter.h"
@@ -107,10 +107,10 @@ public:
 
 		auto scale = SDL_GetWindowDisplayScale(window);
 		UIConfig config{.DisplayScale = scale};
-		auto openui = UINew<UIContext>(config);
+		auto openui = UINew<UICanvas>(config);
 		openui->setPainter(UINew<CairoUIPainter>(width, height));
 		openui->setRender(UINew<CairoDXRender>(width, height, this));
-		m_UIContext = openui;
+		m_UICanvas = openui;
 
 		SDL_ShowWindow(window);
 	}
@@ -135,7 +135,7 @@ public:
 			if (result != S_OK) UI_FATAL("UnregisterMessageCallback failed");
 		}
 
-		m_UIContext = nullptr;
+		m_UICanvas = nullptr;
 		m_SwapchainImages.clear();
 		m_SwapchainFence = nullptr;
 		m_DescriptorPool = nullptr;
@@ -153,15 +153,15 @@ public:
 		return m_Window;
 	}
 
-	UIContextRaw getContext() const
+	UICanvasRaw getCanvas() const
 	{
-		return m_UIContext.get();
+		return m_UICanvas.get();
 	}
 
 	bool update()
 	{
 		auto window = getWindow();
-		auto openui = getContext();
+		auto openui = getCanvas();
 
 		// Send events to OpenUI
 
@@ -435,7 +435,7 @@ protected:
 	ComPtr<ID3D12Fence> m_SwapchainFence;
 	HANDLE m_SwapchainEvent;
 	DWORD m_MessageCookie;
-	UIContextRef m_UIContext;
+	UICanvasRef m_UICanvas;
 
 	friend class CairoDXRender;
 };

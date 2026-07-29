@@ -24,6 +24,17 @@
       }
     },
     {
+      "name": "x64-SDLGPU",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/Output/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
+        "OPENUI_ENABLE_SAMPLE": "ON",
+        "OPENUI_ENABLE_SDLGPU": "ON"
+      }
+    },
+    {
       "name": "x64-osx-Debug",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/Output/${presetName}",

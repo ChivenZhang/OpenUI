@@ -178,10 +178,10 @@ public:
 		SDL_GetWindowSize(window, &width, &height);
 		auto scale = SDL_GetWindowDisplayScale(window);
 		UIConfig config{.DisplayScale = scale};
-		auto openui = UINew<UIContext>(config);
+		auto openui = UINew<UICanvas>(config);
 		openui->setPainter(UINew<CairoUIPainter>(width, height));
 		openui->setRender(UINew<CairoVKRender>(width, height, this));
-		m_UIContext = openui;
+		m_UICanvas = openui;
 
 		SDL_ShowWindow(window);
 	}
@@ -191,7 +191,7 @@ public:
 		auto result = vkQueueWaitIdle(m_Queue);
 		if (result != VK_SUCCESS) UI_FATAL("Could not wait on queue!");
 
-		m_UIContext = nullptr;
+		m_UICanvas = nullptr;
 		for (size_t i=0; i<m_SwapchainFences.size(); ++i) vkDestroyFence(m_Device, m_SwapchainFences[i], nullptr);
 		for (size_t i=0; i<m_SemaphoreImages.size(); ++i) vkDestroySemaphore(m_Device, m_SemaphoreImages[i], nullptr);
 		for (size_t i=0; i<m_SemaphorePaints.size(); ++i) vkDestroySemaphore(m_Device, m_SemaphorePaints[i], nullptr);
@@ -218,15 +218,15 @@ public:
 		return m_Window;
 	}
 
-	UIContextRaw getContext() const override
+	UICanvasRaw getCanvas() const override
 	{
-		return m_UIContext.get();
+		return m_UICanvas.get();
 	}
 
 	bool update() override
 	{
 		auto window = getWindow();
-		auto openui = getContext();
+		auto openui = getCanvas();
 
 		// Send events to OpenUI
 
@@ -650,7 +650,7 @@ protected:
 	UIList<VkSemaphore> m_SemaphoreImages;
 	UIList<VkSemaphore> m_SemaphorePaints;
 	UIList<VkCommandBuffer> m_CommandBuffers;
-	UIContextRef m_UIContext;
+	UICanvasRef m_UICanvas;
 
 	friend class CairoVKRender;
 };

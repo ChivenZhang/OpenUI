@@ -1,133 +1,61 @@
-#pragma once
 /*=================================================
-* Copyright @ 2020-2025 ChivenZhang.
+* Copyright © 2020-2026 ChivenZhang.
 * All Rights Reserved.
 * =====================Note=========================
 *
 *
 * ====================History=======================
-* Created by ChivenZhang at 2025/03/30 15:07:17.
+* Created by chivenzhang@gmail.com.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_METAL
-#include <Metal/Metal.hpp>
-#include <QuartzCore/CAMetalLayer.hpp>
+#ifdef OPENUI_ENABLE_SDLGPU
+#include "SDLGPUDevice.h"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_metal.h>
-#include <OpenUI/UIDevice.h>
-#include "CairoMTRender.h"
-#include "../SDL3InputEnum.h"
-#include "../Cairo/CairoUIPainter.h"
 
-/// @brief
-class SDL3MTDevice
+#include "SDLGPUPainter.h"
+#include "SDLGPURender.h"
+#include "Sample/SDL3InputEnum.h"
+
+SDLGPUDevice::SDLGPUDevice()
 {
-public:
-	explicit SDL3MTDevice()
-	{
-		auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_METAL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
-		if (window == nullptr)
-		{
-			SDL_Quit();
-			UI_FATAL("Failed to create window");
-		}
-		m_Window = window;
+    auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
+    if (window == nullptr)
+    {
+        UI_ERROR("Window could not be created! SDL_Error: %s", SDL_GetError());
+        SDL_Quit();
+        UI_FATAL("GLEW could not be initialized!");
+    }
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+    auto scale = SDL_GetWindowDisplayScale(window);
+    m_Window = window;
 
-		int width = 0, height = 0;
-		SDL_GetWindowSize(window, &width, &height);
+    // Initialize OpenUI context
 
-		// 创建设备
+    UIConfig config{.DisplayScale = scale};
+    auto openui = UINew<UICanvas>(config);
+    openui->setPainter(UINew<SDLGPUPainter>(w, h));
+    openui->setRender(UINew<SDLGPURender>(w, h));
+    m_UICanvas = openui;
 
-		auto devices = MTL::CopyAllDevices();
-		for (size_t i = 0; i < devices->count(); ++i)
-		{
-			auto device = (MTL::Device*)devices->object(i);
-			const char* name = device->name()->utf8String();
-			bool isLowPower = device->lowPower();
-			bool supportsFamily = device->supportsFamily(MTL::GPUFamilyApple1);
-			printf("Device %zu: %s (Low Power: %d, Is M-GPU: %d)\n", i, name, isLowPower, supportsFamily);
-		}
-		devices->release();
-		auto device = MTL::CreateSystemDefaultDevice();
-		if (device == nullptr)
-		{
-			SDL_Quit();
-			UI_FATAL("Failed to create device");
-		}
-		m_Device = device;
+    SDL_ShowWindow(window);
+}
 
-		// 创建队列
+SDLGPUDevice::~SDLGPUDevice()
+{
+    m_UICanvas = nullptr;
+    SDL_DestroyWindow(m_Window);
+}
 
-		auto queue = device->newCommandQueue();
-		if (queue == nullptr)
-		{
-			SDL_Quit();
-			UI_FATAL("Failed to create command queue");
-		}
-		m_Queue = queue;
+UICanvasRaw SDLGPUDevice::getCanvas() const
+{
+    return m_UICanvas.get();
+}
 
-		// 创建信号量
-
-		m_Semaphore = dispatch_semaphore_create(3);
-
-		// 创建交换链
-
-		auto surface = SDL_Metal_CreateView(window);
-		if (surface == nullptr)
-		{
-			SDL_Quit();
-			UI_FATAL("Failed to create view");
-		}
-		m_Surface = surface;
-
-		auto swapchain = (CA::MetalLayer*)SDL_Metal_GetLayer(surface);
-		if (swapchain == nullptr)
-		{
-			SDL_Quit();
-			UI_FATAL("Failed to create swapchain");
-		}
-		m_Swapchain = swapchain;
-		m_Swapchain->setDevice(m_Device);
-		m_Swapchain->setPixelFormat(MTL::PixelFormatRGBA8Unorm);
-		recreateSwapchain();
-
-		// Initialize OpenUI context
-
-		auto scale = SDL_GetWindowDisplayScale(window);
-		UIConfig config{.DisplayScale = scale};
-		auto openui = UINew<UICanvas>(config);
-		openui->setPainter(UINew<CairoUIPainter>(width, height));
-		openui->setRender(UINew<CairoMTRender>(width, height, this));
-		m_UICanvas = openui;
-
-		SDL_ShowWindow(window);
-	}
-
-	~SDL3MTDevice()
-	{
-		m_UICanvas = nullptr;
-		m_Queue->release(); m_Queue = nullptr;
-		m_Device->release(); m_Device = nullptr;
-		SDL_Metal_DestroyView(m_Surface); m_Surface = nullptr;
-		SDL_DestroyWindow(m_Window); m_Window = nullptr;
-	}
-
-	SDL_Window* getWindow() const
-	{
-		return m_Window;
-	}
-
-	UICanvasRaw getCanvas() const
-	{
-		return m_UICanvas.get();
-	}
-
-	bool update()
-	{
-		auto window = getWindow();
+bool SDLGPUDevice::update()
+{
 		auto openui = getCanvas();
-		auto drawable = m_Swapchain->nextDrawable();
-		auto commandBuffer = m_CommandBuffer = m_Queue->commandBuffer();
+		auto window = getWindow();
 
 		// Send events to OpenUI
 
@@ -258,9 +186,8 @@ public:
 				break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 				{
-					recreateSwapchain();
-					openui->layoutElement();
-					UICast<CairoUIPainter>(openui->getPainter())->resize(event.window.data1, event.window.data2);
+					openui->layoutWidget();
+					UICast<SDLGPUPainter>(openui->getPainter())->resize(event.window.data1, event.window.data2);
 					UIResizeEvent event2(event.window.data1, event.window.data2);
 					openui->sendEvent(nullptr, &event2);
 				}
@@ -293,55 +220,18 @@ public:
 		int width, height;
 		SDL_GetWindowSize(window, &width, &height);
 		UIRect client{0, 0, (float)width, (float)height};
-		openui->updateElement(::clock() * 0.001f, client);
+		openui->updateWidget(::clock() * 0.001f, client);
 
 		// Output frame to screen
 
-		dispatch_semaphore_wait(m_Semaphore, DISPATCH_TIME_FOREVER);
-
-		auto renderPassDescriptor = MTL::RenderPassDescriptor::renderPassDescriptor();
-		renderPassDescriptor->setRenderTargetWidth(width);
-		renderPassDescriptor->setRenderTargetHeight(height);
-		renderPassDescriptor->colorAttachments()->object(0)->setTexture(drawable->texture());
-		renderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionClear);
-		renderPassDescriptor->colorAttachments()->object(0)->setStoreAction(MTL::StoreActionStore);
-		renderPassDescriptor->colorAttachments()->object(0)->setClearColor(MTL::ClearColor(0.3, 0.3, 0.8, 1.0));
-        auto renderEncoder = m_RenderCommandEncoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
-
-		auto pixels = UICast<CairoUIPainter>(openui->getPainter())->getPixels();
-		UICast<CairoMTRender>(openui->getRender())->uploadTexture(width, height, (uint8_t*)pixels.data());
-
-		openui->renderElement(client);
-
-		renderEncoder->endEncoding();
-		commandBuffer->presentDrawable(drawable);
-		commandBuffer->addCompletedHandler([this](MTL::CommandBuffer* buffer)
-		{
-			dispatch_semaphore_signal(m_Semaphore);
-		});
-        commandBuffer->commit();
+		openui->renderWidget(client);
 		return true;
-	}
+}
 
-	void recreateSwapchain()
-	{
-		int width = 0, height = 0;
-		SDL_GetWindowSize(m_Window, &width, &height);
-		m_Swapchain->setDrawableSize({1.0f * width, 1.0f * height});
-	}
+SDL_Window* SDLGPUDevice::getWindow() const
+{
+    return m_Window;
+}
 
-protected:
-	SDL_Window* m_Window;
-	SDL_MetalView m_Surface;
-	CA::MetalLayer* m_Swapchain;
-	MTL::Device* m_Device;
-	MTL::CommandQueue* m_Queue;
-	MTL::CommandBuffer* m_CommandBuffer;
-	MTL::RenderCommandEncoder* m_RenderCommandEncoder;
-	dispatch_semaphore_t m_Semaphore;
-	int m_CurrentFrame = 0;
-	UICanvasRef m_UICanvas;
-
-	friend class CairoMTRender;
-};
 #endif
+

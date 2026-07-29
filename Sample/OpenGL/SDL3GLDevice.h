@@ -60,14 +60,14 @@ public:
 		auto openui = UINew<UICanvas>(config);
 		openui->setPainter(UINew<CairoUIPainter>(w, h));
 		openui->setRender(UINew<CairoGLRender>(w, h));
-		m_UIContext = openui;
+		m_UICanvas = openui;
 
 		SDL_ShowWindow(window);
 	}
 
 	~SDL3GLDevice() override
 	{
-		m_UIContext = nullptr;
+		m_UICanvas = nullptr;
 		SDL_GL_DestroyContext(m_Context);
 		SDL_DestroyWindow(m_Window);
 	}
@@ -79,7 +79,7 @@ public:
 
 	UICanvasRaw getCanvas() const override
 	{
-		return m_UIContext.get();
+		return m_UICanvas.get();
 	}
 
 	bool update() override
@@ -270,6 +270,6 @@ public:
 protected:
 	SDL_Window* m_Window;
 	SDL_GLContext m_Context;
-	UICanvasRef m_UIContext;
+	UICanvasRef m_UICanvas;
 };
 #endif

@@ -27,6 +27,9 @@
 #ifdef OPENUI_ENABLE_METAL
 #include "Metal/SDL3MTDevice.h"
 #endif
+#ifdef OPENUI_ENABLE_SDLGPU
+#include "SDLGPU/SDLGPUDevice.h"
+#endif
 
 void sample(UICanvasRaw context, SDL_Window* window);
 
@@ -101,7 +104,7 @@ int main()
 	if (result != VK_SUCCESS) UI_FATAL("vkCreateDebugUtilsMessengerEXT failed");
 	{
 		auto device = UINew<SDL3VKDevice>(instance);
-		auto openui = device->getContext();
+		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);
 		while (device->update());
@@ -140,7 +143,7 @@ int main()
 	}
 	{
 		auto device = UINew<SDL3DXDevice>(instance);
-		auto openui = device->getContext();
+		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);
 		while (device->update());
@@ -153,7 +156,7 @@ int main()
 	SDL_Init(SDL_INIT_VIDEO);
 	{
 		auto device = UINew<SDL3MTDevice>();
-		auto openui = device->getContext();
+		auto openui = device->getCanvas();
 		auto window = device->getWindow();
 		sample(openui, window);
 		while (device->update());
@@ -162,6 +165,18 @@ int main()
 	SDL_Quit();
 #endif
 
+#ifdef OPENUI_ENABLE_SDLGPU
+	SDL_Init(SDL_INIT_VIDEO);
+	{
+		auto device = UINew<SDLGPUDevice>();
+		auto openui = device->getCanvas();
+		auto window = device->getWindow();
+		sample(openui, window);
+		while (device->update());
+		device = nullptr;
+	}
+	SDL_Quit();
+#endif
 	return 0;
 }
 

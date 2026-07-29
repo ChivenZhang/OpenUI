@@ -16,6 +16,7 @@
 #	define __FUNCTION__ __func__
 #	define OPENUI_CPLUSPLUS __cplusplus
 #endif
+
 #if 201703L < OPENUI_CPLUSPLUS
 #	define OPENUI_CPP_VERSION 20
 #elif 201402L < OPENUI_CPLUSPLUS
@@ -298,6 +299,8 @@ inline UIRaw<U> UICast(UIRaw<T> const& target)
 	return const_cast<U*>(dynamic_cast<const U*>((const T*)target));
 }
 
+// ============================================
+
 inline constexpr uint32_t UIHash32(const char* const first, const size_t count) noexcept
 {
 	// These FNV-1a utility functions are extremely performance sensitive,
@@ -553,6 +556,8 @@ const char* const UIInputName[]
 #undef XX
 };
 
+// ============================================
+
 struct UIRect
 {
 	float X = 0, Y = 0, W = 0, H = 0;
@@ -617,7 +622,7 @@ struct UIPrimitive
 
 struct UIPen
 {
-	using style_t = enum
+	enum style_t
 	{
 		NoPen = 0,
 		SolidLine,
@@ -627,21 +632,21 @@ struct UIPen
 		DashDotDotLine,
 		CustomDashLine,
 	};
-	using cap_style_t = enum
+	enum cap_style_t
 	{
 		FlatCap = 0,
 		SquareCap,
 		RoundCap,
 	};
-	using join_style_t = enum
+	enum join_style_t
 	{
 		MiterJoin = 0,
 		BevelJoin,
 		RoundJoin,
 	};
-	style_t Style = style_t::SolidLine;
-	cap_style_t CapStyle = cap_style_t::SquareCap;
-	join_style_t JoinStyle = join_style_t::BevelJoin;
+	style_t Style = SolidLine;
+	cap_style_t CapStyle = SquareCap;
+	join_style_t JoinStyle = BevelJoin;
 	UIColor Color = UIColor{ 0, 0, 0, 1 };
 	float Width = 2.0f, DashOffset = 0.0f, MiterLimit = 10.0f;
 	float DashPattern[12] = {};
@@ -677,7 +682,7 @@ static constexpr UIPen UIFramePen
 
 struct UIBrush
 {
-	using style_t = enum
+	enum style_t
 	{
 		NoBrush = 0,
 		SolidPattern,
@@ -699,7 +704,7 @@ struct UIBrush
 		RadialGradientPattern,
 		TexturePattern,
 	};
-	style_t Style = style_t::SolidPattern;
+	style_t Style = SolidPattern;
 	UIColor Color = UIColor{ 1, 1, 1, 1 };
 };
 static constexpr UIBrush UINoBrush
@@ -737,7 +742,7 @@ static constexpr UIBrush UIFrameBrush
 
 struct UIFont
 {
-	using align_t = enum
+	enum align_t
 	{
 		AlignLeft = 0x0001,
 		AlignRight = 0x0002,
@@ -748,26 +753,26 @@ struct UIFont
 		AlignVCenter = 0x0080,
 		AlignBaseline = 0x0100,
 	};
-	using direction_t = enum
+	enum direction_t
 	{
 		DirectionAutoLayout = 0,
 		DirectionLeftToRight = 1,
 		DirectionRightToLeft = 2,
 	};
-	using ellipsize_t = enum
+	enum ellipsize_t
 	{
 		EllipsizeNone = 0,
 		EllipsizeStart = 1,
 		EllipsizeMiddle = 2,
 		EllipsizeEnd = 3,
 	};
-	using style_t = enum
+	enum style_t
 	{
 		StyleNormal = 0,
 		StyleOblique = 1,
 		StyleItalic = 2,
 	};
-	using weight_t = enum
+	enum weight_t
 	{
 		WeightThin = 100,
 		WeightExtraLight = 200,
@@ -781,11 +786,11 @@ struct UIFont
 	};
 	bool LineWrap = false;
 	UIString Family = OPENUI_FONT_FAMILY;
-	uint32_t Align = align_t::AlignLeft;
-	style_t Style = style_t::StyleNormal;
-	weight_t Weight = weight_t::WeightNormal;
-	ellipsize_t Ellipsize = ellipsize_t::EllipsizeEnd;
-	direction_t Direction = direction_t::DirectionAutoLayout;
+	uint32_t Align = AlignLeft;
+	style_t Style = StyleNormal;
+	weight_t Weight = WeightNormal;
+	ellipsize_t Ellipsize = EllipsizeEnd;
+	direction_t Direction = DirectionAutoLayout;
 	float LineSpacing = 0;
 	uint32_t Size = 14, Spacing = 0;
 };
@@ -941,6 +946,8 @@ namespace UI
 
 	enum Orientation : uint8_t { Horizontal = 0, Vertical = 1, };
 };
+
+// ============================================
 
 inline UIRect UIOverlap(UIRect const& viewport, UIRect const& client)
 {

@@ -12,6 +12,9 @@ endif ()
 if(OPENUI_ENABLE_METAL)
 	add_definitions(-DOPENUI_ENABLE_METAL)
 endif ()
+if(OPENUI_ENABLE_SDLGPU)
+	add_definitions(-DOPENUI_ENABLE_SDLGPU)
+endif ()
 if(CMAKE_HOST_WIN32)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
@@ -37,6 +40,12 @@ add_executable (Sample
 		WebGL/CairoWGLRender.cpp
 		WebGL/CairoWGLRender.h
 		WebGL/WebGLDevice.h
+        SDLGPU/SDLGPURender.cpp
+        SDLGPU/SDLGPURender.h
+		SDLGPU/SDLGPUDevice.h
+		SDLGPU/SDLGPUPainter.cpp
+		SDLGPU/SDLGPUPainter.h
+		SDLGPU/SDLGPUDevice.cpp
 )
 add_dependencies(Sample OpenUI)
 
@@ -82,6 +91,10 @@ target_link_libraries(Sample PRIVATE
 		"-framework Foundation"
 		"-framework QuartzCore"
 )
+endif()
+
+if(OPENUI_ENABLE_SDLGPU)
+
 endif()
 
 target_include_directories(Sample PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
