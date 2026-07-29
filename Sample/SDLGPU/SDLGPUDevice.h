@@ -11,6 +11,7 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_SDLGPU
 #include <OpenUI/UIDevice.h>
+#include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_video.h>
 
 class SDLGPUDevice : public UIDevice
@@ -24,6 +25,7 @@ public:
 
 protected:
 	SDL_Window* m_Window;
+	SDL_GPUDevice* m_Device;
 	UICanvasRef m_UICanvas;
 };
 
