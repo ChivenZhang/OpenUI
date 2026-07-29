@@ -8,7 +8,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_OPENGL)
 #include <gl/glew.h>
 #include "CairoGLRender.h"
 #include "../Cairo/CairoUIPainter.h"

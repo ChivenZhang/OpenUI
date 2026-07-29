@@ -8,7 +8,7 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_METAL)
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
 #define MTK_PRIVATE_IMPLEMENTATION

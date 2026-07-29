@@ -15,16 +15,16 @@
 #include "OpenUI/UILine.h"
 #include "OpenUI/UIInput.h"
 #include <stb_image.h>
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_OPENGL)
 #include "OpenGL/CairoGLDevice.h"
 #endif
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_VULKAN)
 #include "Vulkan/CairoVKDevice.h"
 #endif
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_DIRECTX)
 #include "DirectX/CairoDXDevice.h"
 #endif
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_METAL)
 #include "Metal/CairoMTDevice.h"
 #endif
 #ifdef OPENUI_ENABLE_SDLGPU
@@ -35,7 +35,7 @@ void sample(UICanvasRaw context, SDL_Window* window);
 
 int main()
 {
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_OPENGL)
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");	
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -52,7 +52,7 @@ int main()
 	SDL_Quit();
 #endif
 
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_VULKAN)
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
 	UIList<const char*> layers;
@@ -115,7 +115,7 @@ int main()
 	SDL_Quit();
 #endif
 
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_DIRECTX)
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "1");
 	uint32_t factoryFlags = 0;
@@ -152,7 +152,7 @@ int main()
 	SDL_Quit();
 #endif
 
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_METAL
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_METAL)
 	SDL_Init(SDL_INIT_VIDEO);
 	{
 		auto device = UINew<CairoMTDevice>();

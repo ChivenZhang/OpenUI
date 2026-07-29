@@ -9,7 +9,7 @@
 * Created by ChivenZhang at 2025/03/30 15:07:17.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_VULKAN
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_VULKAN)
 #include <OpenUI/UIRender.h>
 #include <vulkan/vulkan_core.h>
 class CairoVKDevice;

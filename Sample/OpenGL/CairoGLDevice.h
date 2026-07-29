@@ -9,7 +9,7 @@
 * Created by ChivenZhang at 2025/03/29 14:16:23.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_OPENGL
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_OPENGL)
 #include <gl/glew.h>
 #include <SDL3/SDL.h>
 #include <OpenUI/UIDevice.h>

@@ -9,7 +9,7 @@
 * Created by ChivenZhang at 2025/03/29 14:16:58.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_CAIRO && OPENUI_ENABLE_DIRECTX
+#if defined(OPENUI_ENABLE_CAIRO) && defined(OPENUI_ENABLE_DIRECTX)
 #include <SDL3/SDL.h>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
