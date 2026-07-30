@@ -21,7 +21,6 @@ public:
 	UIList<UIWidgetRef> Children;
 	UIFilterRaw Filter = nullptr;
 	UICanvasRaw Canvas = nullptr;
-	UIPointUV3 Primitive[2];
 
 	// =============================Flex Layout==========================
 
@@ -133,18 +132,6 @@ UIString UIWidget::getAttribute(UIString name) const
 
 void UIWidget::setAttribute(UIString name, UIString value)
 {
-}
-
-UIListView<const UIPointUV3> UIWidget::getPrimitive() const
-{
-	auto viewport = UIOverlap(getViewport(), getBounds());
-	PRIVATE()->Primitive[0].P0 = { viewport.X, viewport.Y };
-	PRIVATE()->Primitive[0].P1 = { viewport.X + viewport.W, viewport.Y };
-	PRIVATE()->Primitive[0].P2 = { viewport.X + viewport.W, viewport.Y + viewport.H };
-	PRIVATE()->Primitive[1].P0 = { viewport.X, viewport.Y };
-	PRIVATE()->Primitive[1].P1 = { viewport.X + viewport.W, viewport.Y + viewport.H };
-	PRIVATE()->Primitive[1].P2 = { viewport.X, viewport.Y + viewport.H };
-	return PRIVATE()->Primitive;
 }
 
 bool UIWidget::addWidget(UIWidgetRef value)

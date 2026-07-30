@@ -21,11 +21,12 @@ class UICanvasPrivateData : public UICanvasPrivate
 {
 public:
 	UIConfig Config;
-	UIRenderRef Render;
+	// UIRenderRef Render;
 	UIPainterRef Painter;
 	UIBuilderRef Builder;
 	UIWidgetRaw Focus;
 	bool NeedLayout = true, NeedPaint = true;
+	UIStringMap<UIRenderRef> RenderMap;
 	UIList<UIPrimitive> RenderList;
 	UIList<UIWidgetRaw> AnimateList;
 	UIList<UIWidgetRef> TopLevelView;
@@ -62,14 +63,17 @@ void UICanvas::setPainter(UIPainterRef value)
 	PRIVATE()->Painter = value;
 }
 
-UIRenderRaw UICanvas::getRender() const
+UIRenderRaw UICanvas::getRender(UIString name) const
 {
-	return PRIVATE()->Render.get();
+	auto result = PRIVATE()->RenderMap.find(name);
+	if (result == PRIVATE()->RenderMap.end()) return nullptr;
+	return result->second.get();
 }
 
 void UICanvas::setRender(UIRenderRef value)
 {
-	PRIVATE()->Render = value;
+	if (value == nullptr) return;
+	PRIVATE()->RenderMap[value->getName()] = value;
 }
 
 UIBuilderRaw UICanvas::getBuilder() const
@@ -105,25 +109,25 @@ void UICanvas::setAnimate(UIWidgetRaw value, bool animate)
 void UICanvas::sendEvent(UIReactorRaw sender, UIEventRaw event)
 {
 	UILambda<void(UIWidgetRaw)> foreach_func;
-	foreach_func = [&](UIWidgetRaw element)
+	foreach_func = [&](UIWidgetRaw widget)
 	{
-		if (element->getVisible() == false) return;
-		if (element->getEventFilter())
+		if (widget->getVisible() == false) return;
+		if (widget->getEventFilter())
 		{
-			if (element->getEventFilter()->filter(element, event)) return;
+			if (widget->getEventFilter()->filter(widget, event)) return;
 		}
 		else
 		{
-			if (element->filter(element, event)) return;
+			if (widget->filter(widget, event)) return;
 		}
-		auto childList = element->getWidgets();
+		auto childList = widget->getWidgets();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get());
-		if (event->Accept == false) element->handle(sender, event);
+		if (event->Accept == false) widget->handle(sender, event);
 	};
 	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
 	{
-		auto element = PRIVATE()->TopLevelList[PRIVATE()->TopLevelList.size() - 1 - i].Widget.get();
-		foreach_func(element);
+		auto widget = PRIVATE()->TopLevelList[PRIVATE()->TopLevelList.size() - 1 - i].Widget.get();
+		foreach_func(widget);
 		break;
 	}
 }
@@ -563,16 +567,16 @@ bool UICanvas::layoutWidget(UIRect client)
 		}
 	};
 
-	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
+	for (auto& widget : PRIVATE()->TopLevelList)
 	{
-		arrange_func(PRIVATE()->TopLevelList[i].Widget.get(), client);
+		arrange_func(widget.Widget.get(), client);
 
-		auto root = foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), client);
+		auto root = foreach_func(widget.Widget.get(), client);
 		YGNodeCalculateLayout(root, client.W, client.H, YGDirectionLTR);
-		layout_func(root, PRIVATE()->TopLevelList[i].Widget.get(), client);
+		layout_func(root, widget.Widget.get(), client);
 		YGNodeFreeRecursive(root);
 
-		relayout_func(PRIVATE()->TopLevelList[i].Widget.get(), client, client);
+		relayout_func(widget.Widget.get(), client, client);
 	}
 	return true;
 }
@@ -588,35 +592,36 @@ bool UICanvas::paintWidget(UIRect client)
 	PRIVATE()->NeedPaint = false;
 
 	UILambda<void(UIWidgetRaw, UIRect, UIPainterRaw)> foreach_func;
-	foreach_func = [&](UIWidgetRaw element, UIRect client, UIPainterRaw painter)
+	foreach_func = [&](UIWidgetRaw widget, UIRect client, UIPainterRaw painter)
 	{
-		if (element->getVisible() == false || painter == nullptr) return;
-		element->paint(client, painter);
-		auto childList = element->getWidgets();
+		if (widget->getVisible() == false || painter == nullptr) return;
+		widget->paint(client, painter);
+		auto childList = widget->getWidgets();
 		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds(), painter);
-		element->repaint(client, painter);
+		widget->repaint(client, painter);
 	};
 
-	for (size_t i = 0; i < PRIVATE()->TopLevelList.size(); ++i)
+	for (auto& widget : PRIVATE()->TopLevelList)
 	{
-		foreach_func(PRIVATE()->TopLevelList[i].Widget.get(), PRIVATE()->TopLevelList[i].Widget->getBounds(), getPainter());
+		foreach_func(widget.Widget.get(), widget.Widget->getBounds(), getPainter());
 	}
 	return true;
 }
 
 void UICanvas::renderWidget(UIRect client)
 {
-	if (getPainter() && getRender())
+	if (getPainter() == nullptr) return;
+
+	for (auto& geometry : getPainter()->getGeometry())
 	{
-		UIPointUV3 pointList[2];
-		pointList[0].P0 = {0, 0};
-		pointList[0].P1 = {0 + 1, 0};
-		pointList[0].P2 = {0 + 1, 0 + 1};
-		pointList[1].P0 = {0, 0};
-		pointList[1].P1 = {0 + 1, 0 + 1};
-		pointList[1].P2 = {0, 0 + 1};
-		UIPrimitive primitive{getPainter(), pointList};
-		getRender()->render(client, UIListView<UIPrimitive>(&primitive, 1));
+		for (auto& primitive : geometry.Primitive)
+		{
+			auto renderName = primitive.Style->getStyle<UIString>("render");
+			if (auto render = getRender(renderName))
+			{
+				render->render(getTexture(), *geometry.Client, {&primitive, 1});
+			}
+		}
 	}
 }
 
@@ -635,4 +640,14 @@ void UICanvas::updateWidget(float time, UIRect client)
 	layoutWidget(client);
 	animateWidget(time);
 	paintWidget(client);
+}
+
+UIImage UICanvas::getTexture() const
+{
+	return PRIVATE()->Config.RenderTexture;
+}
+
+void UICanvas::setTexture(UIImage value)
+{
+	PRIVATE()->Config.RenderTexture = value;
 }

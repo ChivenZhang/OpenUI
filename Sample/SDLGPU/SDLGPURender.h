@@ -16,7 +16,8 @@ class SDLGPURender : public UIRender
 {
 public:
     SDLGPURender(int width, int height);
-    void render(UIRect client, UIListView<UIPrimitive> data) override;
+    UIString getName() const override;
+    void render(UIImage canvas, UIRect client, UIListView<UIPrimitive> data) override;
 };
 
 #endif

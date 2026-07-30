@@ -78,6 +78,8 @@ public:
 	virtual void scale(float dx, float dy) = 0;
 
 	virtual void translate(float dx, float dy) = 0;
+
+	virtual UIListView<const UIGeometry> getGeometry() const = 0;
 };
 using UIPainterRef = UIRef<UIPainter>;
 using UIPainterRaw = UIRaw<UIPainter>;

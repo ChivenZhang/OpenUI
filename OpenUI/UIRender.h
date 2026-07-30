@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UI.h"
+#include "UIShader.h"
 class UIRenderPrivate {};
 using UIRenderPrivateRaw = UIRaw<UIRenderPrivate>;
 
@@ -19,7 +19,9 @@ class OPENUI_API UIRender
 public:
 	virtual ~UIRender() = default;
 
-	virtual void render(UIRect client, UIListView<UIPrimitive> data) = 0;
+	virtual UIString getName() const = 0;
+
+	virtual void render(UIImage canvas, UIRect client, UIListView<UIPrimitive> data) = 0;
 };
 using UIRenderRef = UIRef<UIRender>;
 using UIRenderRaw = UIRaw<UIRender>;

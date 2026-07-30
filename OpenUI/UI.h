@@ -100,6 +100,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <variant>
 
 // ============================================
 
@@ -209,6 +210,8 @@ using UIBinary = std::pair<T, U>;
 template <class ...TS>
 using UITuple = std::tuple<TS...>;
 using UIAny = std::any;
+template<class... T>
+using UIVar = std::variant<T...>;
 using UIError = std::exception;
 template <class T>
 using UILambda = std::function<T>;
@@ -558,6 +561,67 @@ const char* const UIInputName[]
 
 // ============================================
 
+
+struct UIFloat2
+{
+	float X = 0, Y = 0;
+};
+
+inline bool operator ==(UIFloat2 const& a, UIFloat2 const& b)
+{
+	return a.X == b.X && a.Y == b.Y;
+}
+
+struct UIFloat3
+{
+	float X = 0, Y = 0, Z = 0;
+};
+
+inline bool operator ==(UIFloat3 const& a, UIFloat3 const& b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+}
+
+struct UIFloat4
+{
+	float X = 0, Y = 0, Z = 0, W = 0;
+};
+
+inline bool operator ==(UIFloat4 const& a, UIFloat4 const& b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
+}
+
+struct UIFloat2x2
+{
+	UIFloat2 X, Y;
+};
+
+inline bool operator ==(UIFloat2x2 const& a, UIFloat2x2 const& b)
+{
+	return a.X == b.X && a.Y == b.Y;
+}
+
+struct UIFloat3x3
+{
+	UIFloat3 X, Y, Z;
+};
+
+inline bool operator ==(UIFloat3x3 const& a, UIFloat3x3 const& b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+}
+
+struct UIFloat4x4
+{
+	UIFloat4 X, Y, Z, W;
+};
+
+inline bool operator ==(UIFloat4x4 const& a, UIFloat4x4 const& b)
+{
+	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
+}
+
 struct UIRect
 {
 	float X = 0, Y = 0, W = 0, H = 0;
@@ -591,6 +655,11 @@ inline bool operator ==(UILine const& a, UILine const& b)
 	return a.P0 == b.P0 && a.P1 == b.P1;
 }
 
+struct UIPointUV
+{
+	float X = 0, Y = 0, U = 0, V = 0;
+};
+
 struct UIColor
 {
 	float R = 0, G = 0, B = 0, A = 0;
@@ -602,22 +671,29 @@ inline bool operator ==(UIColor const& a, UIColor const& b)
 	return a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A;
 }
 
-struct UIPointUV
+struct UIImage
 {
-	float X = 0, Y = 0, U = 0, V = 0;
+	uint32_t Width = 0, Height = 0, Stride = 0, Channel = 0;
+	union { void* Pixel; uint64_t /*For GPU Handle*/ Data = 0; };
+	enum { Byte = 0, Float, GPUByte, GPUFloat, } Type = Byte;
 };
+using UIImageRaw = UIRaw<UIImage>;
 
-struct UIPointUV3
-{
-	UIPointUV P0, P1, P2;
-};
-
+class UIStyle;
+using UIStyleRaw = UIRaw<UIStyle>;
 class UIPainter;
 using UIPainterRaw = UIRaw<UIPainter>;
 struct UIPrimitive
 {
-	UIPainterRaw Painter;
-	UIListView<const UIPointUV3> Primitive;
+	UIStyleRaw Style;
+	UIImageRaw Image;
+	UIRectRaw Bounds;
+	UIListView<UIFloat2> Points;
+};
+struct UIGeometry
+{
+	UIRectRaw Client;
+	UIListView<UIPrimitive> Primitive;
 };
 
 struct UIPen
@@ -800,74 +876,6 @@ using UIFontDirection = UIFont::direction_t;
 using UIFontEllipsize = UIFont::ellipsize_t;
 using UIFontStyle = UIFont::style_t;
 using UIFontWeight = UIFont::weight_t;
-
-struct UIFloat2
-{
-	float X = 0, Y = 0;
-};
-
-inline bool operator ==(UIFloat2 const& a, UIFloat2 const& b)
-{
-	return a.X == b.X && a.Y == b.Y;
-}
-
-struct UIFloat3
-{
-	float X = 0, Y = 0, Z = 0;
-};
-
-inline bool operator ==(UIFloat3 const& a, UIFloat3 const& b)
-{
-	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
-}
-
-struct UIFloat4
-{
-	float X = 0, Y = 0, Z = 0, W = 0;
-};
-
-inline bool operator ==(UIFloat4 const& a, UIFloat4 const& b)
-{
-	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
-}
-
-struct UIFloat2x2
-{
-	UIFloat2 X, Y;
-};
-
-inline bool operator ==(UIFloat2x2 const& a, UIFloat2x2 const& b)
-{
-	return a.X == b.X && a.Y == b.Y;
-}
-
-struct UIFloat3x3
-{
-	UIFloat3 X, Y, Z;
-};
-
-inline bool operator ==(UIFloat3x3 const& a, UIFloat3x3 const& b)
-{
-	return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
-}
-
-struct UIFloat4x4
-{
-	UIFloat4 X, Y, Z, W;
-};
-
-inline bool operator ==(UIFloat4x4 const& a, UIFloat4x4 const& b)
-{
-	return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
-}
-
-struct UIImage
-{
-	uint32_t Width = 0, Height = 0, Stride = 0, Channel = 0;
-	union { void* Pixel; uint64_t /*For GPU Handle*/ Data = 0; };
-	enum { Byte = 0, Float, GPUByte, GPUFloat, } Type = Byte;
-};
-using UIImageRaw = UIRaw<UIImage>;
 
 template <class T, class E = uint8_t>
 struct UIValue

@@ -57,8 +57,8 @@ struct UIButtonStyle
 	UIFloat2 Round{ 0, 0 };
 	UILabelStyle Label =
 	{
-		.Normal {.Foreground {.Font {.Align = UIFont::AlignCenter | UIFont::AlignVCenter, }}, .Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},},
-		.Hover {.Foreground {.Font {.Align = UIFont::AlignCenter | UIFont::AlignVCenter, }}, .Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }}},
+		.Normal {.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }}, .Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},},
+		.Hover {.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }}, .Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }}},
 	};
 	ButtonMode Normal{ .Pen = UIButtonPenNormal, .Brush = UIButtonBrushNormal };
 	ButtonMode Hover{ .Pen = UIButtonPenHover, .Brush = UIButtonBrushHover };

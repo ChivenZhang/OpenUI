@@ -44,7 +44,6 @@ public:
 	virtual void setStyleText(UIString name, UIString value);
 	virtual UIString getAttribute(UIString name) const;
 	virtual void setAttribute(UIString name, UIString value);
-	virtual UIListView<const UIPointUV3> getPrimitive() const;
 	virtual bool addWidget(UIWidgetRef value);
 	virtual bool removeWidget(UIWidgetRef value);
 	virtual void removeWidget();

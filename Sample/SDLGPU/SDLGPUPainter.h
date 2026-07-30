@@ -46,11 +46,8 @@ public:
     void rotate(float angle) override;
     void scale(float dx, float dy) override;
     void translate(float dx, float dy) override;
-
     void resize(int width, int height);
-
-protected:
-
+    UIListView<const UIGeometry> getGeometry() const override;
 };
 
 #endif

@@ -15,7 +15,12 @@ SDLGPURender::SDLGPURender(int width, int height)
 {
 }
 
-void SDLGPURender::render(UIRect client, UIListView<UIPrimitive> data)
+UIString SDLGPURender::getName() const
+{
+    return {};
+}
+
+void SDLGPURender::render(UIImage canvas, UIRect client, UIListView<UIPrimitive> data)
 {
 }
 

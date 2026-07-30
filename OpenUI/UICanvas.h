@@ -19,6 +19,7 @@ class UIConfig
 public:
 	float DisplayScale = 1.0f;
 	float PixelDensity = 1.0f;
+	UIImage RenderTexture;
 };
 
 /// @brief 
@@ -38,7 +39,7 @@ public:
 	UIConfig const& getConfig() const;
 	UIPainterRaw getPainter() const;
 	void setPainter(UIPainterRef value);
-	UIRenderRaw getRender() const;
+	UIRenderRaw getRender(UIString name) const;
 	void setRender(UIRenderRef value);
 	UIBuilderRaw getBuilder() const;
 	UIWidgetRaw getFocus() const;
@@ -58,6 +59,8 @@ public:
 	void renderWidget(UIRect client);
 	void animateWidget(float time);
 	void updateWidget(float time, UIRect client);
+	UIImage getTexture() const;
+	void setTexture(UIImage value);
 
 private:
 	UIContextPrivateRaw m_Private;

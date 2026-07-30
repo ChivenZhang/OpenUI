@@ -144,4 +144,9 @@ void SDLGPUPainter::resize(int width, int height)
 {
 }
 
+UIListView<const UIGeometry> SDLGPUPainter::getGeometry() const
+{
+    return {};
+}
+
 #endif

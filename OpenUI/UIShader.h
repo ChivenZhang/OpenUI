@@ -13,4 +13,7 @@
 
 class OPENUI_API UIShader
 {
+public:
+    virtual ~UIShader() = default;
+    virtual void render(UIImage const& canvas, UIListView<const UIPrimitive> data) const = 0;
 };
