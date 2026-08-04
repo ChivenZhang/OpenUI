@@ -679,21 +679,22 @@ struct UIImage
 };
 using UIImageRaw = UIRaw<UIImage>;
 
+
 class UIStyle;
 using UIStyleRaw = UIRaw<UIStyle>;
 class UIPainter;
 using UIPainterRaw = UIRaw<UIPainter>;
 struct UIPrimitive
 {
+	UIRect Clip;
+	UIImage Image;
 	UIStyleRaw Style;
-	UIImageRaw Image;
-	UIRectRaw Bounds;
-	UIListView<UIFloat2> Points;
+	UIList<UIPointUV> Points;
 };
 struct UIGeometry
 {
-	UIRectRaw Client;
-	UIListView<UIPrimitive> Primitive;
+	UIRect Client;
+	UIList<UIPrimitive> Primitives;
 };
 
 struct UIPen

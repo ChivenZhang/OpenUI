@@ -21,6 +21,7 @@ class UICanvasPrivateData : public UICanvasPrivate
 {
 public:
 	UIConfig Config;
+	UIDeviceRaw Device;
 	// UIRenderRef Render;
 	UIPainterRef Painter;
 	UIBuilderRef Builder;
@@ -34,10 +35,11 @@ public:
 };
 #define PRIVATE() ((UICanvasPrivateData*) m_Private)
 
-UICanvas::UICanvas(UIConfig config)
+UICanvas::UICanvas(UIDeviceRaw device, UIConfig config)
 {
 	m_Private = new UICanvasPrivateData;
 
+	PRIVATE()->Device = device;
 	PRIVATE()->Config = config;
 	PRIVATE()->Builder = UINew<UIBuilder>(this);
 }
@@ -51,6 +53,26 @@ UICanvas::~UICanvas()
 UIConfig const& UICanvas::getConfig() const
 {
 	return PRIVATE()->Config;
+}
+
+UIDeviceRaw UICanvas::getDevice() const
+{
+	return PRIVATE()->Device;
+}
+
+UIBuilderRaw UICanvas::getBuilder() const
+{
+	return PRIVATE()->Builder.get();
+}
+
+UIImage UICanvas::getTarget() const
+{
+	return PRIVATE()->Config.RenderTarget;
+}
+
+void UICanvas::setTarget(UIImage value)
+{
+	PRIVATE()->Config.RenderTarget = value;
 }
 
 UIPainterRaw UICanvas::getPainter() const
@@ -74,11 +96,6 @@ void UICanvas::setRender(UIRenderRef value)
 {
 	if (value == nullptr) return;
 	PRIVATE()->RenderMap[value->getName()] = value;
-}
-
-UIBuilderRaw UICanvas::getBuilder() const
-{
-	return PRIVATE()->Builder.get();
 }
 
 UIWidgetRaw UICanvas::getFocus() const
@@ -614,15 +631,18 @@ void UICanvas::renderWidget(UIRect client)
 
 	for (auto& geometry : getPainter()->getGeometry())
 	{
-		for (auto& primitive : geometry.Primitive)
+		for (auto& primitive : geometry.Primitives)
 		{
+			if (primitive.Style == nullptr) continue;
 			auto renderName = primitive.Style->getStyle<UIString>("render");
 			if (auto render = getRender(renderName))
 			{
-				render->render(getTexture(), *geometry.Client, {&primitive, 1});
+				render->render(geometry.Client, {&primitive, 1});
 			}
 		}
 	}
+
+	getPainter()->getGeometry().clear();
 }
 
 void UICanvas::animateWidget(float time)
@@ -640,14 +660,4 @@ void UICanvas::updateWidget(float time, UIRect client)
 	layoutWidget(client);
 	animateWidget(time);
 	paintWidget(client);
-}
-
-UIImage UICanvas::getTexture() const
-{
-	return PRIVATE()->Config.RenderTexture;
-}
-
-void UICanvas::setTexture(UIImage value)
-{
-	PRIVATE()->Config.RenderTexture = value;
 }

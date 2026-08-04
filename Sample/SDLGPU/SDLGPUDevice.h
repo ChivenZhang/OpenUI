@@ -21,6 +21,12 @@ public:
     ~SDLGPUDevice() override;
     UICanvasRaw getCanvas() const override;
     bool update() override;
+    void setCursor(UIString type) override;
+    UIString getClipText() const override;
+    void setClipText(UIString text) override;
+    void setKeyboard(bool value) override;
+    bool translateText(UIString text, UIString& result) const override;
+    void logMessage(uint8_t type, UIString text) const override;
     SDL_Window* getWindow() const;
 
 protected:

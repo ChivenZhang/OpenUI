@@ -12,7 +12,7 @@
 
 struct UIStylePrivateData : UIStylePrivate
 {
-    UIStringMap<UIAny> Styles;
+    UIStringMap<UIStyleDataRef> Styles;
 };
 #define PRIVATE() ((UIStylePrivateData*)m_Private)
 
@@ -26,15 +26,14 @@ UIStyle::~UIStyle()
 	delete m_Private; m_Private = nullptr;
 }
 
-UIAny const& UIStyle::getStyle(UIString const& key) const
+UIStyleDataRef UIStyle::getStyle(UIString const& key) const
 {
-    static UIAny s_EmptyStyle;
     auto result = PRIVATE()->Styles.find(key);
-    if (result == PRIVATE()->Styles.end()) return s_EmptyStyle;
+    if (result == PRIVATE()->Styles.end()) return {};
     return result->second;
 }
 
-void UIStyle::setStyle(UIString const& key, UIAny const& value)
+void UIStyle::setStyle(UIString const& key, UIStyleDataRef value)
 {
     PRIVATE()->Styles[key] = value;
 }

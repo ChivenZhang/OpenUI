@@ -161,15 +161,29 @@ public:
 	void setStyles(UIStyleRef value);
 
 	template<class T>
-	T const& getStyle(UIString const& key) const
+	T const& getStyle(UIString const& key, T const& value = T()) const
 	{
-		return getStyles()->getStyle<T>(key);
+		return getStyles()->getStyle<T>(key, value);
 	}
 
 	template<class T>
 	void setStyle(UIString const& key, T const& value) const
 	{
 		getStyles()->setStyle<T>(key, value);
+	}
+
+	template<class T>
+	bool hasStyle(UIString const& key) const
+	{
+		if (auto result = getStyles()->getStyle(key)) return result->getData(typeid(std::remove_cvref_t<T>));
+		return false;
+	}
+
+protected:
+	template<class T>
+	void setEmbedStyle(UIString const& key, T& value) const
+	{
+		getStyles()->setEmbedStyle<T>(key, value);
 	}
 
 protected:

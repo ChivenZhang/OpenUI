@@ -53,10 +53,10 @@ SDLGPUDevice::SDLGPUDevice()
     // Initialize OpenUI context
 
     UIConfig config{.DisplayScale = scale};
-    auto openui = UINew<UICanvas>(config);
-    openui->setPainter(UINew<SDLGPUPainter>(w, h));
-    openui->setRender(UINew<SDLGPURender>(w, h));
-    m_UICanvas = openui;
+    auto canvas = UINew<UICanvas>(this, config);
+    canvas->setPainter(UINew<SDLGPUPainter>(w, h, canvas.get()));
+    canvas->setRender(UINew<SDLGPURender>(w, h, canvas.get()));
+    m_UICanvas = canvas;
 
     SDL_ShowWindow(window);
     m_Window = window;
@@ -76,9 +76,36 @@ UICanvasRaw SDLGPUDevice::getCanvas() const
     return m_UICanvas.get();
 }
 
+void SDLGPUDevice::setCursor(UIString type)
+{
+}
+
+UIString SDLGPUDevice::getClipText() const
+{
+	return SDL_GetClipboardText();
+}
+
+void SDLGPUDevice::setClipText(UIString text)
+{
+	SDL_SetClipboardText(text.c_str());
+}
+
+void SDLGPUDevice::setKeyboard(bool value)
+{
+}
+
+bool SDLGPUDevice::translateText(UIString text, UIString& result) const
+{
+	return false;
+}
+
+void SDLGPUDevice::logMessage(uint8_t type, UIString text) const
+{
+}
+
 bool SDLGPUDevice::update()
 {
-	auto openui = getCanvas();
+	auto canvas = getCanvas();
 	auto window = getWindow();
 
 	// Send events to OpenUI
@@ -97,28 +124,28 @@ bool SDLGPUDevice::update()
 			{
 				UIKeyDownEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod, UIString(),
 									event.key.repeat);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_KEY_UP:
 			{
 				UIKeyUpEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod, UIString(),
 									event.key.repeat);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_TEXT_EDITING:
 			{
 				UITextInputEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod,
 										event.edit.text, event.key.repeat, false, event.edit.start, event.edit.length);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_TEXT_INPUT:
 			{
 				UITextInputEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod,
 										event.edit.text, event.key.repeat, true);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_MOUSE_MOTION:
@@ -127,7 +154,7 @@ bool SDLGPUDevice::update()
 				SDL_GetWindowPosition(window, &x, &y);
 				UIMouseMoveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, SDL3InputEnum::GetMouseEnum(event.button.button),
 										SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetModifierEnum(event.key.mod));
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -138,13 +165,13 @@ bool SDLGPUDevice::update()
 				{
 					UIMouseDownEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, SDL3InputEnum::GetMouseEnum(event.button.button),
 											SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetModifierEnum(event.key.mod), event.button.clicks);
-					openui->sendEvent(nullptr, &event2);
+					canvas->sendEvent(nullptr, &event2);
 				}
 				else
 				{
 					UIMouseDblClickEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, SDL3InputEnum::GetMouseEnum(event.button.button),
 												SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetModifierEnum(event.key.mod), event.button.clicks);
-					openui->sendEvent(nullptr, &event2);
+					canvas->sendEvent(nullptr, &event2);
 				}
 			}
 			break;
@@ -154,7 +181,7 @@ bool SDLGPUDevice::update()
 				SDL_GetWindowPosition(window, &x, &y);
 				UIMouseUpEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, SDL3InputEnum::GetMouseEnum(event.button.button),
 									SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetModifierEnum(event.key.mod));
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_MOUSE_WHEEL:
@@ -163,7 +190,7 @@ bool SDLGPUDevice::update()
 				SDL_GetWindowPosition(window, &x, &y);
 				UIMouseWheelEvent event2(event.wheel.x, event.wheel.y, event.wheel.x, event.wheel.y, event.wheel.mouse_x, event.wheel.mouse_y, x + event.wheel.mouse_x, y + event.wheel.mouse_y,
 										SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetModifierEnum(event.key.mod));
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_MOUSE_ENTER:
@@ -172,7 +199,7 @@ bool SDLGPUDevice::update()
 				SDL_GetWindowPosition(window, &x, &y);
 				UIMouseEnterEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, SDL3InputEnum::GetMouseEnum(event.button.button),
 										SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetModifierEnum(event.key.mod));
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
@@ -181,39 +208,39 @@ bool SDLGPUDevice::update()
 				SDL_GetWindowPosition(window, &x, &y);
 				UIMouseLeaveEvent event2(event.motion.x, event.motion.y, x + event.motion.x, y + event.motion.y, SDL3InputEnum::GetMouseEnum(event.button.button),
 										SDL3InputEnum::GetMouseEnum(event.button.button), SDL3InputEnum::GetModifierEnum(event.key.mod));
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_SHOWN:
 			{
 				UIShowEvent event2;
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_HIDDEN:
 			{
 				UIHideEvent event2;
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 			{
 				UICloseEvent event2;
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_MOVED:
 			{
 				UIMoveEvent event2(event.window.data1, event.window.data2);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			{
-				openui->layoutWidget();
-				UICast<SDLGPUPainter>(openui->getPainter())->resize(event.window.data1, event.window.data2);
+				canvas->layoutWidget();
+				// UICast<SDLGPUPainter>(canvas->getPainter())->resize(event.window.data1, event.window.data2);
 				UIResizeEvent event2(event.window.data1, event.window.data2);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_MINIMIZED:
@@ -225,13 +252,13 @@ bool SDLGPUDevice::update()
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
 			{
 				UIFocusEvent event2(true);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			{
 				UIFocusEvent event2(false);
-				openui->sendEvent(nullptr, &event2);
+				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		default:
@@ -244,45 +271,37 @@ bool SDLGPUDevice::update()
 	int width, height;
 	SDL_GetWindowSize(window, &width, &height);
 	UIRect client{0, 0, (float)width, (float)height};
-	openui->updateWidget(::clock() * 0.001f, client);
+	canvas->updateWidget(::clock() * 0.001f, client);
 
 	// Output frame to screen
 
-	openui->renderWidget(client);
-
 	// 获取命令缓冲区 (Command Buffer)
-	SDL_GPUCommandBuffer *cmd_buf = SDL_AcquireGPUCommandBuffer(m_Device);
-	if (cmd_buf == NULL)
+	SDL_GPUCommandBuffer *cmdBuf = SDL_AcquireGPUCommandBuffer(m_Device);
+	if (cmdBuf == NULL)
 	{
 		UI_ERROR("获取 GPU Command Buffer 失败: %s", SDL_GetError());
 		return false;
 	}
 	// 获取当前帧的交换链纹理
-	SDL_GPUTexture *swapchain_texture;
-	if (SDL_AcquireGPUSwapchainTexture(cmd_buf, window, &swapchain_texture, NULL, NULL)) {
-		if (swapchain_texture != NULL) {
-			// 设置渲染目标（设置背景清屏颜色为深天蓝色）
-			SDL_GPUColorTargetInfo color_target = {0};
-			color_target.texture = swapchain_texture;
-			color_target.clear_color = SDL_FColor{ 0.1f, 0.2f, 0.4f, 1.0f };
-			color_target.load_op = SDL_GPU_LOADOP_CLEAR;
-			color_target.store_op = SDL_GPU_STOREOP_STORE;
-			// 开始渲染 Pass
-			SDL_GPURenderPass *render_pass = SDL_BeginGPURenderPass(
-				cmd_buf,
-				&color_target,
-				1,
-				NULL
-			);
+	SDL_GPUTexture* swapchainTexture = nullptr;
+	uint32_t swapchainWidth = 0, swapchainHeight = 0;
+	if (SDL_AcquireGPUSwapchainTexture(cmdBuf, window, &swapchainTexture, &swapchainWidth, &swapchainHeight) && swapchainTexture)
+	{
+		UIImage target
+		{
+			.Width = swapchainWidth,
+			.Height = swapchainHeight,
+			.Stride = swapchainWidth * 4,
+			.Channel = 4,
+			.Data = (uint64_t)swapchainTexture,
+			.Type = UIImage::GPUByte,
+		};
+		canvas->setTarget(target);
 
-			// 在此处提交管线绘制命令 (如绘制三角形/网格)
-
-			// 结束渲染 Pass
-			SDL_EndGPURenderPass(render_pass);
-		}
+		canvas->renderWidget(client);
 	}
 	// 提交命令缓冲区并呈现到屏幕
-	SDL_SubmitGPUCommandBuffer(cmd_buf);
+	SDL_SubmitGPUCommandBuffer(cmdBuf);
 	return true;
 }
 

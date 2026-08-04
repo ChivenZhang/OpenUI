@@ -60,7 +60,7 @@ public:
 
 	// ==============================CSS Style===========================
 
-	UIStyleRef Style;
+	UIStyleRef Styles;
 };
 #define PRIVATE() ((UIWidgetPrivateData*) m_Private)
 
@@ -69,6 +69,7 @@ UIWidget::UIWidget(UICanvasRaw canvas)
 	m_Private = new UIWidgetPrivateData;
 
 	PRIVATE()->Canvas = canvas;
+	PRIVATE()->Styles = UINew<UIStyle>();
 }
 
 UIWidget::~UIWidget()
@@ -772,12 +773,12 @@ void UIWidget::setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis b
 
 UIStyleRaw UIWidget::getStyles() const
 {
-	return PRIVATE()->Style.get();
+	return PRIVATE()->Styles.get();
 }
 
 void UIWidget::setStyles(UIStyleRef value)
 {
-	PRIVATE()->Style = value;
+	PRIVATE()->Styles = value;
 }
 
 void UIWidget::closeEvent(UICloseEventRaw event)

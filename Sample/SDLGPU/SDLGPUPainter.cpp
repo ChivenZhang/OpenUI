@@ -11,8 +11,15 @@
 #ifdef OPENUI_ENABLE_SDLGPU
 #include "SDLGPUPainter.h"
 
-SDLGPUPainter::SDLGPUPainter(int width, int height)
+SDLGPUPainter::SDLGPUPainter(int width, int height, UICanvasRaw canvas)
+    :
+    m_Canvas(canvas)
 {
+}
+
+UICanvasRaw SDLGPUPainter::getCanvas() const
+{
+    return m_Canvas;
 }
 
 UIRect SDLGPUPainter::boundingRect(float x, float y, float width, float height, const UIString& text, float cursor, UIRectRaw cursorRect)
@@ -25,19 +32,11 @@ UIRect SDLGPUPainter::boundingRect(float x, float y, float width, float height, 
     return {};
 }
 
-void SDLGPUPainter::drawArc(float x, float y, float width, float height, float startAngle, float spanAngle)
+void SDLGPUPainter::drawPoint(float x, float y)
 {
 }
 
-void SDLGPUPainter::drawChord(float x, float y, float width, float height, float startAngle, float spanAngle)
-{
-}
-
-void SDLGPUPainter::drawEllipse(float x, float y, float width, float height)
-{
-}
-
-void SDLGPUPainter::drawImage(float x, float y, UIImage image, float sx, float sy, float sw, float sh)
+void SDLGPUPainter::drawPoints(UIListView<UIPoint> points)
 {
 }
 
@@ -49,28 +48,19 @@ void SDLGPUPainter::drawLines(UIListView<UILine> lines)
 {
 }
 
-void SDLGPUPainter::drawPie(float x, float y, float width, float height, float startAngle, float spanAngle)
-{
-}
-
-void SDLGPUPainter::drawPoint(float x, float y)
-{
-}
-
-void SDLGPUPainter::drawPoints(UIListView<UIPoint> points)
-{
-}
-
-void SDLGPUPainter::drawPolygon(UIListView<UIPoint> points)
-{
-}
-
-void SDLGPUPainter::drawPolyline(UIListView<UIPoint> points)
-{
-}
-
 void SDLGPUPainter::drawRect(float x, float y, float width, float height)
 {
+    auto& geometry = m_Geometry.emplace_back();
+    geometry.Client = m_ClipRect;
+    auto& primitive = geometry.Primitives.emplace_back();
+    primitive.Clip = {x, y, width, height};
+    primitive.Points.push_back({x, y});
+    primitive.Points.push_back({x, y+height});
+    primitive.Points.push_back({x+width, y+height});
+    primitive.Points.push_back({x, y});
+    primitive.Points.push_back({x+width, y+height});
+    primitive.Points.push_back({x+width, y});
+    primitive.Style = nullptr;
 }
 
 void SDLGPUPainter::drawRects(UIListView<UIRect> rects)
@@ -78,6 +68,10 @@ void SDLGPUPainter::drawRects(UIListView<UIRect> rects)
 }
 
 void SDLGPUPainter::drawRoundedRect(float x, float y, float w, float h, float xRadius, float yRadius)
+{
+}
+
+void SDLGPUPainter::drawImage(float x, float y, UIImage image, float sx, float sy, float sw, float sh)
 {
 }
 
@@ -140,13 +134,9 @@ void SDLGPUPainter::translate(float dx, float dy)
 {
 }
 
-void SDLGPUPainter::resize(int width, int height)
+UIList<UIGeometry>& SDLGPUPainter::getGeometry()
 {
-}
-
-UIListView<const UIGeometry> SDLGPUPainter::getGeometry() const
-{
-    return {};
+    return m_Geometry;
 }
 
 #endif

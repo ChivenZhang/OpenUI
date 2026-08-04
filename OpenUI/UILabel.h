@@ -54,7 +54,9 @@ public:
 	UIString getText() const;
 	void setText(UIString const& text);
 
+	using UIWidget::getStyle;
 	UILabelStyle getStyle() const;
+	using UIWidget::setStyle;
 	void setStyle(UILabelStyle const& style);
 
 	UIFontAligns getAlignment() const;

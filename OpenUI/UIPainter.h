@@ -10,6 +10,8 @@
 *
 * =================================================*/
 #include "UI.h"
+class UICanvas;
+using UICanvasRaw = UIRaw<UICanvas>;
 class UIPainterPrivate {};
 using UIPainterPrivateRaw = UIRaw<UIPainterPrivate>;
 
@@ -19,37 +21,27 @@ class OPENUI_API UIPainter
 public:
 	virtual ~UIPainter() = default;
 
+	virtual UICanvasRaw getCanvas() const = 0;
+
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect = nullptr) = 0;
 
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
-
-	virtual void drawArc(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
-
-	virtual void drawChord(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
-
-	virtual void drawEllipse(float x, float y, float width, float height) = 0;
-
-	virtual void drawImage(float x, float y, UIImage image, float sx = 0, float sy = 0, float sw = -1, float sh = -1) = 0;
-
-	virtual void drawLine(float x1, float y1, float x2, float y2) = 0;
-
-	virtual void drawLines(UIListView<UILine> lines) = 0;
-
-	virtual void drawPie(float x, float y, float width, float height, float startAngle, float spanAngle) = 0;
 
 	virtual void drawPoint(float x, float y) = 0;
 
 	virtual void drawPoints(UIListView<UIPoint> points) = 0;
 
-	virtual void drawPolygon(UIListView<UIPoint> points) = 0;
+	virtual void drawLine(float x1, float y1, float x2, float y2) = 0;
 
-	virtual void drawPolyline(UIListView<UIPoint> points) = 0;
+	virtual void drawLines(UIListView<UILine> lines) = 0;
 
 	virtual void drawRect(float x, float y, float width, float height) = 0;
 
 	virtual void drawRects(UIListView<UIRect> rects) = 0;
 
 	virtual void drawRoundedRect(float x, float y, float w, float h, float xRadius, float yRadius) = 0;
+
+	virtual void drawImage(float x, float y, UIImage image, float sx = 0, float sy = 0, float sw = -1, float sh = -1) = 0;
 
 	virtual void drawText(float x, float y, float width, float height, const UIString& text, UIRectRaw boundingRect = nullptr, float cursor = 0, UIRectRaw cursorRect = nullptr) = 0;
 
@@ -79,7 +71,7 @@ public:
 
 	virtual void translate(float dx, float dy) = 0;
 
-	virtual UIListView<const UIGeometry> getGeometry() const = 0;
+	virtual UIList<UIGeometry>& getGeometry() = 0;
 };
 using UIPainterRef = UIRef<UIPainter>;
 using UIPainterRaw = UIRaw<UIPainter>;

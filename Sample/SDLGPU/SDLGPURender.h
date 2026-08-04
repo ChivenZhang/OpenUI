@@ -15,9 +15,13 @@
 class SDLGPURender : public UIRender
 {
 public:
-    SDLGPURender(int width, int height);
+    SDLGPURender(int width, int height, UICanvasRaw canvas);
+    UICanvasRaw getCanvas() const override;
     UIString getName() const override;
-    void render(UIImage canvas, UIRect client, UIListView<UIPrimitive> data) override;
+    void render(UIRect client, UIListView<const UIPrimitive> data) override;
+
+protected:
+    UICanvasRaw m_Canvas;
 };
 
 #endif

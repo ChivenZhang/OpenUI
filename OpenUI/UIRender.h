@@ -10,6 +10,8 @@
 *
 * =================================================*/
 #include "UIShader.h"
+class UICanvas;
+using UICanvasRaw = UIRaw<UICanvas>;
 class UIRenderPrivate {};
 using UIRenderPrivateRaw = UIRaw<UIRenderPrivate>;
 
@@ -21,7 +23,9 @@ public:
 
 	virtual UIString getName() const = 0;
 
-	virtual void render(UIImage canvas, UIRect client, UIListView<UIPrimitive> data) = 0;
+	virtual UICanvasRaw getCanvas() const = 0;
+
+	virtual void render(UIRect client, UIListView<const UIPrimitive> data) = 0;
 };
 using UIRenderRef = UIRef<UIRender>;
 using UIRenderRaw = UIRaw<UIRender>;
