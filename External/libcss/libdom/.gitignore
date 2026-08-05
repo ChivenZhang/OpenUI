@@ -1,0 +1,7 @@
+Makefile.config.override
+build-*
+docs/html
+examples/dom-structure-dump
+test/level*.c
+test/INDEX
+*~
