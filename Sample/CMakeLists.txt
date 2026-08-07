@@ -22,34 +22,8 @@ if(CMAKE_HOST_WIN32)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-add_executable (Sample
-		main.cpp
-		SDL3InputEnum.cpp
-		SDL3InputEnum.h
-		Cairo/CairoUIPainter.cpp
-		Cairo/CairoUIPainter.h
-		Metal/CairoMTRender.cpp
-		Metal/CairoMTRender.h
-		Metal/CairoMTDevice.h
-		DirectX/CairoDXRender.cpp
-		DirectX/CairoDXRender.h
-		DirectX/CairoDXDevice.h
-		OpenGL/CairoGLRender.cpp
-		OpenGL/CairoGLRender.h
-		OpenGL/CairoGLDevice.h
-		Vulkan/CairoVKRender.cpp
-		Vulkan/CairoVKRender.h
-		Vulkan/CairoVKDevice.h
-		WebGL/CairoWGLRender.cpp
-		WebGL/CairoWGLRender.h
-		WebGL/CairoWGLDevice.h
-        SDLGPU/SDLGPURender.cpp
-        SDLGPU/SDLGPURender.h
-		SDLGPU/SDLGPUDevice.h
-		SDLGPU/SDLGPUPainter.cpp
-		SDLGPU/SDLGPUPainter.h
-		SDLGPU/SDLGPUDevice.cpp
-)
+file(GLOB_RECURSE OPENUI_SAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+add_executable (Sample ${OPENUI_SAMPLE_SRC})
 add_dependencies(Sample OpenUI)
 
 find_package(SDL3 CONFIG REQUIRED)

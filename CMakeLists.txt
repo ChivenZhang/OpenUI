@@ -17,6 +17,7 @@ endif()
 
 include_directories(${OPENUI_SOURCE_DIR})
 add_subdirectory(External/libcss)
+add_subdirectory(OpenVG)
 add_subdirectory(OpenUI)
 if(OPENUI_ENABLE_SAMPLE)
 add_subdirectory(Sample)
