@@ -28,12 +28,12 @@ add_dependencies(Sample OpenUI)
 
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(Sample PRIVATE SDL3::SDL3)
-find_package(glslang CONFIG REQUIRED)
-target_link_libraries(Sample PRIVATE glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV glslang::SPVRemapper)
 
 if(OPENUI_ENABLE_OPENGL)
 find_package(GLEW REQUIRED)
 target_link_libraries(Sample PRIVATE GLEW::GLEW)
+find_package(glslang CONFIG REQUIRED)
+target_link_libraries(Sample PRIVATE glslang::glslang glslang::glslang-default-resource-limits glslang::SPIRV glslang::SPVRemapper)
 endif()
 
 if(OPENUI_ENABLE_VULKAN)
