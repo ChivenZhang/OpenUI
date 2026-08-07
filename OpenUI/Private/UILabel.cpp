@@ -37,7 +37,7 @@ UILabel::UILabel(UICanvasRaw canvas)
 	linkHovered = &PRIVATE()->LinkHovered;
 	linkActivated = &PRIVATE()->LinkActivated;
 
-#if 1 // TEST CSS
+#if 0 // TEST CSS
 	auto& styleData = PRIVATE()->Style;
 	this->setEmbedStyle("background.color", styleData.Normal.Background.Brush.Color);
 	this->setEmbedStyle("normal.background.color", styleData.Normal.Background.Brush.Color);

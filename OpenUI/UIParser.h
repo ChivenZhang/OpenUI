@@ -15,36 +15,23 @@
 class OPENUI_API UIParser
 {
 public:
-	struct XMLStyle
+	struct style_t
 	{
 		UIString Name, Value;
 	};
-	struct XMLElement
-	{
-		UIString Name, Class, ID;
-		UIList<XMLStyle> Style;
-		// UIRaw<XMLElement> Parent;
-		UIList<UIRef<XMLElement>> Children;
-	};
-	struct CSSSelector
-	{
-		UIString Name, Class, ID;
-	};
-	struct CSSDeclare
+	struct attrib_t
 	{
 		UIString Name, Value;
 	};
-	struct CSSElement
+	struct elem_t
 	{
-		CSSSelector Selector;
-		UIList<CSSDeclare> Declare;
+		UIString Type, Class, ID;
+		UIList<style_t> Style;
+		UIList<attrib_t> Attrib;
+		UIList<UIRef<elem_t>> Child;
 	};
 
 public:
 	virtual ~UIParser() = default;
-	virtual UIRef<XMLElement> parse(UIString html, UIString css) const;
-
-protected:
-	virtual UIRef<XMLElement> parseLayout(UIString html) const;
-	virtual UIList<CSSSelector> parseStyle(UIString css) const;
+	virtual UIRef<elem_t> parse(UIString html) const;
 };

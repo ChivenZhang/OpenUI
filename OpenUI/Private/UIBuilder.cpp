@@ -54,10 +54,10 @@ void UIBuilder::removeFactory()
 	PRIVATE()->FactoryMap.clear();
 }
 
-UIWidgetRef UIBuilder::buildWidget(UIString html, UIString css) const
+UIWidgetRef UIBuilder::buildWidget(UIString html) const
 {
 	UIParser parser;
-	auto element = parser.parse(html, css);
+	auto element = parser.parse(html);
 
 	return UIWidgetRef();
 }

@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.10...4.0)
+﻿cmake_minimum_required(VERSION 3.10...5.0)
 project(OpenUI)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -7,6 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(OPENUI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "OpenUI Source Path")
+set(OPENUI_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External CACHE STRING "OpenUI External Path")
 option(OPENUI_ENABLE_SAMPLE "Enable Sample Compile" OFF)
 
 if(MSVC)
@@ -16,7 +17,6 @@ else()
 endif()
 
 include_directories(${OPENUI_SOURCE_DIR})
-add_subdirectory(External/libcss)
 add_subdirectory(OpenVG)
 add_subdirectory(OpenUI)
 if(OPENUI_ENABLE_SAMPLE)

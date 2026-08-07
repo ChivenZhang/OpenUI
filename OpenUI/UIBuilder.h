@@ -20,7 +20,7 @@ public:
 	virtual bool addFactory(UIFactoryRef value);
 	virtual bool removeFactory(UIString name);
 	virtual void removeFactory();
-	virtual UIWidgetRef buildWidget(UIString html, UIString css) const;
+	virtual UIWidgetRef buildWidget(UIString html) const;
 
 	template<class T, class... Args>
 	UIRef<T> create(Args... args)
