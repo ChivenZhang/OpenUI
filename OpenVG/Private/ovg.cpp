@@ -1,4 +1,7 @@
-#include <iostream>
+﻿/*
+2026/8/8
+*/
+
 #ifndef GLM_FORCE_XYZW_ONLY 
 #define GLM_ENABLE_EXPERIMENTAL
 //#define GLM_FORCE_ALIGNED
@@ -17,12 +20,12 @@
 #include <glm/gtx/matrix_transform_2d.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #endif
+
 using namespace glm;
+
 #include "ovg.h"
 
-
-int main()
+canvas_cb* new_canvas_cb(mem_resource_t* ac)
 {
-    std::cout << "Hello OpenVG!" << std::endl;
-    return 0;
+	return nullptr;
 }

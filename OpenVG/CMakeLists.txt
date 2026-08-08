@@ -14,6 +14,8 @@ else()
     add_compile_options(-finput-charset=UTF-8)
 endif()
 
-add_executable(TestVG
-        ${OPENVG_SOURCE_DIR}/main.cpp
-)
+file(GLOB_RECURSE OPENVG_SOURCE_FILES "*.cpp" "*.h")
+add_executable(TestVG ${OPENUI_SOURCE_FILES})
+
+find_package(glm CONFIG REQUIRED)
+target_link_libraries(TestVG PRIVATE glm::glm-header-only)
