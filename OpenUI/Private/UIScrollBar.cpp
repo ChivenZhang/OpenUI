@@ -215,15 +215,3 @@ UIButtonRaw UIScrollBar::getHandle() const
 {
 	return PRIVATE()->Handle.get();
 }
-
-UIString UIScrollBarFactory::getTagName() const
-{
-	return "scrollbar";
-}
-
-UIWidgetRef UIScrollBarFactory::newWidget() const
-{
-	auto result = UINew<UIScrollBar>(getContext());
-
-	return result;
-}

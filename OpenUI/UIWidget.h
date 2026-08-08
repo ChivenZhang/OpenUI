@@ -38,12 +38,6 @@ public:
 
 	virtual UIFilterRaw getEventFilter() const;
 	virtual void setEventFilter(UIFilterRaw value);
-	virtual UIString getStyleText() const;
-	virtual void setStyleText(UIString value);
-	virtual UIString getStyleText(UIString name) const;
-	virtual void setStyleText(UIString name, UIString value);
-	virtual UIString getAttribute(UIString name) const;
-	virtual void setAttribute(UIString name, UIString value);
 	virtual bool addWidget(UIWidgetRef value);
 	virtual bool removeWidget(UIWidgetRef value);
 	virtual void removeWidget();
@@ -61,7 +55,7 @@ public:
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
 	virtual void handle(UIReactorRaw source, UIEventRaw event) final override;
 
-	// ====================================Attribute===================================
+	// ===================================== Query ====================================
 
 	bool getEnable() const;
 	void setEnable(bool value);
@@ -159,7 +153,12 @@ public:
 
 	UIStyleRaw getStyles() const;
 	void setStyles(UIStyleRef value);
-	void setStyleByText(UIString const& key, UIString const& value);
+	virtual UIString getStyleText() const;	// Style Sheet
+	virtual void setStyleText(UIString value);	// Style Sheet
+	virtual UIString getStyleText(UIString name) const;
+	virtual void setStyleText(UIString name, UIString value);
+	virtual UIString getAttribute(UIString name) const;
+	virtual void setAttribute(UIString name, UIString value);
 
 	template<class T>
 	T const& getStyle(UIString const& key, T const& value = T()) const

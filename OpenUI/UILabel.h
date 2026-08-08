@@ -85,11 +85,3 @@ private:
 };
 using UILabelRef = UIRef<UILabel>;
 using UILabelRaw = UIRaw<UILabel>;
-
-/// @brief Label factory
-class OPENUI_API UILabelFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

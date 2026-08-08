@@ -48,19 +48,3 @@ public:
 private:
 	UIWidgetPrivateRaw m_PrivateLine;
 };
-
-/// @brief HLine factory
-class UIHLineFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};
-
-/// @brief VLine factory
-class UIVLineFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

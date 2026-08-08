@@ -112,11 +112,3 @@ public:
 private:
 	UIWidgetPrivateRaw m_PrivateInput;
 };
-
-/// @brief Input factory
-class OPENUI_API UIInputFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

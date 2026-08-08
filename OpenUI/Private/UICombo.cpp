@@ -275,15 +275,3 @@ bool UICombo::filter(UIReactorRaw source, UIEventRaw event)
 	}
 	return false;
 }
-
-UIString UIComboFactory::getTagName() const
-{
-	return "combo";
-}
-
-UIWidgetRef UIComboFactory::newWidget() const
-{
-	auto result = UINew<UICombo>(getContext());
-
-	return result;
-}

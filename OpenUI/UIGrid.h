@@ -50,11 +50,3 @@ public:
 private:
 	UIWidgetPrivateRaw m_PrivateGrid;
 };
-
-/// @brief Grid factory
-class OPENUI_API UIGridFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

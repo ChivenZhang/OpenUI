@@ -47,18 +47,6 @@ void UIHLine::setStyle(UILineStyle value)
 	PRIVATE()->Style = value;
 }
 
-UIString UIHLineFactory::getTagName() const
-{
-	return "hline";
-}
-
-UIWidgetRef UIHLineFactory::newWidget() const
-{
-	auto result = UINew<UIHLine>(getContext());
-
-	return result;
-}
-
 UIVLine::UIVLine(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
@@ -87,16 +75,4 @@ UILineStyle UIVLine::getStyle() const
 void UIVLine::setStyle(UILineStyle value)
 {
 	PRIVATE()->Style = value;
-}
-
-UIString UIVLineFactory::getTagName() const
-{
-	return "vline";
-}
-
-UIWidgetRef UIVLineFactory::newWidget() const
-{
-	auto result = UINew<UIVLine>(getContext());
-
-	return result;
 }

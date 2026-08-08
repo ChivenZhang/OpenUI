@@ -242,15 +242,3 @@ void UIButton::leaveEvent(UIMouseEventRaw event)
 	PRIVATE()->Hovered = false;
 	if (getCanvas()) getCanvas()->paintWidget();
 }
-
-UIString UIButtonFactory::getTagName() const
-{
-	return "button";
-}
-
-UIWidgetRef UIButtonFactory::newWidget() const
-{
-	auto result = UINew<UIButton>(getContext());
-
-	return result;
-}

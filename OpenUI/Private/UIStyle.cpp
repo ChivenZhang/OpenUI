@@ -51,7 +51,14 @@ void UIStyle::setStyle(UIString const& key, UIStyleDataRef value)
     m_IsDirty = true;
 }
 
-void UIStyle::setStyleByText(UIString const& key, UIString const& value)
+UIString UIStyle::getStyleText(UIString const& key) const
+{
+    auto result = PRIVATE()->Styles.find(key);
+    if (result == PRIVATE()->Styles.end()) return {};
+    return result->second->getText();
+}
+
+void UIStyle::setStyleText(UIString const& key, UIString const& value)
 {
     auto result = PRIVATE()->Styles.find(key);
     if (result == PRIVATE()->Styles.end()) return;

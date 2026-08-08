@@ -16,7 +16,7 @@ UIFactory::UIFactory(UICanvasRaw canvas)
 {
 }
 
-UICanvasRaw UIFactory::getContext() const
+UICanvasRaw UIFactory::getCanvas() const
 {
 	return m_Context;
 }

@@ -64,15 +64,3 @@ void UIFlow::setStyle(UIFlowStyle value)
 {
 	PRIVATE()->Style = value;
 }
-
-UIString UIFlowFactory::getTagName() const
-{
-	return "flow";
-}
-
-UIWidgetRef UIFlowFactory::newWidget() const
-{
-	auto result = UINew<UIFlow>(getContext());
-	
-	return result;
-}

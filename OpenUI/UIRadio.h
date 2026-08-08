@@ -83,11 +83,3 @@ private:
 	friend class UIRadio;
 	UIRadioRaw Active = nullptr;
 };
-
-/// @brief Radio Factory
-class OPENUI_API UIRadioFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

@@ -249,15 +249,3 @@ UIButtonRaw UISlider::getHandle() const
 {
 	return PRIVATE()->Handle.get();
 }
-
-UIString UISliderFactory::getTagName() const
-{
-	return "slider";
-}
-
-UIWidgetRef UISliderFactory::newWidget() const
-{
-	auto result = UINew<UISlider>(getContext());
-
-	return result;
-}

@@ -26,14 +26,6 @@ public:
 };
 
 /// @brief 
-class UICanvasPrivate
-{
-public:
-	virtual ~UICanvasPrivate() = default;
-};
-using UIContextPrivateRaw = UIRaw<UICanvasPrivate>;
-
-/// @brief 
 class OPENUI_API UICanvas
 {
 public:
@@ -75,7 +67,7 @@ public:
 	void updateWidget(float time, UIRect client);
 
 private:
-	UIContextPrivateRaw m_Private;
+	UIWidgetPrivateRaw m_Private;
 };
 using UICanvasRef = UIRef<UICanvas>;
 using UICanvasRaw = UIRaw<UICanvas>;

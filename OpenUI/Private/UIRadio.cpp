@@ -273,15 +273,3 @@ void UIRadio::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
 }
-
-UIString UIRadioFactory::getTagName() const
-{
-	return "radio";
-}
-
-UIWidgetRef UIRadioFactory::newWidget() const
-{
-	auto result = UINew<UIRadio>(getContext());
-
-	return result;
-}

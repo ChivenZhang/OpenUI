@@ -45,13 +45,14 @@ bool UIParser::parse(UIString html, widget_t& result) const
     if (status != LXB_STATUS_OK) return false;
     */
 
+    auto foundBody = false;
+
     UILambda<void(lxb_dom_node_t*, widget_t*)> dom_func;
-    dom_func = [&dom_func](lxb_dom_node_t* node, widget_t* parent)
+    dom_func = [&dom_func, &foundBody](lxb_dom_node_t* node, widget_t* parent)
     {
         if (node->type == LXB_DOM_NODE_TYPE_DOCUMENT)
         {
             auto document = lxb_dom_interface_document(node);
-            parent->Type = "root";
 
             for (auto child = node->first_child; child; child = child->next)
             {
@@ -61,64 +62,77 @@ bool UIParser::parse(UIString html, widget_t& result) const
         else if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
         {
             auto element = lxb_dom_interface_element(node);
-            auto widget = &parent->Children.emplace_back();
 
             size_t tag_len = 0;
             auto tag = lxb_dom_element_local_name(element, &tag_len);
-            widget->Type = UIStringView(reinterpret_cast<const char*>(tag), tag_len);
+            auto tagName = UIStringView(reinterpret_cast<const char*>(tag), tag_len);
+            if (foundBody || tagName == "body") foundBody = true;
 
-            for (auto attr = element->first_attr; attr; attr = attr->next)
+            if (foundBody)
             {
-                auto& attrib = widget->Attrib.emplace_back();
+                auto widget = &parent->Children.emplace_back();
+                widget->Type = UIStringView(reinterpret_cast<const char*>(tag), tag_len);
 
-                size_t name_len;
-                auto name = lxb_dom_attr_local_name(attr, &name_len);
-                attrib.Name = UIStringView(reinterpret_cast<const char*>(name), name_len);
+                for (auto attr = element->first_attr; attr; attr = attr->next)
+                {
+                    auto& attrib = widget->Attrib.emplace_back();
 
-                size_t value_len;
-                auto value = lxb_dom_attr_value(attr, &value_len);
-                attrib.Value = UIStringView(reinterpret_cast<const char*>(value), value_len);
+                    size_t name_len;
+                    auto name = lxb_dom_attr_local_name(attr, &name_len);
+                    attrib.Name = UIStringView(reinterpret_cast<const char*>(name), name_len);
 
-                if (attrib.Name == "id") widget->ID = attrib.Value;
-                if (attrib.Name == "class") widget->Class = attrib.Value;
+                    size_t value_len;
+                    auto value = lxb_dom_attr_value(attr, &value_len);
+                    attrib.Value = UIStringView(reinterpret_cast<const char*>(value), value_len);
+
+                    if (attrib.Name == "id") widget->ID = attrib.Value;
+                    if (attrib.Name == "class") widget->Class = attrib.Value;
+                }
+
+                auto css_func = [](lxb_dom_element_t* element, const lxb_css_rule_declaration_t* decl, void* ctx, lxb_css_selector_specificity_t spec, bool is_weak)->lxb_status_t
+                {
+                    auto widget = (widget_t*)ctx;
+
+                    UIString styleName;
+                    auto status = lxb_css_property_serialize_name(decl->u.user, decl->type,
+                        [](const lxb_char_t *data, size_t len, void *ctx) -> lxb_status_t
+                         {
+                             auto& buffer = *(UIString*)ctx;
+                             buffer += UIStringView(reinterpret_cast<const char*>(data), len);
+                             return LXB_STATUS_OK;
+                         }, &styleName);
+                    if (status != LXB_STATUS_OK) return EXIT_FAILURE;
+
+                    UIString styleValue;
+                    status = lxb_css_property_serialize(decl->u.user, decl->type,
+                        [](const lxb_char_t *data, size_t len, void *ctx) -> lxb_status_t
+                         {
+                             auto& buffer = *(UIString*)ctx;
+                             buffer += UIStringView(reinterpret_cast<const char*>(data), len);
+                             return LXB_STATUS_OK;
+                         }, &styleValue);
+                    if (status != LXB_STATUS_OK) return EXIT_FAILURE;
+
+                    auto& style = widget->Style.emplace_back();
+                    style.Name = styleName;
+                    style.Value = styleValue;
+                    style.Priority = spec;
+
+                    return LXB_STATUS_OK;
+                };
+                lxb_dom_element_style_walk(element, css_func, widget, true);
+
+                for (auto child = node->first_child; child; child = child->next)
+                {
+                    dom_func(child, widget);
+                }
             }
-
-            auto css_func = [](lxb_dom_element_t* element, const lxb_css_rule_declaration_t* decl, void* ctx, lxb_css_selector_specificity_t spec, bool is_weak)->lxb_status_t
+            else
             {
-                auto widget = (widget_t*)ctx;
-
-                UIString styleName;
-                auto status = lxb_css_property_serialize_name(decl->u.user, decl->type,
-                    [](const lxb_char_t *data, size_t len, void *ctx) -> lxb_status_t
-                     {
-                         auto& buffer = *(UIString*)ctx;
-                         buffer += UIStringView(reinterpret_cast<const char*>(data), len);
-                         return LXB_STATUS_OK;
-                     }, &styleName);
-                if (status != LXB_STATUS_OK) return EXIT_FAILURE;
-
-                UIString styleValue;
-                status = lxb_css_property_serialize(decl->u.user, decl->type,
-                    [](const lxb_char_t *data, size_t len, void *ctx) -> lxb_status_t
-                     {
-                         auto& buffer = *(UIString*)ctx;
-                         buffer += UIStringView(reinterpret_cast<const char*>(data), len);
-                         return LXB_STATUS_OK;
-                     }, &styleValue);
-                if (status != LXB_STATUS_OK) return EXIT_FAILURE;
-
-                auto& style = widget->Style.emplace_back();
-                style.Name = styleName;
-                style.Value = styleValue;
-                style.Priority = spec;
-
-                return LXB_STATUS_OK;
-            };
-            lxb_dom_element_style_walk(element, css_func, widget, true);
-
-            for (auto child = node->first_child; child; child = child->next)
-            {
-                dom_func(child, widget);
+                for (auto child = node->first_child; child; child = child->next)
+                {
+                    dom_func(child, parent);
+                }
             }
         }
         else if (node->type == LXB_DOM_NODE_TYPE_TEXT)

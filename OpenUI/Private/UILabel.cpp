@@ -362,15 +362,3 @@ void UILabel::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
 }
-
-UIString UILabelFactory::getTagName() const
-{
-	return "label";
-}
-
-UIWidgetRef UILabelFactory::newWidget() const
-{
-	auto result = UINew<UILabel>(getContext());
-
-	return result;
-}

@@ -9,6 +9,10 @@
 *
 * =================================================*/
 #include "../UICanvas.h"
+#include "../UIButton.h"
+#include "../UICombo.h"
+#include "../UIInput.h"
+#include "../UILine.h"
 #include <yoga/Yoga.h>
 
 struct UITopLevelWidget
@@ -17,7 +21,7 @@ struct UITopLevelWidget
 	int32_t ZOrder;
 };
 
-class UICanvasPrivateData : public UICanvasPrivate
+class UICanvasPrivate : public UIWidgetPrivate
 {
 public:
 	UIConfig Config;
@@ -33,15 +37,32 @@ public:
 	UIList<UIWidgetRef> TopLevelView;
 	UIList<UITopLevelWidget> TopLevelList;
 };
-#define PRIVATE() ((UICanvasPrivateData*) m_Private)
+#define PRIVATE() ((UICanvasPrivate*) m_Private)
 
 UICanvas::UICanvas(UIDeviceRaw device, UIConfig config)
 {
-	m_Private = new UICanvasPrivateData;
+	m_Private = new UICanvasPrivate;
 
 	PRIVATE()->Device = device;
 	PRIVATE()->Config = config;
 	PRIVATE()->Builder = UINew<UIBuilder>(this);
+
+	// TODO: https://developer.mozilla.org/zh-CN/docs/Web/HTML/Reference/Elements
+
+	PRIVATE()->Builder->addFactory("body", UINew<UIWidgetFactory<UIWidget>>(this));
+	PRIVATE()->Builder->addFactory("div", UINew<UIWidgetFactory<UIWidget>>(this));
+	PRIVATE()->Builder->addFactory("hr", UINew<UIWidgetFactory<UIHLine>>(this));
+	PRIVATE()->Builder->addFactory("h1", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("h2", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("h3", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("h4", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("h5", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("h6", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("p", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("button", UINew<UIWidgetFactory<UIButton>>(this));
+	PRIVATE()->Builder->addFactory("input", UINew<UIWidgetFactory<UIInput>>(this));
+	PRIVATE()->Builder->addFactory("label", UINew<UIWidgetFactory<UILabel>>(this));
+	PRIVATE()->Builder->addFactory("select", UINew<UIWidgetFactory<UICombo>>(this));
 }
 
 UICanvas::~UICanvas()

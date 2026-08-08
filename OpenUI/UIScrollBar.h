@@ -63,11 +63,3 @@ private:
 };
 using UIScrollBarRef = UIRef<UIScrollBar>;
 using UIScrollBarRaw = UIRaw<UIScrollBar>;
-
-/// @brief Scroll bar factory
-class OPENUI_API UIScrollBarFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

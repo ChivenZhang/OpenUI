@@ -72,16 +72,3 @@ void UIVBox::setStyle(UIVBoxStyle value)
 {
 	PRIVATE()->Style = value;
 }
-
-UIString UIVBoxFactory::getTagName() const
-{
-	return "vbox";
-}
-
-UIWidgetRef UIVBoxFactory::newWidget() const
-{
-	auto result = UINew<UIVBox>(getContext());
-
-	return result;
-}
-

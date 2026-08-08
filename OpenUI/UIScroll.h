@@ -71,11 +71,3 @@ private:
 };
 using UIScrollRef = UIRef<UIScroll>;
 using UIScrollRaw = UIRaw<UIScroll>;
-
-/// @brief Scroll factory
-class OPENUI_API UIScrollFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

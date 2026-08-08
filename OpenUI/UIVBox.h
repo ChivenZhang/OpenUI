@@ -35,11 +35,3 @@ public:
 private:
 	UIWidgetPrivateRaw m_PrivateVBox;
 };
-
-/// @brief VBox factory
-class OPENUI_API UIVBoxFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

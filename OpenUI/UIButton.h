@@ -112,11 +112,3 @@ private:
 };
 using UIButtonRef = UIRef<UIButton>;
 using UIButtonRaw = UIRaw<UIButton>;
-
-/// @brief Button factory
-class OPENUI_API UIButtonFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

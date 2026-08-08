@@ -252,15 +252,3 @@ void UIGrid::setColumnStretch(UIList<uint32_t> stretch)
 		colStretch += getColumnStretch(i);
 	}
 }
-
-UIString UIGridFactory::getTagName() const
-{
-	return "grid";
-}
-
-UIWidgetRef UIGridFactory::newWidget() const
-{
-	auto result = UINew<UIGrid>(getContext());
-
-	return result;
-}

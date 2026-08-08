@@ -108,33 +108,6 @@ void UIWidget::setEventFilter(UIFilterRaw value)
 	PRIVATE()->Filter = value;
 }
 
-UIString UIWidget::getStyleText() const
-{
-	return UIString();
-}
-
-void UIWidget::setStyleText(UIString value)
-{
-}
-
-UIString UIWidget::getStyleText(UIString name) const
-{
-	return UIString();
-}
-
-void UIWidget::setStyleText(UIString name, UIString value)
-{
-}
-
-UIString UIWidget::getAttribute(UIString name) const
-{
-	return UIString();
-}
-
-void UIWidget::setAttribute(UIString name, UIString value)
-{
-}
-
 bool UIWidget::addWidget(UIWidgetRef value)
 {
 	if (value == nullptr || value.get() == this) return false;
@@ -781,9 +754,32 @@ void UIWidget::setStyles(UIStyleRef value)
 	PRIVATE()->Styles = value;
 }
 
-void UIWidget::setStyleByText(UIString const& key, UIString const& value)
+UIString UIWidget::getStyleText() const
 {
-	getStyles()->setStyleByText(key, value);
+	return UIString();
+}
+
+void UIWidget::setStyleText(UIString value)
+{
+}
+
+UIString UIWidget::getStyleText(UIString name) const
+{
+	return getStyles()->getStyleText(name);
+}
+
+void UIWidget::setStyleText(UIString name, UIString value)
+{
+	getStyles()->setStyleText(name, value);
+}
+
+UIString UIWidget::getAttribute(UIString name) const
+{
+	return UIString();
+}
+
+void UIWidget::setAttribute(UIString name, UIString value)
+{
 }
 
 void UIWidget::closeEvent(UICloseEventRaw event)

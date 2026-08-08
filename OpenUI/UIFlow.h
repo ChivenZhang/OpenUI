@@ -34,11 +34,3 @@ public:
 private:
 	UIWidgetPrivateRaw m_PrivateFlow;
 };
-
-/// @brief Flow factory
-class OPENUI_API UIFlowFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

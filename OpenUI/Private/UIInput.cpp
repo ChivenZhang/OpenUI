@@ -498,15 +498,3 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 		}
 	}
 }
-
-UIString UIInputFactory::getTagName() const
-{
-	return "input";
-}
-
-UIWidgetRef UIInputFactory::newWidget() const
-{
-	auto result = UINew<UIInput>(getContext());
-
-	return result;
-}

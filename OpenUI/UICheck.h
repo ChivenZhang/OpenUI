@@ -68,11 +68,3 @@ private:
 };
 using UICheckRef = UIRef<UICheck>;
 using UICheckRaw = UIRaw<UICheck>;
-
-/// @brief Check Factory
-class OPENUI_API UICheckFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget() const override;
-};

@@ -19,9 +19,7 @@ public:
 
 	virtual ~UIFactory() = default;
 
-	virtual UICanvasRaw getContext() const;
-
-	virtual UIString getTagName() const = 0;
+	virtual UICanvasRaw getCanvas() const;
 
 	virtual UIWidgetRef newWidget() const = 0;
 
@@ -30,3 +28,16 @@ protected:
 };
 using UIFactoryRef = UIRef<UIFactory>;
 using UIFactoryRaw = UIRaw<UIFactory>;
+
+template<class T>
+class UIWidgetFactory : public UIFactory
+{
+public:
+	using UIFactory::UIFactory;
+
+	UIWidgetRef newWidget() const override
+	{
+		auto result = UINew<T>(getCanvas());
+		return result;
+	}
+};

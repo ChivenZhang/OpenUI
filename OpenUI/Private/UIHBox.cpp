@@ -72,15 +72,3 @@ void UIHBox::setStyle(UIHBoxStyle value)
 {
 	PRIVATE()->Style = value;
 }
-
-UIString UIHBoxFactory::getTagName() const
-{
-	return "hbox";
-}
-
-UIWidgetRef UIHBoxFactory::newWidget() const
-{
-	auto result = UINew<UIHBox>(getContext());
-
-	return result;
-}

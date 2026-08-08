@@ -243,15 +243,3 @@ void UICheck::leaveEvent(UIMouseEventRaw event)
 	PRIVATE()->Hovered = false;
 	if (getCanvas()) getCanvas()->paintWidget();
 }
-
-UIString UICheckFactory::getTagName() const
-{
-	return "check";
-}
-
-UIWidgetRef UICheckFactory::newWidget() const
-{
-	auto result = UINew<UICheck>(getContext());
-
-	return result;
-}

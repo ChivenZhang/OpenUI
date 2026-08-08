@@ -77,7 +77,8 @@ public:
 
     UIStyleDataRef getStyle(UIString const& key) const;
     void setStyle(UIString const& key, UIStyleDataRef value);
-    void setStyleByText(UIString const& key, UIString const& value);
+    UIString getStyleText(UIString const& key) const;
+    void setStyleText(UIString const& key, UIString const& value);
 
     template<class T>
     T const& getStyle(UIString const& key, T const& value = T()) const

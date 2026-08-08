@@ -37,16 +37,16 @@ UICanvasRaw UIBuilder::getCanvas() const
 	return PRIVATE()->Canvas;
 }
 
-bool UIBuilder::addFactory(UIFactoryRef value)
+bool UIBuilder::addFactory(UIString tag, UIFactoryRef value)
 {
 	if (value == nullptr) return false;
-	PRIVATE()->FactoryMap[value->getTagName()] = value;
+	PRIVATE()->FactoryMap[tag] = value;
 	return true;
 }
 
-bool UIBuilder::removeFactory(UIString name)
+bool UIBuilder::removeFactory(UIString tag)
 {
-	return PRIVATE()->FactoryMap.erase(name);
+	return PRIVATE()->FactoryMap.erase(tag);
 }
 
 void UIBuilder::removeFactory()
@@ -65,13 +65,16 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 		UILambda<UIWidgetRef(UIParser::widget_t&, uint32_t)> process_func;
 		process_func = [&process_func, this](UIParser::widget_t& w, uint32_t depth)->UIWidgetRef
 		{
-			if (w.Type.empty()) return {};
-
 			auto factory = PRIVATE()->FactoryMap.find(w.Type);
-			if (factory == PRIVATE()->FactoryMap.end() || factory->second == nullptr) return {};
+			if (factory == PRIVATE()->FactoryMap.end() || factory->second == nullptr)
+			{
+				UI_ERROR("cannot find '%s' factory", w.Type.c_str());
+				return {};
+			}
 
 			auto widget = factory->second->newWidget();
 			if (widget == nullptr) return {};
+			widget->setAttribute("textContent", w.Text);
 
 			// Process each widget
 
@@ -87,7 +90,7 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 			}
 			for (auto& s : w.Style)
 			{
-				widget->setStyleByText(s.Name, s.Value);
+				widget->setStyleText(s.Name, s.Value);
 
 				std::cout << UIString((depth + 1) * 4, ' ');
 				std::cout << "-style:" << s.Name << " = " << s.Value << " -priority " << s.Priority << std::endl;
@@ -106,7 +109,8 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 
 			return widget;
 		};
-		return process_func(document, 0);
+
+		return process_func(document.Children.front(), 0);
 	}
 	return {};
 }

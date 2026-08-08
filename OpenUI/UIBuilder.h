@@ -17,8 +17,8 @@ public:
 	UIBuilder(UICanvasRaw canvas);
 	virtual ~UIBuilder();
 	UICanvasRaw getCanvas() const;
-	virtual bool addFactory(UIFactoryRef value);
-	virtual bool removeFactory(UIString name);
+	virtual bool addFactory(UIString tag, UIFactoryRef value);
+	virtual bool removeFactory(UIString tag);
 	virtual void removeFactory();
 	virtual UIWidgetRef buildWidget(UIString html) const;
 

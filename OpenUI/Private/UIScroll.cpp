@@ -287,15 +287,3 @@ void UIScroll::wheelEvent(UIMouseWheelEventRaw event)
 		if (getCanvas()) getCanvas()->layoutWidget();
 	}
 }
-
-UIString UIScrollFactory::getTagName() const
-{
-	return "scroll";
-}
-
-UIWidgetRef UIScrollFactory::newWidget() const
-{
-	auto result = UINew<UIScroll>(getContext());
-
-	return result;
-}
