@@ -504,9 +504,9 @@ UIString UIInputFactory::getTagName() const
 	return "input";
 }
 
-UIWidgetRef UIInputFactory::newWidget(UIString style) const
+UIWidgetRef UIInputFactory::newWidget() const
 {
 	auto result = UINew<UIInput>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

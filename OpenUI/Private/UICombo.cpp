@@ -281,9 +281,9 @@ UIString UIComboFactory::getTagName() const
 	return "combo";
 }
 
-UIWidgetRef UIComboFactory::newWidget(UIString style) const
+UIWidgetRef UIComboFactory::newWidget() const
 {
 	auto result = UINew<UICombo>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

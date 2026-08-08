@@ -255,9 +255,9 @@ UIString UISliderFactory::getTagName() const
 	return "slider";
 }
 
-UIWidgetRef UISliderFactory::newWidget(UIString style) const
+UIWidgetRef UISliderFactory::newWidget() const
 {
 	auto result = UINew<UISlider>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

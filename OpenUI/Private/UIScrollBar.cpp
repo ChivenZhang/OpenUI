@@ -221,9 +221,9 @@ UIString UIScrollBarFactory::getTagName() const
 	return "scrollbar";
 }
 
-UIWidgetRef UIScrollBarFactory::newWidget(UIString style) const
+UIWidgetRef UIScrollBarFactory::newWidget() const
 {
 	auto result = UINew<UIScrollBar>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

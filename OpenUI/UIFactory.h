@@ -23,7 +23,7 @@ public:
 
 	virtual UIString getTagName() const = 0;
 
-	virtual UIWidgetRef newWidget(UIString style) const = 0;
+	virtual UIWidgetRef newWidget() const = 0;
 
 protected:
 	UICanvasRaw m_Context;

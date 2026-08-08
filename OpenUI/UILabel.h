@@ -91,5 +91,5 @@ class OPENUI_API UILabelFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIWidgetRef newWidget() const override;
 };

@@ -70,9 +70,9 @@ UIString UIFlowFactory::getTagName() const
 	return "flow";
 }
 
-UIWidgetRef UIFlowFactory::newWidget(UIString style) const
+UIWidgetRef UIFlowFactory::newWidget() const
 {
 	auto result = UINew<UIFlow>(getContext());
-	result->setStyleText(style);
+	
 	return result;
 }

@@ -368,9 +368,9 @@ UIString UILabelFactory::getTagName() const
 	return "label";
 }
 
-UIWidgetRef UILabelFactory::newWidget(UIString style) const
+UIWidgetRef UILabelFactory::newWidget() const
 {
 	auto result = UINew<UILabel>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

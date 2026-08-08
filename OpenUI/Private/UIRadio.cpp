@@ -279,9 +279,9 @@ UIString UIRadioFactory::getTagName() const
 	return "radio";
 }
 
-UIWidgetRef UIRadioFactory::newWidget(UIString style) const
+UIWidgetRef UIRadioFactory::newWidget() const
 {
 	auto result = UINew<UIRadio>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

@@ -54,7 +54,7 @@ class UIHLineFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIWidgetRef newWidget() const override;
 };
 
 /// @brief VLine factory
@@ -62,5 +62,5 @@ class UIVLineFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIWidgetRef newWidget() const override;
 };

@@ -159,6 +159,7 @@ public:
 
 	UIStyleRaw getStyles() const;
 	void setStyles(UIStyleRef value);
+	void setStyleByText(UIString const& key, UIString const& value);
 
 	template<class T>
 	T const& getStyle(UIString const& key, T const& value = T()) const

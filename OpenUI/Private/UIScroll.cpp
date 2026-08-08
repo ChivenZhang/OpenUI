@@ -293,9 +293,9 @@ UIString UIScrollFactory::getTagName() const
 	return "scroll";
 }
 
-UIWidgetRef UIScrollFactory::newWidget(UIString style) const
+UIWidgetRef UIScrollFactory::newWidget() const
 {
 	auto result = UINew<UIScroll>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

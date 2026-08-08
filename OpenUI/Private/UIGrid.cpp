@@ -258,9 +258,9 @@ UIString UIGridFactory::getTagName() const
 	return "grid";
 }
 
-UIWidgetRef UIGridFactory::newWidget(UIString style) const
+UIWidgetRef UIGridFactory::newWidget() const
 {
 	auto result = UINew<UIGrid>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

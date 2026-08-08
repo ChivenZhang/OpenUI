@@ -50,3 +50,10 @@ void UIStyle::setStyle(UIString const& key, UIStyleDataRef value)
     PRIVATE()->Styles[key] = value;
     m_IsDirty = true;
 }
+
+void UIStyle::setStyleByText(UIString const& key, UIString const& value)
+{
+    auto result = PRIVATE()->Styles.find(key);
+    if (result == PRIVATE()->Styles.end()) return;
+    result->second->setText(value);
+}

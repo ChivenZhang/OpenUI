@@ -781,6 +781,11 @@ void UIWidget::setStyles(UIStyleRef value)
 	PRIVATE()->Styles = value;
 }
 
+void UIWidget::setStyleByText(UIString const& key, UIString const& value)
+{
+	getStyles()->setStyleByText(key, value);
+}
+
 void UIWidget::closeEvent(UICloseEventRaw event)
 {
 }

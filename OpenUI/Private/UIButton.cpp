@@ -248,9 +248,9 @@ UIString UIButtonFactory::getTagName() const
 	return "button";
 }
 
-UIWidgetRef UIButtonFactory::newWidget(UIString style) const
+UIWidgetRef UIButtonFactory::newWidget() const
 {
 	auto result = UINew<UIButton>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

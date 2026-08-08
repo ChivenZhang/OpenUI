@@ -118,5 +118,5 @@ class OPENUI_API UIButtonFactory : public UIFactory
 {
 public:
 	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIWidgetRef newWidget() const override;
 };

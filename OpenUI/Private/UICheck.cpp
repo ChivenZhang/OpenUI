@@ -249,9 +249,9 @@ UIString UICheckFactory::getTagName() const
 	return "check";
 }
 
-UIWidgetRef UICheckFactory::newWidget(UIString style) const
+UIWidgetRef UICheckFactory::newWidget() const
 {
 	auto result = UINew<UICheck>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }

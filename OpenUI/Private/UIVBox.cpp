@@ -78,10 +78,10 @@ UIString UIVBoxFactory::getTagName() const
 	return "vbox";
 }
 
-UIWidgetRef UIVBoxFactory::newWidget(UIString style) const
+UIWidgetRef UIVBoxFactory::newWidget() const
 {
 	auto result = UINew<UIVBox>(getContext());
-	result->setStyleText(style);
+
 	return result;
 }
 
