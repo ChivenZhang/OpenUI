@@ -15,23 +15,24 @@
 class OPENUI_API UIParser
 {
 public:
-	struct style_t
-	{
-		UIString Name, Value;
-	};
 	struct attrib_t
 	{
 		UIString Name, Value;
 	};
-	struct elem_t
+	struct style_t
 	{
-		UIString Type, Class, ID;
+		UIString Name, Value;
+		uint32_t Priority;
+	};
+	struct widget_t
+	{
+		UIString Type, Class, ID, Text;
 		UIList<style_t> Style;
 		UIList<attrib_t> Attrib;
-		UIList<UIRef<elem_t>> Child;
+		UIList<widget_t> Children;
 	};
 
 public:
 	virtual ~UIParser() = default;
-	virtual UIRef<elem_t> parse(UIString html) const;
+	virtual bool parse(UIString html, widget_t& result) const;
 };

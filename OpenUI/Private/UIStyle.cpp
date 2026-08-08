@@ -17,6 +17,8 @@ struct UIStylePrivateData : UIStylePrivate
 #define PRIVATE() ((UIStylePrivateData*)m_Private)
 
 UIStyle::UIStyle()
+    :
+    m_IsDirty(false)
 {
     m_Private = new UIStylePrivateData;
 }
@@ -24,6 +26,16 @@ UIStyle::UIStyle()
 UIStyle::~UIStyle()
 {
 	delete m_Private; m_Private = nullptr;
+}
+
+bool UIStyle::getDirty() const
+{
+    return m_IsDirty;
+}
+
+void UIStyle::setDirty(bool value)
+{
+    m_IsDirty = value;
 }
 
 UIStyleDataRef UIStyle::getStyle(UIString const& key) const
@@ -36,4 +48,5 @@ UIStyleDataRef UIStyle::getStyle(UIString const& key) const
 void UIStyle::setStyle(UIString const& key, UIStyleDataRef value)
 {
     PRIVATE()->Styles[key] = value;
+    m_IsDirty = true;
 }

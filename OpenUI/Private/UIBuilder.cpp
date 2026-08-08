@@ -57,7 +57,38 @@ void UIBuilder::removeFactory()
 UIWidgetRef UIBuilder::buildWidget(UIString html) const
 {
 	UIParser parser;
-	auto element = parser.parse(html);
+	UIParser::widget_t widget;
+	if (parser.parse(html, widget))
+	{
+		// Process the parsed widget
 
-	return UIWidgetRef();
+		UILambda<void(UIParser::widget_t&, uint32_t)> process_func;
+		process_func = [&process_func](UIParser::widget_t& w, uint32_t depth)
+		{
+			if (w.Type.empty()) return;
+
+			// Process each widget
+
+			std::cout << UIString(depth * 4, ' ');
+			std::cout << "<" << w.Type << ">" << std::endl;
+
+			for (auto& a : w.Attrib)
+			{
+				std::cout << UIString((depth + 1) * 4, ' ');
+				std::cout << "-attr :" << a.Name << " = " << a.Value << std::endl;
+			}
+			for (auto& s : w.Style)
+			{
+				std::cout << UIString((depth + 1) * 4, ' ');
+				std::cout << "-style:" << s.Name << " = " << s.Value << " -priority " << s.Priority << std::endl;
+			}
+
+			for (auto& c : w.Children) process_func(c, depth + 1);
+
+			std::cout << UIString(depth * 4, ' ');
+			std::cout << "</" << w.Type << ">" << std::endl;
+		};
+		process_func(widget, 0);
+	}
+	return {};
 }

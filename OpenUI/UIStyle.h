@@ -56,6 +56,10 @@ class OPENUI_API UIStyle
 public:
     UIStyle();
     ~UIStyle();
+
+    bool getDirty() const;
+    void setDirty(bool value);
+
     UIStyleDataRef getStyle(UIString const& key) const;
     void setStyle(UIString const& key, UIStyleDataRef value);
 
@@ -82,6 +86,7 @@ public:
     }
 
 private:
+    bool m_IsDirty;
     UIRaw<UIStylePrivate> m_Private;
 };
 using UIStyleRef = UIRef<UIStyle>;
