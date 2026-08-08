@@ -10,7 +10,7 @@
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
         "OPENUI_ENABLE_SAMPLE": "ON",
         "OPENUI_ENABLE_OPENGL": "ON",
-        "OPENUI_ENABLE_CAIRO": "ON"
+        "OPENUI_ENABLE_CAIRO": "OFF"
       }
     },
     {
@@ -22,7 +22,7 @@
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
         "OPENUI_ENABLE_SAMPLE": "ON",
         "OPENUI_ENABLE_OPENGL": "ON",
-        "OPENUI_ENABLE_CAIRO": "ON"
+        "OPENUI_ENABLE_CAIRO": "OFF"
       }
     },
     {

@@ -2,19 +2,33 @@
   "name" : "openui",
   "version-string" : "1.0.0",
   "builtin-baseline" : "478939b61bfc6aa9faf4ab18b5e2495f18ac1fea",
-  "dependencies" : [ {
-    "name" : "sdl3",
-    "version>=" : "3.1.6-preview#2",
-    "default-features" : false,
-    "features" : [ "vulkan" ]
-  }, {
-    "name" : "yoga",
-    "version>=" : "3.2.1"
-  }, {
-    "name" : "stb",
-    "version>=" : "2024-07-29#1"
-  }, {
-    "name" : "lexbor",
-    "version>=" : "3.0.0"
-  } ]
+  "dependencies": [
+    {
+      "name": "sdl3",
+      "version>=": "3.1.6-preview#2",
+      "default-features": false,
+      "features": [ "vulkan" ]
+    },
+    {
+      "name": "yoga",
+      "version>=": "3.2.1"
+    },
+    {
+      "name": "stb",
+      "version>=": "2024-07-29#1"
+    },
+    {
+      "name": "lexbor",
+      "version>=": "2.7.0"
+    },
+    {
+      "name": "glew" 
+    },
+    {
+      "name": "glm" 
+    },
+    {
+      "name": "glslang" 
+    }
+  ]
 }
