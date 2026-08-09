@@ -55,7 +55,7 @@ public:
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
 	virtual void handle(UIReactorRaw source, UIEventRaw event) final override;
 
-	// ===================================== Query ====================================
+	// ================================== Attrib Query =================================
 
 	bool getEnable() const;
 	void setEnable(bool value);
@@ -87,7 +87,7 @@ public:
 	bool inBounds(UIFloat2 pos);
 	bool inBounds(float x, float y);
 
-	// =================================Flex Layout======================================
+	// ================================= Flex Query ======================================
 
 	UI::DisplayType getDisplayType() const;
 	void setDisplayType(UI::DisplayType value);
@@ -153,6 +153,7 @@ public:
 
 	UIStyleRaw getStyles() const;
 	void setStyles(UIStyleRef value);
+	UIComputedStyleRaw getComputedStyle() const;
 	virtual UIString getStyleText() const;	// Style Sheet
 	virtual void setStyleText(UIString value);	// Style Sheet
 	virtual UIString getStyleText(UIString name) const;

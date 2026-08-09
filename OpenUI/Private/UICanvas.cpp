@@ -15,6 +15,9 @@
 #include "../UILine.h"
 #include <yoga/Yoga.h>
 
+#include "OpenUI/UICheck.h"
+#include "OpenUI/UIRadio.h"
+
 struct UITopLevelWidget
 {
 	UIWidgetRef Widget;
@@ -42,33 +45,33 @@ public:
 UICanvas::UICanvas(UIDeviceRaw device, UIConfig config)
 {
 	m_Private = new UICanvasPrivate;
-
 	PRIVATE()->Device = device;
 	PRIVATE()->Config = config;
 	PRIVATE()->Builder = UINew<UIBuilder>(this);
 
-	// TODO: https://developer.mozilla.org/zh-CN/docs/Web/HTML/Reference/Elements
+	// TODO: Embedded Factory from https://developer.mozilla.org/zh-CN/docs/Web/HTML/Reference/Elements
 
-	PRIVATE()->Builder->addFactory("body", UINew<UIWidgetFactory<UIWidget>>(this));
-	PRIVATE()->Builder->addFactory("div", UINew<UIWidgetFactory<UIWidget>>(this));
-	PRIVATE()->Builder->addFactory("hr", UINew<UIWidgetFactory<UIHLine>>(this));
-	PRIVATE()->Builder->addFactory("h1", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("h2", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("h3", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("h4", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("h5", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("h6", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("p", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("button", UINew<UIWidgetFactory<UIButton>>(this));
-	PRIVATE()->Builder->addFactory("input", UINew<UIWidgetFactory<UIInput>>(this));
-	PRIVATE()->Builder->addFactory("label", UINew<UIWidgetFactory<UILabel>>(this));
-	PRIVATE()->Builder->addFactory("select", UINew<UIWidgetFactory<UICombo>>(this));
+	PRIVATE()->Builder->setFactory("body", UINew<UIWidgetFactory<UIWidget>>());
+	PRIVATE()->Builder->setFactory("div", UINew<UIWidgetFactory<UIWidget>>());
+	PRIVATE()->Builder->setFactory("hr", UINew<UIWidgetFactory<UIHLine>>());
+	PRIVATE()->Builder->setFactory("h1", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("h2", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("h3", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("h4", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("h5", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("h6", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("p", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("label", UINew<UIWidgetFactory<UILabel>>());
+	PRIVATE()->Builder->setFactory("button", UINew<UIWidgetFactory<UIButton>>());
+	PRIVATE()->Builder->setFactory("text", UINew<UIWidgetFactory<UIInput>>());
+	PRIVATE()->Builder->setFactory("select", UINew<UIWidgetFactory<UICombo>>());
+	PRIVATE()->Builder->setFactory("radio", UINew<UIWidgetFactory<UIRadio>>());
+	PRIVATE()->Builder->setFactory("checkbox", UINew<UIWidgetFactory<UICheck>>());
 }
 
 UICanvas::~UICanvas()
 {
-	delete m_Private;
-	m_Private = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 UIConfig const& UICanvas::getConfig() const
@@ -239,13 +242,29 @@ bool UICanvas::layoutWidget(UIRect client)
 	if (PRIVATE()->NeedLayout == false) return false;
 	PRIVATE()->NeedLayout = false;
 
-	UILambda<void(UIWidgetRaw, UIRect)> arrange_func;
-	arrange_func = [&](UIWidgetRaw element, UIRect client)
+	UILambda<void(UIWidgetRaw, bool)> style_func;
+	style_func = [&style_func](UIWidgetRaw widget, bool dirty)
 	{
-		element->arrange(element->getBounds());
-		for (size_t i = 0; i < element->getWidgets().size(); ++i)
+		dirty |= widget->getStyles()->getDirty();
+		if (dirty == false) return;
+		widget->getStyles()->setDirty(false);
+
+		if (widget->getParent() == nullptr) widget->getComputedStyle()->compute(nullptr);
+		else widget->getComputedStyle()->compute(widget->getParent()->getComputedStyle());
+
+		for (size_t i = 0; i < widget->getWidgets().size(); ++i)
 		{
-			arrange_func(element->getWidgets()[i].get(), element->getBounds());
+			style_func(widget->getWidgets()[i].get(), dirty);
+		}
+	};
+
+	UILambda<void(UIWidgetRaw, UIRect)> arrange_func;
+	arrange_func = [&](UIWidgetRaw widget, UIRect client)
+	{
+		widget->arrange(widget->getBounds());
+		for (size_t i = 0; i < widget->getWidgets().size(); ++i)
+		{
+			arrange_func(widget->getWidgets()[i].get(), widget->getBounds());
 		}
 	};
 
@@ -607,6 +626,8 @@ bool UICanvas::layoutWidget(UIRect client)
 
 	for (auto& widget : PRIVATE()->TopLevelList)
 	{
+		style_func(widget.Widget.get(), false);
+
 		arrange_func(widget.Widget.get(), client);
 
 		auto root = foreach_func(widget.Widget.get(), client);

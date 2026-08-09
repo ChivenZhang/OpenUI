@@ -61,6 +61,7 @@ public:
 	// ==============================CSS Style===========================
 
 	UIStyleRef Styles;
+	UIComputedStyleRef ComputedStyles;
 };
 #define PRIVATE() ((UIWidgetPrivateData*) m_Private)
 
@@ -70,6 +71,7 @@ UIWidget::UIWidget(UICanvasRaw canvas)
 
 	PRIVATE()->Canvas = canvas;
 	PRIVATE()->Styles = UINew<UIStyle>();
+	PRIVATE()->ComputedStyles = UINew<UIComputedStyle>(PRIVATE()->Styles.get());
 }
 
 UIWidget::~UIWidget()
@@ -752,6 +754,11 @@ UIStyleRaw UIWidget::getStyles() const
 void UIWidget::setStyles(UIStyleRef value)
 {
 	PRIVATE()->Styles = value;
+}
+
+UIComputedStyleRaw UIWidget::getComputedStyle() const
+{
+	return PRIVATE()->ComputedStyles.get();
 }
 
 UIString UIWidget::getStyleText() const

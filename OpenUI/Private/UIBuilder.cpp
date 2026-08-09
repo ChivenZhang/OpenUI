@@ -37,19 +37,19 @@ UICanvasRaw UIBuilder::getCanvas() const
 	return PRIVATE()->Canvas;
 }
 
-bool UIBuilder::addFactory(UIString tag, UIFactoryRef value)
+bool UIBuilder::setFactory(UIString tag, UIFactoryRef value)
 {
 	if (value == nullptr) return false;
 	PRIVATE()->FactoryMap[tag] = value;
 	return true;
 }
 
-bool UIBuilder::removeFactory(UIString tag)
+bool UIBuilder::unsetFactory(UIString tag)
 {
 	return PRIVATE()->FactoryMap.erase(tag);
 }
 
-void UIBuilder::removeFactory()
+void UIBuilder::unsetFactory()
 {
 	PRIVATE()->FactoryMap.clear();
 }
@@ -72,7 +72,7 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 				return {};
 			}
 
-			auto widget = factory->second->newWidget();
+			auto widget = factory->second->newWidget(getCanvas());
 			if (widget == nullptr) return {};
 			widget->setAttribute("textContent", w.Text);
 

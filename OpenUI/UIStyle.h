@@ -10,6 +10,7 @@
 *
 * =================================================*/
 #include "UI.h"
+class UIComputedStyle;
 
 template<class T, class U>
 bool UITypeC(T const& src, U& dst) { return false; }
@@ -71,10 +72,8 @@ class OPENUI_API UIStyle
 public:
     UIStyle();
     ~UIStyle();
-
     bool getDirty() const;
     void setDirty(bool value);
-
     UIStyleDataRef getStyle(UIString const& key) const;
     void setStyle(UIString const& key, UIStyleDataRef value);
     UIString getStyleText(UIString const& key) const;
@@ -104,7 +103,33 @@ public:
 
 private:
     bool m_IsDirty;
+    friend class UIComputedStyle;
     UIRaw<UIStylePrivate> m_Private;
 };
 using UIStyleRef = UIRef<UIStyle>;
 using UIStyleRaw = UIRaw<UIStyle>;
+
+//================================================================================================================
+
+/// @brief
+class OPENUI_API UIComputedStyle
+{
+public:
+    explicit UIComputedStyle(UIRaw<UIStyle> style);
+    ~UIComputedStyle();
+    bool compute(UIRaw<UIComputedStyle> parent);
+    UIStyleDataRaw getStyle(UIString const& key) const;
+
+    template<class T>
+    T const& getStyle(UIString const& key, T const& value = T()) const
+    {
+        auto result = getStyle(key);
+        if (result && result->getData(typeid(std::remove_cvref_t<T>))) return *(T*)result->getData(typeid(std::remove_cvref_t<T>));
+        return value;
+    }
+
+private:
+    UIRaw<UIStylePrivate> m_Private;
+};
+using UIComputedStyleRef = UIRef<UIComputedStyle>;
+using UIComputedStyleRaw = UIRaw<UIComputedStyle>;

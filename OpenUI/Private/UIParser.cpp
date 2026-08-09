@@ -12,7 +12,6 @@
 #include <lexbor/css/css.h>
 #include <lexbor/html/html.h>
 #include <lexbor/style/style.h>
-#include <lexbor/selectors/selectors.h>
 
 bool UIParser::parse(UIString html, widget_t& result) const
 {

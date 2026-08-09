@@ -32,7 +32,6 @@ public:
 	explicit UICanvas(UIDeviceRaw device, UIConfig config = {});
 	~UICanvas();
 	UIConfig const& getConfig() const;
-
 	UIDeviceRaw getDevice() const;
 	UIBuilderRaw getBuilder() const;
 

@@ -58,11 +58,6 @@ SDLGPUDevice::SDLGPUDevice()
     canvas->setRender(UINew<SDLGPURender>(w, h, canvas.get()));
     m_UICanvas = canvas;
 
-	const std::string html_content = R"(
-		<button>按钮</button>
-    )";
-	auto widget = canvas->getBuilder()->buildWidget(html_content);
-
     SDL_ShowWindow(window);
     m_Window = window;
 	m_Device = device;
