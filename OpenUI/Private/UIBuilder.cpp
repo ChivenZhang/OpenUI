@@ -74,7 +74,8 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 
 			auto widget = factory->second->newWidget(getCanvas());
 			if (widget == nullptr) return {};
-			widget->setAttribute("textContent", w.Text);
+			widget->setID(w.ID);
+			widget->setAttribText("textContent", w.Text);
 
 			// Process each widget
 
@@ -83,7 +84,7 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 
 			for (auto& a : w.Attrib)
 			{
-				widget->setAttribute(a.Name, a.Value);
+				widget->setAttribText(a.Name, a.Value);
 
 				std::cout << UIString((depth + 1) * 4, ' ');
 				std::cout << "-attr :" << a.Name << " = " << a.Value << std::endl;

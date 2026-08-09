@@ -350,6 +350,15 @@ inline const uint32_t UIHash(UIStringView value) noexcept
 }
 #endif
 
+template<class T, class U>
+bool UITypeC(T const& src, U& dst) { return false; }
+
+template<class T>
+bool UITypeC(T const& src, T& dst) { dst = src; return true;}
+
+template<class T, class U = UIString>
+bool UITypeC(T const& src, UIString& dst) { dst = std::to_string(src); return true; }
+
 // ============================================
 
 #define UINAN (NAN)

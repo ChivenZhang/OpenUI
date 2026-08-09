@@ -9,6 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
+#include "UIAttrib.h"
 #include "UIEvent.h"
 #include "UIPainter.h"
 #include "UISignal.h"
@@ -158,8 +159,6 @@ public:
 	virtual void setStyleText(UIString value);	// Style Sheet
 	virtual UIString getStyleText(UIString name) const;
 	virtual void setStyleText(UIString name, UIString value);
-	virtual UIString getAttribute(UIString name) const;
-	virtual void setAttribute(UIString name, UIString value);
 
 	template<class T>
 	T const& getStyle(UIString const& key, T const& value = T()) const
@@ -180,11 +179,43 @@ public:
 		return false;
 	}
 
+	// ================================DOM Attrib======================================
+
+	UIAttribRaw getAttribs() const;
+	void setAttribs(UIAttribRef value);
+	virtual UIString getAttribText(UIString name) const;
+	virtual void setAttribText(UIString name, UIString value);
+
+	template<class T>
+	T const& getAttrib(UIString const& key, T const& value = T()) const
+	{
+		return getAttribs()->getAttrib<T>(key, value);
+	}
+
+	template<class T>
+	void setAttrib(UIString const& key, T const& value) const
+	{
+		getAttribs()->setAttrib<T>(key, value);
+	}
+
+	template<class T>
+	bool hasAttrib(UIString const& key) const
+	{
+		if (auto result = getAttribs()->getAttrib(key)) return result->getData(typeid(std::remove_cvref_t<T>));
+		return false;
+	}
+
 protected:
 	template<class T>
 	void setEmbedStyle(UIString const& key, T& value) const
 	{
 		getStyles()->setEmbedStyle<T>(key, value);
+	}
+
+	template<class T>
+	void setEmbedAttrib(UIString const& key, T& value) const
+	{
+		getAttribs()->setEmbedAttrib<T>(key, value);
 	}
 
 protected:

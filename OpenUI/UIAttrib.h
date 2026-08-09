@@ -10,26 +10,25 @@
 *
 * =================================================*/
 #include "UI.h"
-class UIComputedStyle;
 
-class OPENUI_API UIStyleData
+class OPENUI_API UIAttribData
 {
 public:
-    virtual ~UIStyleData() = default;
+    virtual ~UIAttribData() = default;
     virtual std::type_info const& getType() const = 0;
     virtual UIString getText() const = 0;
     virtual void setText(UIString const& text) = 0;
     virtual void* getData(std::type_info const& type) = 0;
     virtual const void* getData(std::type_info const& type) const = 0;
 };
-using UIStyleDataRef = UIRef<UIStyleData>;
-using UIStyleDataRaw = UIRaw<UIStyleData>;
+using UIAttribDataRef = UIRef<UIAttribData>;
+using UIAttribDataRaw = UIRaw<UIAttribData>;
 
 template<class T>
-class UIStyleValue : public UIStyleData
+class UIAttribValue : public UIAttribData
 {
 public:
-    explicit UIStyleValue(T const& value) : m_Data(value) {}
+    explicit UIAttribValue(T const& value) : m_Data(value) {}
     std::type_info const& getType() const override { return typeid(T); }
     UIString getText() const override { UIString result; UITypeC(m_Data, result); return result; }
     void setText(const UIString& text) override { UITypeC(text, m_Data); }
@@ -41,10 +40,10 @@ protected:
 };
 
 template<class T>
-class UIStyleRefer : public UIStyleData
+class UIAttribRefer : public UIAttribData
 {
 public:
-    explicit UIStyleRefer(T& value) : m_Data(value) {}
+    explicit UIAttribRefer(T& value) : m_Data(value) {}
     std::type_info const& getType() const override { return typeid(T); }
     UIString getText() const override { UIString result; UITypeC(m_Data, result); return result; }
     void setText(const UIString& text) override { UITypeC(text, m_Data); }
@@ -55,72 +54,46 @@ protected:
     T& m_Data;
 };
 
-struct UIStylePrivate {};
+struct UIAttribPrivate {};
 
 /// @brief
-class OPENUI_API UIStyle
+class OPENUI_API UIAttrib
 {
 public:
-    UIStyle();
-    ~UIStyle();
+    UIAttrib();
+    ~UIAttrib();
     bool getDirty() const;
     void setDirty(bool value);
-    UIStyleDataRef getStyle(UIString const& key) const;
-    void setStyle(UIString const& key, UIStyleDataRef value);
-    UIString getStyleText(UIString const& key) const;
-    void setStyleText(UIString const& key, UIString const& value);
+    UIAttribDataRef getAttrib(UIString const& key) const;
+    void setAttrib(UIString const& key, UIAttribDataRef value);
+    UIString getAttribText(UIString const& key) const;
+    void setAttribText(UIString const& key, UIString const& value);
 
     template<class T>
-    T const& getStyle(UIString const& key, T const& value = T()) const
+    T const& getAttrib(UIString const& key, T const& value = T()) const
     {
-        auto result = getStyle(key);
+        auto result = getAttrib(key);
         if (result && result->getData(typeid(std::remove_cvref_t<T>))) return *(T*)result->getData(typeid(std::remove_cvref_t<T>));
         return value;
     }
 
     template<class T>
-    void setStyle(UIString const& key, T const& value)
+    void setAttrib(UIString const& key, T const& value)
     {
-        auto result = getStyle(key);
+        auto result = getAttrib(key);
         if (result) *(T*)result->getData(typeid(std::remove_cvref_t<T>)) = value;
-        else this->setStyle(key, UICast<UIStyleData>(UINew<UIStyleValue<std::remove_cvref_t<T>>>(value)));
+        else this->setAttrib(key, UICast<UIAttribData>(UINew<UIAttribValue<std::remove_cvref_t<T>>>(value)));
     }
 
     template<class T>
-    void setEmbedStyle(UIString const& key, T& value)
+    void setEmbedAttrib(UIString const& key, T& value)
     {
-        this->setStyle(key, UICast<UIStyleData>(UINew<UIStyleRefer<std::remove_cvref_t<T>>>(value)));
+        this->setAttrib(key, UICast<UIAttribData>(UINew<UIAttribRefer<std::remove_cvref_t<T>>>(value)));
     }
 
 private:
     bool m_IsDirty;
-    friend class UIComputedStyle;
-    UIRaw<UIStylePrivate> m_Private;
+    UIRaw<UIAttribPrivate> m_Private;
 };
-using UIStyleRef = UIRef<UIStyle>;
-using UIStyleRaw = UIRaw<UIStyle>;
-
-//================================================================================================================
-
-/// @brief
-class OPENUI_API UIComputedStyle
-{
-public:
-    explicit UIComputedStyle(UIRaw<UIStyle> style);
-    ~UIComputedStyle();
-    bool compute(UIRaw<UIComputedStyle> parent);
-    UIStyleDataRaw getStyle(UIString const& key) const;
-
-    template<class T>
-    T const& getStyle(UIString const& key, T const& value = T()) const
-    {
-        auto result = getStyle(key);
-        if (result && result->getData(typeid(std::remove_cvref_t<T>))) return *(T*)result->getData(typeid(std::remove_cvref_t<T>));
-        return value;
-    }
-
-private:
-    UIRaw<UIStylePrivate> m_Private;
-};
-using UIComputedStyleRef = UIRef<UIComputedStyle>;
-using UIComputedStyleRaw = UIRaw<UIComputedStyle>;
+using UIAttribRef = UIRef<UIAttrib>;
+using UIAttribRaw = UIRaw<UIAttrib>;

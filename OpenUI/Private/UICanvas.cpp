@@ -63,6 +63,7 @@ UICanvas::UICanvas(UIDeviceRaw device, UIConfig config)
 	PRIVATE()->Builder->setFactory("p", UINew<UIWidgetFactory<UILabel>>());
 	PRIVATE()->Builder->setFactory("label", UINew<UIWidgetFactory<UILabel>>());
 	PRIVATE()->Builder->setFactory("button", UINew<UIWidgetFactory<UIButton>>());
+	PRIVATE()->Builder->setFactory("button:hover", UINew<UIWidgetFactory<UIButton>>());
 	PRIVATE()->Builder->setFactory("text", UINew<UIWidgetFactory<UIInput>>());
 	PRIVATE()->Builder->setFactory("select", UINew<UIWidgetFactory<UICombo>>());
 	PRIVATE()->Builder->setFactory("radio", UINew<UIWidgetFactory<UIRadio>>());

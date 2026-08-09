@@ -62,16 +62,20 @@ public:
 
 	UIStyleRef Styles;
 	UIComputedStyleRef ComputedStyles;
+
+	// =============================DOM Attrib===========================
+
+	UIAttribRef Attribs;
 };
 #define PRIVATE() ((UIWidgetPrivateData*) m_Private)
 
 UIWidget::UIWidget(UICanvasRaw canvas)
 {
 	m_Private = new UIWidgetPrivateData;
-
 	PRIVATE()->Canvas = canvas;
 	PRIVATE()->Styles = UINew<UIStyle>();
 	PRIVATE()->ComputedStyles = UINew<UIComputedStyle>(PRIVATE()->Styles.get());
+	PRIVATE()->Attribs = UINew<UIAttrib>();
 }
 
 UIWidget::~UIWidget()
@@ -780,13 +784,24 @@ void UIWidget::setStyleText(UIString name, UIString value)
 	getStyles()->setStyleText(name, value);
 }
 
-UIString UIWidget::getAttribute(UIString name) const
+UIAttribRaw UIWidget::getAttribs() const
 {
-	return UIString();
+	return PRIVATE()->Attribs.get();
 }
 
-void UIWidget::setAttribute(UIString name, UIString value)
+void UIWidget::setAttribs(UIAttribRef value)
 {
+	PRIVATE()->Attribs = value;
+}
+
+UIString UIWidget::getAttribText(UIString name) const
+{
+	return getAttribs()->getAttribText(name);
+}
+
+void UIWidget::setAttribText(UIString name, UIString value)
+{
+	getAttribs()->setAttribText(name, value);
 }
 
 void UIWidget::closeEvent(UICloseEventRaw event)

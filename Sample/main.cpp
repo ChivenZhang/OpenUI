@@ -172,7 +172,14 @@ int main()
 		auto canvas = device->getCanvas();
 
 		canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
-			<button>按钮</button>
+			<style>
+				button {
+				    color: red;
+				}
+			</style>
+			<div></div>
+			<button>按钮1</button>
+			<button>按钮2</button>
 	    )"));
 		
 		while (device->update()) continue;
