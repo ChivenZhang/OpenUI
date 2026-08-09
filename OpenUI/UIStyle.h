@@ -1723,13 +1723,14 @@ template<>
 inline bool UITypeC(UIString const& src, UIPropInsetBlockEnd& dst)
 {
     auto s = UITrim(src);
-    float v; bool ip=false, il=false;
-    if (UIParseCssNumber(s, v, ip, il)) {
-        if (ip) dst.Type = UI_CSS_INSET_BLOCK_END__PERCENTAGE;
-        else dst.Type = UI_CSS_INSET_BLOCK_END__LENGTH;
-        dst.Value = v; return true;
+    if (s.ends_with('%')) {
+        dst.Type = UI_CSS_INSET_BLOCK_END__PERCENTAGE;
+        dst.Value = std::stof(s.substr(0, s.size()-1));
+        return true;
     }
-    return false;
+    dst.Type = UI_CSS_INSET_BLOCK_END__LENGTH;
+    dst.Value = std::stof(s);
+    return true;
 }
 template<>
 inline bool UITypeC(UIPropInsetBlockEnd const& src, UIString& dst)
@@ -1745,13 +1746,14 @@ template<>
 inline bool UITypeC(UIString const& src, UIPropInsetBlockStart& dst)
 {
     auto s = UITrim(src);
-    float v; bool ip=false, il=false;
-    if (UIParseCssNumber(s, v, ip, il)) {
-        if (ip) dst.Type = UI_CSS_INSET_BLOCK_START__PERCENTAGE;
-        else dst.Type = UI_CSS_INSET_BLOCK_START__LENGTH;
-        dst.Value = v; return true;
+    if (s.ends_with('%')) {
+        dst.Type = UI_CSS_INSET_BLOCK_START__PERCENTAGE;
+        dst.Value = std::stof(s.substr(0, s.size()-1));
+        return true;
     }
-    return false;
+    dst.Type = UI_CSS_INSET_BLOCK_START__LENGTH;
+    dst.Value = std::stof(s);
+    return true;
 }
 template<>
 inline bool UITypeC(UIPropInsetBlockStart const& src, UIString& dst)
@@ -1767,13 +1769,14 @@ template<>
 inline bool UITypeC(UIString const& src, UIPropInsetInlineEnd& dst)
 {
     auto s = UITrim(src);
-    float v; bool ip=false, il=false;
-    if (UIParseCssNumber(s, v, ip, il)) {
-        if (ip) dst.Type = UI_CSS_INSET_INLINE_END__PERCENTAGE;
-        else dst.Type = UI_CSS_INSET_INLINE_END__LENGTH;
-        dst.Value = v; return true;
+    if (s.ends_with('%')) {
+        dst.Type = UI_CSS_INSET_INLINE_END__PERCENTAGE;
+        dst.Value = std::stof(s.substr(0, s.size()-1));
+        return true;
     }
-    return false;
+    dst.Type = UI_CSS_INSET_INLINE_END__LENGTH;
+    dst.Value = std::stof(s);
+    return true;
 }
 template<>
 inline bool UITypeC(UIPropInsetInlineEnd const& src, UIString& dst)
@@ -1789,13 +1792,14 @@ template<>
 inline bool UITypeC(UIString const& src, UIPropInsetInlineStart& dst)
 {
     auto s = UITrim(src);
-    float v; bool ip=false, il=false;
-    if (UIParseCssNumber(s, v, ip, il)) {
-        if (ip) dst.Type = UI_CSS_INSET_INLINE_START__PERCENTAGE;
-        else dst.Type = UI_CSS_INSET_INLINE_START__LENGTH;
-        dst.Value = v; return true;
+    if (s.ends_with('%')) {
+        dst.Type = UI_CSS_INSET_INLINE_START__PERCENTAGE;
+        dst.Value = std::stof(s.substr(0, s.size()-1));
+        return true;
     }
-    return false;
+    dst.Type = UI_CSS_INSET_INLINE_START__LENGTH;
+    dst.Value = std::stof(s);
+    return true;
 }
 template<>
 inline bool UITypeC(UIPropInsetInlineStart const& src, UIString& dst)
