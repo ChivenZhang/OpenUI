@@ -173,13 +173,11 @@ int main()
 
 		canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
 			<style>
-				button {
+				button:hover {
 				    color: red;
 				}
 			</style>
-			<div></div>
-			<button>按钮1</button>
-			<button>按钮2</button>
+			<button>My Button</button>
 	    )"));
 		
 		while (device->update()) continue;
