@@ -676,48 +676,6 @@ static inline UIString UITrim(UIString s)
     return s.substr(start, end - start);
 }
 
-// Helper: parse number/length/percentage. Returns true if parsed, sets isPercentage/isLength accordingly.
-static inline bool UIParseCssNumber(UIString const& src, float& outValue, bool& isPercentage, bool& isLength)
-{
-    auto s = UITrim(src);
-    if (s.empty()) return false;
-    isPercentage = false;
-    isLength = false;
-    // percentage
-    if (!s.empty() && s.back() == '%')
-    {
-        try
-        {
-            outValue = std::stof(s.substr(0, s.size() - 1));
-            isPercentage = true;
-            return true;
-        }
-        catch (...) { return false; }
-    }
-    // ends with unit (letters)
-    size_t i = s.size();
-    while (i > 0 && isalpha((unsigned char)s[i - 1])) --i;
-    if (i < s.size())
-    {
-        // has unit
-        UIString num = s.substr(0, i);
-        try
-        {
-            outValue = std::stof(num);
-            isLength = true;
-            return true;
-        }
-        catch (...) { return false; }
-    }
-    // plain number
-    try
-    {
-        outValue = std::stof(s);
-        return true;
-    }
-    catch (...) { return false; }
-}
-
 // Align Content
 template <>
 inline bool UITypeC(UIString const& src, UIPropAlignContent& dst)
@@ -922,7 +880,7 @@ inline bool UITypeC(UIString const& src, UIPropBaselineShift& dst)
     if (src.ends_with('%'))
     {
         dst.Type = UI_CSS_BASELINE_SHIFT__PERCENTAGE;
-        dst.Value = std::stof(src.substr(0, src.size()-1));
+        dst.Value = std::stof(src);
     }
     else
     {
@@ -1370,20 +1328,23 @@ template <>
 inline bool UITypeC(UIString const& src, UIPropBottom& dst)
 {
     auto s = UITrim(src);
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(s, v, ip, il))
+    switch (UIHash(s))
     {
-        if (ip) dst.Value = v, dst.Type = UI_CSS_BOTTOM__PERCENTAGE;
-        else dst.Value = v, dst.Type = UI_CSS_BOTTOM__LENGTH;
+    default: break;
+    case UIHash("auto"): dst.Type = UI_CSS_BOTTOM_AUTO;
         return true;
     }
-    if (UIHash(s) == UIHash("auto"))
+    if (src.ends_with('%'))
     {
-        dst.Type = UI_CSS_BOTTOM_AUTO;
-        return true;
+        dst.Type = UI_CSS_BOTTOM__PERCENTAGE;
+        dst.Value = std::stof(src);
     }
-    return false;
+    else
+    {
+        dst.Type = UI_CSS_BOTTOM__LENGTH;
+        dst.Value = std::stof(src);
+    }
+    return true;
 }
 
 template <>
@@ -1489,17 +1450,12 @@ inline bool UITypeC(UIPropClear const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropDirection& dst)
 {
-    if (UIHash(src) == UIHash("ltr"))
+    switch (UIHash(UITrim(src)))
     {
-        dst.Value = UI_CSS_DIRECTION_LTR;
-        return true;
+    default: return false;
+    case UIHash("ltr"): dst.Value = UI_CSS_DIRECTION_LTR; return true;
+    case UIHash("rtl"): dst.Value = UI_CSS_DIRECTION_RTL; return true;
     }
-    if (UIHash(src) == UIHash("rtl"))
-    {
-        dst.Value = UI_CSS_DIRECTION_RTL;
-        return true;
-    }
-    return false;
 }
 
 template <>
@@ -1552,7 +1508,8 @@ inline bool UITypeC(UIString const& src, UIPropDisplay& dst)
     case UIHash("inline-flex"): dst.Value = UI_CSS_DISPLAY_INLINE_FLEX; return true;
     case UIHash("inline-grid"): dst.Value = UI_CSS_DISPLAY_INLINE_GRID; return true;
     }
-}inline bool UITypeC(UIPropDisplay const& src, UIString& dst)
+}
+inline bool UITypeC(UIPropDisplay const& src, UIString& dst)
 {
     switch (src.Value)
     {
@@ -1593,24 +1550,24 @@ template <>
 inline bool UITypeC(UIString const& src, UIPropFlexBasis& dst)
 {
     auto s = UITrim(src);
-    if (UIHash(s) == UIHash("content"))
+    switch (UIHash(s))
     {
-        dst.Type = UI_CSS_FLEX_BASIS_CONTENT;
+    default: break;
+    case UIHash("content"): dst.Type = UI_CSS_FLEX_BASIS_CONTENT;
         return true;
     }
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(s, v, ip, il))
+    if (s.ends_with('%'))
     {
-        if (ip) dst.Type = UI_CSS_FLEX_BASIS__PERCENTAGE; // if defined
-        else if (il) dst.Type = UI_CSS_FLEX_BASIS__LENGTH;
-        else dst.Type = UI_CSS_FLEX_BASIS__NUMBER;
-        dst.Value = v;
-        return true;
+        dst.Type = UI_CSS_BOTTOM__PERCENTAGE;
+        dst.Value = std::stof(s);
     }
-    return false;
+    else
+    {
+        dst.Type = UI_CSS_BOTTOM__LENGTH;
+        dst.Value = std::stof(s);
+    }
+    return true;
 }
-
 template <>
 inline bool UITypeC(UIPropFlexBasis const& src, UIString& dst)
 {
@@ -1624,8 +1581,6 @@ inline bool UITypeC(UIPropFlexBasis const& src, UIString& dst)
         return true;
     case UI_CSS_FLEX_BASIS__PERCENTAGE: dst = std::to_string(src.Value) + "%";
         return true;
-    case UI_CSS_FLEX_BASIS__NUMBER: dst = std::to_string(src.Value);
-        return true;
     }
 }
 
@@ -1633,69 +1588,49 @@ inline bool UITypeC(UIPropFlexBasis const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFlexGrow& dst)
 {
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(src, v, ip, il))
-    {
-        dst.Type = UI_CSS_FLEX_GROW__NUMBER;
-        dst.Value = v;
-        return true;
-    }
-    return false;
+    dst.Type = UI_CSS_FLEX_GROW__NUMBER;
+    dst.Value = std::stof(src);
+    return true;
 }
-
 template <>
 inline bool UITypeC(UIPropFlexGrow const& src, UIString& dst)
 {
-    if (src.Type == UI_CSS_FLEX_GROW__NUMBER)
-    {
-        dst = std::to_string(src.Value);
-        return true;
-    }
-    return false;
+    dst = std::to_string(src.Value);
+    return true;
 }
 
 template <>
 inline bool UITypeC(UIString const& src, UIPropFlexShrink& dst)
 {
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(src, v, ip, il))
-    {
-        dst.Type = UI_CSS_FLEX_SHRINK__NUMBER;
-        dst.Value = v;
-        return true;
-    }
-    return false;
+    dst.Type = UI_CSS_FLEX_SHRINK__NUMBER;
+    dst.Value = std::stof(src);
+    return true;
 }
 
 template <>
 inline bool UITypeC(UIPropFlexShrink const& src, UIString& dst)
 {
-    if (src.Type == UI_CSS_FLEX_SHRINK__NUMBER)
-    {
-        dst = std::to_string(src.Value);
-        return true;
-    }
-    return false;
+    dst = std::to_string(src.Value);
+    return true;
 }
 
 // Float offset (length/percentage)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFloatOffset& dst)
 {
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(src, v, ip, il))
+    auto s = UITrim(src);
+    if (s.ends_with('%'))
     {
-        if (ip) dst.Type = UI_CSS_FLOAT_OFFSET__PERCENTAGE;
-        else dst.Type = UI_CSS_FLOAT_OFFSET__LENGTH;
-        dst.Value = v;
-        return true;
+        dst.Type = UI_CSS_FLOAT_OFFSET__PERCENTAGE;
+        dst.Value = std::stof(s);
     }
-    return false;
+    else
+    {
+        dst.Type = UI_CSS_FLOAT_OFFSET__LENGTH;
+        dst.Value = std::stof(s);
+    }
+    return true;
 }
-
 template <>
 inline bool UITypeC(UIPropFloatOffset const& src, UIString& dst)
 {
@@ -1713,27 +1648,11 @@ inline bool UITypeC(UIPropFloatOffset const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFontSize& dst)
 {
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(src, v, ip, il))
-    {
-        if (ip) dst.Type = UI_CSS_FONT_SIZE__PERCENTAGE; // if exists
-        else dst.Type = UI_CSS_FONT_SIZE__LENGTH;
-        dst.Value = v;
-        return true;
-    }
-    // keywords like small/medium/large could be added
     return false;
 }
-
 template <>
 inline bool UITypeC(UIPropFontSize const& src, UIString& dst)
 {
-    if (src.Type == UI_CSS_FONT_SIZE__LENGTH)
-    {
-        dst = std::to_string(src.Value) + "px";
-        return true;
-    }
     return false;
 }
 
@@ -1741,25 +1660,11 @@ inline bool UITypeC(UIPropFontSize const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFontStretch& dst)
 {
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(src, v, ip, il))
-    {
-        dst.Type = UI_CSS_FONT_STRETCH__PERCENTAGE;
-        dst.Value = v;
-        return true;
-    }
     return false;
 }
-
 template <>
 inline bool UITypeC(UIPropFontStretch const& src, UIString& dst)
 {
-    if (src.Type == UI_CSS_FONT_STRETCH__PERCENTAGE)
-    {
-        dst = std::to_string(src.Value) + "%";
-        return true;
-    }
     return false;
 }
 
@@ -1767,26 +1672,11 @@ inline bool UITypeC(UIPropFontStretch const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFontWeight& dst)
 {
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(src, v, ip, il))
-    {
-        dst.Type = UI_CSS_FONT_WEIGHT__NUMBER;
-        dst.Value = v;
-        return true;
-    }
-    // keywords like bold/normal mapping can be added
     return false;
 }
-
 template <>
 inline bool UITypeC(UIPropFontWeight const& src, UIString& dst)
 {
-    if (src.Type == UI_CSS_FONT_WEIGHT__NUMBER)
-    {
-        dst = std::to_string(src.Value);
-        return true;
-    }
     return false;
 }
 
@@ -1795,108 +1685,402 @@ template <>
 inline bool UITypeC(UIString const& src, UIPropHeight& dst)
 {
     auto s = UITrim(src);
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(s, v, ip, il))
+    switch (UIHash(s))
     {
-        if (ip) dst.Type = UI_CSS_HEIGHT__PERCENTAGE;
-        else if (il) dst.Type = UI_CSS_HEIGHT__LENGTH;
-        else dst.Type = UI_CSS_HEIGHT__NUMBER;
-        dst.Value = v;
+    default: break;
+    case UIHash("auto"): dst.Type = UI_CSS_HEIGHT_AUTO;
         return true;
     }
-    return false;
+    if (s.ends_with('%'))
+    {
+        dst.Type = UI_CSS_HEIGHT__PERCENTAGE;
+        dst.Value = std::stof(s);
+    }
+    else
+    {
+        dst.Type = UI_CSS_HEIGHT__LENGTH;
+        dst.Value = std::stof(s);
+    }
+    return true;
 }
-
 template <>
 inline bool UITypeC(UIPropHeight const& src, UIString& dst)
 {
     switch (src.Type)
     {
     default: return false;
+    case UI_CSS_HEIGHT_AUTO: dst = "auto";
+        return true;
     case UI_CSS_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     case UI_CSS_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%";
         return true;
-    case UI_CSS_HEIGHT__NUMBER: dst = std::to_string(src.Value);
-        return true;
     }
 }
 
-// Insets (block/inline start/end)
-#define UIPROP_INSET(Name, ENUM_PREFIX) \
-template<> inline bool UITypeC(UIString const& src, UIProp##Name& dst) { float v; bool ip=false, il=false; if (UIParseCssNumber(src, v, ip, il)) { if (ip) dst.Type = ENUM_PREFIX##__PERCENTAGE; else dst.Type = ENUM_PREFIX##__LENGTH; dst.Value = v; return true; } return false; } \
-template<> inline bool UITypeC(UIProp##Name const& src, UIString& dst) { switch(src.Type){ default: return false; case ENUM_PREFIX##__LENGTH: dst = std::to_string(src.Value)+"px"; return true; case ENUM_PREFIX##__PERCENTAGE: dst = std::to_string(src.Value)+"%"; return true; } }
+// Insets (block/inline start/end) - expanded (no macros)
+template<>
+inline bool UITypeC(UIString const& src, UIPropInsetBlockEnd& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_INSET_BLOCK_END__PERCENTAGE;
+        else dst.Type = UI_CSS_INSET_BLOCK_END__LENGTH;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropInsetBlockEnd const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_INSET_BLOCK_END__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_BLOCK_END__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
 
-UIPROP_INSET(InsetBlockEnd, UI_CSS_INSET_BLOCK_END)
-UIPROP_INSET(InsetBlockStart, UI_CSS_INSET_BLOCK_START)
-UIPROP_INSET(InsetInlineEnd, UI_CSS_INSET_INLINE_END)
-UIPROP_INSET(InsetInlineStart, UI_CSS_INSET_INLINE_START)
+template<>
+inline bool UITypeC(UIString const& src, UIPropInsetBlockStart& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_INSET_BLOCK_START__PERCENTAGE;
+        else dst.Type = UI_CSS_INSET_BLOCK_START__LENGTH;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropInsetBlockStart const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_INSET_BLOCK_START__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_BLOCK_START__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
 
-// Left/Right/Top/Width (length/percentage/number)
-#define UIPROP_SIDE(Name, ENUM_PREFIX) \
-template<> inline bool UITypeC(UIString const& src, UIProp##Name& dst) { float v; bool ip=false, il=false; if (UIParseCssNumber(src, v, ip, il)) { if (ip) dst.Type = ENUM_PREFIX##__PERCENTAGE; else if (il) dst.Type = ENUM_PREFIX##__LENGTH; else dst.Type = ENUM_PREFIX##__NUMBER; dst.Value = v; return true; } if (UIHash(UITrim(src))==UIHash("auto")) { dst.Type = ENUM_PREFIX##_AUTO; return true; } return false; } \
-template<> inline bool UITypeC(UIProp##Name const& src, UIString& dst) { switch(src.Type){ default: return false; case ENUM_PREFIX##_AUTO: dst = "auto"; return true; case ENUM_PREFIX##__LENGTH: dst = std::to_string(src.Value)+"px"; return true; case ENUM_PREFIX##__PERCENTAGE: dst = std::to_string(src.Value)+"%"; return true; case ENUM_PREFIX##__NUMBER: dst = std::to_string(src.Value); return true; } }
+template<>
+inline bool UITypeC(UIString const& src, UIPropInsetInlineEnd& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_INSET_INLINE_END__PERCENTAGE;
+        else dst.Type = UI_CSS_INSET_INLINE_END__LENGTH;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropInsetInlineEnd const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_INSET_INLINE_END__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_INLINE_END__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
 
-UIPROP_SIDE(Left, UI_CSS_LEFT)
-UIPROP_SIDE(Right, UI_CSS_RIGHT)
-UIPROP_SIDE(Top, UI_CSS_TOP)
-UIPROP_SIDE(Width, UI_CSS_WIDTH)
+template<>
+inline bool UITypeC(UIString const& src, UIPropInsetInlineStart& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_INSET_INLINE_START__PERCENTAGE;
+        else dst.Type = UI_CSS_INSET_INLINE_START__LENGTH;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropInsetInlineStart const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_INSET_INLINE_START__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_INLINE_START__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
 
-// Letter spacing, line-height, text-indent, tab-size, margins, paddings, max/min sizes, opacity, word-spacing
-#define UIPROP_SIMPLE_NUM(Name, ENUM_PREFIX) \
-template<> inline bool UITypeC(UIString const& src, UIProp##Name& dst) { float v; bool ip=false, il=false; if (UIParseCssNumber(src, v, ip, il)) { if (ip) dst.Type = ENUM_PREFIX##__PERCENTAGE; else if (il) dst.Type = ENUM_PREFIX##__LENGTH; else dst.Type = ENUM_PREFIX##__NUMBER; dst.Value = v; return true; } return false; } \
-template<> inline bool UITypeC(UIProp##Name const& src, UIString& dst) { switch(src.Type){ default: return false; case ENUM_PREFIX##__NUMBER: dst = std::to_string(src.Value); return true; case ENUM_PREFIX##__LENGTH: dst = std::to_string(src.Value)+"px"; return true; case ENUM_PREFIX##__PERCENTAGE: dst = std::to_string(src.Value)+"%"; return true; } }
+// Left/Right/Top/Width (length/percentage/number) - expanded (no macros)
+template<>
+inline bool UITypeC(UIString const& src, UIPropLeft& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_LEFT__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_LEFT__LENGTH;
+        else dst.Type = UI_CSS_LEFT__NUMBER;
+        dst.Value = v; return true;
+    }
+    switch (UIHash(s)) { default: return false; case UIHash("auto"): dst.Type = UI_CSS_LEFT_AUTO; return true; }
+}
+template<>
+inline bool UITypeC(UIPropLeft const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_LEFT_AUTO: dst = "auto"; return true;
+    case UI_CSS_LEFT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_LEFT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_LEFT__NUMBER: dst = std::to_string(src.Value); return true;
+    }
+}
 
-UIPROP_SIMPLE_NUM(LetterSpacing, UI_CSS_LETTER_SPACING)
-UIPROP_SIMPLE_NUM(LineHeight, UI_CSS_LINE_HEIGHT)
-UIPROP_SIMPLE_NUM(TextIndent, UI_CSS_TEXT_INDENT)
-UIPROP_SIMPLE_NUM(TabSize, UI_CSS_TAB_SIZE)
-UIPROP_SIMPLE_NUM(Margin, UI_CSS_MARGIN)
-UIPROP_SIMPLE_NUM(MarginBottom, UI_CSS_MARGIN_BOTTOM)
-UIPROP_SIMPLE_NUM(MarginLeft, UI_CSS_MARGIN_LEFT)
-UIPROP_SIMPLE_NUM(MarginRight, UI_CSS_MARGIN_RIGHT)
-UIPROP_SIMPLE_NUM(MarginTop, UI_CSS_MARGIN_TOP)
-UIPROP_SIMPLE_NUM(MaxHeight, UI_CSS_MAX_HEIGHT)
-UIPROP_SIMPLE_NUM(MaxWidth, UI_CSS_MAX_WIDTH)
-UIPROP_SIMPLE_NUM(MinHeight, UI_CSS_MIN_HEIGHT)
-UIPROP_SIMPLE_NUM(MinWidth, UI_CSS_MIN_WIDTH)
-UIPROP_SIMPLE_NUM(Opacity, UI_CSS_OPACITY)
-UIPROP_SIMPLE_NUM(Padding, UI_CSS_PADDING)
-UIPROP_SIMPLE_NUM(PaddingBottom, UI_CSS_PADDING_BOTTOM)
-UIPROP_SIMPLE_NUM(PaddingLeft, UI_CSS_PADDING_LEFT)
-UIPROP_SIMPLE_NUM(PaddingRight, UI_CSS_PADDING_RIGHT)
-UIPROP_SIMPLE_NUM(PaddingTop, UI_CSS_PADDING_TOP)
-UIPROP_SIMPLE_NUM(WordSpacing, UI_CSS_WORD_SPACING)
+template<>
+inline bool UITypeC(UIString const& src, UIPropRight& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_RIGHT__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_RIGHT__LENGTH;
+        else dst.Type = UI_CSS_RIGHT__NUMBER;
+        dst.Value = v; return true;
+    }
+    switch (UIHash(s)) { default: return false; case UIHash("auto"): dst.Type = UI_CSS_RIGHT_AUTO; return true; }
+}
+template<>
+inline bool UITypeC(UIPropRight const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_RIGHT_AUTO: dst = "auto"; return true;
+    case UI_CSS_RIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_RIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_RIGHT__NUMBER: dst = std::to_string(src.Value); return true;
+    }
+}
 
+template<>
+inline bool UITypeC(UIString const& src, UIPropTop& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_TOP__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_TOP__LENGTH;
+        else dst.Type = UI_CSS_TOP__NUMBER;
+        dst.Value = v; return true;
+    }
+    switch (UIHash(s)) { default: return false; case UIHash("auto"): dst.Type = UI_CSS_TOP_AUTO; return true; }
+}
+template<>
+inline bool UITypeC(UIPropTop const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_TOP_AUTO: dst = "auto"; return true;
+    case UI_CSS_TOP__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_TOP__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_TOP__NUMBER: dst = std::to_string(src.Value); return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropWidth& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_WIDTH__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_WIDTH__LENGTH;
+        else dst.Type = UI_CSS_WIDTH__NUMBER;
+        dst.Value = v; return true;
+    }
+    switch (UIHash(s)) { default: return false; case UIHash("auto"): dst.Type = UI_CSS_WIDTH_AUTO; return true; }
+}
+template<>
+inline bool UITypeC(UIPropWidth const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_WIDTH_AUTO: dst = "auto"; return true;
+    case UI_CSS_WIDTH__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_WIDTH__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_WIDTH__NUMBER: dst = std::to_string(src.Value); return true;
+    }
+}
+
+// Letter spacing, line-height, text-indent, tab-size, margins, paddings, max/min sizes, opacity, word-spacing - expanded (no macros)
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropLetterSpacing& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_LETTER_SPACING__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_LETTER_SPACING__LENGTH;
+        else dst.Type = UI_CSS_LETTER_SPACING__NUMBER;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropLetterSpacing const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_LETTER_SPACING__NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_LETTER_SPACING__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_LETTER_SPACING__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropLineHeight& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_LINE_HEIGHT__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_LINE_HEIGHT__LENGTH;
+        else dst.Type = UI_CSS_LINE_HEIGHT__NUMBER;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropLineHeight const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_LINE_HEIGHT__NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_LINE_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_LINE_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropTextIndent& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_TEXT_INDENT__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_TEXT_INDENT__LENGTH;
+        else dst.Type = UI_CSS_TEXT_INDENT__NUMBER;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropTextIndent const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_TEXT_INDENT__NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_TEXT_INDENT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_TEXT_INDENT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropTabSize& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_TAB_SIZE__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_TAB_SIZE__LENGTH;
+        else dst.Type = UI_CSS_TAB_SIZE__NUMBER;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropTabSize const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_TAB_SIZE__NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_TAB_SIZE__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_TAB_SIZE__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropMargin& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_MARGIN__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_MARGIN__LENGTH;
+        else dst.Type = UI_CSS_MARGIN__NUMBER;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropMargin const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_MARGIN__NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_MARGIN__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MARGIN__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropMarginBottom& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_MARGIN_BOTTOM__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_MARGIN_BOTTOM__LENGTH;
+        else dst.Type = UI_CSS_MARGIN_BOTTOM__NUMBER;
+        dst.Value = v; return true;
+    }
+    return false;
+}
+template<>
+inline bool UITypeC(UIPropMarginBottom const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_MARGIN_BOTTOM__NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_MARGIN_BOTTOM__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MARGIN_BOTTOM__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropMarginLeft& dst)
+{
+    auto s = UITrim(src);
+    float v; bool ip=false, il=false;
+    if (UIParseCssNumber(s, v, ip, il)) {
+        if (ip) dst.Type = UI_CSS_MARGIN_LEFT__PERCENTAGE;
+        else if (il) dst.Type = UI_CSS_MARGIN_LEFT__LENGTH;
+    ... (truncated for brevity)
 // Overflow keywords (partial)
 template <>
 inline bool UITypeC(UIString const& src, UIPropOverflowX& dst)
 {
     auto s = UITrim(src);
-    if (UIHash(s) == UIHash("visible"))
+    switch (UIHash(s))
     {
-        dst.Value = UI_CSS_OVERFLOW_X_VISIBLE;
+    default: return false;
+    case UIHash("visible"): dst.Value = UI_CSS_OVERFLOW_X_VISIBLE;
+        return true;
+    case UIHash("hidden"): dst.Value = UI_CSS_OVERFLOW_X_HIDDEN;
+        return true;
+    case UIHash("scroll"): dst.Value = UI_CSS_OVERFLOW_X_SCROLL;
+        return true;
+    case UIHash("auto"): dst.Value = UI_CSS_OVERFLOW_X_AUTO;
         return true;
     }
-    if (UIHash(s) == UIHash("hidden"))
-    {
-        dst.Value = UI_CSS_OVERFLOW_X_HIDDEN;
-        return true;
-    }
-    if (UIHash(s) == UIHash("scroll"))
-    {
-        dst.Value = UI_CSS_OVERFLOW_X_SCROLL;
-        return true;
-    }
-    if (UIHash(s) == UIHash("auto"))
-    {
-        dst.Value = UI_CSS_OVERFLOW_X_AUTO;
-        return true;
-    }
-    return false;
 }
-
 template <>
 inline bool UITypeC(UIPropOverflowX const& src, UIString& dst)
 {
@@ -1936,7 +2120,6 @@ inline bool UITypeC(UIString const& src, UIPropJustifyContent& dst)
     }
     return true;
 }
-
 template <>
 inline bool UITypeC(UIPropJustifyContent const& src, UIString& dst)
 {
@@ -1964,32 +2147,15 @@ inline bool UITypeC(UIPropJustifyContent const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropPosition& dst)
 {
-    if (UIHash(src) == UIHash("static"))
+    switch (UIHash(UITrim(src)))
     {
-        dst.Value = UI_CSS_POSITION_STATIC;
-        return true;
+    default: return false;
+    case UIHash("static"): dst.Value = UI_CSS_POSITION_STATIC; return true;
+    case UIHash("relative"): dst.Value = UI_CSS_POSITION_RELATIVE; return true;
+    case UIHash("absolute"): dst.Value = UI_CSS_POSITION_ABSOLUTE; return true;
+    case UIHash("fixed"): dst.Value = UI_CSS_POSITION_FIXED; return true;
+    case UIHash("sticky"): dst.Value = UI_CSS_POSITION_STICKY; return true;
     }
-    if (UIHash(src) == UIHash("relative"))
-    {
-        dst.Value = UI_CSS_POSITION_RELATIVE;
-        return true;
-    }
-    if (UIHash(src) == UIHash("absolute"))
-    {
-        dst.Value = UI_CSS_POSITION_ABSOLUTE;
-        return true;
-    }
-    if (UIHash(src) == UIHash("fixed"))
-    {
-        dst.Value = UI_CSS_POSITION_FIXED;
-        return true;
-    }
-    if (UIHash(src) == UIHash("sticky"))
-    {
-        dst.Value = UI_CSS_POSITION_STICKY;
-        return true;
-    }
-    return false;
 }
 
 template <>
@@ -2015,24 +2181,17 @@ inline bool UITypeC(UIPropPosition const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropVisibility& dst)
 {
-    if (UIHash(src) == UIHash("visible"))
+    switch (UIHash(src))
     {
-        dst.Value = UI_CSS_VISIBILITY_VISIBLE;
+    default: return false;
+    case UIHash("visible"): dst.Value = UI_CSS_VISIBILITY_VISIBLE;
+        return true;
+    case UIHash("hidden"): dst.Value = UI_CSS_VISIBILITY_HIDDEN;
+        return true;
+    case UIHash("collapse"): dst.Value = UI_CSS_VISIBILITY_COLLAPSE;
         return true;
     }
-    if (UIHash(src) == UIHash("hidden"))
-    {
-        dst.Value = UI_CSS_VISIBILITY_HIDDEN;
-        return true;
-    }
-    if (UIHash(src) == UIHash("collapse"))
-    {
-        dst.Value = UI_CSS_VISIBILITY_COLLAPSE;
-        return true;
-    }
-    return false;
 }
-
 template <>
 inline bool UITypeC(UIPropVisibility const& src, UIString& dst)
 {
@@ -2052,24 +2211,17 @@ inline bool UITypeC(UIPropVisibility const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropWritingMode& dst)
 {
-    if (UIHash(src) == UIHash("horizontal-tb"))
+    switch (UIHash(src))
     {
-        dst.Value = UI_CSS_WRITING_MODE_HORIZONTAL_TB;
+    default: return false;
+    case UIHash("horizontal-tb"): dst.Value = UI_CSS_WRITING_MODE_HORIZONTAL_TB;
+        return true;
+    case UIHash("vertical-rl"): dst.Value = UI_CSS_WRITING_MODE_VERTICAL_RL;
+        return true;
+    case UIHash("vertical-lr"): dst.Value = UI_CSS_WRITING_MODE_VERTICAL_LR;
         return true;
     }
-    if (UIHash(src) == UIHash("vertical-rl"))
-    {
-        dst.Value = UI_CSS_WRITING_MODE_VERTICAL_RL;
-        return true;
-    }
-    if (UIHash(src) == UIHash("vertical-lr"))
-    {
-        dst.Value = UI_CSS_WRITING_MODE_VERTICAL_LR;
-        return true;
-    }
-    return false;
 }
-
 template <>
 inline bool UITypeC(UIPropWritingMode const& src, UIString& dst)
 {
@@ -2089,26 +2241,28 @@ inline bool UITypeC(UIPropWritingMode const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropZIndex& dst)
 {
-    float v;
-    bool ip = false, il = false;
-    if (UIParseCssNumber(src, v, ip, il))
+    auto s = UITrim(src);
+    switch (UIHash(s))
     {
-        dst.Value = (ui_css_z_index_type_t)(int)v;
+    default: break;
+    case UIHash("auto"): dst.Type = UI_CSS_Z_INDEX_AUTO;
         return true;
     }
-    if (UIHash(UITrim(src)) == UIHash("auto"))
-    {
-        dst.Value = (ui_css_z_index_type_t)0;
-        return true;
-    }
-    return false;
+    dst.Type = UI_CSS_Z_INDEX__INTEGER;
+    dst.Value = std::stof(s);
+    return true;
 }
-
 template <>
 inline bool UITypeC(UIPropZIndex const& src, UIString& dst)
 {
-    dst = std::to_string((int)src.Value);
-    return true;
+    switch (src.Type)
+    {
+    default: return false;
+    case UI_CSS_Z_INDEX_AUTO: dst = "auto";
+        return true;
+    case UI_CSS_Z_INDEX__INTEGER: dst = std::to_string(src.Value);
+        return true;
+    }
 }
 
 // Note: Not all properties' tokens/keywords are exhaustively implemented here. This provides full numeric parsing for length/percentage/number where applicable and common keyword mappings. Further refinements can be added per-property on request.
