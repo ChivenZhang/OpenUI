@@ -1520,40 +1520,39 @@ template <>
 inline bool UITypeC(UIString const& src, UIPropDisplay& dst)
 {
     auto s = UITrim(src);
-    auto h = UIHash(s);
-    if (h == UIHash("block")) { dst.Value = UI_CSS_DISPLAY_BLOCK; return true; }
-    if (h == UIHash("inline")) { dst.Value = UI_CSS_DISPLAY_INLINE; return true; }
-    if (h == UIHash("run-in")) { dst.Value = UI_CSS_DISPLAY_RUN_IN; return true; }
-    if (h == UIHash("flow-root")) { dst.Value = UI_CSS_DISPLAY_FLOW_ROOT; return true; }
-    if (h == UIHash("flow")) { dst.Value = UI_CSS_DISPLAY_FLOW; return true; }
-    if (h == UIHash("table")) { dst.Value = UI_CSS_DISPLAY_TABLE; return true; }
-    if (h == UIHash("flex")) { dst.Value = UI_CSS_DISPLAY_FLEX; return true; }
-    if (h == UIHash("grid")) { dst.Value = UI_CSS_DISPLAY_GRID; return true; }
-    if (h == UIHash("ruby")) { dst.Value = UI_CSS_DISPLAY_RUBY; return true; }
-    if (h == UIHash("list-item")) { dst.Value = UI_CSS_DISPLAY_LIST_ITEM; return true; }
-    if (h == UIHash("table-row-group")) { dst.Value = UI_CSS_DISPLAY_TABLE_ROW_GROUP; return true; }
-    if (h == UIHash("table-header-group")) { dst.Value = UI_CSS_DISPLAY_TABLE_HEADER_GROUP; return true; }
-    if (h == UIHash("table-footer-group")) { dst.Value = UI_CSS_DISPLAY_TABLE_FOOTER_GROUP; return true; }
-    if (h == UIHash("table-row")) { dst.Value = UI_CSS_DISPLAY_TABLE_ROW; return true; }
-    if (h == UIHash("table-cell")) { dst.Value = UI_CSS_DISPLAY_TABLE_CELL; return true; }
-    if (h == UIHash("table-column-group")) { dst.Value = UI_CSS_DISPLAY_TABLE_COLUMN_GROUP; return true; }
-    if (h == UIHash("table-column")) { dst.Value = UI_CSS_DISPLAY_TABLE_COLUMN; return true; }
-    if (h == UIHash("table-caption")) { dst.Value = UI_CSS_DISPLAY_TABLE_CAPTION; return true; }
-    if (h == UIHash("ruby-base")) { dst.Value = UI_CSS_DISPLAY_RUBY_BASE; return true; }
-    if (h == UIHash("ruby-text")) { dst.Value = UI_CSS_DISPLAY_RUBY_TEXT; return true; }
-    if (h == UIHash("ruby-base-container")) { dst.Value = UI_CSS_DISPLAY_RUBY_BASE_CONTAINER; return true; }
-    if (h == UIHash("ruby-text-container")) { dst.Value = UI_CSS_DISPLAY_RUBY_TEXT_CONTAINER; return true; }
-    if (h == UIHash("contents")) { dst.Value = UI_CSS_DISPLAY_CONTENTS; return true; }
-    if (h == UIHash("none")) { dst.Value = UI_CSS_DISPLAY_NONE; return true; }
-    if (h == UIHash("inline-block")) { dst.Value = UI_CSS_DISPLAY_INLINE_BLOCK; return true; }
-    if (h == UIHash("inline-table")) { dst.Value = UI_CSS_DISPLAY_INLINE_TABLE; return true; }
-    if (h == UIHash("inline-flex")) { dst.Value = UI_CSS_DISPLAY_INLINE_FLEX; return true; }
-    if (h == UIHash("inline-grid")) { dst.Value = UI_CSS_DISPLAY_INLINE_GRID; return true; }
-    return false;
-}
-
-template <>
-inline bool UITypeC(UIPropDisplay const& src, UIString& dst)
+    switch (UIHash(s))
+    {
+    default: return false;
+    case UIHash("block"): dst.Value = UI_CSS_DISPLAY_BLOCK; return true;
+    case UIHash("inline"): dst.Value = UI_CSS_DISPLAY_INLINE; return true;
+    case UIHash("run-in"): dst.Value = UI_CSS_DISPLAY_RUN_IN; return true;
+    case UIHash("flow-root"): dst.Value = UI_CSS_DISPLAY_FLOW_ROOT; return true;
+    case UIHash("flow"): dst.Value = UI_CSS_DISPLAY_FLOW; return true;
+    case UIHash("table"): dst.Value = UI_CSS_DISPLAY_TABLE; return true;
+    case UIHash("flex"): dst.Value = UI_CSS_DISPLAY_FLEX; return true;
+    case UIHash("grid"): dst.Value = UI_CSS_DISPLAY_GRID; return true;
+    case UIHash("ruby"): dst.Value = UI_CSS_DISPLAY_RUBY; return true;
+    case UIHash("list-item"): dst.Value = UI_CSS_DISPLAY_LIST_ITEM; return true;
+    case UIHash("table-row-group"): dst.Value = UI_CSS_DISPLAY_TABLE_ROW_GROUP; return true;
+    case UIHash("table-header-group"): dst.Value = UI_CSS_DISPLAY_TABLE_HEADER_GROUP; return true;
+    case UIHash("table-footer-group"): dst.Value = UI_CSS_DISPLAY_TABLE_FOOTER_GROUP; return true;
+    case UIHash("table-row"): dst.Value = UI_CSS_DISPLAY_TABLE_ROW; return true;
+    case UIHash("table-cell"): dst.Value = UI_CSS_DISPLAY_TABLE_CELL; return true;
+    case UIHash("table-column-group"): dst.Value = UI_CSS_DISPLAY_TABLE_COLUMN_GROUP; return true;
+    case UIHash("table-column"): dst.Value = UI_CSS_DISPLAY_TABLE_COLUMN; return true;
+    case UIHash("table-caption"): dst.Value = UI_CSS_DISPLAY_TABLE_CAPTION; return true;
+    case UIHash("ruby-base"): dst.Value = UI_CSS_DISPLAY_RUBY_BASE; return true;
+    case UIHash("ruby-text"): dst.Value = UI_CSS_DISPLAY_RUBY_TEXT; return true;
+    case UIHash("ruby-base-container"): dst.Value = UI_CSS_DISPLAY_RUBY_BASE_CONTAINER; return true;
+    case UIHash("ruby-text-container"): dst.Value = UI_CSS_DISPLAY_RUBY_TEXT_CONTAINER; return true;
+    case UIHash("contents"): dst.Value = UI_CSS_DISPLAY_CONTENTS; return true;
+    case UIHash("none"): dst.Value = UI_CSS_DISPLAY_NONE; return true;
+    case UIHash("inline-block"): dst.Value = UI_CSS_DISPLAY_INLINE_BLOCK; return true;
+    case UIHash("inline-table"): dst.Value = UI_CSS_DISPLAY_INLINE_TABLE; return true;
+    case UIHash("inline-flex"): dst.Value = UI_CSS_DISPLAY_INLINE_FLEX; return true;
+    case UIHash("inline-grid"): dst.Value = UI_CSS_DISPLAY_INLINE_GRID; return true;
+    }
+}inline bool UITypeC(UIPropDisplay const& src, UIString& dst)
 {
     switch (src.Value)
     {
@@ -2113,4 +2112,5 @@ inline bool UITypeC(UIPropZIndex const& src, UIString& dst)
 }
 
 // Note: Not all properties' tokens/keywords are exhaustively implemented here. This provides full numeric parsing for length/percentage/number where applicable and common keyword mappings. Further refinements can be added per-property on request.
+
 
