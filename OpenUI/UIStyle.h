@@ -1957,6 +1957,131 @@ inline bool UITypeC(UIPropHeight const& src, UIString& dst)
     }
 }
 
+// Min/Max width/height
+template<>
+inline bool UITypeC(UIString const& src, UIPropMinWidth& dst)
+{
+    auto s = UITrim(src);
+    if (s == "auto")
+    {
+        dst.Type = UI_CSS_MIN_WIDTH_AUTO;
+    }
+    else if (s.ends_with('%'))
+    {
+        dst.Type = UI_CSS_MIN_WIDTH__PERCENTAGE;
+        dst.Value = std::stof(s);
+    }
+    else
+    {
+        dst.Type = UI_CSS_MIN_WIDTH__LENGTH;
+        dst.Value = std::stof(s);
+    }
+    return true;
+}
+template<>
+inline bool UITypeC(UIPropMinWidth const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_MIN_WIDTH_AUTO: dst = "auto"; return true;
+    case UI_CSS_MIN_WIDTH__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MIN_WIDTH__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropMaxWidth& dst)
+{
+    auto s = UITrim(src);
+    if (s == "none")
+    {
+        dst.Type = UI_CSS_MAX_WIDTH_NONE;
+    }
+    else if (s.ends_with('%'))
+    {
+        dst.Type = UI_CSS_MAX_WIDTH__PERCENTAGE;
+        dst.Value = std::stof(s);
+    }
+    else
+    {
+        dst.Type = UI_CSS_MAX_WIDTH__LENGTH;
+        dst.Value = std::stof(s);
+    }
+    return true;
+}
+template<>
+inline bool UITypeC(UIPropMaxWidth const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_MAX_WIDTH_NONE: dst = "none"; return true;
+    case UI_CSS_MAX_WIDTH__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MAX_WIDTH__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropMinHeight& dst)
+{
+    auto s = UITrim(src);
+    if (s == "auto")
+    {
+        dst.Type = UI_CSS_MIN_HEIGHT_AUTO;
+    }
+    else if (s.ends_with('%'))
+    {
+        dst.Type = UI_CSS_MIN_HEIGHT__PERCENTAGE;
+        dst.Value = std::stof(s);
+    }
+    else
+    {
+        dst.Type = UI_CSS_MIN_HEIGHT__LENGTH;
+        dst.Value = std::stof(s);
+    }
+    return true;
+}
+template<>
+inline bool UITypeC(UIPropMinHeight const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_MIN_HEIGHT_AUTO: dst = "auto"; return true;
+    case UI_CSS_MIN_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MIN_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
+template<>
+inline bool UITypeC(UIString const& src, UIPropMaxHeight& dst)
+{
+    auto s = UITrim(src);
+    if (s == "none")
+    {
+        dst.Type = UI_CSS_MAX_HEIGHT_NONE;
+    }
+    else if (s.ends_with('%'))
+    {
+        dst.Type = UI_CSS_MAX_HEIGHT__PERCENTAGE;
+        dst.Value = std::stof(s);
+    }
+    else
+    {
+        dst.Type = UI_CSS_MAX_HEIGHT__LENGTH;
+        dst.Value = std::stof(s);
+    }
+    return true;
+}
+template<>
+inline bool UITypeC(UIPropMaxHeight const& src, UIString& dst)
+{
+    switch (src.Type) {
+    default: return false;
+    case UI_CSS_MAX_HEIGHT_NONE: dst = "none"; return true;
+    case UI_CSS_MAX_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MAX_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    }
+}
+
 // Letter spacing, line-height, text-indent, tab-size, margins, paddings, max/min sizes, opacity, word-spacing - expanded (no macros)
 
 template<>
