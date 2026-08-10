@@ -154,11 +154,11 @@ public:
 
 	UIStyleRaw getStyles() const;
 	void setStyles(UIStyleRef value);
-	UIComputedStyleRaw getComputedStyle() const;
+	UIComputedStyleRaw getStyleComputed() const;
 	virtual UIString getStyleText() const;	// Style Sheet
 	virtual void setStyleText(UIString value);	// Style Sheet
 	virtual UIString getStyleText(UIString name) const;
-	virtual void setStyleText(UIString name, UIString value);
+	virtual bool setStyleText(UIString name, UIString value);
 
 	template<class T>
 	T const& getStyle(UIString const& key, T const& value = T()) const
@@ -253,4 +253,101 @@ private:
 private:
 	friend class UICanvas;
 	UIRaw<UIWidgetPrivate> m_Private;
+};
+
+struct UIWidgetStyle
+{
+    UIPropAlignContent AlignContent;
+    UIPropAlignItems AlignItems;
+    UIPropAlignSelf AlignSelf;
+    UIPropAlignmentBaseline AlignmentBaseline;
+    UIPropBaselineShift BaselineShift;
+    UIPropBaselineSource BaselineSource;
+    UIPropBorder Border;
+    UIPropBorderBottom BorderBottom;
+    UIPropBorderLeft BorderLeft;
+    UIPropBorderRight BorderRight;
+    UIPropBorderTop BorderTop;
+    UIPropBottom Bottom;
+    UIPropBoxSizing BoxSizing;
+    UIPropClear Clear;
+    UIPropColor Color;
+    UIPropDirection Direction;
+    UIPropDisplay Display;
+    UIPropDominantBaseline DominantBaseline;
+    UIPropFlex Flex;
+    UIPropFlexBasis FlexBasis;
+    UIPropFlexDirection FlexDirection;
+    UIPropFlexGrow FlexGrow;
+    UIPropFlexShrink FlexShrink;
+    UIPropFlexWrap FlexWrap;
+    UIPropFloat Float;
+    UIPropFloatDefer FloatDefer;
+    UIPropFloatOffset FloatOffset;
+    UIPropFloatReference FloatReference;
+    UIPropFontFamily FontFamily;
+    UIPropFontSize FontSize;
+    UIPropFontStretch FontStretch;
+    UIPropFontStyle FontStyle;
+    UIPropFontWeight FontWeight;
+    UIPropHangingPunctuation HangingPunctuation;
+    UIPropHeight Height;
+    UIPropHyphens Hyphens;
+    UIPropInsetBlockEnd InsetBlockEnd;
+    UIPropInsetBlockStart InsetBlockStart;
+    UIPropInsetInlineEnd InsetInlineEnd;
+    UIPropInsetInlineStart InsetInlineStart;
+    UIPropJustifyContent JustifyContent;
+    UIPropLeft Left;
+    UIPropLetterSpacing LetterSpacing;
+    UIPropLineBreak LineBreak;
+    UIPropLineHeight LineHeight;
+    UIPropMargin Margin;
+    UIPropMarginBottom MarginBottom;
+    UIPropMarginLeft MarginLeft;
+    UIPropMarginRight MarginRight;
+    UIPropMarginTop MarginTop;
+    UIPropMaxHeight MaxHeight;
+    UIPropMaxWidth MaxWidth;
+    UIPropMinHeight MinHeight;
+    UIPropMinWidth MinWidth;
+    UIPropOpacity Opacity;
+    UIPropOrder Order;
+    UIPropOverflowBlock OverflowBlock;
+    UIPropOverflowInline OverflowInline;
+    UIPropOverflowWrap OverflowWrap;
+    UIPropOverflowX OverflowX;
+    UIPropOverflowY OverflowY;
+    UIPropPadding Padding;
+    UIPropPaddingBottom PaddingBottom;
+    UIPropPaddingLeft PaddingLeft;
+    UIPropPaddingRight PaddingRight;
+    UIPropPaddingTop PaddingTop;
+    UIPropPosition Position;
+    UIPropRight Right;
+    UIPropTabSize TabSize;
+    UIPropTextAlign TextAlign;
+    UIPropTextAlignAll TextAlignAll;
+    UIPropTextAlignLast TextAlignLast;
+    UIPropTextCombineUpright TextCombineUpright;
+    UIPropTextDecorationLine TextDecorationLine;
+    UIPropTextDecorationStyle TextDecorationStyle;
+    UIPropTextIndent TextIndent;
+    UIPropTextJustify TextJustify;
+    UIPropTextOrientation TextOrientation;
+    UIPropTextOverflow TextOverflow;
+    UIPropTextTransform TextTransform;
+    UIPropTop Top;
+    UIPropUnicodeBidi UnicodeBidi;
+    UIPropVerticalAlign VerticalAlign;
+    UIPropVisibility Visibility;
+    UIPropWhiteSpace WhiteSpace;
+    UIPropWidth Width;
+    UIPropWordBreak WordBreak;
+    UIPropWordSpacing WordSpacing;
+    UIPropWordWrap WordWrap;
+    UIPropWrapFlow WrapFlow;
+    UIPropWrapThrough WrapThrough;
+    UIPropWritingMode WritingMode;
+    UIPropZIndex ZIndex;
 };

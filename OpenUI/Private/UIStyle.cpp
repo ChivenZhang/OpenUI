@@ -59,11 +59,12 @@ UIString UIStyle::getStyleText(UIString const& key) const
     return result->second->getText();
 }
 
-void UIStyle::setStyleText(UIString const& key, UIString const& value)
+bool UIStyle::setStyleText(UIString const& key, UIString const& value)
 {
     auto result = PRIVATE()->Styles.find(key);
-    if (result == PRIVATE()->Styles.end()) return;
+    if (result == PRIVATE()->Styles.end()) return false;
     result->second->setText(value);
+    return true;
 }
 
 //================================================================================================================

@@ -250,8 +250,8 @@ bool UICanvas::layoutWidget(UIRect client)
 		if (dirty == false) return;
 		widget->getStyles()->setDirty(false);
 
-		if (widget->getParent() == nullptr) widget->getComputedStyle()->compute(nullptr);
-		else widget->getComputedStyle()->compute(widget->getParent()->getComputedStyle());
+		if (widget->getParent() == nullptr) widget->getStyleComputed()->compute(nullptr);
+		else widget->getStyleComputed()->compute(widget->getParent()->getStyleComputed());
 
 		for (size_t i = 0; i < widget->getWidgets().size(); ++i)
 		{

@@ -66,6 +66,8 @@ public:
 	// =============================DOM Attrib===========================
 
 	UIAttribRef Attribs;
+
+	UIWidgetStyle StyleCSS;
 };
 #define PRIVATE() ((UIWidgetPrivateData*) m_Private)
 
@@ -760,7 +762,7 @@ void UIWidget::setStyles(UIStyleRef value)
 	PRIVATE()->Styles = value;
 }
 
-UIComputedStyleRaw UIWidget::getComputedStyle() const
+UIComputedStyleRaw UIWidget::getStyleComputed() const
 {
 	return PRIVATE()->ComputedStyles.get();
 }
@@ -779,9 +781,110 @@ UIString UIWidget::getStyleText(UIString name) const
 	return getStyles()->getStyleText(name);
 }
 
-void UIWidget::setStyleText(UIString name, UIString value)
+bool UIWidget::setStyleText(UIString name, UIString value)
 {
-	getStyles()->setStyleText(name, value);
+	if (getStyles()->setStyleText(name, value) == false)
+	{
+		switch(UIHash(name))
+		{
+		default: return false;
+	    case UIHash("align-content"): setEmbedStyle(name, PRIVATE()->StyleCSS.AlignContent); break;
+	    case UIHash("align-items"): setEmbedStyle(name, PRIVATE()->StyleCSS.AlignItems); break;
+	    case UIHash("align-self"): setEmbedStyle(name, PRIVATE()->StyleCSS.AlignSelf); break;
+	    case UIHash("alignment-baseline"): setEmbedStyle(name, PRIVATE()->StyleCSS.AlignmentBaseline); break;
+	    case UIHash("baseline-shift"): setEmbedStyle(name, PRIVATE()->StyleCSS.BaselineShift); break;
+	    case UIHash("baseline-source"): setEmbedStyle(name, PRIVATE()->StyleCSS.BaselineSource); break;
+	    case UIHash("border"): setEmbedStyle(name, PRIVATE()->StyleCSS.Border); break;
+	    case UIHash("border-bottom"): setEmbedStyle(name, PRIVATE()->StyleCSS.BorderBottom); break;
+	    case UIHash("border-left"): setEmbedStyle(name, PRIVATE()->StyleCSS.BorderLeft); break;
+	    case UIHash("border-right"): setEmbedStyle(name, PRIVATE()->StyleCSS.BorderRight); break;
+	    case UIHash("border-top"): setEmbedStyle(name, PRIVATE()->StyleCSS.BorderTop); break;
+	    case UIHash("bottom"): setEmbedStyle(name, PRIVATE()->StyleCSS.Bottom); break;
+	    case UIHash("box-sizing"): setEmbedStyle(name, PRIVATE()->StyleCSS.BoxSizing); break;
+	    case UIHash("clear"): setEmbedStyle(name, PRIVATE()->StyleCSS.Clear); break;
+	    //case UIHash("color"): setEmbedStyle(name, PRIVATE()->StyleCSS.Color); break;
+	    case UIHash("direction"): setEmbedStyle(name, PRIVATE()->StyleCSS.Direction); break;
+	    case UIHash("display"): setEmbedStyle(name, PRIVATE()->StyleCSS.Display); break;
+	    //case UIHash("dominant-baseline"): setEmbedStyle(name, PRIVATE()->StyleCSS.DominantBaseline); break;
+	    //case UIHash("flex"): setEmbedStyle(name, PRIVATE()->StyleCSS.Flex); break;
+	    case UIHash("flex-basis"): setEmbedStyle(name, PRIVATE()->StyleCSS.FlexBasis); break;
+	    //case UIHash("flex-direction"): setEmbedStyle(name, PRIVATE()->StyleCSS.FlexDirection); break;
+	    case UIHash("flex-grow"): setEmbedStyle(name, PRIVATE()->StyleCSS.FlexGrow); break;
+	    case UIHash("flex-shrink"): setEmbedStyle(name, PRIVATE()->StyleCSS.FlexShrink); break;
+	    //case UIHash("flex-wrap"): setEmbedStyle(name, PRIVATE()->StyleCSS.FlexWrap); break;
+	    //case UIHash("float"): setEmbedStyle(name, PRIVATE()->StyleCSS.Float); break;
+	    //case UIHash("float-defer"): setEmbedStyle(name, PRIVATE()->StyleCSS.FloatDefer); break;
+	    case UIHash("float-offset"): setEmbedStyle(name, PRIVATE()->StyleCSS.FloatOffset); break;
+	    //case UIHash("float-reference"): setEmbedStyle(name, PRIVATE()->StyleCSS.FloatReference); break;
+	    //case UIHash("font-family"): setEmbedStyle(name, PRIVATE()->StyleCSS.FontFamily); break;
+	    case UIHash("font-size"): setEmbedStyle(name, PRIVATE()->StyleCSS.FontSize); break;
+	    case UIHash("font-stretch"): setEmbedStyle(name, PRIVATE()->StyleCSS.FontStretch); break;
+	    //case UIHash("font-style"): setEmbedStyle(name, PRIVATE()->StyleCSS.FontStyle); break;
+	    case UIHash("font-weight"): setEmbedStyle(name, PRIVATE()->StyleCSS.FontWeight); break;
+	    //case UIHash("hanging-punctuation"): setEmbedStyle(name, PRIVATE()->StyleCSS.HangingPunctuation); break;
+	    case UIHash("height"): setEmbedStyle(name, PRIVATE()->StyleCSS.Height); break;
+	    //case UIHash("hyphens"): setEmbedStyle(name, PRIVATE()->StyleCSS.Hyphens); break;
+	    case UIHash("inset-block-end"): setEmbedStyle(name, PRIVATE()->StyleCSS.InsetBlockEnd); break;
+	    case UIHash("inset-block-start"): setEmbedStyle(name, PRIVATE()->StyleCSS.InsetBlockStart); break;
+	    case UIHash("inset-inline-end"): setEmbedStyle(name, PRIVATE()->StyleCSS.InsetInlineEnd); break;
+	    case UIHash("inset-inline-start"): setEmbedStyle(name, PRIVATE()->StyleCSS.InsetInlineStart); break;
+	    case UIHash("justify-content"): setEmbedStyle(name, PRIVATE()->StyleCSS.JustifyContent); break;
+	    case UIHash("left"): setEmbedStyle(name, PRIVATE()->StyleCSS.Left); break;
+	    case UIHash("letter-spacing"): setEmbedStyle(name, PRIVATE()->StyleCSS.LetterSpacing); break;
+	    //case UIHash("line-break"): setEmbedStyle(name, PRIVATE()->StyleCSS.LineBreak); break;
+	    case UIHash("line-height"): setEmbedStyle(name, PRIVATE()->StyleCSS.LineHeight); break;
+	    case UIHash("margin"): setEmbedStyle(name, PRIVATE()->StyleCSS.Margin); break;
+	    case UIHash("margin-bottom"): setEmbedStyle(name, PRIVATE()->StyleCSS.MarginBottom); break;
+	    case UIHash("margin-left"): setEmbedStyle(name, PRIVATE()->StyleCSS.MarginLeft); break;
+	    case UIHash("margin-right"): setEmbedStyle(name, PRIVATE()->StyleCSS.MarginRight); break;
+	    case UIHash("margin-top"): setEmbedStyle(name, PRIVATE()->StyleCSS.MarginTop); break;
+	    case UIHash("max-height"): setEmbedStyle(name, PRIVATE()->StyleCSS.MaxHeight); break;
+	    case UIHash("max-width"): setEmbedStyle(name, PRIVATE()->StyleCSS.MaxWidth); break;
+	    case UIHash("min-height"): setEmbedStyle(name, PRIVATE()->StyleCSS.MinHeight); break;
+	    case UIHash("min-width"): setEmbedStyle(name, PRIVATE()->StyleCSS.MinWidth); break;
+	    //case UIHash("opacity"): setEmbedStyle(name, PRIVATE()->StyleCSS.Opacity); break;
+	    //case UIHash("order"): setEmbedStyle(name, PRIVATE()->StyleCSS.Order); break;
+	    //case UIHash("overflow-block"): setEmbedStyle(name, PRIVATE()->StyleCSS.OverflowBlock); break;
+	    //case UIHash("overflow-inline"): setEmbedStyle(name, PRIVATE()->StyleCSS.OverflowInline); break;
+	    //case UIHash("overflow-wrap"): setEmbedStyle(name, PRIVATE()->StyleCSS.OverflowWrap); break;
+	    case UIHash("overflow-x"): setEmbedStyle(name, PRIVATE()->StyleCSS.OverflowX); break;
+	    //case UIHash("overflow-y"): setEmbedStyle(name, PRIVATE()->StyleCSS.OverflowY); break;
+	    case UIHash("padding"): setEmbedStyle(name, PRIVATE()->StyleCSS.Padding); break;
+	    case UIHash("padding-bottom"): setEmbedStyle(name, PRIVATE()->StyleCSS.PaddingBottom); break;
+	    case UIHash("padding-left"): setEmbedStyle(name, PRIVATE()->StyleCSS.PaddingLeft); break;
+	    case UIHash("padding-right"): setEmbedStyle(name, PRIVATE()->StyleCSS.PaddingRight); break;
+	    case UIHash("padding-top"): setEmbedStyle(name, PRIVATE()->StyleCSS.PaddingTop); break;
+	    case UIHash("position"): setEmbedStyle(name, PRIVATE()->StyleCSS.Position); break;
+	    case UIHash("right"): setEmbedStyle(name, PRIVATE()->StyleCSS.Right); break;
+	    case UIHash("tab-size"): setEmbedStyle(name, PRIVATE()->StyleCSS.TabSize); break;
+	    //case UIHash("text-align"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextAlign); break;
+	    //case UIHash("text-align-all"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextAlignAll); break;
+	    //case UIHash("text-align-last"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextAlignLast); break;
+	    //case UIHash("text-combine-upright"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextCombineUpright); break;
+	    //case UIHash("text-decoration-line"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextDecorationLine); break;
+	    //case UIHash("text-decoration-style"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextDecorationStyle); break;
+	    case UIHash("text-indent"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextIndent); break;
+	    //case UIHash("text-justify"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextJustify); break;
+	    //case UIHash("text-orientation"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextOrientation); break;
+	    //case UIHash("text-overflow"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextOverflow); break;
+	    //case UIHash("text-transform"): setEmbedStyle(name, PRIVATE()->StyleCSS.TextTransform); break;
+	    case UIHash("top"): setEmbedStyle(name, PRIVATE()->StyleCSS.Top); break;
+	    //case UIHash("unicode-bidi"): setEmbedStyle(name, PRIVATE()->StyleCSS.UnicodeBidi); break;
+	    //case UIHash("vertical-align"): setEmbedStyle(name, PRIVATE()->StyleCSS.VerticalAlign); break;
+	    case UIHash("visibility"): setEmbedStyle(name, PRIVATE()->StyleCSS.Visibility); break;
+	    //case UIHash("white-space"): setEmbedStyle(name, PRIVATE()->StyleCSS.WhiteSpace); break;
+	    case UIHash("width"): setEmbedStyle(name, PRIVATE()->StyleCSS.Width); break;
+	    //case UIHash("word-break"): setEmbedStyle(name, PRIVATE()->StyleCSS.WordBreak); break;
+	    //case UIHash("word-spacing"): setEmbedStyle(name, PRIVATE()->StyleCSS.WordSpacing); break;
+	    //case UIHash("word-wrap"): setEmbedStyle(name, PRIVATE()->StyleCSS.WordWrap); break;
+	    //case UIHash("wrap-flow"): setEmbedStyle(name, PRIVATE()->StyleCSS.WrapFlow); break;
+	    //case UIHash("wrap-through"): setEmbedStyle(name, PRIVATE()->StyleCSS.WrapThrough); break;
+	    case UIHash("writing-mode"): setEmbedStyle(name, PRIVATE()->StyleCSS.WritingMode); break;
+	    case UIHash("z-index"): setEmbedStyle(name, PRIVATE()->StyleCSS.ZIndex); break;
+		}
+		getStyles()->setStyleText(name, value);
+	}
+	return true;
 }
 
 UIAttribRaw UIWidget::getAttribs() const

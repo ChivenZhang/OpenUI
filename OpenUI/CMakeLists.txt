@@ -3,6 +3,7 @@ file(GLOB_RECURSE OPENUI_SOURCE_FILES "*.cpp" "*.h")
 add_library(OpenUI STATIC ${OPENUI_SOURCE_FILES}
         UIAttrib.h
         Private/UIAttrib.cpp
+        UIPublic.h
 )
 
 find_package(yoga CONFIG REQUIRED)

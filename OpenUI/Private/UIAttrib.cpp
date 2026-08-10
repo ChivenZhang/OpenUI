@@ -59,9 +59,10 @@ UIString UIAttrib::getAttribText(UIString const& key) const
     return result->second->getText();
 }
 
-void UIAttrib::setAttribText(UIString const& key, UIString const& value)
+bool UIAttrib::setAttribText(UIString const& key, UIString const& value)
 {
     auto result = PRIVATE()->Attribs.find(key);
-    if (result == PRIVATE()->Attribs.end()) return;
+    if (result == PRIVATE()->Attribs.end()) return false;
     result->second->setText(value);
+    return true;
 }

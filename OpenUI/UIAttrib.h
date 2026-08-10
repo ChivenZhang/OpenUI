@@ -67,7 +67,7 @@ public:
     UIAttribDataRef getAttrib(UIString const& key) const;
     void setAttrib(UIString const& key, UIAttribDataRef value);
     UIString getAttribText(UIString const& key) const;
-    void setAttribText(UIString const& key, UIString const& value);
+    bool setAttribText(UIString const& key, UIString const& value);
 
     template<class T>
     T const& getAttrib(UIString const& key, T const& value = T()) const
