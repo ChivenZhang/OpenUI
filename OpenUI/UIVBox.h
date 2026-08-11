@@ -33,5 +33,5 @@ public:
 	void setStyle(UIVBoxStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateVBox;
+	UIPrivateRaw m_Private;
 };

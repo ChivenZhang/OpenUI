@@ -11,39 +11,38 @@
 #include "../UIHBox.h"
 
 /// @brief 
-class UIHboxPrivateData : public UIWidgetPrivate
+struct UIHboxPrivateData : UIPrivate
 {
-public:
 	UIHBoxStyle Style;
 };
-#define PRIVATE() ((UIHboxPrivateData*) m_PrivateHbox)
+#define PRIVATE() ((UIHboxPrivateData*) m_Private)
 
 UIHBox::UIHBox(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateHbox = new UIHboxPrivateData;
+	m_Private = new UIHboxPrivateData;
 }
 
 UIHBox::~UIHBox()
 {
-	delete m_PrivateHbox; m_PrivateHbox = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIHBox::arrange(UIRect client)
 {
-	this->setFlexWrap(UI::FlexNoWrap);
-	this->setAlignItems(UI::AlignStretch);
-	this->setFlexDirection(UI::FlexDirectionRow);
-	this->setJustifyContent(UI::JustifySpaceEvenly);
+	this->setFlexWrap({UI_CSS_FLEX_WRAP_NOWRAP});
+	this->setAlignItems({UI_CSS_ALIGN_ITEMS_STRETCH});
+	this->setFlexDirection({UI_CSS_FLEX_DIRECTION_ROW});
+	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
 	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
 		auto child = getWidgets()[i];
-		if (child->getFixedWidth().Unit == UI::UnitNone) child->setFlexGrow(1.0f);
-		else child->setFlexGrow(0.0f);
-		if (child->getFixedHeight().Unit == UI::UnitNone) child->setAlignSelf(UI::AlignStretch);
-		else child->setAlignSelf(UI::AlignCenter);
+		if (child->getFixedWidth().Type == UI_CSS_WIDTH_AUTO) child->setFlexGrow({1.0f, UI_CSS_FLEX_GROW_NUMBER});
+		else child->setFlexGrow({0.0f, UI_CSS_FLEX_GROW_NUMBER});
+		if (child->getFixedHeight().Type == UI_CSS_HEIGHT_AUTO) child->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
+		else child->setAlignSelf({UI_CSS_ALIGN_SELF_CENTER});
 	}
 }
 

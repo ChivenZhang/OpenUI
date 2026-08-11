@@ -33,5 +33,5 @@ public:
 	void setStyle(UIHBoxStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateHbox;
+	UIPrivateRaw m_Private;
 };

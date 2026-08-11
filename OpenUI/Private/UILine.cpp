@@ -10,23 +10,22 @@
 * =================================================*/
 #include "../UILine.h"
 
-class UILinePrivate : public UIWidgetPrivate
+struct UILinePrivate : UIPrivate
 {
-public:
 	UILineStyle Style;
 };
-#define PRIVATE() ((UILinePrivate*)m_PrivateLine)
+#define PRIVATE() ((UILinePrivate*)m_Private)
 
 UIHLine::UIHLine(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateLine = new UILinePrivate;
+	m_Private = new UILinePrivate;
 }
 
 UIHLine::~UIHLine()
 {
-	delete m_PrivateLine; m_PrivateLine = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIHLine::paint(UIRect client, UIPainterRaw painter)
@@ -51,12 +50,12 @@ UIVLine::UIVLine(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateLine = new UILinePrivate;
+	m_Private = new UILinePrivate;
 }
 
 UIVLine::~UIVLine()
 {
-	delete m_PrivateLine; m_PrivateLine = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIVLine::paint(UIRect client, UIPainterRaw painter)

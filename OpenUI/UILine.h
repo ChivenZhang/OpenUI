@@ -31,7 +31,7 @@ public:
 	void setStyle(UILineStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateLine;
+	UIPrivateRaw m_Private;
 };
 
 /// @brief VLine
@@ -46,5 +46,5 @@ public:
 	void setStyle(UILineStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateLine;
+	UIPrivateRaw m_Private;
 };

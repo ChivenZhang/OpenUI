@@ -108,7 +108,7 @@ public:
 	UISignalAsRaw<bool /*checked*/> toggled;
 
 private:
-	UIWidgetPrivateRaw m_PrivateButton;
+	UIPrivateRaw m_Private;
 };
 using UIButtonRef = UIRef<UIButton>;
 using UIButtonRaw = UIRaw<UIButton>;

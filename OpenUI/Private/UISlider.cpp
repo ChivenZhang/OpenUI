@@ -12,9 +12,8 @@
 #include "../UICanvas.h"
 
 /// @brief 
-class UISliderPrivate : public UIWidgetPrivate
+struct UISliderPrivate : UIPrivate
 {
-public:
 	UIFloat2 MousePos;
 	UIButtonRef Handle;
 	UISliderStyle Style;
@@ -30,13 +29,13 @@ public:
 	UISignalAs<int32_t> OnValueChanged;
 	UISignalAs<int32_t, int32_t> OnRangeChanged;
 };
-#define PRIVATE() ((UISliderPrivate*)m_PrivateSlider)
+#define PRIVATE() ((UISliderPrivate*)m_Private)
 
 UISlider::UISlider(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateSlider = new UISliderPrivate;
+	m_Private = new UISliderPrivate;
 
 	sliderMoved = &PRIVATE()->OnSliderMoved;
 	sliderPressed = &PRIVATE()->OnSliderPressed;
@@ -46,7 +45,7 @@ UISlider::UISlider(UICanvasRaw canvas)
 
 	PRIVATE()->Handle = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Handle);
-	PRIVATE()->Handle->setFixedSize(16, 16);
+	PRIVATE()->Handle->setFixedSize({16, UI_CSS_WIDTH_LENGTH}, {16, UI_CSS_HEIGHT_LENGTH});
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });
 	PRIVATE()->Handle->released->connect(this, [=]() {
@@ -57,12 +56,12 @@ UISlider::UISlider(UICanvasRaw canvas)
 
 UISlider::~UISlider()
 {
-	delete m_PrivateSlider; m_PrivateSlider = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UISlider::arrange(UIRect client)
 {
-	PRIVATE()->Handle->setFixedSize(16 * getCanvas()->getConfig().DisplayScale, 16 * getCanvas()->getConfig().DisplayScale);
+	PRIVATE()->Handle->setFixedSize({16 * getCanvas()->getConfig().DisplayScale, UI_CSS_WIDTH_LENGTH}, {16 * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH});
 }
 
 bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)

@@ -110,5 +110,5 @@ public:
 	UISignalAsRaw<UIString const& /*text*/> textCopied;
 
 private:
-	UIWidgetPrivateRaw m_PrivateInput;
+	UIPrivateRaw m_Private;
 };

@@ -11,9 +11,8 @@
 #include "../UIBuilder.h"
 #include "../UIParser.h"
 
-class UIBuilderPrivate : public UIWidgetPrivate
+struct UIBuilderPrivate : UIPrivate
 {
-public:
 	UICanvasRaw Canvas;
 	UIStringMap<UIFactoryRef> FactoryMap;
 };

@@ -11,9 +11,8 @@
 #include "../UIButton.h"
 #include "../UICanvas.h"
 
-class UIButtonPrivate : public UIWidgetPrivate
+struct UIButtonPrivate : UIPrivate
 {
-public:
 	UIButtonStyle Style;
 	UILabelRef Label;
 	UISignalAs<bool> OnClicked;
@@ -26,13 +25,13 @@ public:
 	bool Checked = false;
 	bool Checkable = false;
 };
-#define PRIVATE() ((UIButtonPrivate*) m_PrivateButton)
+#define PRIVATE() ((UIButtonPrivate*) m_Private)
 
 UIButton::UIButton(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateButton = new UIButtonPrivate;
+	m_Private = new UIButtonPrivate;
 
 	clicked = &PRIVATE()->OnClicked;
 	pressed = &PRIVATE()->OnPressed;
@@ -48,15 +47,15 @@ UIButton::UIButton(UICanvasRaw canvas)
 
 UIButton::~UIButton()
 {
-	delete m_PrivateButton; m_PrivateButton = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIButton::arrange(UIRect client)
 {
-	this->setAlignItems(UI::AlignStretch);
-	this->setJustifyContent(UI::JustifySpaceEvenly);
+	this->setAlignItems({UI_CSS_ALIGN_ITEMS_STRETCH});
+	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
-	PRIVATE()->Label->setFlexGrow(1);
+	PRIVATE()->Label->setFlexGrow({1.0f});
 }
 
 void UIButton::paint(UIRect client, UIPainterRaw painter)

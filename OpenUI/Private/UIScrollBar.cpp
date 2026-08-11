@@ -11,9 +11,8 @@
 #include "../UIScrollBar.h"
 #include "../UICanvas.h"
 
-class UIScrollBarPrivate : public UIWidgetPrivate
+struct UIScrollBarPrivate : UIPrivate
 {
-public:
 	UIFloat2 MousePos;
 	UIButtonRef Handle;
 	UIScrollBarStyle Style;
@@ -27,13 +26,13 @@ public:
 	UISignalAs<int32_t> OnValueChanged;
 	UISignalAs<int32_t, int32_t> OnRangeChanged;
 };
-#define PRIVATE() ((UIScrollBarPrivate*)m_PrivateScrollBar)
+#define PRIVATE() ((UIScrollBarPrivate*)m_Private)
 
 UIScrollBar::UIScrollBar(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateScrollBar = new UIScrollBarPrivate;
+	m_Private = new UIScrollBarPrivate;
 
 	sliderMoved = &PRIVATE()->OnSliderMoved;
 	sliderPressed = &PRIVATE()->OnSliderPressed;
@@ -54,7 +53,7 @@ UIScrollBar::UIScrollBar(UICanvasRaw canvas)
 
 UIScrollBar::~UIScrollBar()
 {
-	delete m_PrivateScrollBar; m_PrivateScrollBar = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 bool UIScrollBar::filter(UIReactorRaw source, UIEventRaw _event)

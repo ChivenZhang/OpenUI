@@ -59,7 +59,7 @@ public:
 	UISignalAsRaw<int32_t /*min*/, int32_t /*max*/> rangeChanged;
 
 private:
-	UIWidgetPrivateRaw m_PrivateScrollBar;
+	UIPrivateRaw m_Private;
 };
 using UIScrollBarRef = UIRef<UIScrollBar>;
 using UIScrollBarRaw = UIRaw<UIScrollBar>;

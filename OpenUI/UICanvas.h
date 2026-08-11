@@ -66,7 +66,7 @@ public:
 	void updateWidget(float time, UIRect client);
 
 private:
-	UIWidgetPrivateRaw m_Private;
+	UIPrivateRaw m_Private;
 };
 using UICanvasRef = UIRef<UICanvas>;
 using UICanvasRaw = UIRaw<UICanvas>;

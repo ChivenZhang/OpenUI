@@ -23,9 +23,6 @@ class UIWidget;
 using UIWidgetRef = UIRef<UIWidget>;
 using UIWidgetRaw = UIRaw<UIWidget>;
 
-class UIWidgetPrivate {};
-using UIWidgetPrivateRaw = UIRaw<UIWidgetPrivate>;
-
 /// @brief Base interface of widget
 class OPENUI_API UIWidget : public UIReactor, public UIHandler, public UIFilter, public std::enable_shared_from_this<UIWidget>
 {
@@ -90,65 +87,95 @@ public:
 
 	// ================================= Flex Query ======================================
 
-	UI::DisplayType getDisplayType() const;
-	void setDisplayType(UI::DisplayType value);
-	UI::PositionType getPositionType() const;
-	void setPositionType(UI::PositionType value);
-	UIValueF getFixedPosX() const;
-	void setFixedPosX(UIValueF value);
-	UIValueF getFixedPosY() const;
-	void setFixedPosY(UIValueF value);
-	UIValue2F getFixedPos() const;
-	void setFixedPos(UIValueF left, UIValueF top);
-	UIValueF getMinWidth() const;
-	void setMinWidth(UIValueF value);
-	UIValueF getMaxWidth() const;
-	void setMaxWidth(UIValueF value);
-	UIValueF getFixedWidth() const;
-	void setFixedWidth(UIValueF value);
-	UIValueF getMinHeight() const;
-	void setMinHeight(UIValueF value);
-	UIValueF getMaxHeight() const;
-	void setMaxHeight(UIValueF value);
-	UIValueF getFixedHeight() const;
-	void setFixedHeight(UIValueF value);
-	UIValue2F getMinSize() const;
-	void setMinSize(UIValueF width, UIValueF height);
-	UIValue2F getMaxSize() const;
-	void setMaxSize(UIValueF width, UIValueF height);
-	UIValue2F getFixedSize() const;
-	void setFixedSize(UIValueF width, UIValueF height);
 
-	UIValue4F getBorder() const;
-	void setBorder(UIValue4F value);
-	UIValue4F getMargin() const;
-	void setMargin(UIValue4F value);
-	UIValue4F getPadding() const;
-	void setPadding(UIValue4F value);
-	UIValue2F getSpacing() const;
-	void setSpacing(UIValue2F value);
+	UIPropDisplay getDisplayType() const;
+	void setDisplayType(UIPropDisplay value);
+	UIPropPosition getPositionType() const;
+	void setPositionType(UIPropPosition value);
+	UIPropLeft getFixedPosX() const;
+	void setFixedPosX(UIPropLeft value);
+	void setFixedPosX(float value);
+	UIPropTop getFixedPosY() const;
+	void setFixedPosY(UIPropTop value);
+	void setFixedPosY(float value);
+	void setFixedPos(UIPropLeft left, UIPropTop top);
+	void setFixedPos(float left, float top);
+	UIPropMinWidth getMinWidth() const;
+	void setMinWidth(UIPropMinWidth value);
+	void setMinWidth(float value);
+	UIPropMaxWidth getMaxWidth() const;
+	void setMaxWidth(UIPropMaxWidth value);
+	void setMaxWidth(float value);
+	UIPropWidth getFixedWidth() const;
+	void setFixedWidth(UIPropWidth value);
+	void setFixedWidth(float value);
+	UIPropMinHeight getMinHeight() const;
+	void setMinHeight(UIPropMinHeight value);
+	void setMinHeight(float value);
+	UIPropMaxHeight getMaxHeight() const;
+	void setMaxHeight(UIPropMaxHeight value);
+	void setMaxHeight(float value);
+	UIPropHeight getFixedHeight() const;
+	void setFixedHeight(UIPropHeight value);
+	void setFixedHeight(float value);
+	void setMinSize(UIPropMinWidth width, UIPropMinHeight height);
+	void setMinSize(float width, float height);
+	void setMaxSize(UIPropMaxWidth width, UIPropMaxHeight height);
+	void setMaxSize(float width, float height);
+	void setFixedSize(UIPropWidth width, UIPropHeight height);
+	void setFixedSize(float width, float height);
 
-	UI::FlexDirection getFlexDirection() const;
-	void setFlexDirection(UI::FlexDirection value);
-	UI::FlexWrap getFlexWrap() const;
-	void setFlexWrap(UI::FlexWrap value);
-	UI::JustifyContent getJustifyContent() const;
-	void setJustifyContent(UI::JustifyContent value);
-	UI::AlignItems getAlignItems() const;
-	void setAlignItems(UI::AlignItems value);
-	UI::AlignContent getAlignContent() const;
-	void setAlignContent(UI::AlignContent value);
-	void setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap);
+	void setBorder(UIPropBorderLeft left, UIPropBorderTop top, UIPropBorderRight right, UIPropBorderBottom bottom);
+	UIPropBorderTop getBorderTop() const;
+	void setBorderTop(UIPropBorderTop value);
+	UIPropBorderBottom getBorderBottom() const;
+	void setBorderBottom(UIPropBorderBottom value);
+	UIPropBorderLeft getBorderLeft() const;
+	void setBorderLeft(UIPropBorderLeft value);
+	UIPropBorderRight getBorderRight() const;
+	void setBorderRight(UIPropBorderRight value);
 
-	UI::FlexGrow getFlexGrow() const;
-	void setFlexGrow(UI::FlexGrow value);
-	UI::FlexShrink getFlexShrink() const;
-	void setFlexShrink(UI::FlexShrink value);
-	UI::FlexBasis getFlexBasis() const;
-	void setFlexBasis(UI::FlexBasis value);
-	UI::AlignSelf getAlignSelf() const;
-	void setAlignSelf(UI::AlignSelf value);
-	void setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis);
+	void setMargin(UIPropMarginLeft left, UIPropMarginTop top, UIPropMarginRight right, UIPropMarginBottom bottom);
+	UIPropMarginTop getMarginTop() const;
+	void setMarginTop(UIPropMarginTop value);
+	UIPropMarginBottom getMarginBottom() const;
+	void setMarginBottom(UIPropMarginBottom value);
+	UIPropMarginLeft getMarginLeft() const;
+	void setMarginLeft(UIPropMarginLeft value);
+	UIPropMarginRight getMarginRight() const;
+	void setMarginRight(UIPropMarginRight value);
+
+	void setPadding(UIPropPaddingLeft left, UIPropPaddingTop top, UIPropPaddingRight right, UIPropPaddingBottom bottom);
+	UIPropPaddingTop getPaddingTop() const;
+	void setPaddingTop(UIPropPaddingTop value);
+	UIPropPaddingBottom getPaddingBottom() const;
+	void setPaddingBottom(UIPropPaddingBottom value);
+	UIPropPaddingLeft getPaddingLeft() const;
+	void setPaddingLeft(UIPropPaddingLeft value);
+	UIPropPaddingRight getPaddingRight() const;
+	void setPaddingRight(UIPropPaddingRight value);
+
+	UIPropFlexDirection getFlexDirection() const;
+	void setFlexDirection(UIPropFlexDirection value);
+	UIPropFlexWrap getFlexWrap() const;
+	void setFlexWrap(UIPropFlexWrap value);
+	UIPropJustifyContent getJustifyContent() const;
+	void setJustifyContent(UIPropJustifyContent value);
+	UIPropAlignItems getAlignItems() const;
+	void setAlignItems(UIPropAlignItems value);
+	UIPropAlignContent getAlignContent() const;
+	void setAlignContent(UIPropAlignContent value);
+	void setFlexFlow(UIPropFlexDirection direction, UIPropFlexWrap wrap);
+
+	UIPropFlexGrow getFlexGrow() const;
+	void setFlexGrow(UIPropFlexGrow value);
+	UIPropFlexShrink getFlexShrink() const;
+	void setFlexShrink(UIPropFlexShrink value);
+	UIPropFlexBasis getFlexBasis() const;
+	void setFlexBasis(UIPropFlexBasis value);
+	UIPropAlignSelf getAlignSelf() const;
+	void setAlignSelf(UIPropAlignSelf value);
+	void setFlex(UIPropFlexGrow grow, UIPropFlexShrink shrink, UIPropFlexBasis basis);
 
 	// =================================CSS Style======================================
 
@@ -167,7 +194,7 @@ public:
 	}
 
 	template<class T>
-	void setStyle(UIString const& key, T const& value) const
+	void setStyle(UIString const& key, T const& value = T()) const
 	{
 		getStyles()->setStyle<T>(key, value);
 	}
@@ -252,102 +279,5 @@ private:
 
 private:
 	friend class UICanvas;
-	UIRaw<UIWidgetPrivate> m_Private;
-};
-
-struct UIWidgetStyle
-{
-    UIPropAlignContent AlignContent;
-    UIPropAlignItems AlignItems;
-    UIPropAlignSelf AlignSelf;
-    UIPropAlignmentBaseline AlignmentBaseline;
-    UIPropBaselineShift BaselineShift;
-    UIPropBaselineSource BaselineSource;
-    UIPropBorder Border;
-    UIPropBorderBottom BorderBottom;
-    UIPropBorderLeft BorderLeft;
-    UIPropBorderRight BorderRight;
-    UIPropBorderTop BorderTop;
-    UIPropBottom Bottom;
-    UIPropBoxSizing BoxSizing;
-    UIPropClear Clear;
-    UIPropColor Color;
-    UIPropDirection Direction;
-    UIPropDisplay Display;
-    UIPropDominantBaseline DominantBaseline;
-    UIPropFlex Flex;
-    UIPropFlexBasis FlexBasis;
-    UIPropFlexDirection FlexDirection;
-    UIPropFlexGrow FlexGrow;
-    UIPropFlexShrink FlexShrink;
-    UIPropFlexWrap FlexWrap;
-    UIPropFloat Float;
-    UIPropFloatDefer FloatDefer;
-    UIPropFloatOffset FloatOffset;
-    UIPropFloatReference FloatReference;
-    UIPropFontFamily FontFamily;
-    UIPropFontSize FontSize;
-    UIPropFontStretch FontStretch;
-    UIPropFontStyle FontStyle;
-    UIPropFontWeight FontWeight;
-    UIPropHangingPunctuation HangingPunctuation;
-    UIPropHeight Height;
-    UIPropHyphens Hyphens;
-    UIPropInsetBlockEnd InsetBlockEnd;
-    UIPropInsetBlockStart InsetBlockStart;
-    UIPropInsetInlineEnd InsetInlineEnd;
-    UIPropInsetInlineStart InsetInlineStart;
-    UIPropJustifyContent JustifyContent;
-    UIPropLeft Left;
-    UIPropLetterSpacing LetterSpacing;
-    UIPropLineBreak LineBreak;
-    UIPropLineHeight LineHeight;
-    UIPropMargin Margin;
-    UIPropMarginBottom MarginBottom;
-    UIPropMarginLeft MarginLeft;
-    UIPropMarginRight MarginRight;
-    UIPropMarginTop MarginTop;
-    UIPropMaxHeight MaxHeight;
-    UIPropMaxWidth MaxWidth;
-    UIPropMinHeight MinHeight;
-    UIPropMinWidth MinWidth;
-    UIPropOpacity Opacity;
-    UIPropOrder Order;
-    UIPropOverflowBlock OverflowBlock;
-    UIPropOverflowInline OverflowInline;
-    UIPropOverflowWrap OverflowWrap;
-    UIPropOverflowX OverflowX;
-    UIPropOverflowY OverflowY;
-    UIPropPadding Padding;
-    UIPropPaddingBottom PaddingBottom;
-    UIPropPaddingLeft PaddingLeft;
-    UIPropPaddingRight PaddingRight;
-    UIPropPaddingTop PaddingTop;
-    UIPropPosition Position;
-    UIPropRight Right;
-    UIPropTabSize TabSize;
-    UIPropTextAlign TextAlign;
-    UIPropTextAlignAll TextAlignAll;
-    UIPropTextAlignLast TextAlignLast;
-    UIPropTextCombineUpright TextCombineUpright;
-    UIPropTextDecorationLine TextDecorationLine;
-    UIPropTextDecorationStyle TextDecorationStyle;
-    UIPropTextIndent TextIndent;
-    UIPropTextJustify TextJustify;
-    UIPropTextOrientation TextOrientation;
-    UIPropTextOverflow TextOverflow;
-    UIPropTextTransform TextTransform;
-    UIPropTop Top;
-    UIPropUnicodeBidi UnicodeBidi;
-    UIPropVerticalAlign VerticalAlign;
-    UIPropVisibility Visibility;
-    UIPropWhiteSpace WhiteSpace;
-    UIPropWidth Width;
-    UIPropWordBreak WordBreak;
-    UIPropWordSpacing WordSpacing;
-    UIPropWordWrap WordWrap;
-    UIPropWrapFlow WrapFlow;
-    UIPropWrapThrough WrapThrough;
-    UIPropWritingMode WritingMode;
-    UIPropZIndex ZIndex;
+	UIPrivateRaw m_Private;
 };

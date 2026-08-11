@@ -29,7 +29,7 @@ public:
 	}
 
 private:
-	UIWidgetPrivateRaw m_Private;
+	UIPrivateRaw m_Private;
 };
 using UIBuilderRaw = UIRaw<UIBuilder>;
 using UIBuilderRef = UIRef<UIBuilder>;

@@ -64,7 +64,7 @@ public:
 	UISignalAsRaw<> hovered;
 
 private:
-	UIWidgetPrivateRaw m_PrivateCheck;
+	UIPrivateRaw m_Private;
 };
 using UICheckRef = UIRef<UICheck>;
 using UICheckRaw = UIRaw<UICheck>;

@@ -48,5 +48,5 @@ public:
 	void setColumnStretch(UIList<uint32_t> stretch);
 
 private:
-	UIWidgetPrivateRaw m_PrivateGrid;
+	UIPrivateRaw m_Private;
 };

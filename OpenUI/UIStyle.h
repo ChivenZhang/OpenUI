@@ -174,8 +174,8 @@ struct UIPropAlignmentBaseline
 
 struct UIPropBaselineShift
 {
-    ui_css_baseline_shift_type_t Type = UI_CSS_BASELINE_SHIFT__LENGTH;
-    float Value;
+    float Value = 0.0f;
+    ui_css_baseline_shift_type_t Type = UI_CSS_BASELINE_SHIFT_LENGTH;
 };
 
 struct UIPropBaselineSource
@@ -185,32 +185,32 @@ struct UIPropBaselineSource
 
 struct UIPropBorder
 {
+    float Value = 0.0f;
     ui_css_border_type_t Type = UI_CSS_BORDER_NONE;
-    float Value;
 };
 
 struct UIPropBorderTop
 {
-    ui_css_border_top_type_t Type = UI_CSS_BORDER_TOP_NONE;
-    float Value;
+    float Value = 0.0f;
+    ui_css_border_top_type_t Type = UI_CSS_BORDER_NONE;
 };
 
 struct UIPropBorderBottom
 {
-    ui_css_border_bottom_type_t Type = UI_CSS_BORDER_BOTTOM_NONE;
-    float Value;
+    float Value = 0.0f;
+    ui_css_border_bottom_type_t Type = UI_CSS_BORDER_NONE;
 };
 
 struct UIPropBorderLeft
 {
-    ui_css_border_left_type_t Type = UI_CSS_BORDER_LEFT_NONE;
-    float Value;
+    float Value = 0.0f;
+    ui_css_border_left_type_t Type = UI_CSS_BORDER_NONE;
 };
 
 struct UIPropBorderRight
 {
-    ui_css_border_right_type_t Type = UI_CSS_BORDER_RIGHT_NONE;
-    float Value;
+    float Value = 0.0f;
+    ui_css_border_right_type_t Type = UI_CSS_BORDER_NONE;
 };
 
 struct UIPropBoxSizing
@@ -245,13 +245,13 @@ struct UIPropDominantBaseline
 
 struct UIPropFlex
 {
-    ui_css_flex_type_t Value = UI_CSS_VALUE_INITIAL;
+    ui_css_flex_type_t Value = UI_CSS_FLEX_NONE;
 };
 
 struct UIPropFlexBasis
 {
-    ui_css_flex_basis_type_t Type = UI_CSS_FLEX_BASIS_CONTENT;
     float Value = UINAN;
+    ui_css_flex_basis_type_t Type = UI_CSS_FLEX_BASIS_CONTENT;
 };
 
 struct UIPropFlexDirection
@@ -261,14 +261,14 @@ struct UIPropFlexDirection
 
 struct UIPropFlexGrow
 {
-    ui_css_flex_grow_type_t Type = UI_CSS_FLEX_GROW__NUMBER;
     float Value = 0;
+    ui_css_flex_grow_type_t Type = UI_CSS_FLEX_GROW_NUMBER;
 };
 
 struct UIPropFlexShrink
 {
-    ui_css_flex_shrink_type_t Type = UI_CSS_FLEX_SHRINK__NUMBER;
     float Value = 1;
+    ui_css_flex_shrink_type_t Type = UI_CSS_FLEX_SHRINK_NUMBER;
 };
 
 struct UIPropFlexWrap
@@ -288,8 +288,8 @@ struct UIPropFloatDefer
 
 struct UIPropFloatOffset
 {
-    ui_css_float_offset_type_t Type = UI_CSS_FLOAT_OFFSET__LENGTH;
-    float Value;
+    float Value = 0.0f;
+    ui_css_float_offset_type_t Type = UI_CSS_FLOAT_OFFSET_LENGTH;
 };
 
 struct UIPropFloatReference
@@ -304,14 +304,14 @@ struct UIPropFontFamily
 
 struct UIPropFontSize
 {
+    float Value = 0.0f;
     ui_css_font_size_type_t Type = UI_CSS_FONT_SIZE_MEDIUM;
-    float Value;
 };
 
 struct UIPropFontStretch
 {
+    float Value = 0.0f;
     ui_css_font_stretch_type_t Type = UI_CSS_FONT_STRETCH_NORMAL;
-    float Value;
 };
 
 struct UIPropFontStyle
@@ -321,8 +321,8 @@ struct UIPropFontStyle
 
 struct UIPropFontWeight
 {
+    float Value = 0.0f;
     ui_css_font_weight_type_t Type = UI_CSS_FONT_WEIGHT_NORMAL;
-    float Value;
 };
 
 struct UIPropHangingPunctuation
@@ -332,8 +332,8 @@ struct UIPropHangingPunctuation
 
 struct UIPropHeight
 {
-    ui_css_height_type_t Type = UI_CSS_HEIGHT_AUTO;
     float Value = UINAN;
+    ui_css_height_type_t Type = UI_CSS_HEIGHT_AUTO;
 };
 
 struct UIPropHyphens
@@ -343,26 +343,26 @@ struct UIPropHyphens
 
 struct UIPropInsetBlockEnd
 {
+    float Value = 0.0f;
     ui_css_inset_block_end_type_t Type = UI_CSS_INSET_BLOCK_END_AUTO;
-    float Value;
 };
 
 struct UIPropInsetBlockStart
 {
+    float Value = 0.0f;
     ui_css_inset_block_start_type_t Type = UI_CSS_INSET_BLOCK_START_AUTO;
-    float Value;
 };
 
 struct UIPropInsetInlineEnd
 {
+    float Value = 0.0f;
     ui_css_inset_inline_end_type_t Type = UI_CSS_INSET_INLINE_END_AUTO;
-    float Value;
 };
 
 struct UIPropInsetInlineStart
 {
+    float Value = 0.0f;
     ui_css_inset_inline_start_type_t Type = UI_CSS_INSET_INLINE_START_AUTO;
-    float Value;
 };
 
 struct UIPropJustifyContent
@@ -372,8 +372,8 @@ struct UIPropJustifyContent
 
 struct UIPropLetterSpacing
 {
+    float Value = 0.0f;
     ui_css_letter_spacing_type_t Type = UI_CSS_LETTER_SPACING_NORMAL;
-    float Value;
 };
 
 struct UIPropLineBreak
@@ -383,74 +383,74 @@ struct UIPropLineBreak
 
 struct UIPropLineHeight
 {
+    float Value = 0.0f;
     ui_css_line_height_type_t Type = UI_CSS_LINE_HEIGHT_NORMAL;
-    float Value;
 };
 
 struct UIPropMargin
 {
-    ui_css_margin_type_t Type = UI_CSS_MARGIN__LENGTH;
     float Value = 0;
+    ui_css_margin_type_t Type = UI_CSS_MARGIN_LENGTH;
 };
 
 struct UIPropMarginLeft
 {
-    ui_css_margin_left_type_t Type = UI_CSS_MARGIN_LEFT__LENGTH;
     float Value = 0;
+    ui_css_margin_left_type_t Type = UI_CSS_MARGIN_LENGTH;
 };
 
 struct UIPropMarginRight
 {
-    ui_css_margin_right_type_t Type = UI_CSS_MARGIN_RIGHT__LENGTH;
     float Value = 0;
+    ui_css_margin_right_type_t Type = UI_CSS_MARGIN_LENGTH;
 };
 
 struct UIPropMarginTop
 {
-    ui_css_margin_top_type_t Type = UI_CSS_MARGIN_TOP__LENGTH;
     float Value = 0;
+    ui_css_margin_top_type_t Type = UI_CSS_MARGIN_LENGTH;
 };
 
 struct UIPropMarginBottom
 {
-    ui_css_margin_bottom_type_t Type = UI_CSS_MARGIN_BOTTOM__LENGTH;
     float Value = 0;
+    ui_css_margin_bottom_type_t Type = UI_CSS_MARGIN_LENGTH;
 };
 
 struct UIPropMaxHeight
 {
+    float Value = 0.0f;
     ui_css_max_height_type_t Type = UI_CSS_MAX_HEIGHT_NONE;
-    float Value;
 };
 
 struct UIPropMaxWidth
 {
+    float Value = 0.0f;
     ui_css_max_width_type_t Type = UI_CSS_MAX_WIDTH_NONE;
-    float Value;
 };
 
 struct UIPropMinHeight
 {
+    float Value = 0.0f;
     ui_css_min_height_type_t Type = UI_CSS_MIN_HEIGHT_AUTO;
-    float Value;
 };
 
 struct UIPropMinWidth
 {
+    float Value = 0.0f;
     ui_css_min_width_type_t Type = UI_CSS_MIN_WIDTH_AUTO;
-    float Value;
 };
 
 struct UIPropOpacity
 {
-    ui_css_opacity_type_t Type = UI_CSS_OPACITY__NUMBER;
     float Value = 1.0f;
+    ui_css_opacity_type_t Type = UI_CSS_OPACITY_NUMBER;
 };
 
 struct UIPropOrder
 {
-    ui_css_order_type_t Type = UI_CSS_ORDER__INTEGER;
-    int32_t Value;
+    int32_t Value = 0;
+    ui_css_order_type_t Type = UI_CSS_ORDER_INTEGER;
 };
 
 struct UIPropOverflowBlock
@@ -480,32 +480,32 @@ struct UIPropOverflowY
 
 struct UIPropPadding
 {
-    ui_css_padding_type_t Type = UI_CSS_PADDING__LENGTH;
     float Value = 0;
+    ui_css_padding_type_t Type = UI_CSS_PADDING_LENGTH;
 };
 
 struct UIPropPaddingTop
 {
-    ui_css_padding_right_type_t Type = UI_CSS_PADDING_TOP__LENGTH;
     float Value = 0;
+    ui_css_padding_right_type_t Type = UI_CSS_PADDING_LENGTH;
 };
 
 struct UIPropPaddingBottom
 {
-    ui_css_padding_bottom_type_t Type = UI_CSS_PADDING_BOTTOM__LENGTH;
     float Value = 0;
+    ui_css_padding_bottom_type_t Type = UI_CSS_PADDING_LENGTH;
 };
 
 struct UIPropPaddingLeft
 {
-    ui_css_padding_left_type_t Type = UI_CSS_PADDING_LEFT__LENGTH;
     float Value = 0;
+    ui_css_padding_left_type_t Type = UI_CSS_PADDING_LENGTH;
 };
 
 struct UIPropPaddingRight
 {
-    ui_css_padding_right_type_t Type = UI_CSS_PADDING_RIGHT__LENGTH;
     float Value = 0;
+    ui_css_padding_right_type_t Type = UI_CSS_PADDING_LENGTH;
 };
 
 struct UIPropPosition
@@ -515,32 +515,32 @@ struct UIPropPosition
 
 struct UIPropTop
 {
-    ui_css_top_type_t Type = UI_CSS_TOP_AUTO;
     float Value = UINAN;
+    ui_css_top_type_t Type = UI_CSS_TOP_AUTO;
 };
 
 struct UIPropBottom
 {
+    float Value = 0.0f;
     ui_css_bottom_type_t Type = UI_CSS_BOTTOM_AUTO;
-    float Value;
 };
 
 struct UIPropLeft
 {
+    float Value = 0.0f;
     ui_css_left_type_t Type = UI_CSS_LEFT_AUTO;
-    float Value;
 };
 
 struct UIPropRight
 {
+    float Value = 0.0f;
     ui_css_right_type_t Type = UI_CSS_RIGHT_AUTO;
-    float Value;
 };
 
 struct UIPropTabSize
 {
-    ui_css_tab_size_type_t Type = UI_CSS_TAB_SIZE__NUMBER;
     uint32_t Value = 8;
+    ui_css_tab_size_type_t Type = UI_CSS_TAB_SIZE_NUMBER;
 };
 
 struct UIPropTextAlign
@@ -575,8 +575,8 @@ struct UIPropTextDecorationStyle
 
 struct UIPropTextIndent
 {
-    ui_css_text_indent_type_t Type = UI_CSS_TEXT_INDENT__LENGTH;
-    float Value;
+    float Value = 0.0f;
+    ui_css_text_indent_type_t Type = UI_CSS_TEXT_INDENT_LENGTH;
 };
 
 struct UIPropTextJustify
@@ -601,12 +601,12 @@ struct UIPropTextTransform
 
 struct UIPropUnicodeBidi
 {
-    ui_css_unicode_bidi_type_t Value = UI_CSS_VALUE_INITIAL;
+    ui_css_unicode_bidi_type_t Value = UI_CSS_UNICODE_BIDI_NORMAL;
 };
 
 struct UIPropVerticalAlign
 {
-    ui_css_vertical_align_type_t Value = UI_CSS_VALUE_BASELINE;
+    ui_css_vertical_align_type_t Value = UI_CSS_VERTICAL_ALIGN_FIRST;
 };
 
 struct UIPropVisibility
@@ -621,8 +621,8 @@ struct UIPropWhiteSpace
 
 struct UIPropWidth
 {
-    ui_css_width_type_t Type = UI_CSS_WIDTH_AUTO;
     float Value = UINAN;
+    ui_css_width_type_t Type = UI_CSS_WIDTH_AUTO;
 };
 
 struct UIPropWordBreak
@@ -632,8 +632,8 @@ struct UIPropWordBreak
 
 struct UIPropWordSpacing
 {
+    float Value = 0.0f;
     ui_css_word_spacing_type_t Type = UI_CSS_WORD_SPACING_NORMAL;
-    float Value;
 };
 
 struct UIPropWordWrap
@@ -658,8 +658,8 @@ struct UIPropWritingMode
 
 struct UIPropZIndex
 {
+    int32_t Value = 0;
     ui_css_z_index_type_t Type = UI_CSS_Z_INDEX_AUTO;
-    int32_t Value;
 };
 
 // Helper: trim
@@ -875,12 +875,12 @@ inline bool UITypeC(UIString const& src, UIPropBaselineShift& dst)
     }
     if (src.ends_with('%'))
     {
-        dst.Type = UI_CSS_BASELINE_SHIFT__PERCENTAGE;
+        dst.Type = UI_CSS_BASELINE_SHIFT_PERCENTAGE;
         dst.Value = std::stof(src);
     }
     else
     {
-        dst.Type = UI_CSS_BASELINE_SHIFT__LENGTH;
+        dst.Type = UI_CSS_BASELINE_SHIFT_LENGTH;
         dst.Value = std::stof(src);
     }
     return false;
@@ -902,9 +902,9 @@ inline bool UITypeC(UIPropBaselineShift const& src, UIString& dst)
         return true;
     case UI_CSS_BASELINE_SHIFT_BOTTOM: dst = "bottom";
         return true;
-    case UI_CSS_BASELINE_SHIFT__PERCENTAGE: dst = std::to_string(src.Value) + "%";
+    case UI_CSS_BASELINE_SHIFT_PERCENTAGE: dst = std::to_string(src.Value) + "%";
         return true;
-    case UI_CSS_BASELINE_SHIFT__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_BASELINE_SHIFT_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     }
 }
@@ -977,7 +977,7 @@ inline bool UITypeC(UIString const& src, UIPropBorder& dst)
     case UIHash("outset"): dst.Type = UI_CSS_BORDER_OUTSET;
         return true;
     }
-    dst.Type = UI_CSS_BORDER__LENGTH;
+    dst.Type = UI_CSS_BORDER_LENGTH;
     dst.Value = std::stof(src);
     return true;
 }
@@ -1013,7 +1013,7 @@ inline bool UITypeC(UIPropBorder const& src, UIString& dst)
         return true;
     case UI_CSS_BORDER_OUTSET: dst = "outset";
         return true;
-    case UI_CSS_BORDER__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_BORDER_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     }
 }
@@ -1025,34 +1025,34 @@ inline bool UITypeC(UIString const& src, UIPropBorderTop& dst)
     switch (UIHash(s))
     {
     default: break;
-    case UIHash("thin"): dst.Type = UI_CSS_BORDER_TOP_THIN;
+    case UIHash("thin"): dst.Type = UI_CSS_BORDER_THIN;
         return true;
-    case UIHash("medium"): dst.Type = UI_CSS_BORDER_TOP_MEDIUM;
+    case UIHash("medium"): dst.Type = UI_CSS_BORDER_MEDIUM;
         return true;
-    case UIHash("thick"): dst.Type = UI_CSS_BORDER_TOP_THICK;
+    case UIHash("thick"): dst.Type = UI_CSS_BORDER_THICK;
         return true;
-    case UIHash("none"): dst.Type = UI_CSS_BORDER_TOP_NONE;
+    case UIHash("none"): dst.Type = UI_CSS_BORDER_NONE;
         return true;
-    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_TOP_HIDDEN;
+    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_HIDDEN;
         return true;
-    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_TOP_DOTTED;
+    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_DOTTED;
         return true;
-    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_TOP_DASHED;
+    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_DASHED;
         return true;
-    case UIHash("solid"): dst.Type = UI_CSS_BORDER_TOP_SOLID;
+    case UIHash("solid"): dst.Type = UI_CSS_BORDER_SOLID;
         return true;
-    case UIHash("double"): dst.Type = UI_CSS_BORDER_TOP_DOUBLE;
+    case UIHash("double"): dst.Type = UI_CSS_BORDER_DOUBLE;
         return true;
-    case UIHash("groove"): dst.Type = UI_CSS_BORDER_TOP_GROOVE;
+    case UIHash("groove"): dst.Type = UI_CSS_BORDER_GROOVE;
         return true;
-    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_TOP_RIDGE;
+    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_RIDGE;
         return true;
-    case UIHash("inset"): dst.Type = UI_CSS_BORDER_TOP_INSET;
+    case UIHash("inset"): dst.Type = UI_CSS_BORDER_INSET;
         return true;
-    case UIHash("outset"): dst.Type = UI_CSS_BORDER_TOP_OUTSET;
+    case UIHash("outset"): dst.Type = UI_CSS_BORDER_OUTSET;
         return true;
     }
-    dst.Type = UI_CSS_BORDER_TOP__LENGTH;
+    dst.Type = UI_CSS_BORDER_LENGTH;
     dst.Value = std::stof(src);
     return true;
 }
@@ -1062,33 +1062,33 @@ inline bool UITypeC(UIPropBorderTop const& src, UIString& dst)
     switch (src.Type)
     {
     default: return false;
-    case UI_CSS_BORDER_TOP_THIN: dst = "thin";
+    case UI_CSS_BORDER_THIN: dst = "thin";
         return true;
-    case UI_CSS_BORDER_TOP_MEDIUM: dst = "medium";
+    case UI_CSS_BORDER_MEDIUM: dst = "medium";
         return true;
-    case UI_CSS_BORDER_TOP_THICK: dst = "thick";
+    case UI_CSS_BORDER_THICK: dst = "thick";
         return true;
-    case UI_CSS_BORDER_TOP_NONE: dst = "none";
+    case UI_CSS_BORDER_NONE: dst = "none";
         return true;
-    case UI_CSS_BORDER_TOP_HIDDEN: dst = "hidden";
+    case UI_CSS_BORDER_HIDDEN: dst = "hidden";
         return true;
-    case UI_CSS_BORDER_TOP_DOTTED: dst = "dotted";
+    case UI_CSS_BORDER_DOTTED: dst = "dotted";
         return true;
-    case UI_CSS_BORDER_TOP_DASHED: dst = "dashed";
+    case UI_CSS_BORDER_DASHED: dst = "dashed";
         return true;
-    case UI_CSS_BORDER_TOP_SOLID: dst = "solid";
+    case UI_CSS_BORDER_SOLID: dst = "solid";
         return true;
-    case UI_CSS_BORDER_TOP_DOUBLE: dst = "double";
+    case UI_CSS_BORDER_DOUBLE: dst = "double";
         return true;
-    case UI_CSS_BORDER_TOP_GROOVE: dst = "groove";
+    case UI_CSS_BORDER_GROOVE: dst = "groove";
         return true;
-    case UI_CSS_BORDER_TOP_RIDGE: dst = "ridge";
+    case UI_CSS_BORDER_RIDGE: dst = "ridge";
         return true;
-    case UI_CSS_BORDER_TOP_INSET: dst = "inset";
+    case UI_CSS_BORDER_INSET: dst = "inset";
         return true;
-    case UI_CSS_BORDER_TOP_OUTSET: dst = "outset";
+    case UI_CSS_BORDER_OUTSET: dst = "outset";
         return true;
-    case UI_CSS_BORDER_TOP__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_BORDER_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     }
 }
@@ -1100,34 +1100,34 @@ inline bool UITypeC(UIString const& src, UIPropBorderBottom& dst)
     switch (UIHash(s))
     {
     default: break;
-    case UIHash("thin"): dst.Type = UI_CSS_BORDER_BOTTOM_THIN;
+    case UIHash("thin"): dst.Type = UI_CSS_BORDER_THIN;
         return true;
-    case UIHash("medium"): dst.Type = UI_CSS_BORDER_BOTTOM_MEDIUM;
+    case UIHash("medium"): dst.Type = UI_CSS_BORDER_MEDIUM;
         return true;
-    case UIHash("thick"): dst.Type = UI_CSS_BORDER_BOTTOM_THICK;
+    case UIHash("thick"): dst.Type = UI_CSS_BORDER_THICK;
         return true;
-    case UIHash("none"): dst.Type = UI_CSS_BORDER_BOTTOM_NONE;
+    case UIHash("none"): dst.Type = UI_CSS_BORDER_NONE;
         return true;
-    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_BOTTOM_HIDDEN;
+    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_HIDDEN;
         return true;
-    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_BOTTOM_DOTTED;
+    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_DOTTED;
         return true;
-    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_BOTTOM_DASHED;
+    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_DASHED;
         return true;
-    case UIHash("solid"): dst.Type = UI_CSS_BORDER_BOTTOM_SOLID;
+    case UIHash("solid"): dst.Type = UI_CSS_BORDER_SOLID;
         return true;
-    case UIHash("double"): dst.Type = UI_CSS_BORDER_BOTTOM_DOUBLE;
+    case UIHash("double"): dst.Type = UI_CSS_BORDER_DOUBLE;
         return true;
-    case UIHash("groove"): dst.Type = UI_CSS_BORDER_BOTTOM_GROOVE;
+    case UIHash("groove"): dst.Type = UI_CSS_BORDER_GROOVE;
         return true;
-    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_BOTTOM_RIDGE;
+    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_RIDGE;
         return true;
-    case UIHash("inset"): dst.Type = UI_CSS_BORDER_BOTTOM_INSET;
+    case UIHash("inset"): dst.Type = UI_CSS_BORDER_INSET;
         return true;
-    case UIHash("outset"): dst.Type = UI_CSS_BORDER_BOTTOM_OUTSET;
+    case UIHash("outset"): dst.Type = UI_CSS_BORDER_OUTSET;
         return true;
     }
-    dst.Type = UI_CSS_BORDER_BOTTOM__LENGTH;
+    dst.Type = UI_CSS_BORDER_LENGTH;
     dst.Value = std::stof(src);
     return true;
 }
@@ -1137,33 +1137,33 @@ inline bool UITypeC(UIPropBorderBottom const& src, UIString& dst)
     switch (src.Type)
     {
     default: return false;
-    case UI_CSS_BORDER_BOTTOM_THIN: dst = "thin";
+    case UI_CSS_BORDER_THIN: dst = "thin";
         return true;
-    case UI_CSS_BORDER_BOTTOM_MEDIUM: dst = "medium";
+    case UI_CSS_BORDER_MEDIUM: dst = "medium";
         return true;
-    case UI_CSS_BORDER_BOTTOM_THICK: dst = "thick";
+    case UI_CSS_BORDER_THICK: dst = "thick";
         return true;
-    case UI_CSS_BORDER_BOTTOM_NONE: dst = "none";
+    case UI_CSS_BORDER_NONE: dst = "none";
         return true;
-    case UI_CSS_BORDER_BOTTOM_HIDDEN: dst = "hidden";
+    case UI_CSS_BORDER_HIDDEN: dst = "hidden";
         return true;
-    case UI_CSS_BORDER_BOTTOM_DOTTED: dst = "dotted";
+    case UI_CSS_BORDER_DOTTED: dst = "dotted";
         return true;
-    case UI_CSS_BORDER_BOTTOM_DASHED: dst = "dashed";
+    case UI_CSS_BORDER_DASHED: dst = "dashed";
         return true;
-    case UI_CSS_BORDER_BOTTOM_SOLID: dst = "solid";
+    case UI_CSS_BORDER_SOLID: dst = "solid";
         return true;
-    case UI_CSS_BORDER_BOTTOM_DOUBLE: dst = "double";
+    case UI_CSS_BORDER_DOUBLE: dst = "double";
         return true;
-    case UI_CSS_BORDER_BOTTOM_GROOVE: dst = "groove";
+    case UI_CSS_BORDER_GROOVE: dst = "groove";
         return true;
-    case UI_CSS_BORDER_BOTTOM_RIDGE: dst = "ridge";
+    case UI_CSS_BORDER_RIDGE: dst = "ridge";
         return true;
-    case UI_CSS_BORDER_BOTTOM_INSET: dst = "inset";
+    case UI_CSS_BORDER_INSET: dst = "inset";
         return true;
-    case UI_CSS_BORDER_BOTTOM_OUTSET: dst = "outset";
+    case UI_CSS_BORDER_OUTSET: dst = "outset";
         return true;
-    case UI_CSS_BORDER_BOTTOM__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_BORDER_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     }
 }
@@ -1175,34 +1175,34 @@ inline bool UITypeC(UIString const& src, UIPropBorderLeft& dst)
     switch (UIHash(s))
     {
     default: break;
-    case UIHash("thin"): dst.Type = UI_CSS_BORDER_LEFT_THIN;
+    case UIHash("thin"): dst.Type = UI_CSS_BORDER_THIN;
         return true;
-    case UIHash("medium"): dst.Type = UI_CSS_BORDER_LEFT_MEDIUM;
+    case UIHash("medium"): dst.Type = UI_CSS_BORDER_MEDIUM;
         return true;
-    case UIHash("thick"): dst.Type = UI_CSS_BORDER_LEFT_THICK;
+    case UIHash("thick"): dst.Type = UI_CSS_BORDER_THICK;
         return true;
-    case UIHash("none"): dst.Type = UI_CSS_BORDER_LEFT_NONE;
+    case UIHash("none"): dst.Type = UI_CSS_BORDER_NONE;
         return true;
-    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_LEFT_HIDDEN;
+    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_HIDDEN;
         return true;
-    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_LEFT_DOTTED;
+    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_DOTTED;
         return true;
-    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_LEFT_DASHED;
+    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_DASHED;
         return true;
-    case UIHash("solid"): dst.Type = UI_CSS_BORDER_LEFT_SOLID;
+    case UIHash("solid"): dst.Type = UI_CSS_BORDER_SOLID;
         return true;
-    case UIHash("double"): dst.Type = UI_CSS_BORDER_LEFT_DOUBLE;
+    case UIHash("double"): dst.Type = UI_CSS_BORDER_DOUBLE;
         return true;
-    case UIHash("groove"): dst.Type = UI_CSS_BORDER_LEFT_GROOVE;
+    case UIHash("groove"): dst.Type = UI_CSS_BORDER_GROOVE;
         return true;
-    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_LEFT_RIDGE;
+    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_RIDGE;
         return true;
-    case UIHash("inset"): dst.Type = UI_CSS_BORDER_LEFT_INSET;
+    case UIHash("inset"): dst.Type = UI_CSS_BORDER_INSET;
         return true;
-    case UIHash("outset"): dst.Type = UI_CSS_BORDER_LEFT_OUTSET;
+    case UIHash("outset"): dst.Type = UI_CSS_BORDER_OUTSET;
         return true;
     }
-    dst.Type = UI_CSS_BORDER_LEFT__LENGTH;
+    dst.Type = UI_CSS_BORDER_LENGTH;
     dst.Value = std::stof(src);
     return true;
 }
@@ -1212,33 +1212,33 @@ inline bool UITypeC(UIPropBorderLeft const& src, UIString& dst)
     switch (src.Type)
     {
     default: return false;
-    case UI_CSS_BORDER_LEFT_THIN: dst = "thin";
+    case UI_CSS_BORDER_THIN: dst = "thin";
         return true;
-    case UI_CSS_BORDER_LEFT_MEDIUM: dst = "medium";
+    case UI_CSS_BORDER_MEDIUM: dst = "medium";
         return true;
-    case UI_CSS_BORDER_LEFT_THICK: dst = "thick";
+    case UI_CSS_BORDER_THICK: dst = "thick";
         return true;
-    case UI_CSS_BORDER_LEFT_NONE: dst = "none";
+    case UI_CSS_BORDER_NONE: dst = "none";
         return true;
-    case UI_CSS_BORDER_LEFT_HIDDEN: dst = "hidden";
+    case UI_CSS_BORDER_HIDDEN: dst = "hidden";
         return true;
-    case UI_CSS_BORDER_LEFT_DOTTED: dst = "dotted";
+    case UI_CSS_BORDER_DOTTED: dst = "dotted";
         return true;
-    case UI_CSS_BORDER_LEFT_DASHED: dst = "dashed";
+    case UI_CSS_BORDER_DASHED: dst = "dashed";
         return true;
-    case UI_CSS_BORDER_LEFT_SOLID: dst = "solid";
+    case UI_CSS_BORDER_SOLID: dst = "solid";
         return true;
-    case UI_CSS_BORDER_LEFT_DOUBLE: dst = "double";
+    case UI_CSS_BORDER_DOUBLE: dst = "double";
         return true;
-    case UI_CSS_BORDER_LEFT_GROOVE: dst = "groove";
+    case UI_CSS_BORDER_GROOVE: dst = "groove";
         return true;
-    case UI_CSS_BORDER_LEFT_RIDGE: dst = "ridge";
+    case UI_CSS_BORDER_RIDGE: dst = "ridge";
         return true;
-    case UI_CSS_BORDER_LEFT_INSET: dst = "inset";
+    case UI_CSS_BORDER_INSET: dst = "inset";
         return true;
-    case UI_CSS_BORDER_LEFT_OUTSET: dst = "outset";
+    case UI_CSS_BORDER_OUTSET: dst = "outset";
         return true;
-    case UI_CSS_BORDER_LEFT__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_BORDER_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     }
 }
@@ -1250,34 +1250,34 @@ inline bool UITypeC(UIString const& src, UIPropBorderRight& dst)
     switch (UIHash(s))
     {
     default: break;
-    case UIHash("thin"): dst.Type = UI_CSS_BORDER_RIGHT_THIN;
+    case UIHash("thin"): dst.Type = UI_CSS_BORDER_THIN;
         return true;
-    case UIHash("medium"): dst.Type = UI_CSS_BORDER_RIGHT_MEDIUM;
+    case UIHash("medium"): dst.Type = UI_CSS_BORDER_MEDIUM;
         return true;
-    case UIHash("thick"): dst.Type = UI_CSS_BORDER_RIGHT_THICK;
+    case UIHash("thick"): dst.Type = UI_CSS_BORDER_THICK;
         return true;
-    case UIHash("none"): dst.Type = UI_CSS_BORDER_RIGHT_NONE;
+    case UIHash("none"): dst.Type = UI_CSS_BORDER_NONE;
         return true;
-    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_RIGHT_HIDDEN;
+    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_HIDDEN;
         return true;
-    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_RIGHT_DOTTED;
+    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_DOTTED;
         return true;
-    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_RIGHT_DASHED;
+    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_DASHED;
         return true;
-    case UIHash("solid"): dst.Type = UI_CSS_BORDER_RIGHT_SOLID;
+    case UIHash("solid"): dst.Type = UI_CSS_BORDER_SOLID;
         return true;
-    case UIHash("double"): dst.Type = UI_CSS_BORDER_RIGHT_DOUBLE;
+    case UIHash("double"): dst.Type = UI_CSS_BORDER_DOUBLE;
         return true;
-    case UIHash("groove"): dst.Type = UI_CSS_BORDER_RIGHT_GROOVE;
+    case UIHash("groove"): dst.Type = UI_CSS_BORDER_GROOVE;
         return true;
-    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_RIGHT_RIDGE;
+    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_RIDGE;
         return true;
-    case UIHash("inset"): dst.Type = UI_CSS_BORDER_RIGHT_INSET;
+    case UIHash("inset"): dst.Type = UI_CSS_BORDER_INSET;
         return true;
-    case UIHash("outset"): dst.Type = UI_CSS_BORDER_RIGHT_OUTSET;
+    case UIHash("outset"): dst.Type = UI_CSS_BORDER_OUTSET;
         return true;
     }
-    dst.Type = UI_CSS_BORDER_RIGHT__LENGTH;
+    dst.Type = UI_CSS_BORDER_LENGTH;
     dst.Value = std::stof(src);
     return true;
 }
@@ -1287,33 +1287,33 @@ inline bool UITypeC(UIPropBorderRight const& src, UIString& dst)
     switch (src.Type)
     {
     default: return false;
-    case UI_CSS_BORDER_RIGHT_THIN: dst = "thin";
+    case UI_CSS_BORDER_THIN: dst = "thin";
         return true;
-    case UI_CSS_BORDER_RIGHT_MEDIUM: dst = "medium";
+    case UI_CSS_BORDER_MEDIUM: dst = "medium";
         return true;
-    case UI_CSS_BORDER_RIGHT_THICK: dst = "thick";
+    case UI_CSS_BORDER_THICK: dst = "thick";
         return true;
-    case UI_CSS_BORDER_RIGHT_NONE: dst = "none";
+    case UI_CSS_BORDER_NONE: dst = "none";
         return true;
-    case UI_CSS_BORDER_RIGHT_HIDDEN: dst = "hidden";
+    case UI_CSS_BORDER_HIDDEN: dst = "hidden";
         return true;
-    case UI_CSS_BORDER_RIGHT_DOTTED: dst = "dotted";
+    case UI_CSS_BORDER_DOTTED: dst = "dotted";
         return true;
-    case UI_CSS_BORDER_RIGHT_DASHED: dst = "dashed";
+    case UI_CSS_BORDER_DASHED: dst = "dashed";
         return true;
-    case UI_CSS_BORDER_RIGHT_SOLID: dst = "solid";
+    case UI_CSS_BORDER_SOLID: dst = "solid";
         return true;
-    case UI_CSS_BORDER_RIGHT_DOUBLE: dst = "double";
+    case UI_CSS_BORDER_DOUBLE: dst = "double";
         return true;
-    case UI_CSS_BORDER_RIGHT_GROOVE: dst = "groove";
+    case UI_CSS_BORDER_GROOVE: dst = "groove";
         return true;
-    case UI_CSS_BORDER_RIGHT_RIDGE: dst = "ridge";
+    case UI_CSS_BORDER_RIDGE: dst = "ridge";
         return true;
-    case UI_CSS_BORDER_RIGHT_INSET: dst = "inset";
+    case UI_CSS_BORDER_INSET: dst = "inset";
         return true;
-    case UI_CSS_BORDER_RIGHT_OUTSET: dst = "outset";
+    case UI_CSS_BORDER_OUTSET: dst = "outset";
         return true;
-    case UI_CSS_BORDER_RIGHT__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_BORDER_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     }
 }
@@ -1510,12 +1510,12 @@ inline bool UITypeC(UIString const& src, UIPropFlexBasis& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_BOTTOM__PERCENTAGE;
+        dst.Type = UI_CSS_BOTTOM_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_BOTTOM__LENGTH;
+        dst.Type = UI_CSS_BOTTOM_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1529,9 +1529,9 @@ inline bool UITypeC(UIPropFlexBasis const& src, UIString& dst)
     default: return false;
     case UI_CSS_FLEX_BASIS_CONTENT: dst = "content";
         return true;
-    case UI_CSS_FLEX_BASIS__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_FLEX_BASIS_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
-    case UI_CSS_FLEX_BASIS__PERCENTAGE: dst = std::to_string(src.Value) + "%";
+    case UI_CSS_FLEX_BASIS_PERCENTAGE: dst = std::to_string(src.Value) + "%";
         return true;
     }
 }
@@ -1540,7 +1540,7 @@ inline bool UITypeC(UIPropFlexBasis const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFlexGrow& dst)
 {
-    dst.Type = UI_CSS_FLEX_GROW__NUMBER;
+    dst.Type = UI_CSS_FLEX_GROW_NUMBER;
     dst.Value = std::stof(src);
     return true;
 }
@@ -1554,7 +1554,7 @@ inline bool UITypeC(UIPropFlexGrow const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFlexShrink& dst)
 {
-    dst.Type = UI_CSS_FLEX_SHRINK__NUMBER;
+    dst.Type = UI_CSS_FLEX_SHRINK_NUMBER;
     dst.Value = std::stof(src);
     return true;
 }
@@ -1572,12 +1572,12 @@ inline bool UITypeC(UIString const& src, UIPropFloatOffset& dst)
     auto s = UITrim(src);
     if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_FLOAT_OFFSET__PERCENTAGE;
+        dst.Type = UI_CSS_FLOAT_OFFSET_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_FLOAT_OFFSET__LENGTH;
+        dst.Type = UI_CSS_FLOAT_OFFSET_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1588,9 +1588,9 @@ inline bool UITypeC(UIPropFloatOffset const& src, UIString& dst)
     switch (src.Type)
     {
     default: return false;
-    case UI_CSS_FLOAT_OFFSET__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_FLOAT_OFFSET_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
-    case UI_CSS_FLOAT_OFFSET__PERCENTAGE: dst = std::to_string(src.Value) + "%";
+    case UI_CSS_FLOAT_OFFSET_PERCENTAGE: dst = std::to_string(src.Value) + "%";
         return true;
     }
 }
@@ -1642,12 +1642,12 @@ inline bool UITypeC(UIString const& src, UIPropInsetBlockEnd& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_INSET_BLOCK_END__PERCENTAGE;
+        dst.Type = UI_CSS_INSET_BLOCK_END_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_INSET_BLOCK_END__LENGTH;
+        dst.Type = UI_CSS_INSET_BLOCK_END_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1658,8 +1658,8 @@ inline bool UITypeC(UIPropInsetBlockEnd const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_INSET_BLOCK_END_AUTO: dst = "auto"; return true;
-    case UI_CSS_INSET_BLOCK_END__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_INSET_BLOCK_END__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_INSET_BLOCK_END_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_BLOCK_END_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -1673,12 +1673,12 @@ inline bool UITypeC(UIString const& src, UIPropInsetBlockStart& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_INSET_BLOCK_START__PERCENTAGE;
+        dst.Type = UI_CSS_INSET_BLOCK_START_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_INSET_BLOCK_START__LENGTH;
+        dst.Type = UI_CSS_INSET_BLOCK_START_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1689,8 +1689,8 @@ inline bool UITypeC(UIPropInsetBlockStart const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_INSET_BLOCK_START_AUTO: dst = "auto"; return true;
-    case UI_CSS_INSET_BLOCK_START__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_INSET_BLOCK_START__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_INSET_BLOCK_START_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_BLOCK_START_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -1704,12 +1704,12 @@ inline bool UITypeC(UIString const& src, UIPropInsetInlineEnd& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_INSET_INLINE_END__PERCENTAGE;
+        dst.Type = UI_CSS_INSET_INLINE_END_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_INSET_INLINE_END__LENGTH;
+        dst.Type = UI_CSS_INSET_INLINE_END_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1720,8 +1720,8 @@ inline bool UITypeC(UIPropInsetInlineEnd const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_INSET_INLINE_END_AUTO: dst = "auto"; return true;
-    case UI_CSS_INSET_INLINE_END__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_INSET_INLINE_END__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_INSET_INLINE_END_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_INLINE_END_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -1735,12 +1735,12 @@ inline bool UITypeC(UIString const& src, UIPropInsetInlineStart& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_INSET_INLINE_START__PERCENTAGE;
+        dst.Type = UI_CSS_INSET_INLINE_START_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_INSET_INLINE_START__LENGTH;
+        dst.Type = UI_CSS_INSET_INLINE_START_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1751,8 +1751,8 @@ inline bool UITypeC(UIPropInsetInlineStart const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_INSET_INLINE_START_AUTO: dst = "auto"; return true;
-    case UI_CSS_INSET_INLINE_START__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_INSET_INLINE_START__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_INSET_INLINE_START_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_INSET_INLINE_START_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -1767,12 +1767,12 @@ inline bool UITypeC(UIString const& src, UIPropLeft& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_LEFT__PERCENTAGE;
+        dst.Type = UI_CSS_LEFT_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_LEFT__LENGTH;
+        dst.Type = UI_CSS_LEFT_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1783,8 +1783,8 @@ inline bool UITypeC(UIPropLeft const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_LEFT_AUTO: dst = "auto"; return true;
-    case UI_CSS_LEFT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_LEFT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_LEFT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_LEFT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 template<>
@@ -1797,12 +1797,12 @@ inline bool UITypeC(UIString const& src, UIPropRight& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_RIGHT__PERCENTAGE;
+        dst.Type = UI_CSS_RIGHT_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_RIGHT__LENGTH;
+        dst.Type = UI_CSS_RIGHT_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1813,8 +1813,8 @@ inline bool UITypeC(UIPropRight const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_RIGHT_AUTO: dst = "auto"; return true;
-    case UI_CSS_RIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_RIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_RIGHT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_RIGHT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -1828,12 +1828,12 @@ inline bool UITypeC(UIString const& src, UIPropTop& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_TOP__PERCENTAGE;
+        dst.Type = UI_CSS_TOP_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_TOP__LENGTH;
+        dst.Type = UI_CSS_TOP_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1844,8 +1844,8 @@ inline bool UITypeC(UIPropTop const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_TOP_AUTO: dst = "auto"; return true;
-    case UI_CSS_TOP__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_TOP__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_TOP_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_TOP_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -1860,12 +1860,12 @@ inline bool UITypeC(UIString const& src, UIPropBottom& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_BOTTOM__PERCENTAGE;
+        dst.Type = UI_CSS_BOTTOM_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_BOTTOM__LENGTH;
+        dst.Type = UI_CSS_BOTTOM_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1878,9 +1878,9 @@ inline bool UITypeC(UIPropBottom const& src, UIString& dst)
     default: return false;
     case UI_CSS_BOTTOM_AUTO: dst = "auto";
         return true;
-    case UI_CSS_BOTTOM__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_BOTTOM_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
-    case UI_CSS_BOTTOM__PERCENTAGE: dst = std::to_string(src.Value) + "%";
+    case UI_CSS_BOTTOM_PERCENTAGE: dst = std::to_string(src.Value) + "%";
         return true;
     }
 }
@@ -1895,12 +1895,12 @@ inline bool UITypeC(UIString const& src, UIPropWidth& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_WIDTH__PERCENTAGE;
+        dst.Type = UI_CSS_WIDTH_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_WIDTH__LENGTH;
+        dst.Type = UI_CSS_WIDTH_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1911,9 +1911,9 @@ inline bool UITypeC(UIPropWidth const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_WIDTH_AUTO: dst = "auto"; return true;
-    case UI_CSS_WIDTH__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_WIDTH__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
-    case UI_CSS_WIDTH__NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_WIDTH_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_WIDTH_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_WIDTH_NUMBER: dst = std::to_string(src.Value); return true;
     }
 }
 
@@ -1928,12 +1928,12 @@ inline bool UITypeC(UIString const& src, UIPropHeight& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_HEIGHT__PERCENTAGE;
+        dst.Type = UI_CSS_HEIGHT_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_HEIGHT__LENGTH;
+        dst.Type = UI_CSS_HEIGHT_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1946,9 +1946,9 @@ inline bool UITypeC(UIPropHeight const& src, UIString& dst)
     default: return false;
     case UI_CSS_HEIGHT_AUTO: dst = "auto";
         return true;
-    case UI_CSS_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px";
+    case UI_CSS_HEIGHT_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
-    case UI_CSS_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%";
+    case UI_CSS_HEIGHT_PERCENTAGE: dst = std::to_string(src.Value) + "%";
         return true;
     }
 }
@@ -1964,12 +1964,12 @@ inline bool UITypeC(UIString const& src, UIPropMinWidth& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MIN_WIDTH__PERCENTAGE;
+        dst.Type = UI_CSS_MIN_WIDTH_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MIN_WIDTH__LENGTH;
+        dst.Type = UI_CSS_MIN_WIDTH_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -1980,8 +1980,8 @@ inline bool UITypeC(UIPropMinWidth const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MIN_WIDTH_AUTO: dst = "auto"; return true;
-    case UI_CSS_MIN_WIDTH__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MIN_WIDTH__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MIN_WIDTH_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MIN_WIDTH_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -1995,12 +1995,12 @@ inline bool UITypeC(UIString const& src, UIPropMaxWidth& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MAX_WIDTH__PERCENTAGE;
+        dst.Type = UI_CSS_MAX_WIDTH_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MAX_WIDTH__LENGTH;
+        dst.Type = UI_CSS_MAX_WIDTH_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2011,8 +2011,8 @@ inline bool UITypeC(UIPropMaxWidth const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MAX_WIDTH_NONE: dst = "none"; return true;
-    case UI_CSS_MAX_WIDTH__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MAX_WIDTH__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MAX_WIDTH_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MAX_WIDTH_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2026,12 +2026,12 @@ inline bool UITypeC(UIString const& src, UIPropMinHeight& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MIN_HEIGHT__PERCENTAGE;
+        dst.Type = UI_CSS_MIN_HEIGHT_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MIN_HEIGHT__LENGTH;
+        dst.Type = UI_CSS_MIN_HEIGHT_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2042,8 +2042,8 @@ inline bool UITypeC(UIPropMinHeight const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MIN_HEIGHT_AUTO: dst = "auto"; return true;
-    case UI_CSS_MIN_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MIN_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MIN_HEIGHT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MIN_HEIGHT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2057,12 +2057,12 @@ inline bool UITypeC(UIString const& src, UIPropMaxHeight& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MAX_HEIGHT__PERCENTAGE;
+        dst.Type = UI_CSS_MAX_HEIGHT_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MAX_HEIGHT__LENGTH;
+        dst.Type = UI_CSS_MAX_HEIGHT_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2073,8 +2073,8 @@ inline bool UITypeC(UIPropMaxHeight const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MAX_HEIGHT_NONE: dst = "none"; return true;
-    case UI_CSS_MAX_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MAX_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MAX_HEIGHT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MAX_HEIGHT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2090,7 +2090,7 @@ inline bool UITypeC(UIString const& src, UIPropLetterSpacing& dst)
     }
     else
     {
-        dst.Type = UI_CSS_LETTER_SPACING__LENGTH;
+        dst.Type = UI_CSS_LETTER_SPACING_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2101,7 +2101,7 @@ inline bool UITypeC(UIPropLetterSpacing const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_LETTER_SPACING_NORMAL: dst = "normal"; return true;
-    case UI_CSS_LETTER_SPACING__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_LETTER_SPACING_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
     }
 }
 
@@ -2115,12 +2115,12 @@ inline bool UITypeC(UIString const& src, UIPropLineHeight& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_LINE_HEIGHT__PERCENTAGE;
+        dst.Type = UI_CSS_LINE_HEIGHT_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_LINE_HEIGHT__LENGTH;
+        dst.Type = UI_CSS_LINE_HEIGHT_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2131,8 +2131,8 @@ inline bool UITypeC(UIPropLineHeight const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_LINE_HEIGHT_NORMAL: dst = "normal"; return true;
-    case UI_CSS_LINE_HEIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_LINE_HEIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_LINE_HEIGHT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_LINE_HEIGHT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2142,12 +2142,12 @@ inline bool UITypeC(UIString const& src, UIPropTextIndent& dst)
     auto s = UITrim(src);
     if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_TEXT_INDENT__PERCENTAGE;
+        dst.Type = UI_CSS_TEXT_INDENT_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_TEXT_INDENT__LENGTH;
+        dst.Type = UI_CSS_TEXT_INDENT_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2157,8 +2157,8 @@ inline bool UITypeC(UIPropTextIndent const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_TEXT_INDENT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_TEXT_INDENT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_TEXT_INDENT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_TEXT_INDENT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2166,7 +2166,7 @@ template<>
 inline bool UITypeC(UIString const& src, UIPropTabSize& dst)
 {
     auto s = UITrim(src);
-    dst.Type = UI_CSS_TAB_SIZE__LENGTH;
+    dst.Type = UI_CSS_TAB_SIZE_LENGTH;
     dst.Value = std::stof(s);
     return true;
 }
@@ -2175,8 +2175,8 @@ inline bool UITypeC(UIPropTabSize const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_TAB_SIZE__NUMBER: dst = std::to_string(src.Value); return true;
-    case UI_CSS_TAB_SIZE__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_TAB_SIZE_NUMBER: dst = std::to_string(src.Value); return true;
+    case UI_CSS_TAB_SIZE_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
     }
 }
 
@@ -2190,12 +2190,12 @@ inline bool UITypeC(UIString const& src, UIPropMargin& dst)
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MARGIN__PERCENTAGE;
+        dst.Type = UI_CSS_MARGIN_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MARGIN__LENGTH;
+        dst.Type = UI_CSS_MARGIN_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2206,8 +2206,8 @@ inline bool UITypeC(UIPropMargin const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MARGIN_AUTO: dst = "auto"; return true;
-    case UI_CSS_MARGIN__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MARGIN__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MARGIN_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MARGIN_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2217,16 +2217,16 @@ inline bool UITypeC(UIString const& src, UIPropMarginLeft& dst)
     auto s = UITrim(src);
     if (s == "auto")
     {
-        dst.Type = UI_CSS_MARGIN_LEFT_AUTO;
+        dst.Type = UI_CSS_MARGIN_AUTO;
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MARGIN_LEFT__PERCENTAGE;
+        dst.Type = UI_CSS_MARGIN_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MARGIN_LEFT__LENGTH;
+        dst.Type = UI_CSS_MARGIN_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2236,9 +2236,9 @@ inline bool UITypeC(UIPropMarginLeft const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_MARGIN_LEFT_AUTO: dst = "auto"; return true;
-    case UI_CSS_MARGIN_LEFT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MARGIN_LEFT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MARGIN_AUTO: dst = "auto"; return true;
+    case UI_CSS_MARGIN_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MARGIN_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2248,16 +2248,16 @@ inline bool UITypeC(UIString const& src, UIPropMarginRight& dst)
     auto s = UITrim(src);
     if (s == "auto")
     {
-        dst.Type = UI_CSS_MARGIN_RIGHT_AUTO;
+        dst.Type = UI_CSS_MARGIN_AUTO;
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MARGIN_RIGHT__PERCENTAGE;
+        dst.Type = UI_CSS_MARGIN_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MARGIN_RIGHT__LENGTH;
+        dst.Type = UI_CSS_MARGIN_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2267,9 +2267,9 @@ inline bool UITypeC(UIPropMarginRight const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_MARGIN_RIGHT_AUTO: dst = "auto"; return true;
-    case UI_CSS_MARGIN_RIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MARGIN_RIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MARGIN_AUTO: dst = "auto"; return true;
+    case UI_CSS_MARGIN_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MARGIN_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2279,16 +2279,16 @@ inline bool UITypeC(UIString const& src, UIPropMarginTop& dst)
     auto s = UITrim(src);
     if (s == "auto")
     {
-        dst.Type = UI_CSS_MARGIN_TOP_AUTO;
+        dst.Type = UI_CSS_MARGIN_AUTO;
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MARGIN_TOP__PERCENTAGE;
+        dst.Type = UI_CSS_MARGIN_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MARGIN_TOP__LENGTH;
+        dst.Type = UI_CSS_MARGIN_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2298,9 +2298,9 @@ inline bool UITypeC(UIPropMarginTop const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_MARGIN_TOP_AUTO: dst = "auto"; return true;
-    case UI_CSS_MARGIN_TOP__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MARGIN_TOP__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MARGIN_AUTO: dst = "auto"; return true;
+    case UI_CSS_MARGIN_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MARGIN_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2310,16 +2310,16 @@ inline bool UITypeC(UIString const& src, UIPropMarginBottom& dst)
     auto s = UITrim(src);
     if (s == "auto")
     {
-        dst.Type = UI_CSS_MARGIN_BOTTOM_AUTO;
+        dst.Type = UI_CSS_MARGIN_AUTO;
     }
     else if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_MARGIN_BOTTOM__PERCENTAGE;
+        dst.Type = UI_CSS_MARGIN_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_MARGIN_BOTTOM__LENGTH;
+        dst.Type = UI_CSS_MARGIN_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2329,9 +2329,9 @@ inline bool UITypeC(UIPropMarginBottom const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_MARGIN_BOTTOM_AUTO: dst = "auto"; return true;
-    case UI_CSS_MARGIN_BOTTOM__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MARGIN_BOTTOM__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_MARGIN_AUTO: dst = "auto"; return true;
+    case UI_CSS_MARGIN_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_MARGIN_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2342,12 +2342,12 @@ inline bool UITypeC(UIString const& src, UIPropPadding& dst)
     auto s = UITrim(src);
     if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_PADDING__PERCENTAGE;
+        dst.Type = UI_CSS_PADDING_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_PADDING__LENGTH;
+        dst.Type = UI_CSS_PADDING_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2357,8 +2357,8 @@ inline bool UITypeC(UIPropPadding const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_PADDING__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_PADDING__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_PADDING_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_PADDING_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2368,12 +2368,12 @@ inline bool UITypeC(UIString const& src, UIPropPaddingLeft& dst)
     auto s = UITrim(src);
     if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_PADDING_LEFT__PERCENTAGE;
+        dst.Type = UI_CSS_PADDING_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_PADDING_LEFT__LENGTH;
+        dst.Type = UI_CSS_PADDING_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2383,8 +2383,8 @@ inline bool UITypeC(UIPropPaddingLeft const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_PADDING_LEFT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_PADDING_LEFT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_PADDING_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_PADDING_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2394,12 +2394,12 @@ inline bool UITypeC(UIString const& src, UIPropPaddingRight& dst)
     auto s = UITrim(src);
     if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_PADDING_RIGHT__PERCENTAGE;
+        dst.Type = UI_CSS_PADDING_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_PADDING_RIGHT__LENGTH;
+        dst.Type = UI_CSS_PADDING_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2409,8 +2409,8 @@ inline bool UITypeC(UIPropPaddingRight const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_PADDING_RIGHT__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_PADDING_RIGHT__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_PADDING_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_PADDING_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2420,12 +2420,12 @@ inline bool UITypeC(UIString const& src, UIPropPaddingTop& dst)
     auto s = UITrim(src);
     if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_PADDING_TOP__PERCENTAGE;
+        dst.Type = UI_CSS_PADDING_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_PADDING_TOP__LENGTH;
+        dst.Type = UI_CSS_PADDING_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2435,8 +2435,8 @@ inline bool UITypeC(UIPropPaddingTop const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_PADDING_TOP__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_PADDING_TOP__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_PADDING_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_PADDING_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2446,12 +2446,12 @@ inline bool UITypeC(UIString const& src, UIPropPaddingBottom& dst)
     auto s = UITrim(src);
     if (s.ends_with('%'))
     {
-        dst.Type = UI_CSS_PADDING_BOTTOM__PERCENTAGE;
+        dst.Type = UI_CSS_PADDING_PERCENTAGE;
         dst.Value = std::stof(s);
     }
     else
     {
-        dst.Type = UI_CSS_PADDING_BOTTOM__LENGTH;
+        dst.Type = UI_CSS_PADDING_LENGTH;
         dst.Value = std::stof(s);
     }
     return true;
@@ -2461,8 +2461,8 @@ inline bool UITypeC(UIPropPaddingBottom const& src, UIString& dst)
 {
     switch (src.Type) {
     default: return false;
-    case UI_CSS_PADDING_BOTTOM__LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_PADDING_BOTTOM__PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
+    case UI_CSS_PADDING_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
+    case UI_CSS_PADDING_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
 }
 
@@ -2651,7 +2651,7 @@ inline bool UITypeC(UIString const& src, UIPropZIndex& dst)
     case UIHash("auto"): dst.Type = UI_CSS_Z_INDEX_AUTO;
         return true;
     }
-    dst.Type = UI_CSS_Z_INDEX__INTEGER;
+    dst.Type = UI_CSS_Z_INDEX_INTEGER;
     dst.Value = std::stoi(s);
     return true;
 }
@@ -2663,7 +2663,7 @@ inline bool UITypeC(UIPropZIndex const& src, UIString& dst)
     default: return false;
     case UI_CSS_Z_INDEX_AUTO: dst = "auto";
         return true;
-    case UI_CSS_Z_INDEX__INTEGER: dst = std::to_string(src.Value);
+    case UI_CSS_Z_INDEX_INTEGER: dst = std::to_string(src.Value);
         return true;
     }
 }

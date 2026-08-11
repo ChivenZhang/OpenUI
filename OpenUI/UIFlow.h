@@ -32,5 +32,5 @@ public:
 	void setStyle(UIFlowStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateFlow;
+	UIPrivateRaw m_Private;
 };

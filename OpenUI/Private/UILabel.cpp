@@ -15,9 +15,8 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize2.h>
 
-class UILabelPrivate : public UIWidgetPrivate
+struct UILabelPrivate : UIPrivate
 {
-public:
 	UILabelStyle Style;
 	UIString Text;
 	UIImage Image, ImageScaled;
@@ -26,13 +25,13 @@ public:
 	bool Hovered = false;
 	UISignalAs<UIString> LinkHovered, LinkActivated;
 };
-#define PRIVATE() ((UILabelPrivate*)m_PrivateLabel)
+#define PRIVATE() ((UILabelPrivate*)m_Private)
 
 UILabel::UILabel(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateLabel = new UILabelPrivate;
+	m_Private = new UILabelPrivate;
 
 	linkHovered = &PRIVATE()->LinkHovered;
 	linkActivated = &PRIVATE()->LinkActivated;
@@ -53,7 +52,7 @@ UILabel::UILabel(UICanvasRaw canvas)
 
 UILabel::~UILabel()
 {
-	delete m_PrivateLabel; m_PrivateLabel = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UILabel::layout(UIRect client)

@@ -12,9 +12,8 @@
 #include "../UICanvas.h"
 
 /// @brief 
-class UIRadioPrivate : public UIWidgetPrivate
+struct UIRadioPrivate : UIPrivate
 {
-public:
 	UIRadioStyle Style;
 	UIButtonRef Button;
 	UILabelRef Label;
@@ -27,13 +26,13 @@ public:
 	bool Hovered = false;
 	bool Checked = false;
 };
-#define PRIVATE() ((UIRadioPrivate*) m_PrivateRadio)
+#define PRIVATE() ((UIRadioPrivate*) m_Private)
 
 UIRadio::UIRadio(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateRadio = new UIRadioPrivate;
+	m_Private = new UIRadioPrivate;
 
 	clicked = &PRIVATE()->OnClicked;
 	pressed = &PRIVATE()->OnPressed;
@@ -44,8 +43,13 @@ UIRadio::UIRadio(UICanvasRaw canvas)
 
 	PRIVATE()->Button = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Button);
-	PRIVATE()->Button->setMinSize(16, 16);
-	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
+	PRIVATE()->Button->setMinSize({16, UI_CSS_MIN_WIDTH_LENGTH}, {16, UI_CSS_MIN_HEIGHT_LENGTH});
+	PRIVATE()->Button->setMargin(
+		{ 8, UI_CSS_MARGIN_LENGTH},
+		{ 0, UI_CSS_MARGIN_LENGTH},
+		{ 8, UI_CSS_MARGIN_LENGTH},
+		{ 0, UI_CSS_MARGIN_LENGTH }
+		);
 	PRIVATE()->Button->setCheckable(true);
 
 	PRIVATE()->Label = UINew<UILabel>(canvas);
@@ -98,24 +102,32 @@ UIRadio::~UIRadio()
 	if (PRIVATE()->SelfGroup->Active == this) PRIVATE()->SelfGroup->Active = nullptr;
 	if (PRIVATE()->OtherGroup->Active == this) PRIVATE()->OtherGroup->Active = nullptr;
 	PRIVATE()->OtherGroup = nullptr;
-	delete m_PrivateRadio; m_PrivateRadio = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIRadio::arrange(UIRect client)
 {
-	this->setAlignSelf(UI::AlignStretch);
-	this->setJustifyContent(UI::JustifySpaceEvenly);
+	this->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
+	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
-	PRIVATE()->Button->setFlexGrow(0);
-	PRIVATE()->Button->setAlignSelf(UI::AlignCenter);
+	PRIVATE()->Button->setFlexGrow({0, UI_CSS_FLEX_GROW_NUMBER});
+	PRIVATE()->Button->setAlignSelf({UI_CSS_ALIGN_SELF_CENTER});
 
-	PRIVATE()->Label->setFlexGrow(1);
-	PRIVATE()->Label->setAlignSelf(UI::AlignStretch);
+	PRIVATE()->Label->setFlexGrow({1, UI_CSS_FLEX_GROW_NUMBER});
+	PRIVATE()->Label->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
 
 	auto painter = getCanvas()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;
-	PRIVATE()->Button->setFixedSize(fontSize * getCanvas()->getConfig().DisplayScale, fontSize * getCanvas()->getConfig().DisplayScale);
-	PRIVATE()->Button->setMargin({ 8 * getCanvas()->getConfig().DisplayScale, 0, 8 * getCanvas()->getConfig().DisplayScale, 0 });
+	PRIVATE()->Button->setFixedSize(
+		{fontSize * getCanvas()->getConfig().DisplayScale, UI_CSS_WIDTH_LENGTH},
+		{fontSize * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH}
+		);
+	PRIVATE()->Button->setMargin(
+		{ 8 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH},
+		{8 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH}
+		);
 	auto style = PRIVATE()->Button->getStyle();
 	style.Round = { (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) , (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) };
 	PRIVATE()->Button->setStyle(style);

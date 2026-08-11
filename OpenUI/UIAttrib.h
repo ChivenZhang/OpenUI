@@ -9,7 +9,7 @@
 * Created by chivenzhang@gmail.com.
 *
 * =================================================*/
-#include "UI.h"
+#include "UIPublic.h"
 
 class OPENUI_API UIAttribData
 {
@@ -54,8 +54,6 @@ protected:
     T& m_Data;
 };
 
-struct UIAttribPrivate {};
-
 /// @brief
 class OPENUI_API UIAttrib
 {
@@ -93,7 +91,7 @@ public:
 
 private:
     bool m_IsDirty;
-    UIRaw<UIAttribPrivate> m_Private;
+    UIPrivateRaw m_Private;
 };
 using UIAttribRef = UIRef<UIAttrib>;
 using UIAttribRaw = UIRaw<UIAttrib>;

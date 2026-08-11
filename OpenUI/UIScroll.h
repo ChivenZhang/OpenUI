@@ -67,7 +67,7 @@ protected:
 	void wheelEvent(UIMouseWheelEventRaw event) override;
 
 private:
-	UIWidgetPrivateRaw m_PrivateScroll;
+	UIPrivateRaw m_Private;
 };
 using UIScrollRef = UIRef<UIScroll>;
 using UIScrollRaw = UIRaw<UIScroll>;

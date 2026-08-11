@@ -11,17 +11,17 @@
 #include "../UIAttrib.h"
 
 #undef PRIVATE
-struct UIAttribPrivateData : UIAttribPrivate
+struct UIAttribPrivate : UIPrivate
 {
-    UIStringMap<UIAttribDataRef> Attribs;
+    UIStringHashMap<UIAttribDataRef> Attribs;
 };
-#define PRIVATE() ((UIAttribPrivateData*)m_Private)
+#define PRIVATE() ((UIAttribPrivate*)m_Private)
 
 UIAttrib::UIAttrib()
     :
     m_IsDirty(true)
 {
-    m_Private = new UIAttribPrivateData;
+    m_Private = new UIAttribPrivate;
 }
 
 UIAttrib::~UIAttrib()

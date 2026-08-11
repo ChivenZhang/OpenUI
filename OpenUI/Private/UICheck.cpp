@@ -11,9 +11,8 @@
 #include "../UICheck.h"
 #include "../UICanvas.h"
 
-class UICheckPrivate : public UIWidgetPrivate
+struct UICheckPrivate : UIPrivate
 {
-public:
 	UICheckStyle Style;
 	UIButtonRef Button;
 	UILabelRef Label;
@@ -25,13 +24,13 @@ public:
 	bool Hovered = false;
 	bool Checked = false;
 };
-#define PRIVATE() ((UICheckPrivate*) m_PrivateCheck)
+#define PRIVATE() ((UICheckPrivate*) m_Private)
 
 UICheck::UICheck(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateCheck = new UICheckPrivate;
+	m_Private = new UICheckPrivate;
 
 	clicked = &PRIVATE()->OnClicked;
 	pressed = &PRIVATE()->OnPressed;
@@ -40,8 +39,13 @@ UICheck::UICheck(UICanvasRaw canvas)
 
 	PRIVATE()->Button = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Button);
-	PRIVATE()->Button->setMinSize(16, 16);
-	PRIVATE()->Button->setMargin({ 8, 0, 8, 0 });
+	PRIVATE()->Button->setMinSize({16.0f, UI_CSS_MIN_WIDTH_LENGTH}, {16.0f, UI_CSS_MIN_HEIGHT_LENGTH});
+	PRIVATE()->Button->setMargin(
+		{ 8.0f },
+		{ 8.0f },
+		{ 0.0f },
+		{ 0.0f }
+		);
 	PRIVATE()->Button->setCheckable(true);
 
 	{
@@ -91,24 +95,32 @@ UICheck::UICheck(UICanvasRaw canvas)
 
 UICheck::~UICheck()
 {
-	delete m_PrivateCheck; m_PrivateCheck = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UICheck::arrange(UIRect client)
 {
-	this->setAlignSelf(UI::AlignStretch);
-	this->setJustifyContent(UI::JustifySpaceEvenly);
+	this->setAlignSelf({UI_CSS_ALIGN_SELF_STRETCH});
+	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
-	PRIVATE()->Button->setFlexGrow(0);
-	PRIVATE()->Button->setAlignSelf(UI::AlignCenter);
+	PRIVATE()->Button->setFlexGrow({UI_CSS_FLEX_GROW_NUMBER, 0});
+	PRIVATE()->Button->setAlignSelf({UI_CSS_ALIGN_SELF_CENTER});
 
-	PRIVATE()->Label->setFlexGrow(1);
-	PRIVATE()->Label->setAlignSelf(UI::AlignStretch);
+	PRIVATE()->Label->setFlexGrow({UI_CSS_FLEX_GROW_NUMBER, 1});
+	PRIVATE()->Label->setAlignSelf({UI_CSS_ALIGN_SELF_STRETCH});
 
 	auto painter = getCanvas()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;
-	PRIVATE()->Button->setFixedSize(fontSize * getCanvas()->getConfig().DisplayScale, fontSize * getCanvas()->getConfig().DisplayScale);
-	PRIVATE()->Button->setMargin({ 8 * getCanvas()->getConfig().DisplayScale, 0, 8 * getCanvas()->getConfig().DisplayScale, 0 });
+	PRIVATE()->Button->setFixedSize(
+		{fontSize * getCanvas()->getConfig().DisplayScale, UI_CSS_WIDTH_LENGTH},
+		{fontSize * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH}
+		);
+	PRIVATE()->Button->setMargin(
+		{8 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH},
+		{8 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH}
+		);
 }
 
 void UICheck::layout(UIRect client)

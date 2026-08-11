@@ -24,9 +24,8 @@ struct UITopLevelWidget
 	int32_t ZOrder;
 };
 
-class UICanvasPrivate : public UIWidgetPrivate
+struct UICanvasPrivate : UIPrivate
 {
-public:
 	UIConfig Config;
 	UIDeviceRaw Device;
 	// UIRenderRef Render;
@@ -139,7 +138,7 @@ void UICanvas::setAnimate(UIWidgetRaw value, bool animate)
 	{
 		auto result = std::find(PRIVATE()->AnimateList.begin(), PRIVATE()->AnimateList.end(), value);
 		if (result == PRIVATE()->AnimateList.end())
-			PRIVATE()->AnimateList.push_back(value);
+			PRIVATE()->AnimateList.emplace_back(value);
 	}
 	else
 	{
@@ -270,358 +269,362 @@ bool UICanvas::layoutWidget(UIRect client)
 	};
 
 	UILambda<YGNodeRef(UIWidgetRaw, UIRect)> foreach_func;
-	foreach_func = [&](UIWidgetRaw element, UIRect client)-> YGNodeRef
+	foreach_func = [&](UIWidgetRaw widget, UIRect client)-> YGNodeRef
 	{
 		auto node = YGNodeNew();
 
-		switch (element->getDisplayType())
+		switch (widget->getDisplayType().Value)
 		{
-		case UI::DisplayFlex: YGNodeStyleSetDisplay(node, YGDisplayFlex);
+		default:
+		case UI_CSS_DISPLAY_NONE: YGNodeStyleSetDisplay(node, YGDisplayNone);
 			break;
-		case UI::DisplayNone: YGNodeStyleSetDisplay(node, YGDisplayNone);
+		case UI_CSS_DISPLAY_FLEX: YGNodeStyleSetDisplay(node, YGDisplayFlex);
 			break;
 		}
-		switch (element->getPositionType())
+		switch (widget->getPositionType().Value)
 		{
-		case UI::PositionStatic: YGNodeStyleSetPositionType(node, YGPositionTypeStatic);
+		default:
+		case UI_CSS_POSITION_STATIC: YGNodeStyleSetPositionType(node, YGPositionTypeStatic);
 			break;
-		case UI::PositionRelative: YGNodeStyleSetPositionType(node, YGPositionTypeRelative);
+		case UI_CSS_POSITION_RELATIVE: YGNodeStyleSetPositionType(node, YGPositionTypeRelative);
 			break;
-		case UI::PositionAbsolute: YGNodeStyleSetPositionType(node, YGPositionTypeAbsolute);
+		case UI_CSS_POSITION_ABSOLUTE: YGNodeStyleSetPositionType(node, YGPositionTypeAbsolute);
 			break;
 		}
-		switch (element->getFixedPosX().Unit)
+		switch (widget->getFixedPosX().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, UINAN);
+		default:
+		case UI_CSS_LEFT_AUTO: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, element->getFixedPosX());
+		case UI_CSS_LEFT_LENGTH: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, widget->getFixedPosX().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeLeft, element->getFixedPosX());
+		case UI_CSS_LEFT_PERCENTAGE: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeLeft, widget->getFixedPosX().Value);
 			break;
 		}
-		switch (element->getFixedPosY().Unit)
+		switch (widget->getFixedPosY().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, UINAN);
+		default:
+		case UI_CSS_TOP_AUTO: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, element->getFixedPosY());
+		case UI_CSS_TOP_LENGTH: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, widget->getFixedPosY().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeTop, element->getFixedPosY());
+		case UI_CSS_TOP_PERCENTAGE: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeTop, widget->getFixedPosY().Value);
 			break;
 		}
-		switch (element->getFixedWidth().Unit)
+		switch (widget->getFixedWidth().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetWidth(node, UINAN);
+		default: YGNodeStyleSetWidth(node, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetWidth(node, element->getFixedWidth());
+		case UI_CSS_WIDTH_LENGTH: YGNodeStyleSetWidth(node, widget->getFixedWidth().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetWidthPercent(node, element->getFixedWidth());
+		case UI_CSS_WIDTH_PERCENTAGE: YGNodeStyleSetWidthPercent(node, widget->getFixedWidth().Value);
 			break;
-		case UI::UnitAuto: YGNodeStyleSetWidthAuto(node);
+		case UI_CSS_WIDTH_AUTO: YGNodeStyleSetWidthAuto(node);
 			break;
 		}
-		switch (element->getFixedHeight().Unit)
+		switch (widget->getFixedHeight().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetHeight(node, UINAN);
+		default: YGNodeStyleSetHeight(node, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetHeight(node, element->getFixedHeight());
+		case UI_CSS_HEIGHT_LENGTH: YGNodeStyleSetHeight(node, widget->getFixedHeight().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetHeightPercent(node, element->getFixedHeight());
+		case UI_CSS_HEIGHT_PERCENTAGE: YGNodeStyleSetHeightPercent(node, widget->getFixedHeight().Value);
 			break;
-		case UI::UnitAuto: YGNodeStyleSetHeightAuto(node);
+		case UI_CSS_HEIGHT_AUTO: YGNodeStyleSetHeightAuto(node);
 			break;
 		}
-		switch (element->getMinWidth().Unit)
+		switch (widget->getMinWidth().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMinWidth(node, UINAN);
+		default: YGNodeStyleSetMinWidth(node, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMinWidth(node, element->getMinWidth());
+		case UI_CSS_MIN_WIDTH_LENGTH: YGNodeStyleSetMinWidth(node, widget->getMinWidth().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMinWidthPercent(node, element->getMinWidth());
+		case UI_CSS_MIN_WIDTH_PERCENTAGE: YGNodeStyleSetMinWidthPercent(node, widget->getMinWidth().Value);
 			break;
 		}
-		switch (element->getMinHeight().Unit)
+		switch (widget->getMinHeight().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMinHeight(node, UINAN);
+		default: YGNodeStyleSetMinHeight(node, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMinHeight(node, element->getMinHeight());
+		case UI_CSS_MIN_HEIGHT_LENGTH: YGNodeStyleSetMinHeight(node, widget->getMinHeight().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMinHeightPercent(node, element->getMinHeight());
+		case UI_CSS_MIN_HEIGHT_PERCENTAGE: YGNodeStyleSetMinHeightPercent(node, widget->getMinHeight().Value);
 			break;
 		}
-		switch (element->getMaxWidth().Unit)
+		switch (widget->getMaxWidth().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMaxWidth(node, UINAN);
+		default: YGNodeStyleSetMaxWidth(node, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMaxWidth(node, element->getMaxWidth());
+		case UI_CSS_MAX_WIDTH_LENGTH: YGNodeStyleSetMaxWidth(node, widget->getMaxWidth().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMaxWidthPercent(node, element->getMaxWidth());
+		case UI_CSS_MAX_WIDTH_PERCENTAGE: YGNodeStyleSetMaxWidthPercent(node, widget->getMaxWidth().Value);
 			break;
 		}
-		switch (element->getMaxHeight().Unit)
+		switch (widget->getMaxHeight().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMaxHeight(node, UINAN);
+		default: YGNodeStyleSetMaxHeight(node, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMaxHeight(node, element->getMaxHeight());
+		case UI_CSS_MAX_HEIGHT_LENGTH: YGNodeStyleSetMaxHeight(node, widget->getMaxHeight().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMaxHeightPercent(node, element->getMaxHeight());
+		case UI_CSS_MAX_HEIGHT_PERCENTAGE: YGNodeStyleSetMaxHeightPercent(node, widget->getMaxHeight().Value);
 			break;
 		}
-		YGNodeStyleSetBorder(node, YGEdgeLeft, element->getBorder()[0]);
-		YGNodeStyleSetBorder(node, YGEdgeTop, element->getBorder()[1]);
-		YGNodeStyleSetBorder(node, YGEdgeRight, element->getBorder()[2]);
-		YGNodeStyleSetBorder(node, YGEdgeBottom, element->getBorder()[3]);
-		switch (element->getMargin()[0].Unit)
+		YGNodeStyleSetBorder(node, YGEdgeLeft, widget->getBorderLeft().Value);
+		YGNodeStyleSetBorder(node, YGEdgeTop, widget->getBorderTop().Value);
+		YGNodeStyleSetBorder(node, YGEdgeRight, widget->getBorderRight().Value);
+		YGNodeStyleSetBorder(node, YGEdgeBottom, widget->getBorderBottom().Value);
+		switch (widget->getMarginLeft().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeLeft, UINAN);
+		default: YGNodeStyleSetMargin(node, YGEdgeLeft, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeLeft, element->getMargin()[0]);
+		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeLeft, widget->getMarginLeft().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeLeft, element->getMargin()[0]);
+		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeLeft, widget->getMarginLeft().Value);
 			break;
-		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeLeft);
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeLeft);
 			break;
 		}
-		switch (element->getMargin()[1].Unit)
+		switch (widget->getMarginTop().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeTop, UINAN);
+		default: YGNodeStyleSetMargin(node, YGEdgeTop, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeTop, element->getMargin()[1]);
+		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeTop, widget->getMarginTop().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeTop, element->getMargin()[1]);
+		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeTop, widget->getMarginTop().Value);
 			break;
-		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeTop);
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeTop);
 			break;
 		}
-		switch (element->getMargin()[2].Unit)
+		switch (widget->getMarginRight().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeRight, UINAN);
+		default: YGNodeStyleSetMargin(node, YGEdgeRight, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeRight, element->getMargin()[2]);
+		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeRight, widget->getMarginRight().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeRight, element->getMargin()[2]);
+		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeRight, widget->getMarginRight().Value);
 			break;
-		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeRight);
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeRight);
 			break;
 		}
-		switch (element->getMargin()[3].Unit)
+		switch (widget->getMarginBottom().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetMargin(node, YGEdgeBottom, UINAN);
+		default: YGNodeStyleSetMargin(node, YGEdgeBottom, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetMargin(node, YGEdgeBottom, element->getMargin()[3]);
+		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeBottom, widget->getMarginBottom().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetMarginPercent(node, YGEdgeBottom, element->getMargin()[3]);
+		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeBottom, widget->getMarginBottom().Value);
 			break;
-		case UI::UnitAuto: YGNodeStyleSetMarginAuto(node, YGEdgeBottom);
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeBottom);
 			break;
 		}
-		switch (element->getPadding()[0].Unit)
+		switch (widget->getPaddingLeft().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeLeft, UINAN);
+		default: YGNodeStyleSetPadding(node, YGEdgeLeft, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeLeft, element->getPadding()[0]);
+		case UI_CSS_PADDING_LENGTH: YGNodeStyleSetPadding(node, YGEdgeLeft, widget->getPaddingLeft().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeLeft, element->getPadding()[0]);
+		case UI_CSS_PADDING_PERCENTAGE: YGNodeStyleSetPaddingPercent(node, YGEdgeLeft, widget->getPaddingLeft().Value);
 			break;
 		}
-		switch (element->getPadding()[1].Unit)
+		switch (widget->getPaddingTop().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeTop, UINAN);
+		default: YGNodeStyleSetPadding(node, YGEdgeTop, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeTop, element->getPadding()[1]);
+		case UI_CSS_PADDING_LENGTH: YGNodeStyleSetPadding(node, YGEdgeTop, widget->getPaddingTop().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeTop, element->getPadding()[1]);
+		case UI_CSS_PADDING_PERCENTAGE: YGNodeStyleSetPaddingPercent(node, YGEdgeTop, widget->getPaddingTop().Value);
 			break;
 		}
-		switch (element->getPadding()[2].Unit)
+		switch (widget->getPaddingRight().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeRight, UINAN);
+		default: YGNodeStyleSetPadding(node, YGEdgeRight, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeRight, element->getPadding()[2]);
+		case UI_CSS_PADDING_LENGTH: YGNodeStyleSetPadding(node, YGEdgeRight, widget->getPaddingRight().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeRight, element->getPadding()[2]);
+		case UI_CSS_PADDING_PERCENTAGE: YGNodeStyleSetPaddingPercent(node, YGEdgeRight, widget->getPaddingRight().Value);
 			break;
 		}
-		switch (element->getPadding()[3].Unit)
+		switch (widget->getPaddingBottom().Type)
 		{
-		case UI::UnitNone: YGNodeStyleSetPadding(node, YGEdgeBottom, UINAN);
+		default: YGNodeStyleSetPadding(node, YGEdgeBottom, UINAN);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetPadding(node, YGEdgeBottom, element->getPadding()[3]);
+		case UI_CSS_PADDING_LENGTH: YGNodeStyleSetPadding(node, YGEdgeBottom, widget->getPaddingBottom().Value);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetPaddingPercent(node, YGEdgeBottom, element->getPadding()[3]);
+		case UI_CSS_PADDING_PERCENTAGE: YGNodeStyleSetPaddingPercent(node, YGEdgeBottom, widget->getPaddingBottom().Value);
 			break;
 		}
-		switch (element->getSpacing()[0].Unit)
+		// switch (widget->getSpacing().Type)
+		// {
+		// case UI_CSS_UnitNone: YGNodeStyleSetGap(node, YGGutterRow, 0);
+		// 	break;
+		// case UI_CSS_UnitPoint: YGNodeStyleSetGap(node, YGGutterRow, widget->getSpacing().Value);
+		// 	break;
+		// case UI_CSS_UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterRow, widget->getSpacing().Value);
+		// 	break;
+		// }
+		// switch (widget->getSpacing().Type)
+		// {
+		// case UI_CSS_UnitNone: YGNodeStyleSetGap(node, YGGutterColumn, 0);
+		// 	break;
+		// case UI_CSS_UnitPoint: YGNodeStyleSetGap(node, YGGutterColumn, widget->getSpacing().Value);
+		// 	break;
+		// case UI_CSS_UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterColumn, widget->getSpacing().Value);
+		// 	break;
+		// }
+		switch (widget->getFlexDirection().Value)
 		{
-		case UI::UnitNone: YGNodeStyleSetGap(node, YGGutterRow, 0);
+		default:
+		case UI_CSS_FLEX_DIRECTION_COLUMN: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumn);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetGap(node, YGGutterRow, element->getSpacing()[0]);
+		case UI_CSS_FLEX_DIRECTION_COLUMN_REVERSE: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumnReverse);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterRow, element->getSpacing()[0]);
+		case UI_CSS_FLEX_DIRECTION_ROW: YGNodeStyleSetFlexDirection(node, YGFlexDirectionRow);
+			break;
+		case UI_CSS_FLEX_DIRECTION_ROW_REVERSE: YGNodeStyleSetFlexDirection(node, YGFlexDirectionRowReverse);
 			break;
 		}
-		switch (element->getSpacing()[1].Unit)
+		switch (widget->getFlexWrap().Value)
 		{
-		case UI::UnitNone: YGNodeStyleSetGap(node, YGGutterColumn, 0);
+		default:
+		case UI_CSS_FLEX_WRAP_NOWRAP: YGNodeStyleSetFlexWrap(node, YGWrapNoWrap);
 			break;
-		case UI::UnitPoint: YGNodeStyleSetGap(node, YGGutterColumn, element->getSpacing()[1]);
+		case UI_CSS_FLEX_WRAP_WRAP: YGNodeStyleSetFlexWrap(node, YGWrapWrap);
 			break;
-		case UI::UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterColumn, element->getSpacing()[1]);
+		case UI_CSS_FLEX_WRAP_WRAP_REVERSE: YGNodeStyleSetFlexWrap(node, YGWrapWrapReverse);
 			break;
 		}
-		switch (element->getFlexDirection())
+		switch (widget->getAlignContent().Value)
 		{
-		case UI::FlexDirectionColumn: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumn);
+		default: YGNodeStyleSetAlignContent(node, YGAlignAuto);
 			break;
-		case UI::FlexDirectionColumnReverse: YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumnReverse);
+		case UI_CSS_ALIGN_CONTENT_FLEX_START: YGNodeStyleSetAlignContent(node, YGAlignFlexStart);
 			break;
-		case UI::FlexDirectionRow: YGNodeStyleSetFlexDirection(node, YGFlexDirectionRow);
+		case UI_CSS_ALIGN_CONTENT_FLEX_END: YGNodeStyleSetAlignContent(node, YGAlignFlexEnd);
 			break;
-		case UI::FlexDirectionRowReverse: YGNodeStyleSetFlexDirection(node, YGFlexDirectionRowReverse);
+		case UI_CSS_ALIGN_CONTENT_CENTER: YGNodeStyleSetAlignContent(node, YGAlignCenter);
+			break;
+		case UI_CSS_ALIGN_CONTENT_STRETCH: YGNodeStyleSetAlignContent(node, YGAlignStretch);
+			break;
+		case UI_CSS_ALIGN_CONTENT_SPACE_BETWEEN: YGNodeStyleSetAlignContent(node, YGAlignSpaceBetween);
+			break;
+		case UI_CSS_ALIGN_CONTENT_SPACE_AROUND: YGNodeStyleSetAlignContent(node, YGAlignSpaceAround);
+			break;
+		case UI_CSS_ALIGN_CONTENT_BASE_LINE: YGNodeStyleSetAlignContent(node, YGAlignBaseline);
+			break;
+		case UI_CSS_ALIGN_CONTENT_SPACE_EVENLY: YGNodeStyleSetAlignContent(node, YGAlignSpaceEvenly);
 			break;
 		}
-		switch (element->getFlexWrap())
+		switch (widget->getAlignItems().Value)
 		{
-		case UI::FlexNoWrap: YGNodeStyleSetFlexWrap(node, YGWrapNoWrap);
+		default: YGNodeStyleSetAlignItems(node, YGAlignAuto);
 			break;
-		case UI::FlexDoWrap: YGNodeStyleSetFlexWrap(node, YGWrapWrap);
+		case UI_CSS_ALIGN_ITEMS_FLEX_START: YGNodeStyleSetAlignItems(node, YGAlignFlexStart);
 			break;
-		case UI::FlexWrapReverse: YGNodeStyleSetFlexWrap(node, YGWrapWrapReverse);
+		case UI_CSS_ALIGN_ITEMS_CENTER: YGNodeStyleSetAlignItems(node, YGAlignCenter);
+			break;
+		case UI_CSS_ALIGN_ITEMS_FLEX_END: YGNodeStyleSetAlignItems(node, YGAlignFlexEnd);
+			break;
+		case UI_CSS_ALIGN_ITEMS_STRETCH: YGNodeStyleSetAlignItems(node, YGAlignStretch);
+			break;
+		case UI_CSS_ALIGN_ITEMS_BASELINE: YGNodeStyleSetAlignItems(node, YGAlignBaseline);
+			break;
+		case UI_CSS_ALIGN_ITEMS_SPACE_EVENLY: YGNodeStyleSetAlignItems(node, YGAlignSpaceEvenly);
+			break;
+		case UI_CSS_ALIGN_ITEMS_SPACE_AROUND: YGNodeStyleSetAlignItems(node, YGAlignSpaceAround);
 			break;
 		}
-		switch (element->getAlignContent())
+		switch (widget->getJustifyContent().Value)
 		{
-		case UI::AlignAuto: YGNodeStyleSetAlignContent(node, YGAlignAuto);
+		default:
+		case UI_CSS_JUSTIFY_CONTENT_FLEX_START: YGNodeStyleSetJustifyContent(node, YGJustifyFlexStart);
 			break;
-		case UI::AlignFlexStart: YGNodeStyleSetAlignContent(node, YGAlignFlexStart);
+		case UI_CSS_JUSTIFY_CONTENT_CENTER: YGNodeStyleSetJustifyContent(node, YGJustifyCenter);
 			break;
-		case UI::AlignCenter: YGNodeStyleSetAlignContent(node, YGAlignCenter);
+		case UI_CSS_JUSTIFY_CONTENT_FLEX_END: YGNodeStyleSetJustifyContent(node, YGJustifyFlexEnd);
 			break;
-		case UI::AlignFlexEnd: YGNodeStyleSetAlignContent(node, YGAlignFlexEnd);
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_BETWEEN: YGNodeStyleSetJustifyContent(node, YGJustifySpaceBetween);
 			break;
-		case UI::AlignStretch: YGNodeStyleSetAlignContent(node, YGAlignStretch);
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_AROUND: YGNodeStyleSetJustifyContent(node, YGJustifySpaceAround);
 			break;
-		case UI::AlignBaseline: YGNodeStyleSetAlignContent(node, YGAlignBaseline);
-			break;
-		case UI::AlignSpaceBetween: YGNodeStyleSetAlignContent(node, YGAlignSpaceEvenly);
-			break;
-		case UI::AlignSpaceAround: YGNodeStyleSetAlignContent(node, YGAlignSpaceAround);
-			break;
-		case UI::AlignSpaceEvenly: YGNodeStyleSetAlignContent(node, YGAlignSpaceEvenly);
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY: YGNodeStyleSetJustifyContent(node, YGJustifySpaceEvenly);
 			break;
 		}
-		switch (element->getAlignItems())
+		switch (widget->getFlexBasis().Type)
 		{
-		case UI::AlignAuto: YGNodeStyleSetAlignItems(node, YGAlignAuto);
+		default: YGNodeStyleSetFlexBasis(node, UINAN);
 			break;
-		case UI::AlignFlexStart: YGNodeStyleSetAlignItems(node, YGAlignFlexStart);
+		case UI_CSS_FLEX_BASIS_LENGTH: YGNodeStyleSetFlexBasis(node, widget->getFlexBasis().Value);
 			break;
-		case UI::AlignCenter: YGNodeStyleSetAlignItems(node, YGAlignCenter);
+		case UI_CSS_FLEX_BASIS_PERCENTAGE: YGNodeStyleSetFlexBasisPercent(node, widget->getFlexBasis().Value);
 			break;
-		case UI::AlignFlexEnd: YGNodeStyleSetAlignItems(node, YGAlignFlexEnd);
-			break;
-		case UI::AlignStretch: YGNodeStyleSetAlignItems(node, YGAlignStretch);
-			break;
-		case UI::AlignBaseline: YGNodeStyleSetAlignItems(node, YGAlignBaseline);
-			break;
-		case UI::AlignSpaceBetween: YGNodeStyleSetAlignItems(node, YGAlignSpaceEvenly);
-			break;
-		case UI::AlignSpaceAround: YGNodeStyleSetAlignItems(node, YGAlignSpaceAround);
-			break;
-		case UI::AlignSpaceEvenly: YGNodeStyleSetAlignItems(node, YGAlignSpaceEvenly);
+		case UI_CSS_FLEX_BASIS_CONTENT: YGNodeStyleSetFlexBasisAuto(node);
 			break;
 		}
-		switch (element->getJustifyContent())
+		switch (widget->getAlignSelf().Value)
 		{
-		case UI::JustifyFlexStart: YGNodeStyleSetJustifyContent(node, YGJustifyFlexStart);
+		default:
+		case UI_CSS_ALIGN_SELF_AUTO: YGNodeStyleSetAlignSelf(node, YGAlignAuto);
 			break;
-		case UI::JustifyCenter: YGNodeStyleSetJustifyContent(node, YGJustifyCenter);
+		case UI_CSS_ALIGN_SELF_FLEX_START: YGNodeStyleSetAlignSelf(node, YGAlignFlexStart);
 			break;
-		case UI::JustifyFlexEnd: YGNodeStyleSetJustifyContent(node, YGJustifyFlexEnd);
+		case UI_CSS_ALIGN_SELF_CENTER: YGNodeStyleSetAlignSelf(node, YGAlignCenter);
 			break;
-		case UI::JustifySpaceBetween: YGNodeStyleSetJustifyContent(node, YGJustifySpaceBetween);
+		case UI_CSS_ALIGN_SELF_FLEX_END: YGNodeStyleSetAlignSelf(node, YGAlignFlexEnd);
 			break;
-		case UI::JustifySpaceAround: YGNodeStyleSetJustifyContent(node, YGJustifySpaceAround);
+		case UI_CSS_ALIGN_SELF_STRETCH: YGNodeStyleSetAlignSelf(node, YGAlignStretch);
 			break;
-		case UI::JustifySpaceEvenly: YGNodeStyleSetJustifyContent(node, YGJustifySpaceEvenly);
+		case UI_CSS_ALIGN_SELF_BASELINE: YGNodeStyleSetAlignSelf(node, YGAlignBaseline);
+			break;
+		case UI_CSS_ALIGN_SPACE_EVENLY: YGNodeStyleSetAlignSelf(node, YGAlignSpaceEvenly);
+			break;
+		case UI_CSS_ALIGN_SPACE_AROUND: YGNodeStyleSetAlignSelf(node, YGAlignSpaceAround);
 			break;
 		}
-		switch (element->getFlexBasis().Unit)
-		{
-		case UI::UnitNone: YGNodeStyleSetFlexBasis(node, UINAN);
-			break;
-		case UI::UnitPoint: YGNodeStyleSetFlexBasis(node, element->getFlexBasis());
-			break;
-		case UI::UnitPercent: YGNodeStyleSetFlexBasisPercent(node, element->getFlexBasis());
-			break;
-		case UI::UnitAuto: YGNodeStyleSetFlexBasisAuto(node);
-			break;
-		}
-		switch (element->getAlignSelf())
-		{
-		case UI::AlignAuto: YGNodeStyleSetAlignSelf(node, YGAlignAuto);
-			break;
-		case UI::AlignFlexStart: YGNodeStyleSetAlignSelf(node, YGAlignFlexStart);
-			break;
-		case UI::AlignCenter: YGNodeStyleSetAlignSelf(node, YGAlignCenter);
-			break;
-		case UI::AlignFlexEnd: YGNodeStyleSetAlignSelf(node, YGAlignFlexEnd);
-			break;
-		case UI::AlignStretch: YGNodeStyleSetAlignSelf(node, YGAlignStretch);
-			break;
-		case UI::AlignBaseline: YGNodeStyleSetAlignSelf(node, YGAlignBaseline);
-			break;
-		case UI::AlignSpaceBetween: YGNodeStyleSetAlignSelf(node, YGAlignSpaceEvenly);
-			break;
-		case UI::AlignSpaceAround: YGNodeStyleSetAlignSelf(node, YGAlignSpaceAround);
-			break;
-		case UI::AlignSpaceEvenly: YGNodeStyleSetAlignSelf(node, YGAlignSpaceEvenly);
-			break;
-		}
-		YGNodeStyleSetFlexGrow(node, element->getFlexGrow());
-		YGNodeStyleSetFlexShrink(node, element->getFlexShrink());
+		YGNodeStyleSetFlexGrow(node, widget->getFlexGrow().Value);
+		YGNodeStyleSetFlexShrink(node, widget->getFlexShrink().Value);
 
-		for (size_t i = 0; i < element->getWidgets().size(); ++i)
+		for (size_t i = 0; i < widget->getWidgets().size(); ++i)
 		{
-			auto child = foreach_func(element->getWidgets()[i].get(), client);
+			auto child = foreach_func(widget->getWidgets()[i].get(), client);
 			YGNodeInsertChild(node, child, YGNodeGetChildCount(node));
 		}
 		return node;
 	};
 
 	UILambda<void(YGNodeRef, UIWidgetRaw, UIRect)> layout_func;
-	layout_func = [&](YGNodeRef node, UIWidgetRaw element, UIRect client)
+	layout_func = [&](YGNodeRef node, UIWidgetRaw widget, UIRect client)
 	{
-		element->setLocalBounds({YGNodeLayoutGetLeft(node), YGNodeLayoutGetTop(node), YGNodeLayoutGetWidth(node), YGNodeLayoutGetHeight(node)});
-		element->setBounds({client.X + element->getLocalBounds().X, client.Y + element->getLocalBounds().Y, element->getLocalBounds().W, element->getLocalBounds().H});
-		element->setViewport({UINAN, UINAN, UINAN, UINAN});
+		widget->setLocalBounds({YGNodeLayoutGetLeft(node), YGNodeLayoutGetTop(node), YGNodeLayoutGetWidth(node), YGNodeLayoutGetHeight(node)});
+		widget->setBounds({client.X + widget->getLocalBounds().X, client.Y + widget->getLocalBounds().Y, widget->getLocalBounds().W, widget->getLocalBounds().H});
+		widget->setViewport({UINAN, UINAN, UINAN, UINAN});
 
-		for (size_t i = 0; i < YGNodeGetChildCount(node) && i < element->getWidgets().size(); ++i)
+		for (size_t i = 0; i < YGNodeGetChildCount(node) && i < widget->getWidgets().size(); ++i)
 		{
-			layout_func(YGNodeGetChild(node, i), element->getWidgets()[i].get(), element->getBounds());
+			layout_func(YGNodeGetChild(node, i), widget->getWidgets()[i].get(), widget->getBounds());
 		}
 	};
 
 	UILambda<void(UIWidgetRaw, UIRect, UIRect)> relayout_func;
-	relayout_func = [&](UIWidgetRaw element, UIRect client, UIRect viewport)
+	relayout_func = [&](UIWidgetRaw widget, UIRect client, UIRect viewport)
 	{
-		if (std::isnan(element->getViewport().X) ||
-			std::isnan(element->getViewport().Y) ||
-			std::isnan(element->getViewport().W) ||
-			std::isnan(element->getViewport().H))
-			element->setViewport(UIOverlap(viewport, element->getBounds()));
+		if (std::isnan(widget->getViewport().X) ||
+			std::isnan(widget->getViewport().Y) ||
+			std::isnan(widget->getViewport().W) ||
+			std::isnan(widget->getViewport().H))
+			widget->setViewport(UIOverlap(viewport, widget->getBounds()));
 
-		element->layout(element->getBounds());
-		element->setBounds({client.X + element->getLocalBounds().X, client.Y + element->getLocalBounds().Y, element->getLocalBounds().W, element->getLocalBounds().H});
-		element->setViewport(UIOverlap(element->getViewport(), element->getBounds()));
-		for (size_t i = 0; i < element->getWidgets().size(); ++i)
+		widget->layout(widget->getBounds());
+		widget->setBounds({client.X + widget->getLocalBounds().X, client.Y + widget->getLocalBounds().Y, widget->getLocalBounds().W, widget->getLocalBounds().H});
+		widget->setViewport(UIOverlap(widget->getViewport(), widget->getBounds()));
+		for (size_t i = 0; i < widget->getWidgets().size(); ++i)
 		{
-			auto bounds = element->getBounds();
-			auto childBounds = element->getWidgets()[i]->getLocalBounds();
-			element->getWidgets()[i]->setBounds({bounds.X + childBounds.X, bounds.Y + childBounds.Y, childBounds.W, childBounds.H});
+			auto bounds = widget->getBounds();
+			auto childBounds = widget->getWidgets()[i]->getLocalBounds();
+			widget->getWidgets()[i]->setBounds({bounds.X + childBounds.X, bounds.Y + childBounds.Y, childBounds.W, childBounds.H});
 		}
-		for (size_t i = 0; i < element->getWidgets().size(); ++i)
+		for (size_t i = 0; i < widget->getWidgets().size(); ++i)
 		{
-			relayout_func(element->getWidgets()[i].get(), element->getBounds(), element->getViewport());
+			relayout_func(widget->getWidgets()[i].get(), widget->getBounds(), widget->getViewport());
 		}
 	};
 

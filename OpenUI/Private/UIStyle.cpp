@@ -11,17 +11,17 @@
 #include "../UIStyle.h"
 
 #undef PRIVATE
-struct UIStylePrivateData : UIStylePrivate
+struct UIStylePrivate : UIPrivate
 {
-    UIStringMap<UIStyleDataRef> Styles;
+    UIStringHashMap<UIStyleDataRef> Styles;
 };
-#define PRIVATE() ((UIStylePrivateData*)m_Private)
+#define PRIVATE() ((UIStylePrivate*)m_Private)
 
 UIStyle::UIStyle()
     :
     m_IsDirty(true)
 {
-    m_Private = new UIStylePrivateData;
+    m_Private = new UIStylePrivate;
 }
 
 UIStyle::~UIStyle()
@@ -73,7 +73,7 @@ bool UIStyle::setStyleText(UIString const& key, UIString const& value)
 struct UIComputedStylePrivate : UIStylePrivate
 {
     UIRaw<UIStyle> Style;
-    UIStringMap<UIStyleDataRaw> ComputedStyles;
+    UIStringHashMap<UIStyleDataRaw> ComputedStyles;
 };
 #define PRIVATE() ((UIComputedStylePrivate*)m_Private)
 
@@ -98,7 +98,7 @@ bool UIComputedStyle::compute(UIRaw<UIComputedStyle> parent)
             PRIVATE()->ComputedStyles[style.first] = style.second;
         }
     }
-    for (auto& style : ((UIStylePrivateData*)PRIVATE()->Style->m_Private)->Styles)
+    for (auto& style : ((UIStylePrivate*)PRIVATE()->Style->m_Private)->Styles)
     {
         PRIVATE()->ComputedStyles[style.first] = style.second.get();
     }

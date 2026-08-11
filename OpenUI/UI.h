@@ -356,9 +356,6 @@ bool UITypeC(T const& src, U& dst) { return false; }
 template<class T>
 bool UITypeC(T const& src, T& dst) { dst = src; return true;}
 
-template<class T, class U = UIString>
-bool UITypeC(T const& src, UIString& dst) { dst = std::to_string(src); return true; }
-
 // ============================================
 
 #define UINAN (NAN)
@@ -906,64 +903,8 @@ using UIValue4F = UIArray<UIValueF, 4>;
 
 namespace UI
 {
-	enum DisplayType
-	{
-		DisplayFlex,
-		DisplayNone,
-	};
-
-	enum PositionType
-	{
-		PositionStatic,
-		PositionRelative,
-		PositionAbsolute,
-	};
-
-	enum AlignItems
-	{
-		AlignAuto,
-		AlignFlexStart,
-		AlignCenter,
-		AlignFlexEnd,
-		AlignStretch,
-		AlignBaseline,
-		AlignSpaceBetween,
-		AlignSpaceAround,
-		AlignSpaceEvenly,
-	};
-	enum FlexDirection
-	{
-		FlexDirectionColumn,
-		FlexDirectionColumnReverse,
-		FlexDirectionRow,
-		FlexDirectionRowReverse,
-	};
-	enum FlexWrap
-	{
-		FlexNoWrap,
-		FlexDoWrap,
-		FlexWrapReverse,
-	};
-	using AlignContent = AlignItems;
-	enum JustifyContent
-	{
-		JustifyFlexStart,
-		JustifyCenter,
-		JustifyFlexEnd,
-		JustifySpaceBetween,
-		JustifySpaceAround,
-		JustifySpaceEvenly,
-	};
-
-	using FlexGrow = UIValueF;
-	using FlexBasis = UIValueF;
-	using FlexShrink = UIValueF;
-	using AlignSelf = AlignItems;
-
-	enum ValueUnit : uint8_t { UnitNone = 0, UnitPoint, UnitPercent, UnitAuto, };
-
 	enum Orientation : uint8_t { Horizontal = 0, Vertical = 1, };
-};
+}
 
 // ============================================
 

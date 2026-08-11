@@ -71,7 +71,7 @@ public:
 	UISignalAsRaw<> hovered;
 
 private:
-	UIWidgetPrivateRaw m_PrivateRadio;
+	UIPrivateRaw m_Private;
 };
 using UIRadioRef = UIRef<UIRadio>;
 using UIRadioRaw = UIRaw<UIRadio>;
