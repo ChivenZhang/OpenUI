@@ -332,8 +332,8 @@ struct UIPropHangingPunctuation
 
 struct UIPropHeight
 {
-    ui_css_height_type_t Type;
-    float Value;
+    ui_css_height_type_t Type = UI_CSS_HEIGHT_AUTO;
+    float Value = UINAN;
 };
 
 struct UIPropHyphens
@@ -389,32 +389,32 @@ struct UIPropLineHeight
 
 struct UIPropMargin
 {
-    ui_css_margin_type_t Type;
-    float Value;
+    ui_css_margin_type_t Type = UI_CSS_MARGIN__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropMarginLeft
 {
-    ui_css_margin_left_type_t Type;
-    float Value;
+    ui_css_margin_left_type_t Type = UI_CSS_MARGIN_LEFT__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropMarginRight
 {
-    ui_css_margin_right_type_t Type;
-    float Value;
+    ui_css_margin_right_type_t Type = UI_CSS_MARGIN_RIGHT__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropMarginTop
 {
-    ui_css_margin_top_type_t Type;
-    float Value;
+    ui_css_margin_top_type_t Type = UI_CSS_MARGIN_TOP__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropMarginBottom
 {
-    ui_css_margin_bottom_type_t Type;
-    float Value;
+    ui_css_margin_bottom_type_t Type = UI_CSS_MARGIN_BOTTOM__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropMaxHeight
@@ -443,8 +443,8 @@ struct UIPropMinWidth
 
 struct UIPropOpacity
 {
-    ui_css_opacity_type_t Type;
-    float Value;
+    ui_css_opacity_type_t Type = UI_CSS_OPACITY__NUMBER;
+    float Value = 1.0f;
 };
 
 struct UIPropOrder
@@ -455,12 +455,12 @@ struct UIPropOrder
 
 struct UIPropOverflowBlock
 {
-    ui_css_overflow_block_type_t Value;
+    ui_css_overflow_block_type_t Value = UI_CSS_OVERFLOW_BLOCK_VISIBLE;
 };
 
 struct UIPropOverflowInline
 {
-    ui_css_overflow_inline_type_t Value;
+    ui_css_overflow_inline_type_t Value = UI_CSS_OVERFLOW_INLINE_VISIBLE;
 };
 
 struct UIPropOverflowWrap
@@ -470,47 +470,47 @@ struct UIPropOverflowWrap
 
 struct UIPropOverflowX
 {
-    ui_css_overflow_x_type_t Value;
+    ui_css_overflow_x_type_t Value = UI_CSS_OVERFLOW_X_VISIBLE;
 };
 
 struct UIPropOverflowY
 {
-    ui_css_overflow_y_type_t Value;
+    ui_css_overflow_y_type_t Value = UI_CSS_OVERFLOW_Y_VISIBLE;
 };
 
 struct UIPropPadding
 {
-    ui_css_padding_type_t Type;
-    float Value;
+    ui_css_padding_type_t Type = UI_CSS_PADDING__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropPaddingTop
 {
-    ui_css_padding_right_type_t Type;
-    float Value;
+    ui_css_padding_right_type_t Type = UI_CSS_PADDING_TOP__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropPaddingBottom
 {
-    ui_css_padding_bottom_type_t Type;
-    float Value;
+    ui_css_padding_bottom_type_t Type = UI_CSS_PADDING_BOTTOM__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropPaddingLeft
 {
-    ui_css_padding_left_type_t Type = UI_CSS_PADDING_LEFT_AUTO;
-    float Value = UINAN;
+    ui_css_padding_left_type_t Type = UI_CSS_PADDING_LEFT__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropPaddingRight
 {
-    ui_css_padding_right_type_t Type = UI_CSS_PADDING_RIGHT_AUTO;
-    float Value = UINAN;
+    ui_css_padding_right_type_t Type = UI_CSS_PADDING_RIGHT__LENGTH;
+    float Value = 0;
 };
 
 struct UIPropPosition
 {
-    ui_css_position_type_t Value = UI_CSS_POSITION_RELATIVE;
+    ui_css_position_type_t Value = UI_CSS_POSITION_STATIC;
 };
 
 struct UIPropTop
@@ -611,18 +611,18 @@ struct UIPropVerticalAlign
 
 struct UIPropVisibility
 {
-    ui_css_visibility_type_t Value;
+    ui_css_visibility_type_t Value = UI_CSS_VISIBILITY_VISIBLE;
 };
 
 struct UIPropWhiteSpace
 {
-    ui_css_white_space_type_t Value;
+    ui_css_white_space_type_t Value = UI_CSS_WHITE_SPACE_NORMAL;
 };
 
 struct UIPropWidth
 {
-    ui_css_width_type_t Type;
-    float Value;
+    ui_css_width_type_t Type = UI_CSS_WIDTH_AUTO;
+    float Value = UINAN;
 };
 
 struct UIPropWordBreak
