@@ -169,68 +169,68 @@ struct UIPropAlignSelf
 
 struct UIPropAlignmentBaseline
 {
-    ui_css_alignment_baseline_type_t Value;
+    ui_css_alignment_baseline_type_t Value = UI_CSS_ALIGNMENT_BASELINE_BASELINE;
 };
 
 struct UIPropBaselineShift
 {
-    ui_css_baseline_shift_type_t Type;
+    ui_css_baseline_shift_type_t Type = UI_CSS_BASELINE_SHIFT__LENGTH;
     float Value;
 };
 
 struct UIPropBaselineSource
 {
-    ui_css_baseline_source_type_t Value;
+    ui_css_baseline_source_type_t Value = UI_CSS_BASELINE_SOURCE_AUTO;
 };
 
 struct UIPropBorder
 {
-    ui_css_border_type_t Type;
+    ui_css_border_type_t Type = UI_CSS_BORDER_NONE;
     float Value;
 };
 
 struct UIPropBorderTop
 {
-    ui_css_border_top_type_t Type;
+    ui_css_border_top_type_t Type = UI_CSS_BORDER_TOP_NONE;
     float Value;
 };
 
 struct UIPropBorderBottom
 {
-    ui_css_border_bottom_type_t Type;
+    ui_css_border_bottom_type_t Type = UI_CSS_BORDER_BOTTOM_NONE;
     float Value;
 };
 
 struct UIPropBorderLeft
 {
-    ui_css_border_left_type_t Type;
+    ui_css_border_left_type_t Type = UI_CSS_BORDER_LEFT_NONE;
     float Value;
 };
 
 struct UIPropBorderRight
 {
-    ui_css_border_right_type_t Type;
+    ui_css_border_right_type_t Type = UI_CSS_BORDER_RIGHT_NONE;
     float Value;
 };
 
 struct UIPropBoxSizing
 {
-    ui_css_box_sizing_type_t Value;
+    ui_css_box_sizing_type_t Value = UI_CSS_BOX_SIZING_CONTENT_BOX;
 };
 
 struct UIPropClear
 {
-    ui_css_clear_type_t Value;
+    ui_css_clear_type_t Value = UI_CSS_CLEAR_NONE;
 };
 
 struct UIPropColor
 {
-    ui_css_color_type_t Value;
+    ui_css_color_type_t Value = UI_CSS_COLOR_CURRENTCOLOR;
 };
 
 struct UIPropDirection
 {
-    ui_css_direction_type_t Value;
+    ui_css_direction_type_t Value = UI_CSS_DIRECTION_LTR;
 };
 
 struct UIPropDisplay
@@ -240,12 +240,12 @@ struct UIPropDisplay
 
 struct UIPropDominantBaseline
 {
-    ui_css_dominant_baseline_type_t Value;
+    ui_css_dominant_baseline_type_t Value = UI_CSS_DOMINANT_BASELINE_AUTO;
 };
 
 struct UIPropFlex
 {
-    ui_css_flex_type_t Value;
+    ui_css_flex_type_t Value = UI_CSS_VALUE_INITIAL;
 };
 
 struct UIPropFlexBasis
@@ -278,56 +278,56 @@ struct UIPropFlexWrap
 
 struct UIPropFloat
 {
-    ui_css_float_type_t Value;
+    ui_css_float_type_t Value = UI_CSS_FLOAT_NONE;
 };
 
 struct UIPropFloatDefer
 {
-    ui_css_float_defer_type_t Value;
+    ui_css_float_defer_type_t Value = UI_CSS_FLOAT_DEFER_NONE;
 };
 
 struct UIPropFloatOffset
 {
-    ui_css_float_offset_type_t Type;
+    ui_css_float_offset_type_t Type = UI_CSS_FLOAT_OFFSET__LENGTH;
     float Value;
 };
 
 struct UIPropFloatReference
 {
-    ui_css_float_reference_type_t Value;
+    ui_css_float_reference_type_t Value = UI_CSS_FLOAT_REFERENCE_INLINE;
 };
 
 struct UIPropFontFamily
 {
-    ui_css_font_family_type_t Value;
+    ui_css_font_family_type_t Value = UI_CSS_FONT_FAMILY_UI_SANS_SERIF;
 };
 
 struct UIPropFontSize
 {
-    ui_css_font_size_type_t Type;
+    ui_css_font_size_type_t Type = UI_CSS_FONT_SIZE_MEDIUM;
     float Value;
 };
 
 struct UIPropFontStretch
 {
-    ui_css_font_stretch_type_t Type;
+    ui_css_font_stretch_type_t Type = UI_CSS_FONT_STRETCH_NORMAL;
     float Value;
 };
 
 struct UIPropFontStyle
 {
-    ui_css_font_style_type_t Value;
+    ui_css_font_style_type_t Value = UI_CSS_FONT_STYLE_NORMAL;
 };
 
 struct UIPropFontWeight
 {
-    ui_css_font_weight_type_t Type;
+    ui_css_font_weight_type_t Type = UI_CSS_FONT_WEIGHT_NORMAL;
     float Value;
 };
 
 struct UIPropHangingPunctuation
 {
-    ui_css_hanging_punctuation_type_t Value;
+    ui_css_hanging_punctuation_type_t Value = UI_CSS_HANGING_PUNCTUATION_NONE;
 };
 
 struct UIPropHeight
@@ -338,30 +338,30 @@ struct UIPropHeight
 
 struct UIPropHyphens
 {
-    ui_css_hyphens_type_t Value;
+    ui_css_hyphens_type_t Value = UI_CSS_HYPHENS_MANUAL;
 };
 
 struct UIPropInsetBlockEnd
 {
-    ui_css_inset_block_end_type_t Type;
+    ui_css_inset_block_end_type_t Type = UI_CSS_INSET_BLOCK_END_AUTO;
     float Value;
 };
 
 struct UIPropInsetBlockStart
 {
-    ui_css_inset_block_start_type_t Type;
+    ui_css_inset_block_start_type_t Type = UI_CSS_INSET_BLOCK_START_AUTO;
     float Value;
 };
 
 struct UIPropInsetInlineEnd
 {
-    ui_css_inset_inline_end_type_t Type;
+    ui_css_inset_inline_end_type_t Type = UI_CSS_INSET_INLINE_END_AUTO;
     float Value;
 };
 
 struct UIPropInsetInlineStart
 {
-    ui_css_inset_inline_start_type_t Type;
+    ui_css_inset_inline_start_type_t Type = UI_CSS_INSET_INLINE_START_AUTO;
     float Value;
 };
 
@@ -372,18 +372,18 @@ struct UIPropJustifyContent
 
 struct UIPropLetterSpacing
 {
-    ui_css_letter_spacing_type_t Type;
+    ui_css_letter_spacing_type_t Type = UI_CSS_LETTER_SPACING_NORMAL;
     float Value;
 };
 
 struct UIPropLineBreak
 {
-    ui_css_line_break_type_t Value;
+    ui_css_line_break_type_t Value = UI_CSS_LINE_BREAK_AUTO;
 };
 
 struct UIPropLineHeight
 {
-    ui_css_line_height_type_t Type;
+    ui_css_line_height_type_t Type = UI_CSS_LINE_HEIGHT_NORMAL;
     float Value;
 };
 
@@ -419,25 +419,25 @@ struct UIPropMarginBottom
 
 struct UIPropMaxHeight
 {
-    ui_css_max_height_type_t Type;
+    ui_css_max_height_type_t Type = UI_CSS_MAX_HEIGHT_NONE;
     float Value;
 };
 
 struct UIPropMaxWidth
 {
-    ui_css_max_width_type_t Type;
+    ui_css_max_width_type_t Type = UI_CSS_MAX_WIDTH_NONE;
     float Value;
 };
 
 struct UIPropMinHeight
 {
-    ui_css_min_height_type_t Type;
+    ui_css_min_height_type_t Type = UI_CSS_MIN_HEIGHT_AUTO;
     float Value;
 };
 
 struct UIPropMinWidth
 {
-    ui_css_min_width_type_t Type;
+    ui_css_min_width_type_t Type = UI_CSS_MIN_WIDTH_AUTO;
     float Value;
 };
 
@@ -449,7 +449,7 @@ struct UIPropOpacity
 
 struct UIPropOrder
 {
-    ui_css_order_type_t Type;
+    ui_css_order_type_t Type = UI_CSS_ORDER__INTEGER;
     int32_t Value;
 };
 
@@ -465,7 +465,7 @@ struct UIPropOverflowInline
 
 struct UIPropOverflowWrap
 {
-    ui_css_overflow_wrap_type_t Value;
+    ui_css_overflow_wrap_type_t Value = UI_CSS_OVERFLOW_WRAP_NORMAL;
 };
 
 struct UIPropOverflowX
@@ -521,92 +521,92 @@ struct UIPropTop
 
 struct UIPropBottom
 {
-    ui_css_bottom_type_t Type;
+    ui_css_bottom_type_t Type = UI_CSS_BOTTOM_AUTO;
     float Value;
 };
 
 struct UIPropLeft
 {
-    ui_css_left_type_t Type;
+    ui_css_left_type_t Type = UI_CSS_LEFT_AUTO;
     float Value;
 };
 
 struct UIPropRight
 {
-    ui_css_right_type_t Type;
+    ui_css_right_type_t Type = UI_CSS_RIGHT_AUTO;
     float Value;
 };
 
 struct UIPropTabSize
 {
-    ui_css_tab_size_type_t Type;
-    uint32_t Value;
+    ui_css_tab_size_type_t Type = UI_CSS_TAB_SIZE__NUMBER;
+    uint32_t Value = 8;
 };
 
 struct UIPropTextAlign
 {
-    ui_css_text_align_type_t Value;
+    ui_css_text_align_type_t Value = UI_CSS_TEXT_ALIGN_START;
 };
 
 struct UIPropTextAlignAll
 {
-    ui_css_text_align_all_type_t Value;
+    ui_css_text_align_all_type_t Value = UI_CSS_TEXT_ALIGN_ALL_START;
 };
 
 struct UIPropTextAlignLast
 {
-    ui_css_text_align_last_type_t Value;
+    ui_css_text_align_last_type_t Value = UI_CSS_TEXT_ALIGN_LAST_AUTO;
 };
 
 struct UIPropTextCombineUpright
 {
-    ui_css_text_combine_upright_type_t Value;
+    ui_css_text_combine_upright_type_t Value = UI_CSS_TEXT_COMBINE_UPRIGHT_NONE;
 };
 
 struct UIPropTextDecorationLine
 {
-    ui_css_text_decoration_line_type_t Value;
+    ui_css_text_decoration_line_type_t Value = UI_CSS_TEXT_DECORATION_LINE_NONE;
 };
 
 struct UIPropTextDecorationStyle
 {
-    ui_css_text_decoration_style_type_t Value;
+    ui_css_text_decoration_style_type_t Value = UI_CSS_TEXT_DECORATION_STYLE_SOLID;
 };
 
 struct UIPropTextIndent
 {
-    ui_css_text_indent_type_t Type;
+    ui_css_text_indent_type_t Type = UI_CSS_TEXT_INDENT__LENGTH;
     float Value;
 };
 
 struct UIPropTextJustify
 {
-    ui_css_text_justify_type_t Value;
+    ui_css_text_justify_type_t Value = UI_CSS_TEXT_JUSTIFY_AUTO;
 };
 
 struct UIPropTextOrientation
 {
-    ui_css_text_orientation_type_t Value;
+    ui_css_text_orientation_type_t Value = UI_CSS_TEXT_ORIENTATION_MIXED;
 };
 
 struct UIPropTextOverflow
 {
-    ui_css_text_overflow_type_t Value;
+    ui_css_text_overflow_type_t Value = UI_CSS_TEXT_OVERFLOW_CLIP;
 };
 
 struct UIPropTextTransform
 {
-    ui_css_text_transform_type_t Value;
+    ui_css_text_transform_type_t Value = UI_CSS_TEXT_TRANSFORM_NONE;
 };
 
 struct UIPropUnicodeBidi
 {
-    ui_css_unicode_bidi_type_t Value;
+    ui_css_unicode_bidi_type_t Value = UI_CSS_VALUE_INITIAL;
 };
 
 struct UIPropVerticalAlign
 {
-    ui_css_vertical_align_type_t Value;
+    ui_css_vertical_align_type_t Value = UI_CSS_VALUE_BASELINE;
 };
 
 struct UIPropVisibility
@@ -627,38 +627,38 @@ struct UIPropWidth
 
 struct UIPropWordBreak
 {
-    ui_css_word_break_type_t Value;
+    ui_css_word_break_type_t Value = UI_CSS_WORD_BREAK_NORMAL;
 };
 
 struct UIPropWordSpacing
 {
-    ui_css_word_spacing_type_t Type;
+    ui_css_word_spacing_type_t Type = UI_CSS_WORD_SPACING_NORMAL;
     float Value;
 };
 
 struct UIPropWordWrap
 {
-    ui_css_word_wrap_type_t Value;
+    ui_css_word_wrap_type_t Value = UI_CSS_WORD_WRAP_NORMAL;
 };
 
 struct UIPropWrapFlow
 {
-    ui_css_wrap_flow_type_t Value;
+    ui_css_wrap_flow_type_t Value = UI_CSS_WRAP_FLOW_AUTO;
 };
 
 struct UIPropWrapThrough
 {
-    ui_css_wrap_through_type_t Value;
+    ui_css_wrap_through_type_t Value = UI_CSS_WRAP_THROUGH_NONE;
 };
 
 struct UIPropWritingMode
 {
-    ui_css_writing_mode_type_t Value;
+    ui_css_writing_mode_type_t Value = UI_CSS_WRITING_MODE_HORIZONTAL_TB;
 };
 
 struct UIPropZIndex
 {
-    ui_css_z_index_type_t Type;
+    ui_css_z_index_type_t Type = UI_CSS_Z_INDEX_AUTO;
     int32_t Value;
 };
 
