@@ -315,22 +315,22 @@ bool UICanvas::layoutWidget(UIRect client)
 		{
 		default: YGNodeStyleSetWidth(node, UINAN);
 			break;
+		case UI_CSS_WIDTH_AUTO: YGNodeStyleSetWidthAuto(node);
+			break;
 		case UI_CSS_WIDTH_LENGTH: YGNodeStyleSetWidth(node, widget->getFixedWidth().Value);
 			break;
 		case UI_CSS_WIDTH_PERCENTAGE: YGNodeStyleSetWidthPercent(node, widget->getFixedWidth().Value);
-			break;
-		case UI_CSS_WIDTH_AUTO: YGNodeStyleSetWidthAuto(node);
 			break;
 		}
 		switch (widget->getFixedHeight().Type)
 		{
 		default: YGNodeStyleSetHeight(node, UINAN);
 			break;
+		case UI_CSS_HEIGHT_AUTO: YGNodeStyleSetHeightAuto(node);
+			break;
 		case UI_CSS_HEIGHT_LENGTH: YGNodeStyleSetHeight(node, widget->getFixedHeight().Value);
 			break;
 		case UI_CSS_HEIGHT_PERCENTAGE: YGNodeStyleSetHeightPercent(node, widget->getFixedHeight().Value);
-			break;
-		case UI_CSS_HEIGHT_AUTO: YGNodeStyleSetHeightAuto(node);
 			break;
 		}
 		switch (widget->getMinWidth().Type)
@@ -377,44 +377,44 @@ bool UICanvas::layoutWidget(UIRect client)
 		{
 		default: YGNodeStyleSetMargin(node, YGEdgeLeft, UINAN);
 			break;
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeLeft);
+			break;
 		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeLeft, widget->getMarginLeft().Value);
 			break;
 		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeLeft, widget->getMarginLeft().Value);
-			break;
-		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeLeft);
 			break;
 		}
 		switch (widget->getMarginTop().Type)
 		{
 		default: YGNodeStyleSetMargin(node, YGEdgeTop, UINAN);
 			break;
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeTop);
+			break;
 		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeTop, widget->getMarginTop().Value);
 			break;
 		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeTop, widget->getMarginTop().Value);
-			break;
-		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeTop);
 			break;
 		}
 		switch (widget->getMarginRight().Type)
 		{
 		default: YGNodeStyleSetMargin(node, YGEdgeRight, UINAN);
 			break;
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeRight);
+			break;
 		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeRight, widget->getMarginRight().Value);
 			break;
 		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeRight, widget->getMarginRight().Value);
-			break;
-		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeRight);
 			break;
 		}
 		switch (widget->getMarginBottom().Type)
 		{
 		default: YGNodeStyleSetMargin(node, YGEdgeBottom, UINAN);
 			break;
+		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeBottom);
+			break;
 		case UI_CSS_MARGIN_LENGTH: YGNodeStyleSetMargin(node, YGEdgeBottom, widget->getMarginBottom().Value);
 			break;
 		case UI_CSS_MARGIN_PERCENTAGE: YGNodeStyleSetMarginPercent(node, YGEdgeBottom, widget->getMarginBottom().Value);
-			break;
-		case UI_CSS_MARGIN_AUTO: YGNodeStyleSetMarginAuto(node, YGEdgeBottom);
 			break;
 		}
 		switch (widget->getPaddingLeft().Type)

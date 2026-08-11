@@ -183,12 +183,6 @@ struct UIPropBaselineSource
     ui_css_baseline_source_type_t Value = UI_CSS_BASELINE_SOURCE_AUTO;
 };
 
-struct UIPropBorder
-{
-    float Value = 0.0f;
-    ui_css_border_type_t Type = UI_CSS_BORDER_NONE;
-};
-
 struct UIPropBorderTop
 {
     float Value = 0.0f;
@@ -211,6 +205,14 @@ struct UIPropBorderRight
 {
     float Value = 0.0f;
     ui_css_border_right_type_t Type = UI_CSS_BORDER_NONE;
+};
+
+struct UIPropBorder
+{
+    UIPropBorderLeft Left;
+    UIPropBorderTop Top;
+    UIPropBorderRight Right;
+    UIPropBorderBottom Bottom;
 };
 
 struct UIPropBoxSizing
@@ -387,12 +389,6 @@ struct UIPropLineHeight
     ui_css_line_height_type_t Type = UI_CSS_LINE_HEIGHT_NORMAL;
 };
 
-struct UIPropMargin
-{
-    float Value = 0;
-    ui_css_margin_type_t Type = UI_CSS_MARGIN_LENGTH;
-};
-
 struct UIPropMarginLeft
 {
     float Value = 0;
@@ -415,6 +411,14 @@ struct UIPropMarginBottom
 {
     float Value = 0;
     ui_css_margin_bottom_type_t Type = UI_CSS_MARGIN_LENGTH;
+};
+
+struct UIPropMargin
+{
+    UIPropMarginLeft Left;
+    UIPropMarginTop Top;
+    UIPropMarginRight Right;
+    UIPropMarginBottom Bottom;
 };
 
 struct UIPropMaxHeight
@@ -478,12 +482,6 @@ struct UIPropOverflowY
     ui_css_overflow_y_type_t Value = UI_CSS_OVERFLOW_Y_VISIBLE;
 };
 
-struct UIPropPadding
-{
-    float Value = 0;
-    ui_css_padding_type_t Type = UI_CSS_PADDING_LENGTH;
-};
-
 struct UIPropPaddingTop
 {
     float Value = 0;
@@ -506,6 +504,14 @@ struct UIPropPaddingRight
 {
     float Value = 0;
     ui_css_padding_right_type_t Type = UI_CSS_PADDING_LENGTH;
+};
+
+struct UIPropPadding
+{
+    UIPropPaddingLeft Left;
+    UIPropPaddingTop Top;
+    UIPropPaddingRight Right;
+    UIPropPaddingBottom Bottom;
 };
 
 struct UIPropPosition
@@ -946,76 +952,12 @@ inline bool UITypeC(UIPropBaselineSource const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropBorder& dst)
 {
-    auto s = UITrim(src);
-    switch (UIHash(s))
-    {
-    default: break;
-    case UIHash("thin"): dst.Type = UI_CSS_BORDER_THIN;
-        return true;
-    case UIHash("medium"): dst.Type = UI_CSS_BORDER_MEDIUM;
-        return true;
-    case UIHash("thick"): dst.Type = UI_CSS_BORDER_THICK;
-        return true;
-    case UIHash("none"): dst.Type = UI_CSS_BORDER_NONE;
-        return true;
-    case UIHash("hidden"): dst.Type = UI_CSS_BORDER_HIDDEN;
-        return true;
-    case UIHash("dotted"): dst.Type = UI_CSS_BORDER_DOTTED;
-        return true;
-    case UIHash("dashed"): dst.Type = UI_CSS_BORDER_DASHED;
-        return true;
-    case UIHash("solid"): dst.Type = UI_CSS_BORDER_SOLID;
-        return true;
-    case UIHash("double"): dst.Type = UI_CSS_BORDER_DOUBLE;
-        return true;
-    case UIHash("groove"): dst.Type = UI_CSS_BORDER_GROOVE;
-        return true;
-    case UIHash("ridge"): dst.Type = UI_CSS_BORDER_RIDGE;
-        return true;
-    case UIHash("inset"): dst.Type = UI_CSS_BORDER_INSET;
-        return true;
-    case UIHash("outset"): dst.Type = UI_CSS_BORDER_OUTSET;
-        return true;
-    }
-    dst.Type = UI_CSS_BORDER_LENGTH;
-    dst.Value = std::stof(src);
-    return true;
+    return false;
 }
 template <>
 inline bool UITypeC(UIPropBorder const& src, UIString& dst)
 {
-    switch (src.Type)
-    {
-    default: return false;
-    case UI_CSS_BORDER_THIN: dst = "thin";
-        return true;
-    case UI_CSS_BORDER_MEDIUM: dst = "medium";
-        return true;
-    case UI_CSS_BORDER_THICK: dst = "thick";
-        return true;
-    case UI_CSS_BORDER_NONE: dst = "none";
-        return true;
-    case UI_CSS_BORDER_HIDDEN: dst = "hidden";
-        return true;
-    case UI_CSS_BORDER_DOTTED: dst = "dotted";
-        return true;
-    case UI_CSS_BORDER_DASHED: dst = "dashed";
-        return true;
-    case UI_CSS_BORDER_SOLID: dst = "solid";
-        return true;
-    case UI_CSS_BORDER_DOUBLE: dst = "double";
-        return true;
-    case UI_CSS_BORDER_GROOVE: dst = "groove";
-        return true;
-    case UI_CSS_BORDER_RIDGE: dst = "ridge";
-        return true;
-    case UI_CSS_BORDER_INSET: dst = "inset";
-        return true;
-    case UI_CSS_BORDER_OUTSET: dst = "outset";
-        return true;
-    case UI_CSS_BORDER_LENGTH: dst = std::to_string(src.Value) + "px";
-        return true;
-    }
+    return false;
 }
 
 template <>
@@ -2183,32 +2125,12 @@ inline bool UITypeC(UIPropTabSize const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropMargin& dst)
 {
-    auto s = UITrim(src);
-    if (s == "auto")
-    {
-        dst.Type = UI_CSS_MARGIN_AUTO;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_MARGIN_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_MARGIN_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    return false;
 }
 template<>
 inline bool UITypeC(UIPropMargin const& src, UIString& dst)
 {
-    switch (src.Type) {
-    default: return false;
-    case UI_CSS_MARGIN_AUTO: dst = "auto"; return true;
-    case UI_CSS_MARGIN_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_MARGIN_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
-    }
+    return false;
 }
 
 template<>
@@ -2339,27 +2261,12 @@ inline bool UITypeC(UIPropMarginBottom const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropPadding& dst)
 {
-    auto s = UITrim(src);
-    if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_PADDING_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_PADDING_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    return false;
 }
 template<>
 inline bool UITypeC(UIPropPadding const& src, UIString& dst)
 {
-    switch (src.Type) {
-    default: return false;
-    case UI_CSS_PADDING_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
-    case UI_CSS_PADDING_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
-    }
+    return false;
 }
 
 template<>

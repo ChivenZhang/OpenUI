@@ -87,7 +87,6 @@ public:
 
 	// ================================= Flex Query ======================================
 
-
 	UIPropDisplay getDisplayType() const;
 	void setDisplayType(UIPropDisplay value);
 	UIPropPosition getPositionType() const;
