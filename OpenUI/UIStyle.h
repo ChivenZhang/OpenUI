@@ -9,7 +9,7 @@
 * Created by chivenzhang@gmail.com.
 *
 * =================================================*/
-#include "UI.h"
+#include "UIPublic.h"
 class UIComputedStyle;
 
 class OPENUI_API UIStyleData
@@ -76,10 +76,6 @@ protected:
     T& m_Data;
 };
 
-struct UIStylePrivate
-{
-};
-
 /// @brief
 class OPENUI_API UIStyle
 {
@@ -119,7 +115,7 @@ public:
 private:
     bool m_IsDirty;
     friend class UIComputedStyle;
-    UIRaw<UIStylePrivate> m_Private;
+    UIPrivateRaw m_Private;
 };
 
 using UIStyleRef = UIRef<UIStyle>;
@@ -146,7 +142,7 @@ public:
     }
 
 private:
-    UIRaw<UIStylePrivate> m_Private;
+    UIPrivateRaw m_Private;
 };
 
 using UIComputedStyleRef = UIRef<UIComputedStyle>;
@@ -158,17 +154,17 @@ using UIComputedStyleRaw = UIRaw<UIComputedStyle>;
 
 struct UIPropAlignContent
 {
-    ui_css_align_content_type_t Value;
+    ui_css_align_content_type_t Value = UI_CSS_ALIGN_CONTENT_STRETCH;
 };
 
 struct UIPropAlignItems
 {
-    ui_css_align_items_type_t Value;
+    ui_css_align_items_type_t Value = UI_CSS_ALIGN_ITEMS_STRETCH;
 };
 
 struct UIPropAlignSelf
 {
-    ui_css_align_self_type_t Value;
+    ui_css_align_self_type_t Value = UI_CSS_ALIGN_SELF_AUTO;
 };
 
 struct UIPropAlignmentBaseline
@@ -239,7 +235,7 @@ struct UIPropDirection
 
 struct UIPropDisplay
 {
-    ui_css_display_type_t Value;
+    ui_css_display_type_t Value = UI_CSS_DISPLAY_INLINE;
 };
 
 struct UIPropDominantBaseline
@@ -254,30 +250,30 @@ struct UIPropFlex
 
 struct UIPropFlexBasis
 {
-    ui_css_flex_basis_type_t Type;
-    float Value;
+    ui_css_flex_basis_type_t Type = UI_CSS_FLEX_BASIS_CONTENT;
+    float Value = UINAN;
 };
 
 struct UIPropFlexDirection
 {
-    ui_css_flex_direction_type_t Value;
+    ui_css_flex_direction_type_t Value = UI_CSS_FLEX_DIRECTION_ROW;
 };
 
 struct UIPropFlexGrow
 {
-    ui_css_flex_grow_type_t Type;
-    float Value;
+    ui_css_flex_grow_type_t Type = UI_CSS_FLEX_GROW__NUMBER;
+    float Value = 0;
 };
 
 struct UIPropFlexShrink
 {
-    ui_css_flex_shrink_type_t Type;
-    float Value;
+    ui_css_flex_shrink_type_t Type = UI_CSS_FLEX_SHRINK__NUMBER;
+    float Value = 1;
 };
 
 struct UIPropFlexWrap
 {
-    ui_css_flex_wrap_type_t Value;
+    ui_css_flex_wrap_type_t Value = UI_CSS_FLEX_WRAP_NOWRAP;
 };
 
 struct UIPropFloat
@@ -371,7 +367,7 @@ struct UIPropInsetInlineStart
 
 struct UIPropJustifyContent
 {
-    ui_css_justify_content_type_t Value;
+    ui_css_justify_content_type_t Value = UI_CSS_JUSTIFY_CONTENT_FLEX_START;
 };
 
 struct UIPropLetterSpacing
@@ -502,25 +498,25 @@ struct UIPropPaddingBottom
 
 struct UIPropPaddingLeft
 {
-    ui_css_padding_left_type_t Type;
-    float Value;
+    ui_css_padding_left_type_t Type = UI_CSS_PADDING_LEFT_AUTO;
+    float Value = UINAN;
 };
 
 struct UIPropPaddingRight
 {
-    ui_css_padding_right_type_t Type;
-    float Value;
+    ui_css_padding_right_type_t Type = UI_CSS_PADDING_RIGHT_AUTO;
+    float Value = UINAN;
 };
 
 struct UIPropPosition
 {
-    ui_css_position_type_t Value;
+    ui_css_position_type_t Value = UI_CSS_POSITION_RELATIVE;
 };
 
 struct UIPropTop
 {
-    ui_css_top_type_t Type;
-    float Value;
+    ui_css_top_type_t Type = UI_CSS_TOP_AUTO;
+    float Value = UINAN;
 };
 
 struct UIPropBottom
