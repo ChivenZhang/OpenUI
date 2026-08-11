@@ -5,7 +5,7 @@
   "dependencies": [
     {
       "name": "sdl3",
-      "version>=": "3.1.6-preview#2",
+      "version>=": "3.4.2#1",
       "default-features": false,
       "features": [ "vulkan" ]
     },
@@ -29,6 +29,12 @@
     },
     {
       "name": "glslang" 
+    },
+    {
+      "name": "vulkan"
+    },
+    {
+      "name": "vulkan-memory-allocator"
     }
   ]
 }

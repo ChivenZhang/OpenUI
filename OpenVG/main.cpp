@@ -17,7 +17,8 @@
 #include <glm/gtx/matrix_transform_2d.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #endif
-using namespace glm;
+
+#include <vulkan/vulkan.h>
 #include "ovg.h"
 
 

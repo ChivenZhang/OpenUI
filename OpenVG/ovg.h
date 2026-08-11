@@ -4,11 +4,11 @@
 
 struct quadratic_v_t
 {
-	vec2 p0, p1, p2;
+	glm::vec2 p0, p1, p2;
 };
 struct cubic_v_t
 {
-	vec2 p0, p1, p2, p3;	// p1 p2是控制点
+	glm::vec2 p0, p1, p2, p3;	// p1 p2是控制点
 };
 /*
 用 bezier curve（贝塞尔曲线） 来设置 color stop（颜色渐变规则），
@@ -20,7 +20,7 @@ struct rect_shadow_vt
 {
 	float radius = 4;	// 半径
 	int segment = 6;	// 细分段
-	vec4 cfrom = { 0,0,0,0.8 }, cto = { 0.5,0.5,0.5,0.5 };// 颜色从cf到ct
+	glm::vec4 cfrom = { 0,0,0,0.8 }, cto = { 0.5,0.5,0.5,0.5 };// 颜色从cf到ct
 	/*	cubic
 		X轴为 offset（偏移量，取值范围为 0~1，0 代表阴影绘制起点），
 		Y轴为 alpha（颜 色透明度，取值范围为0~1，0 代表完全透明），
@@ -46,20 +46,37 @@ enum class path_type_et :uint32_t
 	LINE_JOIN_BEVEL2
 */
 
-// 混合模式
-enum class blendMode_e :int8_t {
-	none = -1,
+// 混合模式 
+enum class blendMode_e :int {
+	none = -1,	// 不混合
 	normal = 0,	// 普通混合
 	additive,
 	multiply,
 	modulate,
-	screen
+	screen,
+	normal_prem,	// 预乘alpha
+	additive_prem,
+};
+enum vg_line_cap_t :uint8_t {
+	VG_LINE_CAP_BUTT,
+	VG_LINE_CAP_ROUND,
+	VG_LINE_CAP_SQUARE
+};
+
+enum vg_line_join_t :uint8_t {
+	VG_LINE_JOIN_MITER,
+	VG_LINE_JOIN_ROUND,
+	VG_LINE_JOIN_BEVEL
+};
+enum vg_fill_rule_t {
+	VG_FILL_RULE_EVEN_ODD,
+	VG_FILL_RULE_NON_ZERO
 };
 enum vg_extend_t :uint8_t {
-	VG_EXTEND_NONE,    /*!< nothing will be outputed outside the pattern original bounds */
-	VG_EXTEND_REPEAT,  /*!< pattern will be repeated to fill all the target bounds */
-	VG_EXTEND_REFLECT, /*!< pattern will be repeated but mirrored on each repeat */
-	VG_EXTEND_PAD      /*!< the last pixels making the borders of the pattern will be extended to the whole target */
+	VG_EXTEND_NONE,
+	VG_EXTEND_REPEAT,
+	VG_EXTEND_REFLECT,
+	VG_EXTEND_PAD
 };
 
 enum vg_filter_t :uint8_t {
@@ -70,14 +87,14 @@ enum vg_filter_t :uint8_t {
 	VG_FILTER_BILINEAR,
 	VG_FILTER_GAUSSIAN,
 };
-enum class vg_pattern_type_t :uint8_t {
-	VG_PATTERN_TYPE_SOLID,         /*!< single color pattern */
-	VG_PATTERN_TYPE_SURFACE,       /*!< vg surface pattern */
-	VG_PATTERN_TYPE_LINEAR,        /*!< linear gradient pattern */
-	VG_PATTERN_TYPE_RADIAL,        /*!< radial gradient pattern */
-	VG_PATTERN_TYPE_MESH,          /*!< not implemented */
-	VG_PATTERN_TYPE_RASTER_SOURCE, /*!< not implemented */
-	VG_PATTERN_TYPE_SWEEP, /*!< 锥形渐变 */
+enum vg_pattern_type_t :uint8_t {
+	VG_PATTERN_TYPE_SOLID,        // 单色
+	VG_PATTERN_TYPE_SURFACE,      // 纹理填充
+	VG_PATTERN_TYPE_LINEAR,       // 线性渐变 /*!< linear gradient pattern */
+	VG_PATTERN_TYPE_RADIAL,       // 径向渐变 /*!< radial gradient pattern */
+	VG_PATTERN_TYPE_MESH,         // 网格渐变 /*!< not implemented */
+	VG_PATTERN_TYPE_RASTER_SOURCE, //
+	VG_PATTERN_TYPE_SWEEP,			// 锥形渐变 
 };
 enum vg_clip_state_t :uint8_t {
 	vg_clip_state_none = 0x00,
@@ -86,6 +103,14 @@ enum vg_clip_state_t :uint8_t {
 	vg_clip_state_clip_saved = 0x06,
 };
 
+enum vg_operator_t :uint8_t {
+	VG_OPERATOR_CLEAR,
+
+	VG_OPERATOR_SOURCE,
+	VG_OPERATOR_OVER,
+	VG_OPERATOR_DIFFERENCE,
+	VG_OPERATOR_MAX,
+};
 #ifndef d_doubleSided
 #define d_doubleSided 0x01
 #define d_depthTestEnable 0x02
@@ -106,20 +131,20 @@ struct gem_info_t {
 
 
 struct push_constants_t {
-	vec4          source;
-	vec2          size;
+	glm::vec4          source;
+	glm::vec2          size;
 	uint32_t      fsq_patternType;
 	float         opacity;
-	mat3x2 mat;
-	mat3x2 matInv;
+	glm::mat3x2 mat;
+	glm::mat3x2 matInv;
 };
 #define MAX_STOPS 32
 struct vg_gradient_t {
-	vec4 colors[MAX_STOPS];
+	glm::vec4 colors[MAX_STOPS];
 	float stops[MAX_STOPS];
-	vec4 cp[2];
-	ivec4 m;
-	vec2 scale;	// 缩放目标
+	glm::vec4 cp[2];
+	glm::ivec4 m;
+	glm::vec2 scale;	// 缩放目标
 	uint32_t count;
 	int extend;
 };
@@ -133,7 +158,7 @@ struct vg_pattern_t {
 	vg_filter_t       filter;
 	vg_pattern_type_t	type;
 	bool                hasMatrix;
-	mat3x2			matrix;
+	glm::mat3x2			matrix;
 	void* data;	// Surface指针或vg_gradient_t
 };
 
@@ -149,26 +174,34 @@ struct vg_state_save_t {
 	uint8_t		curFillRule;
 	push_constants_t	pushConsts;
 	uint32_t			color;
-	vg_pattern_t		pattern;
+	vg_pattern_t* pattern;
 	vg_clip_state_t		clippingState;
 	uint32_t			references = 1;
 	bool aa = true;
+	bool glutessEnable = false;
 };
 
+enum ImageFlipMode
+{
+	FLIP_NONE,			// 不翻转
+	FLIP_HORIZONTAL,	// 水平翻转 
+	FLIP_VERTICAL,		// 垂直翻转
+	FLIP_HORIZONTAL_AND_VERTICAL = (FLIP_HORIZONTAL | FLIP_VERTICAL)    // 水平和垂直翻转（不是对角翻转）
+};
 struct ovg_image_r
 {
 	void* img;
-	ivec4 rc;		// 所在纹理区域
-	ivec4 sliced;	// 九宫格
-	ivec2 dsize;	// 渲染大小
-	ivec2 pos;		// 渲染坐标
+	glm::ivec4 rc;		// 所在纹理区域
+	glm::ivec4 sliced;	// 九宫格
+	glm::ivec2 texsize;	// 纹理大小
+	glm::ivec4 dst;		// 渲染坐标大小 
 	uint32_t color;		// 混合颜色
 	int8_t type;		// img的类型
 };
 struct text_st_t {
-	vec2 pos;
-	vec2 size;
-	vec4 clip;		// 裁剪区域
+	glm::vec2 pos;
+	glm::vec2 size;
+	glm::vec4 clip;		// 裁剪区域
 	const char* text;
 	int text_len;
 };
@@ -179,8 +212,8 @@ struct text_style_t
 	font_family_t* family = 0;
 	float fontsize = 0;
 	float lineheight = 0;
-	vec2 align = { 0.50,0.50 };	// 文本对齐
-	vec2 shadow_pos = { 1.0,1.0 };
+	glm::vec2 align = { 0.50,0.50 };	// 文本对齐
+	glm::vec2 shadow_pos = { 1.0,1.0 };
 	int stroke = 0;						// 描边宽度
 	uint32_t color = 0xffc2c2c2;		// 文本颜色
 	uint32_t color_stroke = 0xff000000;	// 描边颜色
@@ -189,8 +222,8 @@ struct text_style_t
 };
 // 文本区域
 struct text_box_rt {
-	ivec4 rc = {};		// 设置文本渲染区域，偏移/大小
-	vec2 text_align = { 0.0,0.0 };// 文本对齐
+	glm::ivec4 rc = {};		// 设置文本渲染区域，偏移/大小
+	glm::vec2 text_align = { 0.0,0.0 };// 文本对齐
 	int8_t auto_break = 0;	// 是否自动换行
 	int8_t word_wrap = 0;	// 0字符换行，1单词换行，2换行点，3句子断开，4标题大小写断点
 	int8_t ellipsis = 0;	// 省略号
@@ -206,7 +239,7 @@ struct rvg_t;
 struct drawlist_t;
 // 接口
 struct ovg_canvas_cb {
-	mem_resource_t* ac = 0;
+	mem_resource_t* ac;
 	// 路径操作
 	ovg_path_t* (*new_path)(mem_resource_t* ac);
 	void(*path_destroy)(ovg_path_t* path);
@@ -215,9 +248,10 @@ struct ovg_canvas_cb {
 	void(*new_sub_path)(ovg_path_t* path);
 	void(*path_extents)(ovg_path_t* path, float* x1, float* y1, float* x2, float* y2);
 	void(*get_current_point)(ovg_path_t* path, float* x, float* y);
+	size_t(*get_segment_count)(ovg_path_t* path);
+	void(*set_segment_color)(ovg_path_t* path, size_t idx, uint32_t color);
 	// 添加数据到当前路径，参考path_type_e
 	void(*add_path)(ovg_path_t* path, float* data, size_t count);
-	void(*add_path0)(ovg_path_t* path, ovg_path_t* src);
 	void(*move_to)(ovg_path_t* path, float x, float y);
 	void(*rel_move_to)(ovg_path_t* path, float x, float y);
 	void(*line_to)(ovg_path_t* path, float x, float y);
@@ -234,8 +268,10 @@ struct ovg_canvas_cb {
 	void(*ellipse)(ovg_path_t* path, float radiusX, float radiusY, float x, float y, float rotationAngle);
 	void(*elliptic_arc_to)(ovg_path_t* path, float x, float y, bool large_arc_flag, bool sweep_flag, float rx, float ry, float phi);
 	void(*rel_elliptic_arc_to)(ovg_path_t* path, float x, float y, bool large_arc_flag, bool sweep_flag, float rx, float ry, float phi);
+	void(*circle)(ovg_path_t* path, float x, float y, float radius);
 	// 配置
 	vg_state_save_t* (*new_state)(mem_resource_t* ac);
+	void (*state_destroy)(vg_state_save_t* p);
 	void(*set_opacity)(vg_state_save_t* ctx, float opacity);
 	void(*set_source_color)(vg_state_save_t* ctx, uint32_t c);
 	void(*set_source_rgba)(vg_state_save_t* ctx, float r, float g, float b, float a);
@@ -271,43 +307,42 @@ struct ovg_canvas_cb {
 
 	// 渲染操作，rvg_t可以多次执行fill或stroke/clip
 	rvg_t* (*new_rvg)(mem_resource_t* ac);
+	void (*destroy_rvg)(rvg_t* p);
+	void(*clear)(rvg_t* v);			// 清空画布
 	void(*set_path)(rvg_t* v, ovg_path_t* path, vg_state_save_t* st);
 	void(*stroke)(rvg_t* v);
 	void(*stroke_preserve)(rvg_t* v);
 	void(*fill)(rvg_t* v);
 	void(*fill_preserve)(rvg_t* v);
 	void(*paint)(rvg_t* v);			// 全屏渲染
-	void(*clear)(rvg_t* v);			// 清空画布
 	void(*reset_clip)(rvg_t* v);	// 重置裁剪
 	void(*clip)(rvg_t* v);			// 路径裁剪，清空当前路径
 	void(*clip_preserve)(rvg_t* v);	// 路径裁剪
-	void(*scissor)(rvg_t* v, int x, int y, int width, int height);	// 矩形裁剪，不受状态影响
+	void(*clip_rect)(rvg_t* v, int x, int y, int width, int height);	// 矩形裁剪
 
-	// 渲染列表
-	drawlist_t* (*new_drawlist)(mem_resource_t* ac);
-	// 添加矢量对象，dst渲染的坐标/宽高，rect为对象的区域坐标/宽高
-	void (*add_vg)(drawlist_t* dc, rvg_t* v, const vec4* dst, const ivec4* rect);
 	// 添加文本，风格，渲染区可选
-	void (*add_text)(drawlist_t* dc, text_st_t* p, text_style_t* ts, text_box_rt* box);
+	void (*add_text)(rvg_t* dc, text_st_t* p, text_style_t* ts, text_box_rt* box);
 	// 普通图片，支持九宫格、混合颜色
-	void (*add_image)(drawlist_t* dc, ovg_image_r* r);
+	void (*add_image)(rvg_t* dc, ovg_image_r* r);
 	// 原始三角形，输入0则不修改
-	void (*geom_set_state)(drawlist_t* dc, gem_info_t* info, const mat4* matrix);
+	void (*set_geom_state)(rvg_t* dc, gem_info_t* info, const void* matrix4x4);
 	// 添加几何数据到缓冲区，xy顶点坐标，color顶点颜色，uv顶点纹理坐标，indices索引数据，color_type=0表示float4，1表示uint32_t
-	void (*geom_add_geometry)(drawlist_t* dc, void* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
+	void (*add_geometry)(rvg_t* dc, void* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
 	// 添加3D几何数据到缓冲区，xyz顶点坐标，color顶点颜色（双面则要双倍），uv顶点纹理坐标，indices索引数据
-	void (*geom_add_geometry3d)(drawlist_t* dc, void* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
+	void (*add_geometry3d)(rvg_t* dc, void* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
 
 };
 
+ovg_canvas_cb* new_canvas_cb();
+void free_canvas_cb(ovg_canvas_cb*);
 // 测试
-void* new_gpu();
-
+//void* new_gpu();
 struct ovg_device_t;
 struct ovg_ctx_t;
 ovg_device_t* new_vkdevctx(VkDevice vkdev, VkPhysicalDevice phy, VkInstance instance);
 void free_vkdevctx(ovg_device_t* dev);
 ovg_ctx_t* new_ovgctx(ovg_device_t* dev, VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlags samples);
+void free_ovgctx(ovg_ctx_t* p);
+ovg_canvas_cb* get_canvas_cb(ovg_ctx_t* ctx);// 不需要释放
 
-ovg_canvas_cb* get_canvas_cb(ovg_ctx_t* ctx); 
 
