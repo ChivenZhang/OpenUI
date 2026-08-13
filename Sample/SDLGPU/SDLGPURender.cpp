@@ -13,7 +13,7 @@
 #include <SDL3/SDL_gpu.h>
 #include <OpenUI/UICanvas.h>
 
-SDLGPURender::SDLGPURender(int width, int height, UICanvasRaw canvas)
+SDLGPURender::SDLGPURender(UICanvasRaw canvas, int width, int height)
     :
     m_Canvas(canvas)
 {
@@ -29,10 +29,10 @@ UIString SDLGPURender::getName() const
     return {};
 }
 
-void SDLGPURender::render(UIRect client, UIListView<const UIPrimitive> data)
+void SDLGPURender::render(UIRect client, UIImageRaw srcImage, UIImageRaw dstImage, UIComputedStyleRaw style)
 {
     auto canvas = getCanvas()->getTarget();
-    auto swapchainTexture = (SDL_GPUTexture*) getCanvas()->getTarget().Data;
+    auto swapchainTexture = (SDL_GPUTexture*) getCanvas()->getTarget()->Data;
 
     // // 获取命令缓冲区 (Command Buffer)
     // SDL_GPUCommandBuffer *cmdBuf = SDL_AcquireGPUCommandBuffer(m_Device);

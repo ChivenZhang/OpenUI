@@ -35,7 +35,7 @@ public:
 	UIDeviceRaw getDevice() const;
 	UIBuilderRaw getBuilder() const;
 
-	UIImage getTarget() const;
+	UIImageRaw getTarget() const;
 	void setTarget(UIImage value);
 
 	UIPainterRaw getPainter() const;

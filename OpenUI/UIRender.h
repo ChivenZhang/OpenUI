@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UIShader.h"
+#include "UIStyle.h"
 class UICanvas;
 using UICanvasRaw = UIRaw<UICanvas>;
 class UIRenderPrivate {};
@@ -25,7 +25,7 @@ public:
 
 	virtual UICanvasRaw getCanvas() const = 0;
 
-	virtual void render(UIRect client, UIListView<const UIPrimitive> data) = 0;
+	virtual void render(UIRect client, UIImageRaw srcImage, UIImageRaw dstImage, UIComputedStyleRaw style) = 0;
 };
 using UIRenderRef = UIRef<UIRender>;
 using UIRenderRaw = UIRaw<UIRender>;

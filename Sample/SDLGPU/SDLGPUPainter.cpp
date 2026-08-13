@@ -11,7 +11,7 @@
 #ifdef OPENUI_ENABLE_SDLGPU
 #include "SDLGPUPainter.h"
 
-SDLGPUPainter::SDLGPUPainter(int width, int height, UICanvasRaw canvas)
+SDLGPUPainter::SDLGPUPainter(UICanvasRaw canvas, int width, int height)
     :
     m_Canvas(canvas)
 {
@@ -20,6 +20,11 @@ SDLGPUPainter::SDLGPUPainter(int width, int height, UICanvasRaw canvas)
 UICanvasRaw SDLGPUPainter::getCanvas() const
 {
     return m_Canvas;
+}
+
+UIImageRaw SDLGPUPainter::getTarget() const
+{
+    return {};
 }
 
 UIRect SDLGPUPainter::boundingRect(float x, float y, float width, float height, const UIString& text, float cursor, UIRectRaw cursorRect)
@@ -50,17 +55,6 @@ void SDLGPUPainter::drawLines(UIListView<UILine> lines)
 
 void SDLGPUPainter::drawRect(float x, float y, float width, float height)
 {
-    auto& geometry = m_Geometry.emplace_back();
-    geometry.Client = m_ClipRect;
-    auto& primitive = geometry.Primitives.emplace_back();
-    primitive.Clip = {x, y, width, height};
-    primitive.Points.push_back({x, y});
-    primitive.Points.push_back({x, y+height});
-    primitive.Points.push_back({x+width, y+height});
-    primitive.Points.push_back({x, y});
-    primitive.Points.push_back({x+width, y+height});
-    primitive.Points.push_back({x+width, y});
-    primitive.Style = nullptr;
 }
 
 void SDLGPUPainter::drawRects(UIListView<UIRect> rects)
@@ -132,11 +126,6 @@ void SDLGPUPainter::scale(float dx, float dy)
 
 void SDLGPUPainter::translate(float dx, float dy)
 {
-}
-
-UIList<UIGeometry>& SDLGPUPainter::getGeometry()
-{
-    return m_Geometry;
 }
 
 #endif

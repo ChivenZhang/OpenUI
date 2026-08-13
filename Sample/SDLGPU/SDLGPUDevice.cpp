@@ -54,8 +54,8 @@ SDLGPUDevice::SDLGPUDevice()
 
     UIConfig config{.DisplayScale = scale};
     auto canvas = UINew<UICanvas>(this, config);
-    canvas->setPainter(UINew<SDLGPUPainter>(w, h, canvas.get()));
-    canvas->setRender(UINew<SDLGPURender>(w, h, canvas.get()));
+    canvas->setPainter(UINew<SDLGPUPainter>(canvas.get(), w, h));
+    canvas->setRender(UINew<SDLGPURender>(canvas.get(), w, h));
     m_UICanvas = canvas;
 
     SDL_ShowWindow(window);

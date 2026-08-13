@@ -271,6 +271,7 @@ protected:
 
 protected:
 	UICanvasRaw getCanvas() const;
+	UIImageRaw getTarget() const;
 
 private:
 	void setContext(UICanvasRaw value);

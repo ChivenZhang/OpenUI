@@ -28,12 +28,12 @@ struct UICanvasPrivate : UIPrivate
 {
 	UIConfig Config;
 	UIDeviceRaw Device;
-	// UIRenderRef Render;
+	UIRenderRef Render;
 	UIPainterRef Painter;
 	UIBuilderRef Builder;
 	UIWidgetRaw Focus;
 	bool NeedLayout = true, NeedPaint = true;
-	UIStringMap<UIRenderRef> RenderMap;
+	UIStringMap<UIRenderRef> EffectorMap;
 	UIList<UIPrimitive> RenderList;
 	UIList<UIWidgetRaw> AnimateList;
 	UIList<UIWidgetRef> TopLevelView;
@@ -89,9 +89,9 @@ UIBuilderRaw UICanvas::getBuilder() const
 	return PRIVATE()->Builder.get();
 }
 
-UIImage UICanvas::getTarget() const
+UIImageRaw UICanvas::getTarget() const
 {
-	return PRIVATE()->Config.RenderTarget;
+	return &PRIVATE()->Config.RenderTarget;
 }
 
 void UICanvas::setTarget(UIImage value)
@@ -111,15 +111,15 @@ void UICanvas::setPainter(UIPainterRef value)
 
 UIRenderRaw UICanvas::getRender(UIString name) const
 {
-	auto result = PRIVATE()->RenderMap.find(name);
-	if (result == PRIVATE()->RenderMap.end()) return nullptr;
+	auto result = PRIVATE()->EffectorMap.find(name);
+	if (result == PRIVATE()->EffectorMap.end()) return nullptr;
 	return result->second.get();
 }
 
 void UICanvas::setRender(UIRenderRef value)
 {
 	if (value == nullptr) return;
-	PRIVATE()->RenderMap[value->getName()] = value;
+	PRIVATE()->EffectorMap[value->getName()] = value;
 }
 
 UIWidgetRaw UICanvas::getFocus() const
@@ -673,22 +673,33 @@ bool UICanvas::paintWidget(UIRect client)
 
 void UICanvas::renderWidget(UIRect client)
 {
-	if (getPainter() == nullptr) return;
-
-	for (auto& geometry : getPainter()->getGeometry())
+	UILambda<void(UIWidgetRaw, UIRect)> foreach_func;
+	foreach_func = [&](UIWidgetRaw widget, UIRect client)
 	{
-		for (auto& primitive : geometry.Primitives)
-		{
-			if (primitive.Style == nullptr) continue;
-			auto renderName = primitive.Style->getStyle<UIString>("render");
-			if (auto render = getRender(renderName))
-			{
-				render->render(geometry.Client, {&primitive, 1});
-			}
-		}
-	}
+		if (widget->getVisible() == false) return;
 
-	getPainter()->getGeometry().clear();
+		auto source = widget->getTarget();
+		if (source == nullptr) return;
+
+		auto& filter = widget->getStyle<UIPropFilter>("filter");
+		if (auto render = this->getRender(filter.Func); render && filter.Value)
+		{
+			render->render(client, source, nullptr, widget->getStyleComputed());
+		}
+
+		if (auto render = PRIVATE()->Render.get())
+		{
+			render->render(client, source, this->getTarget(), widget->getStyleComputed());
+		}
+
+		auto childList = widget->getWidgets();
+		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds());
+	};
+
+	for (auto& widget : PRIVATE()->TopLevelList)
+	{
+		foreach_func(widget.Widget.get(), widget.Widget->getBounds());
+	}
 }
 
 void UICanvas::animateWidget(float time)

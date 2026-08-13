@@ -21,6 +21,7 @@ public:
 	UIList<UIWidgetRef> Children;
 	UIFilterRaw Filter = nullptr;
 	UICanvasRaw Canvas = nullptr;
+	UIImage Target = {};
 
 	// =============================Flex Layout==========================
 
@@ -912,10 +913,10 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		case UIHash("baseline-shift"): setStyle<UIPropBaselineShift>(name); break;
 		case UIHash("baseline-source"): setStyle<UIPropBaselineSource>(name); break;
 		case UIHash("border"): setEmbedStyle(name, PRIVATE()->Border); break;
-		case UIHash("border-bottom"): setEmbedStyle(name, PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Bottom); break;
-		case UIHash("border-left"): setEmbedStyle(name, PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Left); break;
-		case UIHash("border-right"): setEmbedStyle(name, PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Right); break;
-		case UIHash("border-top"): setEmbedStyle(name, PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Top); break;
+		case UIHash("border-bottom"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Bottom); break;
+		case UIHash("border-left"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Left); break;
+		case UIHash("border-right"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Right); break;
+		case UIHash("border-top"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Top); break;
 		case UIHash("bottom"): setStyle<UIPropBottom>(name); break;
 		case UIHash("box-sizing"): setStyle<UIPropBoxSizing>(name); break;
 		case UIHash("clear"): setStyle<UIPropClear>(name); break;
@@ -951,10 +952,10 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		//case UIHash("line-break"): setStyle<UIPropLineBreak>(name); break;
 		case UIHash("line-height"): setStyle<UIPropLineHeight>(name); break;
 		case UIHash("margin"): setEmbedStyle(name, PRIVATE()->Margin); break;
-		case UIHash("margin-bottom"): setEmbedStyle(name, PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Bottom); break;
-		case UIHash("margin-left"): setEmbedStyle(name, PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Left); break;
-		case UIHash("margin-right"): setEmbedStyle(name, PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Right); break;
-		case UIHash("margin-top"): setEmbedStyle(name, PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Top); break;
+		case UIHash("margin-bottom"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Bottom); break;
+		case UIHash("margin-left"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Left); break;
+		case UIHash("margin-right"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Right); break;
+		case UIHash("margin-top"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Top); break;
 		case UIHash("max-height"): setStyle<UIPropMaxHeight>(name); break;
 		case UIHash("max-width"): setStyle<UIPropMaxWidth>(name); break;
 		case UIHash("min-height"): setStyle<UIPropMinHeight>(name); break;
@@ -967,10 +968,10 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		case UIHash("overflow-x"): setStyle<UIPropOverflowX>(name); break;
 		//case UIHash("overflow-y"): setStyle<UIPropOverflowY>(name); break;
 		case UIHash("padding"): setEmbedStyle(name, PRIVATE()->Padding); break;
-		case UIHash("padding-bottom"): setEmbedStyle(name, PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Bottom); break;
-		case UIHash("padding-left"): setEmbedStyle(name, PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Left); break;
-		case UIHash("padding-right"): setEmbedStyle(name, PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Right); break;
-		case UIHash("padding-top"): setEmbedStyle(name, PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Top); break;
+		case UIHash("padding-bottom"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Bottom); break;
+		case UIHash("padding-left"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Left); break;
+		case UIHash("padding-right"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Right); break;
+		case UIHash("padding-top"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Top); break;
 		case UIHash("position"): setStyle<UIPropPosition>(name); break;
 		case UIHash("right"): setStyle<UIPropRight>(name); break;
 		case UIHash("tab-size"): setStyle<UIPropTabSize>(name); break;
@@ -1119,6 +1120,11 @@ void UIWidget::timerEvent(UITimerEventRaw event)
 UICanvasRaw UIWidget::getCanvas() const
 {
 	return PRIVATE()->Canvas;
+}
+
+UIImageRaw UIWidget::getTarget() const
+{
+	return &PRIVATE()->Target;
 }
 
 void UIWidget::setContext(UICanvasRaw value)

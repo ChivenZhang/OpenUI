@@ -668,6 +668,12 @@ struct UIPropZIndex
     ui_css_z_index_type_t Type = UI_CSS_Z_INDEX_AUTO;
 };
 
+struct UIPropFilter
+{
+    ui_css_filter_type_t Value = 0;
+    UIString Func, Args;
+};
+
 // Helper: trim
 static inline UIString UITrim(UIString s)
 {
