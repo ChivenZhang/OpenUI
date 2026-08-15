@@ -22,19 +22,30 @@
       "version>=": "2.7.0"
     },
     {
-      "name": "glew" 
+      "name": "glew"
     },
     {
-      "name": "glm" 
+      "name": "glm"
     },
     {
-      "name": "glslang" 
+      "name": "glslang"
     },
     {
       "name": "vulkan"
     },
     {
       "name": "vulkan-memory-allocator"
+    },
+    {
+      "name": "harfbuzz",
+      "version>=": "13.0.1",
+      "features": [ "freetype", "icu" ]
+    },
+    {
+      "name": "fontconfig"
+    },
+    {
+      "name": "libraqm" 
     }
   ]
 }
