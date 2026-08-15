@@ -86,23 +86,15 @@ typedef struct UboGrad {
 	int      extend;
 } UboGrad;
 
-struct push_constants_std140_t {
-	glm::mat2x3 mat;
-	glm::mat2x3 matInv;
+struct push_constants_scalar_t {
+	glm::mat3x2 mat;
+	glm::mat3x2 matInv;
 	float source[4];              // vec4
 	float size[2];                // vec2
 	uint32_t fsq_patternType;
 	float opacity;
 };
-struct gpu_cmd_it
-{
-	push_constants_std140_t u;
-	vg_gradient_t grad;
-	Uint32 num_vertices;
-	Uint32 num_instances;
-	Uint32 first_vertex;
-	Uint32 first_instance;
-};
+ 
 /* ── 3.  Global renderer state ────────────────────────────────── */
 typedef struct VGState {
 	SDL_Window* window;
@@ -119,8 +111,7 @@ typedef struct VGState {
 	SDL_GPURenderPass* pass;
 	SDL_GPUCommandBuffer* cmd;
 	std::queue<SDL_GPUTransferBuffer*> rq;
-	std::vector<ovgVertex> vs;
-	std::vector<gpu_cmd_it> cs;
+ 
 	ovg_draw_data* data;
 } VGState;
 

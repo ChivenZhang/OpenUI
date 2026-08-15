@@ -38,8 +38,8 @@
 //#include "Private/a_vg.vert.h"
 //#include "Private/a_vg.frag.h"
 
-#include "shaders/spv_c/a_vg0.vert.h"
-#include "shaders/spv_c/a_vg0.frag.h"
+#include "shaders/spv_c/a_vg.vert.h"
+#include "shaders/spv_c/a_vg.frag.h"
 
 #define FULLSCREEN_BIT         0x10000000
 #define SRCTYPE_MASK           0x000000FF
@@ -459,15 +459,14 @@ SDL_GPUSampler* CreateLinearSampler(SDL_GPUDevice* device) {
 
 void mul_pat(vg_gradient_t* grad, int type, const glm::mat3& mat, const glm::mat3& pat_mat);
 
-void begin_frame(VGState* g) {
-	g->cs.clear();
-	g->vs.clear();
-}
+void begin_frame(VGState* g) {}
 int submit_draw(VGState* g) {
 
 	uint32_t sw = 0, sh = 0;
 	SDL_GPUTexture* swapchain = NULL;
-	resize_res(g, g->vs.size() + g->data->v_count);
+	uint32_t vcount = 0;
+	if (g->data)vcount += g->data->v_count;
+	resize_res(g, vcount);
 	SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(g->device);
 	if (!cmd) return 0;
 	if (!SDL_AcquireGPUSwapchainTexture(cmd, g->window, &swapchain, &sw, &sh)) {
@@ -492,13 +491,15 @@ int submit_draw(VGState* g) {
 	/* ── Upload vertices via a transfer buffer ────────────── */
 	SDL_GPUTransferBufferCreateInfo tbc = {};
 	tbc.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-	tbc.size = g->vs.size() * sizeof(ovgVertex);
-	tbc.size += g->data->v_count * sizeof(ovgVertex);
+	tbc.size = 0;
+	if (g->data)
+		tbc.size += g->data->v_count * sizeof(ovgVertex);
 	SDL_GPUTransferBuffer* staging = SDL_CreateGPUTransferBuffer(g->device, &tbc);
 	g->rq.push(staging);
 	void* map = SDL_MapGPUTransferBuffer(g->device, staging, false);
-	//memcpy(map, g->vs.data(), tbc.size);
-	memcpy(map, g->data->vg_vertex, tbc.size);
+
+	if (g->data)
+		memcpy(map, g->data->vg_vertex, tbc.size);
 	SDL_UnmapGPUTransferBuffer(g->device, staging);
 
 	/* Use a copy pass for the upload, then a render pass for drawing */
@@ -524,15 +525,8 @@ int submit_draw(VGState* g) {
 	SDL_Rect clip = { 0,0,g->width,g->height };
 	SDL_SetGPUViewport(g->pass, &view);
 	SDL_SetGPUScissor(g->pass, &clip);
-	for (auto& it : g->cs)
-	{
-		SDL_PushGPUVertexUniformData(cmd, 0, &it.u, sizeof(it.u));
-		SDL_PushGPUFragmentUniformData(cmd, 0, &it.grad, sizeof(it.grad));
-		SDL_DrawGPUPrimitives(g->pass, it.num_vertices, 1, it.first_vertex, 0);
-	}
 
-
-	for (size_t i = 0; i < g->data->count; i++)
+	for (size_t i = 0; g->data && i < g->data->count; i++)
 	{
 		auto& it = g->data->d[i];
 		auto pc = it.vg.state->pushConsts;
@@ -540,7 +534,7 @@ int submit_draw(VGState* g) {
 		switch (it.g.stype) {
 		case 0:
 		{
-			push_constants_std140_t pc0 = {};
+			push_constants_scalar_t pc0 = {};
 			if (it.vg.state->pattern && it.vg.state->pattern->type != PAT_SOLID) {
 				pc.source = { smax,smax,0,0 };
 			}
@@ -551,8 +545,8 @@ int submit_draw(VGState* g) {
 				pc.fsq_patternType = (pc.fsq_patternType & FULLSCREEN_BIT) + it.vg.state->pattern->type;
 			pc0.fsq_patternType = pc.fsq_patternType;
 			pc0.opacity = pc.opacity;
-			pc0.mat = glm::transpose(pc.mat);
-			pc0.matInv = glm::transpose(pc.matInv);
+			pc0.mat = pc.mat; //glm::transpose(pc.mat);
+			pc0.matInv = pc.matInv;// glm::transpose(pc.matInv);
 			if (it.vg.state->pattern) {
 				auto gr = *(vg_gradient_t*)it.vg.state->pattern->data;
 				glm::mat3 patmat = it.vg.state->pattern->matrix;
@@ -702,82 +696,6 @@ void mul_pat(vg_gradient_t* grad, int type, const glm::mat3& mat, const glm::mat
 	grad->cp[1] = glm::vec4(glm::vec2(cp1[0]), glm::vec2(cp1[1]));
 	vg_sort_gradient_stops(grad, grad->stops, grad->count);
 }
-void VG_DrawFilledRect(VGState* g, float x, float y, float w, float h, int patType, float opacity, const glm::vec4& c4)
-{
-	glm::vec2 pos = { x,y };
-	pos *= 0.0;
-	//x = y = 0;
-	uint32_t c = CreateRgbaf(c4.x, c4.y, c4.z, c4.w);
-	ovgVertex verts[6] = {
-		/* tri 1 */                          /* pos */        /* color */              /* uv */
-		{ {x,     y},		{0, 0},c },
-		{ {x + w, y},		{1, 0} ,c},
-		{ {x + w, y + h},	{1, 1}, c },
-		/* tri 2 */
-		{ {x,     y},		{0, 0}, c },
-		{ {x + w, y + h},	{1, 1}, c },
-		{ {x,     y + h},	{0, 1 }, c},
-	};
-	gpu_cmd_it gc = {};
-	gc.first_vertex = g->vs.size();
-	gc.num_vertices = 6;
-	for (size_t i = 0; i < 6; i++)
-	{
-		verts[i].uv = {};
-		g->vs.push_back(verts[i]);
-	}
-	SDL_GPUCommandBuffer* cmd = g->cmd;
-
-	/* Push all uniforms BEFORE drawing */
-	//VG_PushDrawUniforms(g, cmd, (float)sw, (float)sh, patType, opacity);
-	push_constants_t pc = {};
-	pc.source = c4;
-	pc.size = { g->width, g->height };
-	pc.fsq_patternType = (pc.fsq_patternType & FULLSCREEN_BIT) + patType;
-	pc.opacity = opacity;
-	auto mat = glm::translate(glm::mat3(1.0), pos);
-	pc.mat = mat;
-	pc.matInv = glm::inverse(mat);
-	auto mx = std::max(g->width, g->height);
-	if (patType != PAT_SOLID) {
-		pc.source = { mx,mx,0,0 };
-	}
-	vkvg_matrix_t m = {};
-	vkvg_matrix_init(&m, 1, 0, 0, 1, pos.x, pos.y);
-	auto mk = glm::mat2x3(1.0);
-	push_constants_std140_t pc0 = {};
-	memcpy(&pc0.source, &pc.source, sizeof(float) * 4);
-	pc0.size[0] = pc.size.x;
-	pc0.size[1] = pc.size.y;
-	pc0.fsq_patternType = pc.fsq_patternType;
-	pc0.opacity = pc.opacity;
-	pc0.mat = pc.mat;
-	pc0.matInv = pc.matInv;
-	memcpy(&pc0.mat, &m, sizeof(m));
-	gc.u = pc0;
-	vg_gradient_t grad = {};
-	{
-		grad.cp[0] = glm::vec4{ 0, 0, 100, 256 };
-		grad.m = glm::ivec4(1024, 0, 0, 1024);
-		grad.extend = 0;
-		grad.scale = glm::vec2{ 1.0,1.0 };
-	}
-	switch (patType) {
-	case PAT_RADIAL:
-		pattern_edit_radial(&grad, 150, 100, 25.6, 102.4, 102.4, 128.0, false);
-		break;
-	case PAT_SWEEP:
-		pattern_edit_sweep(&grad, 150, 100, 0, 2);
-		break;
-	}
-	pattern_add_color_stop(&grad, 0, 0, 0, 1, 1);// 蓝
-	pattern_add_color_stop(&grad, 0.5, 0, 1, 0, 1);// 绿
-	pattern_add_color_stop(&grad, 1, 1, 0, 0, 1);// 红
-	glm::mat3 patmat = glm::mat3(1.0);
-	mul_pat(&grad, patType, pc0.mat, patmat);
-	gc.grad = grad;
-	g->cs.push_back(gc);
-}
 
 /* ── 9.  Per-frame rendering ───────────────────────────────────── */
 void VG_RenderFrame(VGState* g, ovg_draw_data* data) {
@@ -791,21 +709,6 @@ void VG_RenderFrame(VGState* g, ovg_draw_data* data) {
 	}
 	begin_frame(g);
 	g->data = data;
-	/* Full-screen background */
-	//VG_DrawFilledRect(g, 0, 0, fw, fh, PAT_SOLID, 1.0f, glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
-	static glm::vec2 pos[4] = { {400,300},{400,50},{50,300},{50,50} };
-
-	///* Linear gradient */
-	//VG_DrawFilledRect(g, pos[0].x, pos[0].y, 300, 200, PAT_LINEAR, 0.860f, glm::vec4(1, 1, 0, 1));
-
-	///* Radial gradient */
-	//VG_DrawFilledRect(g, pos[1].x, pos[1].y, 300, 200, PAT_RADIAL, 0.85f, glm::vec4(0, 1, 1, 1));
-
-	///* Sweep gradient */
-	//VG_DrawFilledRect(g, pos[2].x, pos[2].y, 300, 200, PAT_SWEEP, 0.9f, glm::vec4(1, 0, 1, 1));
-
-	///* Translucent solid */
-	//VG_DrawFilledRect(g, pos[3].x, pos[3].y, 300, 200, PAT_SOLID, 0.85f, glm::vec4(0.62f, 0.8f, 0.4f, 1.0f));
 	submit_draw(g);
 }
 
