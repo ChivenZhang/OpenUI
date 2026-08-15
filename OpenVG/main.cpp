@@ -85,13 +85,23 @@ int main()
 		cav->set_fill_rule(sst, VG_FILL_RULE_EVEN_ODD);
 		r_grid_fill(cav, vg, sst, path, surfsize, glm::ivec2(-1, 0xffdfdfdf), 20);
 		cav->set_source_color(sst, 0xff0080ff);
-		auto pat = cav->new_pattern_linear(cav->ac, 0, 0, 100, 256);
+		auto pat = cav->new_pattern_linear(cav->ac, 0, 0, 0, 256);
 		cav->pattern_add_color_stop(pat, 0, 0, 0, 1, 1);// 蓝
 		cav->pattern_add_color_stop(pat, 0.5, 0, 1, 0, 1);// 绿
 		cav->pattern_add_color_stop(pat, 1, 1, 0, 0, 1);// 红
 		cav->set_source(sst, pat);
-		cav->rectangle(path, 20, 20, 300, 200);
+		cav->rectangle(path, 20, 20, 300, 300);
 		cav->fill(vg);
+		cav->translate(sst, 330, 0);
+		{
+			auto pat = cav->new_pattern_linear(cav->ac, 0, 20, 0, 256);
+			cav->pattern_add_color_stop(pat, 0, 0, 0, 1, 0.81);// 蓝
+			cav->pattern_add_color_stop(pat, 0.5, 0, 1, 0, 0.81);// 绿
+			cav->pattern_add_color_stop(pat, 1, 1, 0, 0, 0.91);// 红
+			cav->set_source(sst, pat);
+			cav->rectangle(path, 20, 20, 300, 300);
+			cav->fill(vg);
+		}
 		cav->translate(sst, 120, 250);
 		cav->rectangle(path, 0, 0, 300, 300);
 		pat = cav->new_pattern_radial(cav->ac, 150, 150, 25.6, 102.4, 102.4, 128.0, false);

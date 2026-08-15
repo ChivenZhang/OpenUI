@@ -160,6 +160,13 @@ ovg_canvas_cb* new_canvas_cb()
 void free_canvas_cb(ovg_canvas_cb* p) {
 	if (p)delete p;
 }
+ovg_ctx_cb* new_ctx_cb()
+{
+	return nullptr;
+}
+void free_ctx_cb(ovg_ctx_cb* p) {
+	if (p)delete p;
+}
 // vg
 #if 1
 struct ovg_path_t {
