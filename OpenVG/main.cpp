@@ -47,7 +47,7 @@ int main()
 		cav->set_path(vg, path, sst);
 		cav->fill(vg);
 		pat = cav->new_pattern_radial(cav->ac, 150, 100, 25.6, 102.4, 102.4, 128.0, false);
-		cav->pattern_add_color_stop(pat, 0, 0, 0, 1, 0);// 蓝
+		cav->pattern_add_color_stop(pat, 0, 0, 0, 0.51, 1);// 蓝
 		cav->pattern_add_color_stop(pat, 0.5, 0, 1, 0, 1);// 绿
 		cav->pattern_add_color_stop(pat, 1, 1, 0, 0, 1);// 红
 		cav->set_source(sst, pat);
