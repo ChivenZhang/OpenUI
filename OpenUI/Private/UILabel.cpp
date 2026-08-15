@@ -295,7 +295,6 @@ void UILabel::setPixmap(UIImage image)
 		PRIVATE()->PixelScaled.clear();
 		PRIVATE()->ImageScaled = UIImage{};
 	}
-	getCanvas()->paintWidget();
 }
 
 UILabel::scale_t UILabel::getScaledContents() const
@@ -306,7 +305,6 @@ UILabel::scale_t UILabel::getScaledContents() const
 void UILabel::setScaledContents(scale_t value)
 {
 	PRIVATE()->ScaledContents = value;
-	getCanvas()->paintWidget();
 }
 
 void UILabel::mouseDoubleEvent(UIMouseEventRaw event)

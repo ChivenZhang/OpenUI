@@ -257,8 +257,6 @@ void UIRadio::mouseReleaseEvent(UIMouseEventRaw event)
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
 
-			getCanvas()->paintWidget();
-
 			event->Accept = true;
 		}
 	}

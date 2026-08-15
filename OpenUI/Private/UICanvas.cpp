@@ -30,13 +30,14 @@ struct UITopLevelWidget
 
 struct UICanvasPrivate : UIPrivate
 {
+	UIImage Target;
 	UIConfig Config;
 	UIDeviceRaw Device;
 	UIRenderRef Render;
 	UIPainterRef Painter;
 	UIBuilderRef Builder;
 	UIWidgetRaw Focus;
-	bool NeedLayout = true, NeedPaint = true;
+	bool NeedLayout = true;
 	UIStringMap<UIRenderRef> EffectorMap;
 	UIList<UIPrimitive> RenderList;
 	UIList<UIWidgetRaw> AnimateList;
@@ -95,12 +96,12 @@ UIBuilderRaw UICanvas::getBuilder() const
 
 UIImageRaw UICanvas::getTarget() const
 {
-	return &PRIVATE()->Config.RenderTarget;
+	return &PRIVATE()->Target;
 }
 
 void UICanvas::setTarget(UIImage value)
 {
-	PRIVATE()->Config.RenderTarget = value;
+	PRIVATE()->Target = value;
 }
 
 UIPainterRaw UICanvas::getPainter() const
@@ -240,7 +241,6 @@ UIListView<const UIWidgetRef> UICanvas::getWidget() const
 void UICanvas::layoutWidget()
 {
 	PRIVATE()->NeedLayout = true;
-	paintWidget();
 }
 
 bool UICanvas::layoutWidget(UIRect client)
@@ -650,18 +650,13 @@ bool UICanvas::layoutWidget(UIRect client)
 	return true;
 }
 
-void UICanvas::paintWidget()
-{
-	PRIVATE()->NeedPaint = true;
-}
-
 bool UICanvas::paintWidget(UIRect client)
 {
-	auto painter = getPainter();
-	auto render = getRender({});
+	auto painter = PRIVATE()->Painter.get();
+	auto render = PRIVATE()->Render.get();
+	auto screenRT = &PRIVATE()->Target;
 	if (painter == nullptr || render == nullptr) return false;
-	auto screenRT = getTarget();
-	if (screenRT == nullptr) return false;
+	if (screenRT == nullptr || !screenRT->Handle) return false;
 
 	UILambda<void(UIWidgetRaw, UIRect, UIMat4)> foreach_func;
 	foreach_func = [&](UIWidgetRaw widget, UIRect client, UIMat4 matrix)

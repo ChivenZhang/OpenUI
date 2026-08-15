@@ -22,7 +22,6 @@ class UIConfig
 public:
 	float DisplayScale = 1.0f;
 	float PixelDensity = 1.0f;
-	UIImage RenderTarget;
 };
 
 /// @brief 
@@ -59,7 +58,6 @@ public:
 
 	void layoutWidget();
 	bool layoutWidget(UIRect client);
-	void paintWidget();
 	bool paintWidget(UIRect client);
 	void animateWidget(float time);
 	void updateWidget(float time, UIRect client);

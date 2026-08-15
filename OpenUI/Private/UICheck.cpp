@@ -163,7 +163,6 @@ void UICheck::setChecked(bool value)
 	PRIVATE()->Button->setChecked(value);
 	if (PRIVATE()->Checked) PRIVATE()->Button->setText("✔");
 	else PRIVATE()->Button->setText("");
-	if (getCanvas()) getCanvas()->paintWidget();
 }
 
 UIButtonRaw UICheck::getButton() const
@@ -189,7 +188,6 @@ void UICheck::mouseDoubleEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getCanvas()) getCanvas()->paintWidget();
 		}
 	}
 }
@@ -207,7 +205,6 @@ void UICheck::mousePressEvent(UIMouseEventRaw event)
 
 			PRIVATE()->OnPressed.signal();
 			PRIVATE()->OnClicked.signal(PRIVATE()->Checked);
-			if (getCanvas()) getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -222,7 +219,6 @@ void UICheck::mouseReleaseEvent(UIMouseEventRaw event)
 		{
 			PRIVATE()->Pressed = false;
 			PRIVATE()->OnReleased.signal();
-			if (getCanvas()) getCanvas()->paintWidget();
 
 			event->Accept = true;
 		}
@@ -237,12 +233,10 @@ void UICheck::mouseMoveEvent(UIMouseEventRaw event)
 	{
 		PRIVATE()->Hovered = true;
 		PRIVATE()->OnHovered.signal();
-		if (getCanvas()) getCanvas()->paintWidget();
 	}
 	else
 	{
 		PRIVATE()->Hovered = false;
-		if (getCanvas()) getCanvas()->paintWidget();
 	}
 }
 
@@ -253,5 +247,4 @@ void UICheck::enterEvent(UIMouseEventRaw event)
 void UICheck::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
-	if (getCanvas()) getCanvas()->paintWidget();
 }
