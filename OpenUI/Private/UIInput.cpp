@@ -412,7 +412,6 @@ void UIInput::keyPressEvent(UIKeyEventRaw event)
 	{
 		cut();
 	}
-	getCanvas()->paintWidget();
 }
 
 void UIInput::inputEvent(UITextInputEventRaw event)
@@ -432,7 +431,6 @@ void UIInput::inputEvent(UITextInputEventRaw event)
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 		}
-		getCanvas()->paintWidget();
 	}
 }
 
@@ -453,7 +451,6 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X, getBounds().Y, -1, getBounds().H, PRIVATE()->Text, event->X, event->Y, &PRIVATE()->Cursor, &cursorRect);
 			PRIVATE()->CursorStart = PRIVATE()->Cursor;
 			PRIVATE()->MousePress = true;
-			getCanvas()->paintWidget();
 
 			getCanvas()->setFocus(this);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
@@ -474,8 +471,6 @@ void UIInput::mouseReleaseEvent(UIMouseEventRaw event)
 		{
 			PRIVATE()->CursorStart = -1;
 			PRIVATE()->Selection = {};
-
-			getCanvas()->paintWidget();
 		}
 	}
 }

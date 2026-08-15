@@ -36,7 +36,7 @@ struct UICanvasPrivate : UIPrivate
 	UIPainterRef Painter;
 	UIBuilderRef Builder;
 	UIWidgetRaw Focus;
-	bool NeedLayout = true, NeedPaint = true;
+	bool NeedLayout = true;
 	UIStringMap<UIRenderRef> EffectorMap;
 	UIList<UIPrimitive> RenderList;
 	UIList<UIWidgetRaw> AnimateList;
@@ -240,7 +240,6 @@ UIListView<const UIWidgetRef> UICanvas::getWidget() const
 void UICanvas::layoutWidget()
 {
 	PRIVATE()->NeedLayout = true;
-	paintWidget();
 }
 
 bool UICanvas::layoutWidget(UIRect client)
@@ -648,11 +647,6 @@ bool UICanvas::layoutWidget(UIRect client)
 		relayout_func(widget.Widget.get(), client, client);
 	}
 	return true;
-}
-
-void UICanvas::paintWidget()
-{
-	PRIVATE()->NeedPaint = true;
 }
 
 bool UICanvas::paintWidget(UIRect client)
