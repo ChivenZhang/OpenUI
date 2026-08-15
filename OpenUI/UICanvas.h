@@ -22,7 +22,6 @@ class UIConfig
 public:
 	float DisplayScale = 1.0f;
 	float PixelDensity = 1.0f;
-	UIImage RenderTarget;
 };
 
 /// @brief 

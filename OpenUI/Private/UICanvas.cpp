@@ -30,6 +30,7 @@ struct UITopLevelWidget
 
 struct UICanvasPrivate : UIPrivate
 {
+	UIImage Target;
 	UIConfig Config;
 	UIDeviceRaw Device;
 	UIRenderRef Render;
@@ -95,12 +96,12 @@ UIBuilderRaw UICanvas::getBuilder() const
 
 UIImageRaw UICanvas::getTarget() const
 {
-	return &PRIVATE()->Config.RenderTarget;
+	return &PRIVATE()->Target;
 }
 
 void UICanvas::setTarget(UIImage value)
 {
-	PRIVATE()->Config.RenderTarget = value;
+	PRIVATE()->Target = value;
 }
 
 UIPainterRaw UICanvas::getPainter() const
@@ -651,11 +652,11 @@ bool UICanvas::layoutWidget(UIRect client)
 
 bool UICanvas::paintWidget(UIRect client)
 {
-	auto painter = getPainter();
-	auto render = getRender({});
+	auto painter = PRIVATE()->Painter.get();
+	auto render = PRIVATE()->Render.get();
+	auto screenRT = &PRIVATE()->Target;
 	if (painter == nullptr || render == nullptr) return false;
-	auto screenRT = getTarget();
-	if (screenRT == nullptr) return false;
+	if (screenRT == nullptr || !screenRT->Handle) return false;
 
 	UILambda<void(UIWidgetRaw, UIRect, UIMat4)> foreach_func;
 	foreach_func = [&](UIWidgetRaw widget, UIRect client, UIMat4 matrix)
