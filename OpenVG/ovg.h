@@ -95,6 +95,8 @@ enum vg_operator_t :uint8_t {
 	VG_OPERATOR_MAX,
 };
 
+// 渲染命令
+#if 1
 struct push_constants_t {
 	glm::vec4          source;
 	glm::vec2          size;
@@ -186,8 +188,6 @@ struct gem_info_t {
 	uint8_t shader = 0;		// shader_type_e
 };
 
-// 渲染命令
-#if 1
 // 普通三角形命令
 struct geom_cmd_t {
 	int stype = 1;
@@ -221,6 +221,38 @@ union gcmd_t {
 	vgcmd_t vg;
 	geom_cmd_t g;
 };
+struct ovgVertex {
+	glm::vec2	pos;
+	glm::vec2	uv;
+	uint32_t	color;
+};
+struct geomVertex1 {
+	glm::vec3 pos;
+	glm::vec2 uv;
+	uint32_t color;
+};
+struct geomVertex2 {
+	glm::vec3 pos;
+	glm::vec2 uv;
+	uint32_t color;
+	uint32_t color1;
+};
+struct ovg_draw_data {
+	gcmd_t* d;				// 渲染命令列表
+	size_t count;
+	ovgVertex* vg_vertex;	// 矢量顶点
+	size_t v_count;
+	uint32_t* vg_indices;	// 矢量索引
+	size_t i_count;
+	size_t uboCount;		// 渐变ubo结构数量
+	geomVertex1* vertex1;	// 单面顶点
+	size_t v1_count;
+	geomVertex2* vertex2;	// 双面顶点
+	size_t v2_count;
+	uint32_t* geom_indices;	// 索引 
+	size_t g_count;
+};
+
 #endif
 
 enum ImageFlipMode
@@ -278,24 +310,6 @@ struct ovg_path_t;
 // 矢量对象
 struct rvg_t;
 
-struct ovgVertex {
-	glm::vec2	pos;
-	glm::vec2	uv;
-	uint32_t	color;
-};
-struct geomVertex1 {
-	glm::vec3 pos;
-	glm::vec2 uv;
-	uint32_t color;
-};
-struct geomVertex2 {
-	glm::vec3 pos;
-	glm::vec2 uv;
-	uint32_t color;
-	uint32_t color1;
-};
-// 渲染列表
-struct drawlist_t;
 // 接口
 struct ovg_canvas_cb {
 	mem_resource_t* ac;
@@ -397,19 +411,5 @@ struct ovg_canvas_cb {
 
 ovg_canvas_cb* new_canvas_cb();
 void free_canvas_cb(ovg_canvas_cb*);
-struct ovg_draw_data {
-	gcmd_t* d;
-	size_t count;
-	ovgVertex* vg_vertex;	// 矢量顶点
-	size_t v_count;
-	uint32_t* vg_indices;	// 矢量索引
-	size_t i_count;
-	size_t uboCount;		// 渐变ubo结构数量
-	geomVertex1* vertex1;	// 单面顶点
-	size_t v1_count;
-	geomVertex2* vertex2;	// 双面顶点
-	size_t v2_count;
-	uint32_t* geom_indices;	// 索引 
-	size_t g_count;
-};
+
 ovg_draw_data get_draw_list(rvg_t* p);

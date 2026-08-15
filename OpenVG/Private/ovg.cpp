@@ -1454,6 +1454,18 @@ vg_state_save_t* ovg_new_state(mem_resource_t* ac0) {
 		auto pp = (ss_act*)ac->new_mem(sizeof(ss_act));
 		pp->ac = ac;
 		p = pp;
+		*p = {};
+		push_constants_t pc = {};
+		pc.source.w = 1;
+		pc.size = { (float)100, (float)100 };
+		pc.fsq_patternType = VG_PATTERN_TYPE_SOLID;
+		pc.opacity = 1.0f;
+		pc.mat = pc.matInv = glm::mat3x2(1.0);
+		p->lineWidth = 1.f;
+		p->miterLimit = 10.f;
+		p->curOperator = VG_OPERATOR_OVER;
+		p->curFillRule = VG_FILL_RULE_NON_ZERO;
+		p->pushConsts = pc;
 	}
 	return p;
 }
@@ -1957,6 +1969,62 @@ void rvg_t::poly_fill(ovg_path_t* ctx, glm::vec4* bounds, vgcmd_t& c)
 	c.vc = nc;
 	ctx->curVertOffset = _vertex.size();
 	auto cv = c.v;
+#if 1
+	while (ptrPath < ctx->pathPtr) {
+		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+		if (pathPointCount > 2) {
+			uint32_t firstVertIdx = (uint32_t)_vertex.size();
+			c.vertex.x = firstVertIdx;
+
+			// ---- 1. 先收集局部坐标 + 算 bounds（避免展开时重复 transform）----
+			std::vector<glm::vec2> polyPoints(pathPointCount);
+			for (uint32_t i = 0; i < pathPointCount; i++) {
+				glm::vec2 localPos = ctx->points[i + firstPtIdx];
+				polyPoints[i] = localPos;
+
+				if (bounds) {
+					glm::vec2 transformedPos = localPos;
+					matrix_transform_point(&c.state->pushConsts.mat,
+						&transformedPos.x, &transformedPos.y);
+					if (transformedPos.x < bounds->x) bounds->x = transformedPos.x;
+					if (transformedPos.x > bounds->z) bounds->z = transformedPos.x;
+					if (transformedPos.y < bounds->y) bounds->y = transformedPos.y;
+					if (transformedPos.y > bounds->w) bounds->w = transformedPos.y;
+				}
+			}
+
+			// ---- 2. 展开为 TRIANGLE_LIST ----
+			// 原 FAN 语义: v0 是共享顶点，三角形为 (v0, v_i, v_{i+1})
+			for (uint32_t i = 1; i < pathPointCount - 1; i++) {
+				// 三角形 (v0, v_i, v_{i+1})
+				v.pos = polyPoints[0];
+				_vertex.push_back(v);
+
+				v.pos = polyPoints[i];
+				_vertex.push_back(v);
+
+				v.pos = polyPoints[i + 1];
+				_vertex.push_back(v);
+			}
+
+			cv->firstVertex = firstVertIdx;
+			cv->vertexCount = (pathPointCount - 2) * 3;  // ← 关键改动
+			cv++;
+		}
+		firstPtIdx += pathPointCount;
+
+		// 跳过曲线数据（和原来一样）
+		if (o_path_has_curves(ctx->pathes.data(), ptrPath)) {
+			ptrPath++;
+			uint32_t totPts = 0;
+			while (totPts < pathPointCount)
+				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
+		}
+		else {
+			ptrPath++;
+		}
+	}
+#else
 	while (ptrPath < ctx->pathPtr) {
 		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
 		if (pathPointCount > 2) {
@@ -1994,6 +2062,7 @@ void rvg_t::poly_fill(ovg_path_t* ctx, glm::vec4* bounds, vgcmd_t& c)
 	}
 	if (bounds)
 		c.bounds = *bounds;
+#endif
 }
 
 #ifndef NOT_FILL_NZ_GLUTESS
@@ -3630,6 +3699,17 @@ ovg_draw_data get_draw_list(rvg_t* p)
 	if (p)
 	{
 		r.d = p->cmdlist.data(); r.count = p->cmdlist.size();
+		r.vg_vertex = (ovgVertex*)p->_vertex.data();
+		r.v_count = p->_vertex.size();
+		r.vg_indices = p->_indices.data();
+		r.i_count = p->_indices.size();
+		r.uboCount = p->gCount;
+		r.vertex1 = (geomVertex1*)p->gps.vd1.data();
+		r.v1_count = p->gps.vd1.size();
+		r.vertex2 = (geomVertex2*)p->gps.vd2.data();
+		r.v2_count = p->gps.vd2.size();
+		r.geom_indices = p->gps.ids.data();
+		r.g_count = p->gps.ids.size();
 	}
 	return r;
 }
