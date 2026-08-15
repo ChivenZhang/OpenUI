@@ -38,8 +38,8 @@
 //#include "Private/a_vg.vert.h"
 //#include "Private/a_vg.frag.h"
 
-#include "Private/a_vg0.vert.h"
-#include "Private/a_vg0.frag.h"
+#include "shaders/spv_c/a_vg0.vert.h"
+#include "shaders/spv_c/a_vg0.frag.h"
 
 #define FULLSCREEN_BIT         0x10000000
 #define SRCTYPE_MASK           0x000000FF
