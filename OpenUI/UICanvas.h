@@ -61,7 +61,6 @@ public:
 	bool layoutWidget(UIRect client);
 	void paintWidget();
 	bool paintWidget(UIRect client);
-	void renderWidget(UIRect client);
 	void animateWidget(float time);
 	void updateWidget(float time, UIRect client);
 

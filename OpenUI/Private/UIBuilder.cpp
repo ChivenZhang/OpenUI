@@ -93,7 +93,7 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 				widget->setStyleText(s.Name, s.Value);
 
 				std::cout << UIString((depth + 1) * 4, ' ');
-				std::cout << "-style:" << s.Name << " = " << s.Value << " -priority " << s.Priority << std::endl;
+				std::cout << "-style:" << s.Name << " = " << s.Value << std::endl;
 			}
 
 			for (auto& c : w.Children)

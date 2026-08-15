@@ -24,6 +24,8 @@ public:
 
 	virtual UIImageRaw getTarget() const = 0;
 
+	virtual void setTarget(UIImageRaw value) = 0;
+
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect = nullptr) = 0;
 
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect = nullptr) = 0;
@@ -64,7 +66,7 @@ public:
 
 	virtual void setViewport(float x, float y, float width, float height) = 0;
 
-	virtual void shear(float sh, float sv) = 0;
+	virtual void skew(float sh, float sv) = 0;
 
 	virtual void rotate(float angle) = 0;
 

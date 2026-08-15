@@ -193,9 +193,9 @@ public:
 	}
 
 	template<class T>
-	void setStyle(UIString const& key, T const& value = T()) const
+	void setStyle(UIString const& key, T const& value = T(), bool inherited = false) const
 	{
-		getStyles()->setStyle<T>(key, value);
+		getStyles()->setStyle<T>(key, value, inherited);
 	}
 
 	template<class T>
@@ -233,9 +233,9 @@ public:
 
 protected:
 	template<class T>
-	void setEmbedStyle(UIString const& key, T& value) const
+	void setEmbedStyle(UIString const& key, T& value, bool inherited = false) const
 	{
-		getStyles()->setEmbedStyle<T>(key, value);
+		getStyles()->setEmbedStyle<T>(key, value, inherited);
 	}
 
 	template<class T>
@@ -272,6 +272,7 @@ protected:
 protected:
 	UICanvasRaw getCanvas() const;
 	UIImageRaw getTarget() const;
+	void setTarget(UIImage value);
 
 private:
 	void setContext(UICanvasRaw value);

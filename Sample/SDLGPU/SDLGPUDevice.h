@@ -28,11 +28,12 @@ public:
     bool translateText(UIString text, UIString& result) const override;
     void logMessage(uint8_t type, UIString text) const override;
     SDL_Window* getWindow() const;
+	SDL_GPUDevice* getDevice() const;
 
 protected:
 	SDL_Window* m_Window;
 	SDL_GPUDevice* m_Device;
-	UICanvasRef m_UICanvas;
+	UICanvasRef m_Canvas;
 };
 
 #endif

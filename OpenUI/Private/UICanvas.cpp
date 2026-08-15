@@ -14,6 +14,10 @@
 #include "../UIInput.h"
 #include "../UILine.h"
 #include <yoga/Yoga.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "OpenUI/UICheck.h"
 #include "OpenUI/UIRadio.h"
@@ -111,6 +115,7 @@ void UICanvas::setPainter(UIPainterRef value)
 
 UIRenderRaw UICanvas::getRender(UIString name) const
 {
+	if (name.empty()) return PRIVATE()->Render.get();
 	auto result = PRIVATE()->EffectorMap.find(name);
 	if (result == PRIVATE()->EffectorMap.end()) return nullptr;
 	return result->second.get();
@@ -119,7 +124,8 @@ UIRenderRaw UICanvas::getRender(UIString name) const
 void UICanvas::setRender(UIRenderRef value)
 {
 	if (value == nullptr) return;
-	PRIVATE()->EffectorMap[value->getName()] = value;
+	if (value->getName().empty()) PRIVATE()->Render = value;
+	else PRIVATE()->EffectorMap[value->getName()] = value;
 }
 
 UIWidgetRaw UICanvas::getFocus() const
@@ -651,55 +657,75 @@ void UICanvas::paintWidget()
 
 bool UICanvas::paintWidget(UIRect client)
 {
-	if (PRIVATE()->NeedPaint == false) return false;
-	PRIVATE()->NeedPaint = false;
+	auto painter = getPainter();
+	auto render = getRender({});
+	if (painter == nullptr || render == nullptr) return false;
+	auto screenRT = getTarget();
+	if (screenRT == nullptr) return false;
 
-	UILambda<void(UIWidgetRaw, UIRect, UIPainterRaw)> foreach_func;
-	foreach_func = [&](UIWidgetRaw widget, UIRect client, UIPainterRaw painter)
-	{
-		if (widget->getVisible() == false || painter == nullptr) return;
-		widget->paint(client, painter);
-		auto childList = widget->getWidgets();
-		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds(), painter);
-		widget->repaint(client, painter);
-	};
-
-	for (auto& widget : PRIVATE()->TopLevelList)
-	{
-		foreach_func(widget.Widget.get(), widget.Widget->getBounds(), getPainter());
-	}
-	return true;
-}
-
-void UICanvas::renderWidget(UIRect client)
-{
-	UILambda<void(UIWidgetRaw, UIRect)> foreach_func;
-	foreach_func = [&](UIWidgetRaw widget, UIRect client)
+	UILambda<void(UIWidgetRaw, UIRect, UIMat4)> foreach_func;
+	foreach_func = [&](UIWidgetRaw widget, UIRect client, UIMat4 matrix)
 	{
 		if (widget->getVisible() == false) return;
-
-		auto source = widget->getTarget();
-		if (source == nullptr) return;
-
-		auto& filter = widget->getStyle<UIPropFilter>("filter");
-		if (auto render = this->getRender(filter.Func); render && filter.Value)
-		{
-			render->render(client, source, nullptr, widget->getStyleComputed());
-		}
-
-		if (auto render = PRIVATE()->Render.get())
-		{
-			render->render(client, source, this->getTarget(), widget->getStyleComputed());
-		}
-
 		auto childList = widget->getWidgets();
-		for (size_t i = 0; i < childList.size(); ++i) foreach_func(childList[i].get(), childList[i]->getBounds());
+
+		auto widgetRT = render->newImage(screenRT->Width, screenRT->Height);
+		widget->setTarget(widgetRT);
+
+		// Paint Widget
+
+		widget->paint(client, painter);
+
+		for (size_t i = 0; i < childList.size(); ++i)
+		{
+			auto child = childList[i].get();
+			auto transform = glm::translate(matrix, glm::vec3(child->getTranslate().X, child->getTranslate().Y, 0.0f));
+			transform = glm::rotate(transform, glm::radians(child->getRotate()), {0.0f, 0.0f, 1.0f});
+			transform = glm::scale(transform, glm::vec3(child->getScale()));
+
+			foreach_func(child, child->getBounds(), transform);
+		}
+
+		// Merge Widget
+
+		for (size_t i = 0; i < childList.size(); ++i)
+		{
+			auto child = childList[i].get();
+			auto transform = glm::translate(matrix, glm::vec3(child->getTranslate().X, child->getTranslate().Y, 0.0f));
+			transform = glm::rotate(transform, glm::radians(child->getRotate()), {0.0f, 0.0f, 1.0f});
+			transform = glm::scale(transform, glm::vec3(child->getScale()));
+
+			render->render(client, transform, child->getTarget(), &widgetRT, child->getStyleComputed());
+
+			render->delImage(*child->getTarget());
+			child->setTarget({});
+		}
+
+		// Filter Widget
+
+		auto& cssFilter = widget->getStyle<UIPropFilter>("filter");
+		if (auto filter = this->getRender(cssFilter.Func))
+		{
+			filter->render(client, matrix, &widgetRT, nullptr, widget->getStyleComputed());
+		}
 	};
 
 	for (auto& widget : PRIVATE()->TopLevelList)
 	{
-		foreach_func(widget.Widget.get(), widget.Widget->getBounds());
+		auto matrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3(widget.Widget->getTranslate().X, widget.Widget->getTranslate().Y, 0.0f));
+		matrix = glm::rotate(matrix, glm::radians(widget.Widget->getRotate()), {0.0f, 0.0f, 1.0f});
+		matrix = glm::scale( matrix, glm::vec3(widget.Widget->getScale()));
+		foreach_func(widget.Widget.get(), widget.Widget->getBounds(), matrix);
+
+		auto widgetRT = widget.Widget->getTarget();
+
+		// Combine Widget
+		render->render(client, matrix, widgetRT, screenRT, widget.Widget->getStyleComputed());
+
+		render->delImage(*widgetRT);
+		widget.Widget->setTarget({});
 	}
+	return true;
 }
 
 void UICanvas::animateWidget(float time)

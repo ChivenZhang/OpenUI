@@ -920,8 +920,8 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		case UIHash("bottom"): setStyle<UIPropBottom>(name); break;
 		case UIHash("box-sizing"): setStyle<UIPropBoxSizing>(name); break;
 		case UIHash("clear"): setStyle<UIPropClear>(name); break;
-		//case UIHash("color"): setStyle<UIPropColor>(name); break;
-		case UIHash("direction"): setStyle<UIPropDirection>(name); break;
+		case UIHash("color"): setStyle<UIPropColor>(name, {}, true); break;
+		case UIHash("direction"): setStyle<UIPropDirection>(name, {}, true); break;
 		case UIHash("display"): setStyle<UIPropDisplay>(name); break;
 		//case UIHash("dominant-baseline"): setStyle<UIPropDominantBaseline>(name); break;
 		//case UIHash("flex"): setStyle<UIPropFlex>(name); break;
@@ -934,11 +934,11 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		//case UIHash("float-defer"): setStyle<UIPropFloatDefer>(name); break;
 		case UIHash("float-offset"): setStyle<UIPropFloatOffset>(name); break;
 		//case UIHash("float-reference"): setStyle<UIPropFloatReference>(name); break;
-		//case UIHash("font-family"): setStyle<UIPropFontFamily>(name); break;
-		case UIHash("font-size"): setStyle<UIPropFontSize>(name); break;
+		//case UIHash("font-family"): setStyle<UIPropFontFamily>(name, {}, true); break;
+		case UIHash("font-size"): setStyle<UIPropFontSize>(name, {}, true); break;
 		case UIHash("font-stretch"): setStyle<UIPropFontStretch>(name); break;
-		//case UIHash("font-style"): setStyle<UIPropFontStyle>(name); break;
-		case UIHash("font-weight"): setStyle<UIPropFontWeight>(name); break;
+		//case UIHash("font-style"): setStyle<UIPropFontStyle>(name, {}, true); break;
+		case UIHash("font-weight"): setStyle<UIPropFontWeight>(name, {}, true); break;
 		//case UIHash("hanging-punctuation"): setStyle<UIPropHangingPunctuation>(name); break;
 		case UIHash("height"): setStyle<UIPropHeight>(name); break;
 		//case UIHash("hyphens"): setStyle<UIPropHyphens>(name); break;
@@ -948,9 +948,9 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		case UIHash("inset-inline-start"): setStyle<UIPropInsetInlineStart>(name); break;
 		case UIHash("justify-content"): setStyle<UIPropJustifyContent>(name); break;
 		case UIHash("left"): setStyle<UIPropLeft>(name); break;
-		case UIHash("letter-spacing"): setStyle<UIPropLetterSpacing>(name); break;
+		case UIHash("letter-spacing"): setStyle<UIPropLetterSpacing>(name, {}, true); break;
 		//case UIHash("line-break"): setStyle<UIPropLineBreak>(name); break;
-		case UIHash("line-height"): setStyle<UIPropLineHeight>(name); break;
+		case UIHash("line-height"): setStyle<UIPropLineHeight>(name, {}, true); break;
 		case UIHash("margin"): setEmbedStyle(name, PRIVATE()->Margin); break;
 		case UIHash("margin-bottom"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Bottom); break;
 		case UIHash("margin-left"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Left); break;
@@ -975,25 +975,25 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		case UIHash("position"): setStyle<UIPropPosition>(name); break;
 		case UIHash("right"): setStyle<UIPropRight>(name); break;
 		case UIHash("tab-size"): setStyle<UIPropTabSize>(name); break;
-		//case UIHash("text-align"): setStyle<UIPropTextAlign>(name); break;
+		//case UIHash("text-align"): setStyle<UIPropTextAlign>(name, {}, true); break;
 		//case UIHash("text-align-all"): setStyle<UIPropTextAlignAll>(name); break;
 		//case UIHash("text-align-last"): setStyle<UIPropTextAlignLast>(name); break;
 		//case UIHash("text-combine-upright"): setStyle<UIPropTextCombineUpright>(name); break;
 		//case UIHash("text-decoration-line"): setStyle<UIPropTextDecorationLine>(name); break;
 		//case UIHash("text-decoration-style"): setStyle<UIPropTextDecorationStyle>(name); break;
-		case UIHash("text-indent"): setStyle<UIPropTextIndent>(name); break;
+		case UIHash("text-indent"): setStyle<UIPropTextIndent>(name, {}, true); break;
 		//case UIHash("text-justify"): setStyle<UIPropTextJustify>(name); break;
 		//case UIHash("text-orientation"): setStyle<UIPropTextOrientation>(name); break;
 		//case UIHash("text-overflow"): setStyle<UIPropTextOverflow>(name); break;
-		//case UIHash("text-transform"): setStyle<UIPropTextTransform>(name); break;
+		//case UIHash("text-transform"): setStyle<UIPropTextTransform>(name, {}, true); break;
 		case UIHash("top"): setStyle<UIPropTop>(name); break;
 		//case UIHash("unicode-bidi"): setStyle<UIPropUnicodeBidi>(name); break;
 		//case UIHash("vertical-align"): setStyle<UIPropVerticalAlign>(name); break;
-		case UIHash("visibility"): setStyle<UIPropVisibility>(name); break;
-		//case UIHash("white-space"): setStyle<UIPropWhiteSpace>(name); break;
+		case UIHash("visibility"): setStyle<UIPropVisibility>(name, {}, true); break;
+		//case UIHash("white-space"): setStyle<UIPropWhiteSpace>(name, {}, true); break;
 		case UIHash("width"): setStyle<UIPropWidth>(name); break;
 		//case UIHash("word-break"): setStyle<UIPropWordBreak>(name); break;
-		//case UIHash("word-spacing"): setStyle<UIPropWordSpacing>(name); break;
+		//case UIHash("word-spacing"): setStyle<UIPropWordSpacing>(name, {}, true); break;
 		//case UIHash("word-wrap"): setStyle<UIPropWordWrap>(name); break;
 		//case UIHash("wrap-flow"): setStyle<UIPropWrapFlow>(name); break;
 		//case UIHash("wrap-through"): setStyle<UIPropWrapThrough>(name); break;
@@ -1125,6 +1125,11 @@ UICanvasRaw UIWidget::getCanvas() const
 UIImageRaw UIWidget::getTarget() const
 {
 	return &PRIVATE()->Target;
+}
+
+void UIWidget::setTarget(UIImage value)
+{
+	PRIVATE()->Target = value;
 }
 
 void UIWidget::setContext(UICanvasRaw value)

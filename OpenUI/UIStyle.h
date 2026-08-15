@@ -16,6 +16,7 @@ class OPENUI_API UIStyleData
 {
 public:
     virtual ~UIStyleData() = default;
+    virtual bool inherited() const = 0;
     virtual std::type_info const& getType() const = 0;
     virtual UIString getText() const = 0;
     virtual void setText(UIString const& text) = 0;
@@ -30,18 +31,10 @@ template <class T>
 class UIStyleValue : public UIStyleData
 {
 public:
-    explicit UIStyleValue(T const& value) : m_Data(value)
-    {
-    }
-
+    explicit UIStyleValue(T const& value, bool inherited) : m_Data(value), m_Inherited(inherited) { }
+    bool inherited() const override { return m_Inherited; }
     std::type_info const& getType() const override { return typeid(T); }
-
-    UIString getText() const override
-    {
-        UIString result;
-        UITypeC(m_Data, result);
-        return result;
-    }
+    UIString getText() const override { UIString result; UITypeC(m_Data, result); return result; }
 
     void setText(const UIString& text) override { UITypeC(text, m_Data); }
     void* getData(const std::type_info& type) override { return (type == typeid(T)) ? &m_Data : nullptr; }
@@ -49,31 +42,24 @@ public:
 
 protected:
     T m_Data;
+    bool m_Inherited;
 };
 
 template <class T>
 class UIStyleRefer : public UIStyleData
 {
 public:
-    explicit UIStyleRefer(T& value) : m_Data(value)
-    {
-    }
-
+    explicit UIStyleRefer(T& value, bool inherited) : m_Data(value), m_Inherited(inherited) { }
+    bool inherited() const override { return m_Inherited; }
     std::type_info const& getType() const override { return typeid(T); }
-
-    UIString getText() const override
-    {
-        UIString result;
-        UITypeC(m_Data, result);
-        return result;
-    }
-
+    UIString getText() const override { UIString result; UITypeC(m_Data, result); return result; }
     void setText(const UIString& text) override { UITypeC(text, m_Data); }
     void* getData(const std::type_info& type) override { return (type == typeid(T)) ? &m_Data : nullptr; }
     const void* getData(const std::type_info& type) const override { return (type == typeid(T)) ? &m_Data : nullptr; }
 
 protected:
     T& m_Data;
+    bool m_Inherited;
 };
 
 /// @brief
@@ -99,17 +85,17 @@ public:
     }
 
     template <class T>
-    void setStyle(UIString const& key, T const& value)
+    void setStyle(UIString const& key, T const& value, bool inherited = false)
     {
         auto result = getStyle(key);
         if (result) *(T*)result->getData(typeid(std::remove_cvref_t<T>)) = value;
-        else this->setStyle(key, UICast<UIStyleData>(UINew<UIStyleValue<std::remove_cvref_t<T>>>(value)));
+        else this->setStyle(key, UICast<UIStyleData>(UINew<UIStyleValue<std::remove_cvref_t<T>>>(value, inherited)));
     }
 
     template <class T>
-    void setEmbedStyle(UIString const& key, T& value)
+    void setEmbedStyle(UIString const& key, T& value, bool inherited = false)
     {
-        this->setStyle(key, UICast<UIStyleData>(UINew<UIStyleRefer<std::remove_cvref_t<T>>>(value)));
+        this->setStyle(key, UICast<UIStyleData>(UINew<UIStyleRefer<std::remove_cvref_t<T>>>(value, inherited)));
     }
 
 private:
@@ -227,7 +213,15 @@ struct UIPropClear
 
 struct UIPropColor
 {
-    ui_css_color_type_t Value = UI_CSS_COLOR_CURRENTCOLOR;
+    union
+    {
+        struct
+        {
+            uint8_t R, G, B, A;
+        };
+        uint32_t RGBA = 0;
+    } Value;
+    ui_css_color_type_t Type = UI_CSS_COLOR_CURRENTCOLOR;
 };
 
 struct UIPropDirection
@@ -1347,6 +1341,21 @@ inline bool UITypeC(UIPropClear const& src, UIString& dst)
     case UI_CSS_CLEAR_NONE: dst = "none";
         return true;
     }
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropColor& dst)
+{
+    return std::sscanf(src.c_str(), "rgba(%u,%u,%u,%u)", &dst.Value.R, &dst.Value.G, &dst.Value.B, &dst.Value.A);
+}
+template <>
+inline bool UITypeC(UIPropColor const& src, UIString& dst)
+{
+    char buffer[256] = {};
+    auto result = std::snprintf(buffer, sizeof(buffer), "rgba(%u,%u,%u,%u)", src.Value.R, src.Value.G, src.Value.B, src.Value.A);
+    if (result <= 0) return false;
+    dst = {buffer, (size_t) result};
+    return true;
 }
 
 // Direction

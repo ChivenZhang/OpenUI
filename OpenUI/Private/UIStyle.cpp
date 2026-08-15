@@ -95,7 +95,7 @@ bool UIComputedStyle::compute(UIRaw<UIComputedStyle> parent)
     {
         for (auto& style : ((UIComputedStylePrivate*)parent->m_Private)->ComputedStyles)
         {
-            PRIVATE()->ComputedStyles[style.first] = style.second;
+            if (style.second->inherited()) PRIVATE()->ComputedStyles[style.first] = style.second;
         }
     }
     for (auto& style : ((UIStylePrivate*)PRIVATE()->Style->m_Private)->Styles)

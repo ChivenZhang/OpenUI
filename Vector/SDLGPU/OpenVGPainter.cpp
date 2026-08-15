@@ -1,83 +1,50 @@
 /*=================================================
-* Copyright © 2020-2026 ChivenZhang.
+* Copyright © 2020-2025 ChivenZhang.
 * All Rights Reserved.
 * =====================Note=========================
 *
 *
 * ====================History=======================
-* Created by chivenzhang@gmail.com.
+* Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#ifdef OPENUI_ENABLE_SDLGPU
-#include "SDLGPUPainter.h"
+#include "OpenVGPainter.h"
 #include "SDLGPURenderVG.h"
-#include "SDLGPUDevice.h"
 #include <OpenVG/VGContext.h>
 #include <OpenVG/VGShape.h>
 #include <OpenVG/VGText.h>
 #include <OpenVG/VGPicture.h>
 #include <OpenVG/VGTrueType.h>
 
-class SDLGPUDevice;
-
-struct SDLGPUPainterPrivate : UIPrivate
+class OpenVGPainterData : public UIPainterPrivate
 {
+public:
 	VGRect Client;
 	VGContextRef Context;
 	UIPen Pen;
 	UIFont Font;
 	UIBrush Brush;
 	UIRect Scissor, Viewport;
-	bool EnableClip = false;
+	bool EnableCilp = false;
 	VGShapeRef RectFillShape;
-	UIImageRaw Target;
 };
-#define PRIVATE() ((SDLGPUPainterPrivate*) m_Private)
+#define PRIVATE() ((OpenVGPainterData*) m_Private)
 #define CONTEXT() (PRIVATE()->Context)
 
-SDLGPUPainter::SDLGPUPainter(UICanvasRaw canvas, int width, int height)
-    :
-    m_Canvas(canvas)
+OpenVGPainter::OpenVGPainter(uint32_t width, uint32_t height)
 {
-	m_Private = new SDLGPUPainterPrivate;
+	m_Private = new OpenVGPainterData;
 	PRIVATE()->Context = VGNew<VGContext>();
 	CONTEXT()->setPainter(VGNew<VGPainter>());
-	CONTEXT()->setRender(VGNew<SDLGPURenderVG>(VGCast<SDLGPUDevice>(canvas->getDevice())->getDevice()));
+	CONTEXT()->setRender(VGNew<SDLGPURenderVG>());
 }
 
-SDLGPUPainter::~SDLGPUPainter()
+OpenVGPainter::~OpenVGPainter()
 {
 	delete m_Private; m_Private = nullptr;
 }
 
-UICanvasRaw SDLGPUPainter::getCanvas() const
-{
-    return m_Canvas;
-}
-
-UIImageRaw SDLGPUPainter::getTarget() const
-{
-	auto target = PRIVATE()->Target;
-	VGImage source
-	{
-		.Width = target->Width,
-		.Height = target->Height,
-		.Stride = target->Stride,
-		.Channel = target->Channel,
-		.Handle = target->Handle,
-		.Format = (decltype(VGImage::Format))target->Format,
-	};
-	CONTEXT()->getRender()->setTarget(&source);
-	CONTEXT()->renderElement({0, 0, (float)PRIVATE()->Target->Width, (float)PRIVATE()->Target->Height});
-    return PRIVATE()->Target;
-}
-
-void SDLGPUPainter::setTarget(UIImageRaw value)
-{
-	PRIVATE()->Target = value;
-}
-
-UIRect SDLGPUPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect)
+UIRect OpenVGPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect)
 {
 	auto& font = PRIVATE()->Font;
 
@@ -118,7 +85,7 @@ UIRect SDLGPUPainter::boundingRect(float x, float y, float width, float height, 
 	return UIRect{ rect.X, rect.Y, rect.W, rect.H };
 }
 
-UIRect SDLGPUPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect)
+UIRect OpenVGPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect)
 {
 	auto& font = PRIVATE()->Font;
 
@@ -161,7 +128,67 @@ UIRect SDLGPUPainter::boundingRect(float x, float y, float width, float height, 
 	return UIRect{ rect.X, rect.Y, rect.W, rect.H };
 }
 
-void SDLGPUPainter::drawImage(float x, float y, UIImage image, float sx, float sy, float sw, float sh)
+void OpenVGPainter::drawArc(float x, float y, float width, float height, float startAngle, float spanAngle)
+{
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
+	{
+		VGShape shape;
+		shape.moveTo(x, y);
+		shape.arcTo(width * 0.5f, height * 0.5f, width * 0.5f, height * 0.5f, startAngle, spanAngle);
+		shape.close();
+		auto color = getBrush().Color;
+		shape.setFillColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->fillElement(&shape);
+	}
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
+	{
+		VGShape shape;
+		shape.moveTo(x, y);
+		shape.arcTo(width * 0.5f, height * 0.5f, width * 0.5f, height * 0.5f, startAngle, spanAngle);
+		shape.close();
+		auto color = getPen().Color;
+		shape.setStrokeColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->strokeElement(&shape);
+	}
+}
+
+void OpenVGPainter::drawChord(float x, float y, float width, float height, float startAngle, float spanAngle)
+{
+}
+
+void OpenVGPainter::drawEllipse(float x, float y, float width, float height)
+{
+	if (width <= 0 || height <= 0) return;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
+	{
+		VGShape shape;
+		shape.arcTo(x + width * 0.5f, y + height * 0.5f, width * 0.5f, height * 0.5f, 0, 360);
+		shape.close();
+		auto color = getBrush().Color;
+		shape.setFillColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->fillElement(&shape);
+	}
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
+	{
+		VGShape shape;
+		shape.arcTo(x + width * 0.5f, y + height * 0.5f, width * 0.5f, height * 0.5f, 0, 360);
+		shape.close();
+		shape.setLineWidth(getPen().Width);
+		auto color = getPen().Color;
+		shape.setStrokeColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->strokeElement(&shape);
+	}
+}
+
+void OpenVGPainter::drawImage(float x, float y, UIImage image, float sx, float sy, float sw, float sh)
 {
 	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
@@ -177,18 +204,18 @@ void SDLGPUPainter::drawImage(float x, float y, UIImage image, float sx, float s
 		_image.Width = image.Width;
 		_image.Height = image.Height;
 		_image.Stride = image.Stride;
-		_image.Pixels = image.Pixels;
-		_image.Format = (decltype(VGImage::Format))image.Format;
+		_image.Pixel = image.Pixel;
+		_image.Type = (VGImage::type_t)image.Type;
 		shape.setImage(0, 0, image.Width, image.Height, _image);
 
-		shape.setScale(1, 1);
 		shape.setRotate(0);
 		shape.setTranslate(x, y);
+		shape.setScale(1, 1);
 		CONTEXT()->fillElement(&shape);
 	}
 }
 
-void SDLGPUPainter::drawLine(float x1, float y1, float x2, float y2)
+void OpenVGPainter::drawLine(float x1, float y1, float x2, float y2)
 {
 	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
@@ -205,7 +232,7 @@ void SDLGPUPainter::drawLine(float x1, float y1, float x2, float y2)
 	}
 }
 
-void SDLGPUPainter::drawLines(UIListView<UILine> lines)
+void OpenVGPainter::drawLines(UIArrayView<UILine> lines)
 {
 	if (PRIVATE()->Pen.Style != UIPen::NoPen)
 	{
@@ -225,12 +252,42 @@ void SDLGPUPainter::drawLines(UIListView<UILine> lines)
 	}
 }
 
-void SDLGPUPainter::drawPoint(float x, float y)
+void OpenVGPainter::drawPie(float x, float y, float width, float height, float startAngle, float spanAngle)
+{
+	if (width <= 0 || height <= 0) return;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
+	{
+		VGShape shape;
+		shape.moveTo(0, 0);
+		shape.arcTo(0, 0, width * 0.5f, height * 0.5f, startAngle, spanAngle);
+		shape.close();
+		auto color = getBrush().Color;
+		shape.setFillColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->fillElement(&shape);
+	}
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
+	{
+		VGShape shape;
+		shape.moveTo(0, 0);
+		shape.arcTo(0, 0, width * 0.5f, height * 0.5f, startAngle, spanAngle);
+		shape.close();
+		shape.setLineWidth(getPen().Width);
+		auto color = getPen().Color;
+		shape.setStrokeColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->strokeElement(&shape);
+	}
+}
+
+void OpenVGPainter::drawPoint(float x, float y)
 {
 	drawRect(x, y, 1, 1);
 }
 
-void SDLGPUPainter::drawPoints(UIListView<UIPoint> points)
+void OpenVGPainter::drawPoints(UIArrayView<UIPoint> points)
 {
 	for (size_t i = 0; i < points.size(); ++i)
 	{
@@ -238,7 +295,60 @@ void SDLGPUPainter::drawPoints(UIListView<UIPoint> points)
 	}
 }
 
-void SDLGPUPainter::drawRect(float x, float y, float width, float height)
+void OpenVGPainter::drawPolygon(UIArrayView<UIPoint> points)
+{
+	if (points.size() < 3) return;
+	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
+	{
+		VGShape shape;
+		shape.moveTo(points.front().X, points.front().Y);
+		for (size_t i = 1; i < points.size(); ++i)
+			shape.lineTo(points[i].X, points[i].Y);
+		shape.lineTo(points.front().X, points.front().Y);
+		shape.close();
+		auto color = getBrush().Color;
+		shape.setFillColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->fillElement(&shape);
+	}
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
+	{
+		VGShape shape;
+		shape.moveTo(points.front().X, points.front().Y);
+		for (size_t i = 1; i < points.size(); ++i)
+			shape.lineTo(points[i].X, points[i].Y);
+		shape.lineTo(points.front().X, points.front().Y);
+		shape.close();
+		shape.setLineWidth(getPen().Width);
+		auto color = getPen().Color;
+		shape.setStrokeColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->strokeElement(&shape);
+	}
+}
+
+void OpenVGPainter::drawPolyline(UIArrayView<UIPoint> points)
+{
+	if (points.size() < 2) return;
+	if (PRIVATE()->Pen.Style != UIPen::NoPen)
+	{
+		VGShape shape;
+		shape.moveTo(points.front().X, points.front().Y);
+		for (size_t i = 1; i < points.size(); ++i)
+			shape.lineTo(points[i].X, points[i].Y);
+		shape.close();
+		shape.setLineWidth(getPen().Width);
+		auto color = getPen().Color;
+		shape.setStrokeColor({ color.R, color.G, color.B, color.A });
+		auto scissor = PRIVATE()->Scissor;
+		shape.setScissor({ scissor.X, scissor.Y, scissor.W, scissor.H });
+		CONTEXT()->strokeElement(&shape);
+	}
+}
+
+void OpenVGPainter::drawRect(float x, float y, float width, float height)
 {
 	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
@@ -282,7 +392,7 @@ void SDLGPUPainter::drawRect(float x, float y, float width, float height)
 	}
 }
 
-void SDLGPUPainter::drawRects(UIListView<UIRect> rects)
+void OpenVGPainter::drawRects(UIArrayView<UIRect> rects)
 {
 	for (size_t i = 0; i < rects.size(); ++i)
 	{
@@ -290,7 +400,7 @@ void SDLGPUPainter::drawRects(UIListView<UIRect> rects)
 	}
 }
 
-void SDLGPUPainter::drawRoundedRect(float x, float y, float width, float height, float xRadius, float yRadius)
+void OpenVGPainter::drawRoundedRect(float x, float y, float width, float height, float xRadius, float yRadius)
 {
 	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
@@ -327,7 +437,7 @@ void SDLGPUPainter::drawRoundedRect(float x, float y, float width, float height,
 	}
 }
 
-void SDLGPUPainter::drawText(float x, float y, float width, float height, const UIString& text, UIRectRaw boundingRect, float cursor, UIRectRaw cursorRect)
+void OpenVGPainter::drawText(float x, float y, float width, float height, const UIString& text, UIRectRaw boundingRect, float cursor, UIRectRaw cursorRect)
 {
 	if (PRIVATE()->Brush.Style != UIBrush::NoBrush)
 	{
@@ -376,64 +486,92 @@ void SDLGPUPainter::drawText(float x, float y, float width, float height, const 
 	}
 }
 
-UIPen const& SDLGPUPainter::getPen() const
+UIPen const& OpenVGPainter::getPen() const
 {
 	return PRIVATE()->Pen;
 }
 
-void SDLGPUPainter::setPen(const UIPen& pen)
+void OpenVGPainter::setPen(const UIPen& pen)
 {
 	PRIVATE()->Pen = pen;
 }
 
-UIBrush const& SDLGPUPainter::getBrush() const
+UIBrush const& OpenVGPainter::getBrush() const
 {
 	return PRIVATE()->Brush;
 }
 
-void SDLGPUPainter::setBrush(const UIBrush& brush)
+void OpenVGPainter::setBrush(const UIBrush& brush)
 {
 	PRIVATE()->Brush = brush;
 }
 
-UIFont const& SDLGPUPainter::getFont() const
+UIFont const& OpenVGPainter::getFont() const
 {
 	return PRIVATE()->Font;
 }
 
-void SDLGPUPainter::setFont(const UIFont& font)
+void OpenVGPainter::setFont(const UIFont& font)
 {
 	PRIVATE()->Font = font;
 }
 
-void SDLGPUPainter::setClipping(bool enable)
+void OpenVGPainter::setClipping(bool enable)
 {
 }
 
-void SDLGPUPainter::setClipRect(float x, float y, float width, float height)
+void OpenVGPainter::setClipRect(float x, float y, float width, float height)
 {
 	PRIVATE()->Scissor = { x, y, width, height };
 }
 
-void SDLGPUPainter::setViewport(float x, float y, float width, float height)
+void OpenVGPainter::setViewport(float x, float y, float width, float height)
 {
 	PRIVATE()->Viewport = { x, y, width, height };
 }
 
-void SDLGPUPainter::skew(float sh, float sv)
+void OpenVGPainter::shear(float sh, float sv)
 {
 }
 
-void SDLGPUPainter::rotate(float angle)
+void OpenVGPainter::rotate(float angle)
 {
 }
 
-void SDLGPUPainter::scale(float dx, float dy)
+void OpenVGPainter::scale(float dx, float dy)
 {
 }
 
-void SDLGPUPainter::translate(float dx, float dy)
+void OpenVGPainter::translate(float dx, float dy)
 {
 }
 
-#endif
+uint32_t OpenVGPainter::getWidth() const
+{
+	return PRIVATE()->Client.W;
+}
+
+uint32_t OpenVGPainter::getHeight() const
+{
+	return PRIVATE()->Client.H;
+}
+
+uint32_t OpenVGPainter::getStride() const
+{
+	return getWidth() * 4;
+}
+
+UIArrayView<const uint8_t> OpenVGPainter::getPixels() const
+{
+	return UIArrayView<const uint8_t>();
+}
+
+void OpenVGPainter::resize(uint32_t width, uint32_t height)
+{
+	PRIVATE()->Client = VGRect{ 0,0,(float)width,(float)height };
+}
+
+VGContextRaw OpenVGPainter::getVGContext() const
+{
+	return PRIVATE()->Context.get();
+}

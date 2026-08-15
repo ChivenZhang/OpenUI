@@ -57,8 +57,8 @@ UILabel::~UILabel()
 
 void UILabel::layout(UIRect client)
 {
-	if (PRIVATE()->Image.Pixel == nullptr) return;
-	auto rawPixels = PRIVATE()->Image.Pixel;
+	if (PRIVATE()->Image.Pixels == nullptr) return;
+	auto rawPixels = PRIVATE()->Image.Pixels;
 	auto rawWidth = PRIVATE()->Image.Width;
 	auto rawHeight = PRIVATE()->Image.Height;
 	auto rawStride = PRIVATE()->Image.Stride;
@@ -94,7 +94,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
+			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	case ScaleNoRatio:
@@ -110,7 +110,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
+			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	case ScaleKeepRatio:
@@ -136,7 +136,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
+			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	}
@@ -161,7 +161,7 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 	}
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 
-	if (PRIVATE()->Image.Pixel)
+	if (PRIVATE()->Image.Pixels)
 	{
 		switch (PRIVATE()->ScaledContents)
 		{
@@ -270,13 +270,13 @@ UIImage UILabel::getPixmap() const
 
 void UILabel::setPixmap(UIImage image)
 {
-	if (image.Pixel && image.Type == UIImage::Byte && image.Width * 4 == image.Stride)
+	if (image.Pixels && image.Format == UIImage::Byte && image.Width * 4 == image.Stride)
 	{
 		auto channel = image.Stride / image.Width;
 		PRIVATE()->Pixel.resize(image.Width * image.Height * 4);
 		PRIVATE()->Image = UIImage{ image.Width, image.Height, image.Width * 4, 0, PRIVATE()->Pixel.data() };
 		auto dstPixels = PRIVATE()->Pixel.data();
-		auto srcPixels = (uint8_t*)image.Pixel;
+		auto srcPixels = (uint8_t*)image.Pixels;
 		auto numPixels = image.Width * image.Height;
 		for (uint32_t i = 0; i < numPixels; ++i)
 		{

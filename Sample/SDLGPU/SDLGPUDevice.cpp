@@ -13,6 +13,8 @@
 #include "../SDL3InputEnum.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+
+#include "SDLGPUMerger.h"
 #include "SDLGPUPainter.h"
 #include "SDLGPURender.h"
 
@@ -54,9 +56,11 @@ SDLGPUDevice::SDLGPUDevice()
 
     UIConfig config{.DisplayScale = scale};
     auto canvas = UINew<UICanvas>(this, config);
-    canvas->setPainter(UINew<SDLGPUPainter>(canvas.get(), w, h));
-    canvas->setRender(UINew<SDLGPURender>(canvas.get(), w, h));
-    m_UICanvas = canvas;
+	auto render = UINew<SDLGPUMerger>(canvas.get(), w, h);
+	auto painter = UINew<SDLGPUPainter>(canvas.get(), w, h);
+    canvas->setRender(render);
+    canvas->setPainter(painter);
+    m_Canvas = canvas;
 
     SDL_ShowWindow(window);
     m_Window = window;
@@ -65,7 +69,8 @@ SDLGPUDevice::SDLGPUDevice()
 
 SDLGPUDevice::~SDLGPUDevice()
 {
-    m_UICanvas = nullptr;
+    m_Canvas = nullptr;
+
 	SDL_ReleaseWindowFromGPUDevice(m_Device, m_Window);
 	SDL_DestroyGPUDevice(m_Device);
     SDL_DestroyWindow(m_Window);
@@ -73,7 +78,7 @@ SDLGPUDevice::~SDLGPUDevice()
 
 UICanvasRaw SDLGPUDevice::getCanvas() const
 {
-    return m_UICanvas.get();
+    return m_Canvas.get();
 }
 
 void SDLGPUDevice::setCursor(UIString type)
@@ -266,14 +271,8 @@ bool SDLGPUDevice::update()
 		}
 	}
 
-	// Update layout and paint
-
-	int width, height;
-	SDL_GetWindowSize(window, &width, &height);
-	UIRect client{0, 0, (float)width, (float)height};
-	canvas->updateWidget(::clock() * 0.001f, client);
-
 	// Output frame to screen
+
 
 	// 获取命令缓冲区 (Command Buffer)
 	SDL_GPUCommandBuffer *cmdBuf = SDL_AcquireGPUCommandBuffer(m_Device);
@@ -282,32 +281,37 @@ bool SDLGPUDevice::update()
 		UI_ERROR("获取 GPU Command Buffer 失败: %s", SDL_GetError());
 		return false;
 	}
-	// 获取当前帧的交换链纹理
-	SDL_GPUTexture* swapchainTexture = nullptr;
-	uint32_t swapchainWidth = 0, swapchainHeight = 0;
-	if (SDL_AcquireGPUSwapchainTexture(cmdBuf, window, &swapchainTexture, &swapchainWidth, &swapchainHeight) && swapchainTexture)
+
+	SDL_GPUTexture* screenRT = nullptr;
+	uint32_t screenWidth = 0, screenHeight = 0;
+	if (SDL_AcquireGPUSwapchainTexture(cmdBuf, window, &screenRT, &screenWidth, &screenHeight) && screenRT)
 	{
+		SDL_SubmitGPUCommandBuffer(cmdBuf);
+
 		UIImage target
 		{
-			.Width = swapchainWidth,
-			.Height = swapchainHeight,
-			.Stride = swapchainWidth * 4,
+			.Width = screenWidth,
+			.Height = screenHeight,
+			.Stride = screenWidth * 4,
 			.Channel = 4,
-			.Data = (uint64_t)swapchainTexture,
-			.Type = UIImage::GPUByte,
+			.Handle = reinterpret_cast<uint64_t>(screenRT),
+			.Format = UIImage::GPUByte,
 		};
 		canvas->setTarget(target);
 
-		canvas->renderWidget(client);
+		canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)screenWidth, (float)screenHeight});
 	}
-	// 提交命令缓冲区并呈现到屏幕
-	SDL_SubmitGPUCommandBuffer(cmdBuf);
 	return true;
 }
 
 SDL_Window* SDLGPUDevice::getWindow() const
 {
     return m_Window;
+}
+
+SDL_GPUDevice* SDLGPUDevice::getDevice() const
+{
+	return m_Device;
 }
 
 #endif

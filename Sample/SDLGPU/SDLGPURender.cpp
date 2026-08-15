@@ -13,10 +13,24 @@
 #include <SDL3/SDL_gpu.h>
 #include <OpenUI/UICanvas.h>
 
+#include "SDLGPUDevice.h"
+
 SDLGPURender::SDLGPURender(UICanvasRaw canvas, int width, int height)
     :
     m_Canvas(canvas)
 {
+}
+
+SDLGPURender::~SDLGPURender()
+{
+    auto device = UICast<SDLGPUDevice>(getCanvas()->getDevice())->getDevice();
+    SDL_WaitForGPUIdle(device);
+
+    while (m_Targets.size())
+    {
+        SDL_ReleaseGPUTexture(device, (SDL_GPUTexture*)m_Targets.back().Handle);
+        m_Targets.pop_back();
+    }
 }
 
 UICanvasRaw SDLGPURender::getCanvas() const
@@ -29,44 +43,54 @@ UIString SDLGPURender::getName() const
     return {};
 }
 
-void SDLGPURender::render(UIRect client, UIImageRaw srcImage, UIImageRaw dstImage, UIComputedStyleRaw style)
+UIImage SDLGPURender::newImage(uint32_t width, uint32_t height)
 {
-    auto canvas = getCanvas()->getTarget();
-    auto swapchainTexture = (SDL_GPUTexture*) getCanvas()->getTarget()->Data;
+    auto device = UICast<SDLGPUDevice>(getCanvas()->getDevice())->getDevice();
+    SDL_WaitForGPUIdle(device);
 
-    // // 获取命令缓冲区 (Command Buffer)
-    // SDL_GPUCommandBuffer *cmdBuf = SDL_AcquireGPUCommandBuffer(m_Device);
-    // if (cmdBuf == NULL)
-    // {
-    //     UI_ERROR("获取 GPU Command Buffer 失败: %s", SDL_GetError());
-    //     return false;
-    // }
-    //
-    // // 设置渲染目标（设置背景清屏颜色为深天蓝色）
-    // SDL_GPUColorTargetInfo colorTarget = {0};
-    // colorTarget.texture = swapchainTexture;
-    // colorTarget.clear_color = SDL_FColor{ 0.1f, 0.2f, 0.4f, 1.0f };
-    // colorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
-    // colorTarget.store_op = SDL_GPU_STOREOP_STORE;
-    // // 开始渲染 Pass
-    // SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(
-    //     cmdBuf,
-    //     &colorTarget,
-    //     1,
-    //     NULL
-    // );
-    //
-    // // 在此处提交管线绘制命令 (如绘制三角形/网格)
-    //
-    // // 结束渲染 Pass
-    // SDL_EndGPURenderPass(renderPass);
-    //
-    // SDL_BindGPUGraphicsPipeline(pass, pipeline);
-    //
-    // SDL_GPUBufferBinding vb{ .buffer = vbuf, .offset = 0 };
-    // SDL_BindGPUVertexBuffers(pass, 0, &vb, 1);
-    //
-    // SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);  // 3顶点, 1实例
+    SDL_GPUTexture* texture = nullptr;
+    while (m_Targets.size() && (m_Targets.back().Width != width || m_Targets.back().Height != height))
+    {
+        SDL_ReleaseGPUTexture(device, (SDL_GPUTexture*)m_Targets.back().Handle);
+        m_Targets.pop_back();
+    }
+
+    if (m_Targets.empty())
+    {
+        SDL_GPUTextureCreateInfo info
+        {
+            .type = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+            .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+            .width = width,
+            .height = height,
+            .layer_count_or_depth = 1,
+            .num_levels = 1,
+            .sample_count = SDL_GPU_SAMPLECOUNT_1,
+            .props = 0
+        };
+        texture = SDL_CreateGPUTexture(device, &info);
+    }
+    else
+    {
+        texture = (SDL_GPUTexture*)m_Targets.back().Handle;
+        m_Targets.pop_back();
+    }
+
+    return UIImage
+    {
+        .Width = width,
+        .Height = height,
+        .Stride = width * 4,
+        .Channel = 4,
+        .Handle = (uint64_t)texture,
+        .Format = UIImage::GPUByte
+    };
+}
+
+void SDLGPURender::delImage(UIImage value)
+{
+    m_Targets.emplace_back(value);
 }
 
 #endif

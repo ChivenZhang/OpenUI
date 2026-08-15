@@ -1,4 +1,4 @@
-<mxfile host="drawio-plugin" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" modified="2026-08-13T01:29:10.336Z" etag="XpMd3OsQvXo3PN0jREyh" version="22.1.22" type="embed" pages="3">
+<mxfile host="drawio-plugin" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" modified="2026-08-13T16:47:04.680Z" etag="Y3MmWrHgwKkVh_u0fL6r" version="22.1.22" type="embed" pages="3">
   <diagram id="G7-4dMvRM-vJRnt78NFY" name="类图">
     <mxGraphModel dx="1354" dy="1145" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -388,14 +388,14 @@
     </mxGraphModel>
   </diagram>
   <diagram id="d7bORBiqh0P1t-LM73Cb" name="渲染">
-    <mxGraphModel dx="855" dy="546" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1354" dy="745" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="4WabDlsTL6BiiDR4aAGK-2" value="外部 Pass 1" style="html=1;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
           <mxGeometry x="80" y="80" width="100" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="4WabDlsTL6BiiDR4aAGK-3" value="Widget VG Pass" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#60a917;strokeColor=#2D7600;fontColor=#ffffff;" parent="1" vertex="1">
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-3" value="Widget Paint&lt;br&gt;Pass" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#60a917;strokeColor=#2D7600;fontColor=#ffffff;" parent="1" vertex="1">
           <mxGeometry x="240" y="80" width="100" height="50" as="geometry" />
         </mxCell>
         <mxCell id="4WabDlsTL6BiiDR4aAGK-4" value="" style="endArrow=classic;html=1;" parent="1" source="4WabDlsTL6BiiDR4aAGK-2" target="4WabDlsTL6BiiDR4aAGK-3" edge="1">
