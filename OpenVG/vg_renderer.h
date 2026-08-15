@@ -110,10 +110,10 @@ typedef struct VGState {
 	SDL_GPUGraphicsPipeline* pipeline;
 	SDL_GPUBuffer* vertexBuffer;
 	SDL_GPUSampler* linearSampler;
-
+	uint32_t cap_v = 0;
 	/* CPU-side data mirrors */
 	UboGrad                ubo;
-	int                     vertexCount;
+	int width = 0, height = 0;
 	SDL_GPUTexture* emptyImg;
 	SDL_GPUSampler* sampler;
 	SDL_GPURenderPass* pass;

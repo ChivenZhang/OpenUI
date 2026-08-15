@@ -1360,6 +1360,7 @@ vg_pattern_t* ovg_new_pattern_linear(mem_resource_t* ac0, float x0, float y0, fl
 	pat->extend = vg_extend_t::VG_EXTEND_NONE;
 	pat->data = &pat->g;
 	_vg_pattern_edit_linear(pat, x0, y0, x1, y1);
+	pat->matrix = glm::mat3x2(1.0);
 	pat->references = 1;
 }
 int vg_pattern_edit_radial(pat_act* pat, float cx0, float cy0, float radius0, float cx1, float cy1, float radius1, bool is_ellipse) {
@@ -1413,6 +1414,7 @@ vg_pattern_t* ovg_new_pattern_radial(mem_resource_t* ac0, float cx0, float cy0, 
 	pat->type = vg_pattern_type_t::VG_PATTERN_TYPE_RADIAL;
 	pat->extend = vg_extend_t::VG_EXTEND_NONE;
 	pat->data = &pat->g;
+	pat->matrix = glm::mat3x2(1.0);
 	vg_pattern_edit_radial(pat, cx0, cy0, radius0, cx1, cy1, radius1, is_ellipse);
 	pat->references = 1;
 }
@@ -1429,6 +1431,7 @@ vg_pattern_t* ovg_new_pattern_sweep(mem_resource_t* ac0, float cx, float cy, flo
 	pat->type = vg_pattern_type_t::VG_PATTERN_TYPE_MESH;
 	pat->extend = vg_extend_t::VG_EXTEND_NONE;
 	pat->data = &pat->g;
+	pat->matrix = glm::mat3x2(1.0);
 	vg_pattern_edit_sweep(pat, cx, cy, start_angle, end_angle);
 	pat->references = 1;
 }
@@ -1819,6 +1822,9 @@ void rvg_t::fill_preserve()
 	p->t = cur_st;
 	if (p->t->pattern)
 		gCount++;
+	auto t = p->t;
+	uint32_t color = t->color;
+	p->color = color;
 	vgcmd_t c = {};
 	if (p->t->curFillRule == VG_FILL_RULE_EVEN_ODD) {
 
@@ -1963,18 +1969,15 @@ void rvg_t::poly_fill(ovg_path_t* ctx, glm::vec4* bounds, vgcmd_t& c)
 	if (!nc)return;
 	ptrPath = 0;
 
-	c.v = (vg_sub_cmd*)mac.allocate(sizeof(vg_sub_cmd) * nc);
-	if (!c.v)return;
 	cp_cmdt(&c, ctx->t);
-	c.vc = nc;
 	ctx->curVertOffset = _vertex.size();
-	auto cv = c.v;
+	c.vertex.x = _vertex.size();
 #if 1
 	while (ptrPath < ctx->pathPtr) {
 		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
 		if (pathPointCount > 2) {
 			uint32_t firstVertIdx = (uint32_t)_vertex.size();
-			c.vertex.x = firstVertIdx;
+
 
 			// ---- 1. 先收集局部坐标 + 算 bounds（避免展开时重复 transform）----
 			std::vector<glm::vec2> polyPoints(pathPointCount);
@@ -2006,10 +2009,8 @@ void rvg_t::poly_fill(ovg_path_t* ctx, glm::vec4* bounds, vgcmd_t& c)
 				v.pos = polyPoints[i + 1];
 				_vertex.push_back(v);
 			}
+			c.vertex.y += (pathPointCount - 2) * 3;  // ← 关键改动
 
-			cv->firstVertex = firstVertIdx;
-			cv->vertexCount = (pathPointCount - 2) * 3;  // ← 关键改动
-			cv++;
 		}
 		firstPtIdx += pathPointCount;
 

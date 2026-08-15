@@ -277,8 +277,8 @@ bool VG_Init(VGState* g, int width, int height) {
 		return false;
 	}
 
-
-	SDL_GPUBufferCreateInfo bc = { .usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = sizeof(ovgVertex) * 5 * 6, };
+	g->cap_v = 1024;
+	SDL_GPUBufferCreateInfo bc = { .usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = sizeof(ovgVertex) * g->cap_v , };
 	g->vertexBuffer = SDL_CreateGPUBuffer(g->device, &bc);
 	if (!g->vertexBuffer) return false;
 
@@ -308,6 +308,18 @@ bool VG_Init(VGState* g, int width, int height) {
 	return true;
 }
 
+bool resize_res(VGState* g, size_t vcount) {
+	if (!g)return false;
+	if (vcount > g->cap_v)
+	{
+		g->cap_v += vcount;
+		SDL_GPUBufferCreateInfo bc = { .usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = sizeof(ovgVertex) * g->cap_v, };
+		if (g->vertexBuffer)
+			SDL_ReleaseGPUBuffer(g->device, g->vertexBuffer);
+		g->vertexBuffer = SDL_CreateGPUBuffer(g->device, &bc);
+		if (!g->vertexBuffer) return false;
+	}
+}
 SDL_GPUTexture* CreateWhiteTexture16x16(SDL_GPUDevice* device) {
 	const int W = 16, H = 16;
 	const Uint32 pixelCount = W * H;
@@ -445,21 +457,24 @@ SDL_GPUSampler* CreateLinearSampler(SDL_GPUDevice* device) {
 #define PAT_RASTER 5
 #define PAT_SWEEP  6	
 
+void mul_pat(vg_gradient_t* grad, int type, const glm::mat3& mat, const glm::mat3& pat_mat);
+
 void begin_frame(VGState* g) {
 	g->cs.clear();
 	g->vs.clear();
 }
 int submit_draw(VGState* g) {
 
-	uint32_t sw, sh;
+	uint32_t sw = 0, sh = 0;
 	SDL_GPUTexture* swapchain = NULL;
-
+	resize_res(g, g->vs.size() + g->data->v_count);
 	SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(g->device);
 	if (!cmd) return 0;
 	if (!SDL_AcquireGPUSwapchainTexture(cmd, g->window, &swapchain, &sw, &sh)) {
 		SDL_CancelGPUCommandBuffer(cmd);
 		return 0;
 	}
+	g->width = sw; g->height = sh;
 	if (swapchain == NULL) {
 		/* Window minimized or not ready — cancel and skip this frame */
 		SDL_CancelGPUCommandBuffer(cmd);
@@ -501,11 +516,12 @@ int submit_draw(VGState* g) {
 	SDL_BindGPUFragmentSamplers(g->pass, 0, &binding, 1);
 	SDL_SetGPUStencilReference(g->pass, 0x1);
 	SDL_GPUViewport view = { 0,0,0,0,0,1 };
+	int smax = std::max(g->width, g->height);
 	view.x = 0;
-	view.y = 600;
-	view.w = 800;
-	view.h = -600;
-	SDL_Rect clip = { 0,0,800,600 };
+	view.y = g->height;
+	view.w = g->width;
+	view.h = -g->height;
+	SDL_Rect clip = { 0,0,g->width,g->height };
 	SDL_SetGPUViewport(g->pass, &view);
 	SDL_SetGPUScissor(g->pass, &clip);
 	for (auto& it : g->cs)
@@ -520,33 +536,34 @@ int submit_draw(VGState* g) {
 	{
 		auto& it = g->data->d[i];
 		auto pc = it.vg.state->pushConsts;
-		pc.size = { sw,sh };
+		pc.size = { g->width,g->height };
 		switch (it.g.stype) {
 		case 0:
 		{
 			push_constants_std140_t pc0 = {};
-			if (it.vg.state->pattern->type != PAT_SOLID) {
-				pc.source = { 800,800,0,0 };
+			if (it.vg.state->pattern && it.vg.state->pattern->type != PAT_SOLID) {
+				pc.source = { smax,smax,0,0 };
 			}
 			memcpy(&pc0.source, &pc.source, sizeof(float) * 4);
 			pc0.size[0] = pc.size.x;
 			pc0.size[1] = pc.size.y;
-			pc.fsq_patternType = (pc.fsq_patternType & FULLSCREEN_BIT) + it.vg.state->pattern->type;
+			if (it.vg.state->pattern)
+				pc.fsq_patternType = (pc.fsq_patternType & FULLSCREEN_BIT) + it.vg.state->pattern->type;
 			pc0.fsq_patternType = pc.fsq_patternType;
 			pc0.opacity = pc.opacity;
-			pc0.mat = pc.mat;// glm::transpose(pc.mat);
-			pc0.matInv = pc.matInv;
-			float m6[16];
-			float m60[16];
-			memcpy(m6, &pc.mat, sizeof(pc0.mat));
-			memcpy(m60, &pc0.mat, sizeof(pc0.mat));
+			pc0.mat = glm::transpose(pc.mat);
+			pc0.matInv = glm::transpose(pc.matInv);
+			if (it.vg.state->pattern) {
+				auto gr = *(vg_gradient_t*)it.vg.state->pattern->data;
+				glm::mat3 patmat = it.vg.state->pattern->matrix;
+				mul_pat(&gr, it.vg.state->pattern->type, pc.mat, patmat);
+				SDL_PushGPUFragmentUniformData(cmd, 0, &gr, sizeof(vg_gradient_t));
+			}
 			SDL_PushGPUVertexUniformData(cmd, 0, &pc0, sizeof(pc0));
-			auto gr = (vg_gradient_t*)it.vg.state->pattern->data;
-			SDL_PushGPUFragmentUniformData(cmd, 0, gr, sizeof(vg_gradient_t));
-			for (int k = 0; k < it.vg.vc; k++)
+
+			if (it.vg.index.y < 1)
 			{
-				auto kt = it.vg.v + k;
-				SDL_DrawGPUPrimitives(g->pass, kt->vertexCount, 1, kt->firstVertex, 0);
+				SDL_DrawGPUPrimitives(g->pass, it.vg.vertex.y, 1, it.vg.vertex.x, 0);
 			}
 			//struct vgcmd_t {
 			//	int stype = 0;
@@ -715,14 +732,15 @@ void VG_DrawFilledRect(VGState* g, float x, float y, float w, float h, int patTy
 	//VG_PushDrawUniforms(g, cmd, (float)sw, (float)sh, patType, opacity);
 	push_constants_t pc = {};
 	pc.source = c4;
-	pc.size = { (float)800, (float)600 };
+	pc.size = { g->width, g->height };
 	pc.fsq_patternType = (pc.fsq_patternType & FULLSCREEN_BIT) + patType;
 	pc.opacity = opacity;
 	auto mat = glm::translate(glm::mat3(1.0), pos);
 	pc.mat = mat;
 	pc.matInv = glm::inverse(mat);
+	auto mx = std::max(g->width, g->height);
 	if (patType != PAT_SOLID) {
-		pc.source = { 800,800,0,0 };
+		pc.source = { mx,mx,0,0 };
 	}
 	vkvg_matrix_t m = {};
 	vkvg_matrix_init(&m, 1, 0, 0, 1, pos.x, pos.y);

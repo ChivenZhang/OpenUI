@@ -23,40 +23,88 @@
 #include "vg_renderer.h"
 
 #include <Windows.h>
+
+void r_grid_fill(ovg_canvas_cb* cr, rvg_t* vg, vg_state_save_t* sst, ovg_path_t* path, glm::vec2 size, glm::ivec2 cols, int width)
+{
+	int x = fmod(size.x, width);
+	int y = fmod(size.y, width);
+	int xn = size.x / width;
+	int yn = size.y / width;
+	if (x > 0)xn++;
+	if (y > 0)yn++;
+
+	cr->rectangle(path, 0, 0, size.x, size.y);
+	cr->clip(vg);
+	for (size_t i = 0; i < yn; i++)
+	{
+		auto iw = i * width;
+		for (size_t j = 0; j < xn; j++)
+		{
+			bool k0 = (j & 1);
+			bool k1 = !(j & 1);
+			auto k = !(i & 1) ? k0 : k1;
+			if (k)
+				cr->rectangle(path, j * width, iw, width, width);
+		}
+	}
+	auto c = cols[0];
+	cr->set_source_color(sst, c);
+	cr->fill(vg);
+	for (size_t i = 0; i < yn; i++)
+	{
+		auto iw = i * width;
+		for (size_t j = 0; j < xn; j++)
+		{
+			bool k0 = (j & 1);
+			bool k1 = !(j & 1);
+			auto k = (i & 1) ? k0 : k1;
+			if (k)
+				cr->rectangle(path, j * width, iw, width, width);
+		}
+	}
+	c = cols[1];
+	cr->set_source_color(sst, c);
+	cr->fill(vg);
+}
 int main()
 {
-	LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
+	//LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
 	std::cout << "Hello OpenVG!" << std::endl;
 	VGState g[1] = {};
 
 	ovg_canvas_cb* cav = new_canvas_cb();
 	static ovg_draw_data dlist = {};
+	glm::ivec2 surfsize = { 800,600 };
+	g->width = surfsize.x; g->height = surfsize.y;
 	if (cav)
 	{
 		auto vg = cav->new_rvg(cav->ac);
 		auto path = cav->new_path(cav->ac);
-		cav->rectangle(path, 20, 20, 300, 200);
 		vg_state_save_t* sst = cav->new_state(cav->ac);
-		cav->set_source_color(sst, 0xff0080ff);
+		cav->set_path(vg, path, sst);
 		cav->set_fill_rule(sst, VG_FILL_RULE_EVEN_ODD);
+		r_grid_fill(cav, vg, sst, path, surfsize, glm::ivec2(-1, 0xffdfdfdf), 20);
+		cav->set_source_color(sst, 0xff0080ff);
 		auto pat = cav->new_pattern_linear(cav->ac, 0, 0, 100, 256);
 		cav->pattern_add_color_stop(pat, 0, 0, 0, 1, 1);// 蓝
 		cav->pattern_add_color_stop(pat, 0.5, 0, 1, 0, 1);// 绿
 		cav->pattern_add_color_stop(pat, 1, 1, 0, 0, 1);// 红
 		cav->set_source(sst, pat);
-		cav->set_path(vg, path, sst);
+		cav->rectangle(path, 20, 20, 300, 200);
 		cav->fill(vg);
-		pat = cav->new_pattern_radial(cav->ac, 150, 100, 25.6, 102.4, 102.4, 128.0, false);
-		cav->pattern_add_color_stop(pat, 0, 0, 0, 0.51, 1);// 蓝
+		cav->translate(sst, 120, 250);
+		cav->rectangle(path, 0, 0, 300, 300);
+		pat = cav->new_pattern_radial(cav->ac, 150, 150, 25.6, 102.4, 102.4, 128.0, false);
+		cav->pattern_add_color_stop(pat, 0, 0, 0, 1, 0);// 蓝
 		cav->pattern_add_color_stop(pat, 0.5, 0, 1, 0, 1);// 绿
-		cav->pattern_add_color_stop(pat, 1, 1, 0, 0, 1);// 红
+		cav->pattern_add_color_stop(pat, 0.8, 1, 0, 0, 1);// 红
+		cav->pattern_add_color_stop(pat, 1, 1, 1, 0, 0.61);// 橙
 		cav->set_source(sst, pat);
-		cav->rectangle(path, 120, 50, 300, 200);
 		cav->set_path(vg, path, sst);
 		cav->fill(vg);
 		dlist = get_draw_list(vg);
 	}
-	if (!VG_Init(g, 800, 600)) {
+	if (!VG_Init(g, surfsize.x, surfsize.y)) {
 		SDL_Log("Init failed: %s", SDL_GetError());
 		return 1;
 	}

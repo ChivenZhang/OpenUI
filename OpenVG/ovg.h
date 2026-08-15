@@ -201,15 +201,9 @@ struct geom_cmd_t {
 	size_t v_offset = 0;				// vbo绑定偏移：0单面，1双面
 };
 
-struct vg_sub_cmd {
-	uint32_t vertexCount;
-	uint32_t firstVertex;
-};
 // 矢量命令
 struct vgcmd_t {
 	int stype = 0;
-	vg_sub_cmd* v = 0;
-	int vc = 0;
 	int full_screen_quad = 0;
 	glm::ivec2 vertex = {};			// 顶点开始、数量
 	glm::ivec2 index = {};			// 索引开始、数量
