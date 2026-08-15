@@ -48,13 +48,5 @@ public:
 	void setColumnStretch(UIList<uint32_t> stretch);
 
 private:
-	UIWidgetPrivateRaw m_PrivateGrid;
-};
-
-/// @brief Grid factory
-class OPENUI_API UIGridFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIPrivateRaw m_Private;
 };

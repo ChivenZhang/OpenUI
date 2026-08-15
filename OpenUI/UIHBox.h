@@ -33,13 +33,5 @@ public:
 	void setStyle(UIHBoxStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateHbox;
-};
-
-/// @brief HBox factory
-class OPENUI_API UIHBoxFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIPrivateRaw m_Private;
 };

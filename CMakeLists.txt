@@ -17,8 +17,11 @@ else()
 endif()
 
 include_directories(${OPENUI_SOURCE_DIR})
+include_directories(${OPENUI_SOURCE_DIR}/Vector/SDLGPU)
 add_subdirectory(OpenVG)
+add_subdirectory(Vector/SDLGPU)
 add_subdirectory(OpenUI)
+
 if(OPENUI_ENABLE_SAMPLE)
 add_subdirectory(Sample)
 endif()

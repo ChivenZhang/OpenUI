@@ -17,21 +17,20 @@ struct UIGridItem
 };
 
 /// @brief 
-class UIGridPrivate : public UIWidgetPrivate
+struct UIGridPrivate : UIPrivate
 {
-public:
 	UIGridStyle Style;
 	UIMap<UIWidgetRaw, UIGridItem> GridItemMap;
 	UIList<uint32_t> RowStretch, ColumnStretch;
 	UIList<float> RowPercent, ColumnPercent, RowSummary, ColumnSummary;
 };
-#define PRIVATE() ((UIGridPrivate*) m_PrivateGrid)
+#define PRIVATE() ((UIGridPrivate*) m_Private)
 
 UIGrid::UIGrid(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateGrid = new UIGridPrivate;
+	m_Private = new UIGridPrivate;
 
 	PRIVATE()->Style.Pen = { .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, };
 	PRIVATE()->Style.Brush = { .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, };
@@ -39,18 +38,18 @@ UIGrid::UIGrid(UICanvasRaw canvas)
 
 UIGrid::~UIGrid()
 {
-	delete m_PrivateGrid; m_PrivateGrid = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIGrid::arrange(UIRect client)
 {
 	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
-		getWidgets()[i]->setDisplayType(UI::DisplayNone);
+		getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_NONE});
 		auto result = PRIVATE()->GridItemMap.find(getWidgets()[i].get());
 		if (result == PRIVATE()->GridItemMap.end())
 		{
-			getWidgets()[i]->setDisplayType(UI::DisplayNone);
+			getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_NONE});
 		}
 		else
 		{
@@ -64,10 +63,10 @@ void UIGrid::arrange(UIRect client)
 			for (size_t k = 0; k < rowSpan && row + k < getColumnCount(); ++k) height += PRIVATE()->RowPercent[row + k];
 			for (size_t k = 0; k < colSpan && col + k < getColumnCount(); ++k) width += PRIVATE()->ColumnPercent[col + k];
 
-			getWidgets()[i]->setDisplayType(UI::DisplayFlex);
-			getWidgets()[i]->setPositionType(UI::PositionAbsolute);
-			getWidgets()[i]->setFixedPos(UIValueF(posX, UI::UnitPercent), UIValueF(posY, UI::UnitPercent));
-			getWidgets()[i]->setFixedSize(UIValueF(width, UI::UnitPercent), UIValueF(height, UI::UnitPercent));
+			getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_FLEX});
+			getWidgets()[i]->setPositionType({UI_CSS_POSITION_ABSOLUTE});
+			getWidgets()[i]->setFixedPos({posX, UI_CSS_LEFT_PERCENTAGE}, {posY, UI_CSS_TOP_PERCENTAGE});
+			getWidgets()[i]->setFixedSize({width, UI_CSS_WIDTH_PERCENTAGE}, {height, UI_CSS_HEIGHT_PERCENTAGE});
 		}
 	}
 }
@@ -251,16 +250,4 @@ void UIGrid::setColumnStretch(UIList<uint32_t> stretch)
 		PRIVATE()->ColumnSummary[i] = colStretch * 100.0f / colStretches;
 		colStretch += getColumnStretch(i);
 	}
-}
-
-UIString UIGridFactory::getTagName() const
-{
-	return "grid";
-}
-
-UIWidgetRef UIGridFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UIGrid>(getContext());
-	result->setStyleText(style);
-	return result;
 }

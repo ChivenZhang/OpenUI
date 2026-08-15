@@ -1,0 +1,1118 @@
+#pragma once
+/*=================================================
+* Copyright © 2020-2026 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by chivenzhang@gmail.com.
+*
+* =================================================*/
+#include "UI.h"
+
+struct UIPrivate
+{
+};
+
+using UIPrivateRaw = UIRaw<UIPrivate>;
+
+enum
+{
+    UI_CSS_ALIGN_CONTENT_FLEX_START,
+    UI_CSS_ALIGN_CONTENT_FLEX_END,
+    UI_CSS_ALIGN_CONTENT_CENTER,
+    UI_CSS_ALIGN_CONTENT_SPACE_BETWEEN,
+    UI_CSS_ALIGN_CONTENT_SPACE_AROUND,
+    UI_CSS_ALIGN_CONTENT_STRETCH,
+    UI_CSS_ALIGN_CONTENT_SPACE_EVENLY,
+    UI_CSS_ALIGN_CONTENT_BASE_LINE,
+};
+
+typedef unsigned int ui_css_align_content_type_t;
+
+enum
+{
+    UI_CSS_ALIGN_ITEMS_FLEX_START,
+    UI_CSS_ALIGN_ITEMS_FLEX_END,
+    UI_CSS_ALIGN_ITEMS_CENTER,
+    UI_CSS_ALIGN_ITEMS_BASELINE,
+    UI_CSS_ALIGN_ITEMS_STRETCH,
+    UI_CSS_ALIGN_ITEMS_SPACE_EVENLY,
+    UI_CSS_ALIGN_ITEMS_SPACE_AROUND,
+};
+
+typedef unsigned int ui_css_align_items_type_t;
+
+enum
+{
+    UI_CSS_ALIGN_SELF_AUTO,
+    UI_CSS_ALIGN_SELF_FLEX_START,
+    UI_CSS_ALIGN_SELF_FLEX_END,
+    UI_CSS_ALIGN_SELF_CENTER,
+    UI_CSS_ALIGN_SELF_BASELINE,
+    UI_CSS_ALIGN_SELF_STRETCH,
+    UI_CSS_ALIGN_SPACE_EVENLY,
+    UI_CSS_ALIGN_SPACE_AROUND,
+};
+
+typedef unsigned int ui_css_align_self_type_t;
+
+enum
+{
+    UI_CSS_ALIGNMENT_BASELINE_BASELINE,
+    UI_CSS_ALIGNMENT_BASELINE_TEXT_BOTTOM,
+    UI_CSS_ALIGNMENT_BASELINE_ALPHABETIC,
+    UI_CSS_ALIGNMENT_BASELINE_IDEOGRAPHIC,
+    UI_CSS_ALIGNMENT_BASELINE_MIDDLE,
+    UI_CSS_ALIGNMENT_BASELINE_CENTRAL,
+    UI_CSS_ALIGNMENT_BASELINE_MATHEMATICAL,
+    UI_CSS_ALIGNMENT_BASELINE_TEXT_TOP,
+};
+
+typedef unsigned int ui_css_alignment_baseline_type_t;
+
+
+enum
+{
+    UI_CSS_BASELINE_SHIFT_LENGTH,
+    UI_CSS_BASELINE_SHIFT_PERCENTAGE,
+    UI_CSS_BASELINE_SHIFT_SUB,
+    UI_CSS_BASELINE_SHIFT_SUPER,
+    UI_CSS_BASELINE_SHIFT_TOP,
+    UI_CSS_BASELINE_SHIFT_CENTER,
+    UI_CSS_BASELINE_SHIFT_BOTTOM,
+};
+
+typedef unsigned int ui_css_baseline_shift_type_t;
+
+enum
+{
+    UI_CSS_BASELINE_SOURCE_AUTO,
+    UI_CSS_BASELINE_SOURCE_FIRST,
+    UI_CSS_BASELINE_SOURCE_LAST,
+};
+
+typedef unsigned int ui_css_baseline_source_type_t;
+
+enum
+{
+    UI_CSS_BORDER_THIN,
+    UI_CSS_BORDER_MEDIUM,
+    UI_CSS_BORDER_THICK,
+    UI_CSS_BORDER_NONE,
+    UI_CSS_BORDER_HIDDEN,
+    UI_CSS_BORDER_DOTTED,
+    UI_CSS_BORDER_DASHED,
+    UI_CSS_BORDER_SOLID,
+    UI_CSS_BORDER_DOUBLE,
+    UI_CSS_BORDER_GROOVE,
+    UI_CSS_BORDER_RIDGE,
+    UI_CSS_BORDER_INSET,
+    UI_CSS_BORDER_OUTSET,
+    UI_CSS_BORDER_LENGTH,
+};
+
+typedef unsigned int ui_css_border_type_t, ui_css_border_bottom_type_t, ui_css_border_left_type_t,
+                     ui_css_border_right_type_t, ui_css_border_top_type_t;
+
+enum
+{
+    UI_CSS_BOX_SIZING_CONTENT_BOX,
+    UI_CSS_BOX_SIZING_BORDER_BOX,
+};
+
+typedef unsigned int ui_css_box_sizing_type_t;
+
+enum
+{
+    UI_CSS_CLEAR_INLINE_START,
+    UI_CSS_CLEAR_INLINE_END,
+    UI_CSS_CLEAR_BLOCK_START,
+    UI_CSS_CLEAR_BLOCK_END,
+    UI_CSS_CLEAR_LEFT,
+    UI_CSS_CLEAR_RIGHT,
+    UI_CSS_CLEAR_TOP,
+    UI_CSS_CLEAR_BOTTOM,
+    UI_CSS_CLEAR_NONE,
+};
+
+typedef unsigned int ui_css_clear_type_t;
+
+enum
+{
+    UI_CSS_COLOR_CURRENTCOLOR,
+    UI_CSS_COLOR_TRANSPARENT,
+    UI_CSS_COLOR_HEX,
+    UI_CSS_COLOR_ALICEBLUE,
+    UI_CSS_COLOR_ANTIQUEWHITE,
+    UI_CSS_COLOR_AQUA,
+    UI_CSS_COLOR_AQUAMARINE,
+    UI_CSS_COLOR_AZURE,
+    UI_CSS_COLOR_BEIGE,
+    UI_CSS_COLOR_BISQUE,
+    UI_CSS_COLOR_BLACK,
+    UI_CSS_COLOR_BLANCHEDALMOND,
+    UI_CSS_COLOR_BLUE,
+    UI_CSS_COLOR_BLUEVIOLET,
+    UI_CSS_COLOR_BROWN,
+    UI_CSS_COLOR_BURLYWOOD,
+    UI_CSS_COLOR_CADETBLUE,
+    UI_CSS_COLOR_CHARTREUSE,
+    UI_CSS_COLOR_CHOCOLATE,
+    UI_CSS_COLOR_CORAL,
+    UI_CSS_COLOR_CORNFLOWERBLUE,
+    UI_CSS_COLOR_CORNSILK,
+    UI_CSS_COLOR_CRIMSON,
+    UI_CSS_COLOR_CYAN,
+    UI_CSS_COLOR_DARKBLUE,
+    UI_CSS_COLOR_DARKCYAN,
+    UI_CSS_COLOR_DARKGOLDENROD,
+    UI_CSS_COLOR_DARKGRAY,
+    UI_CSS_COLOR_DARKGREEN,
+    UI_CSS_COLOR_DARKGREY,
+    UI_CSS_COLOR_DARKKHAKI,
+    UI_CSS_COLOR_DARKMAGENTA,
+    UI_CSS_COLOR_DARKOLIVEGREEN,
+    UI_CSS_COLOR_DARKORANGE,
+    UI_CSS_COLOR_DARKORCHID,
+    UI_CSS_COLOR_DARKRED,
+    UI_CSS_COLOR_DARKSALMON,
+    UI_CSS_COLOR_DARKSEAGREEN,
+    UI_CSS_COLOR_DARKSLATEBLUE,
+    UI_CSS_COLOR_DARKSLATEGRAY,
+    UI_CSS_COLOR_DARKSLATEGREY,
+    UI_CSS_COLOR_DARKTURQUOISE,
+    UI_CSS_COLOR_DARKVIOLET,
+    UI_CSS_COLOR_DEEPPINK,
+    UI_CSS_COLOR_DEEPSKYBLUE,
+    UI_CSS_COLOR_DIMGRAY,
+    UI_CSS_COLOR_DIMGREY,
+    UI_CSS_COLOR_DODGERBLUE,
+    UI_CSS_COLOR_FIREBRICK,
+    UI_CSS_COLOR_FLORALWHITE,
+    UI_CSS_COLOR_FORESTGREEN,
+    UI_CSS_COLOR_FUCHSIA,
+    UI_CSS_COLOR_GAINSBORO,
+    UI_CSS_COLOR_GHOSTWHITE,
+    UI_CSS_COLOR_GOLD,
+    UI_CSS_COLOR_GOLDENROD,
+    UI_CSS_COLOR_GRAY,
+    UI_CSS_COLOR_GREEN,
+    UI_CSS_COLOR_GREENYELLOW,
+    UI_CSS_COLOR_GREY,
+    UI_CSS_COLOR_HONEYDEW,
+    UI_CSS_COLOR_HOTPINK,
+    UI_CSS_COLOR_INDIANRED,
+    UI_CSS_COLOR_INDIGO,
+    UI_CSS_COLOR_IVORY,
+    UI_CSS_COLOR_KHAKI,
+    UI_CSS_COLOR_LAVENDER,
+    UI_CSS_COLOR_LAVENDERBLUSH,
+    UI_CSS_COLOR_LAWNGREEN,
+    UI_CSS_COLOR_LEMONCHIFFON,
+    UI_CSS_COLOR_LIGHTBLUE,
+    UI_CSS_COLOR_LIGHTCORAL,
+    UI_CSS_COLOR_LIGHTCYAN,
+    UI_CSS_COLOR_LIGHTGOLDENRODYELLOW,
+    UI_CSS_COLOR_LIGHTGRAY,
+    UI_CSS_COLOR_LIGHTGREEN,
+    UI_CSS_COLOR_LIGHTGREY,
+    UI_CSS_COLOR_LIGHTPINK,
+    UI_CSS_COLOR_LIGHTSALMON,
+    UI_CSS_COLOR_LIGHTSEAGREEN,
+    UI_CSS_COLOR_LIGHTSKYBLUE,
+    UI_CSS_COLOR_LIGHTSLATEGRAY,
+    UI_CSS_COLOR_LIGHTSLATEGREY,
+    UI_CSS_COLOR_LIGHTSTEELBLUE,
+    UI_CSS_COLOR_LIGHTYELLOW,
+    UI_CSS_COLOR_LIME,
+    UI_CSS_COLOR_LIMEGREEN,
+    UI_CSS_COLOR_LINEN,
+    UI_CSS_COLOR_MAGENTA,
+    UI_CSS_COLOR_MAROON,
+    UI_CSS_COLOR_MEDIUMAQUAMARINE,
+    UI_CSS_COLOR_MEDIUMBLUE,
+    UI_CSS_COLOR_MEDIUMORCHID,
+    UI_CSS_COLOR_MEDIUMPURPLE,
+    UI_CSS_COLOR_MEDIUMSEAGREEN,
+    UI_CSS_COLOR_MEDIUMSLATEBLUE,
+    UI_CSS_COLOR_MEDIUMSPRINGGREEN,
+    UI_CSS_COLOR_MEDIUMTURQUOISE,
+    UI_CSS_COLOR_MEDIUMVIOLETRED,
+    UI_CSS_COLOR_MIDNIGHTBLUE,
+    UI_CSS_COLOR_MINTCREAM,
+    UI_CSS_COLOR_MISTYROSE,
+    UI_CSS_COLOR_MOCCASIN,
+    UI_CSS_COLOR_NAVAJOWHITE,
+    UI_CSS_COLOR_NAVY,
+    UI_CSS_COLOR_OLDLACE,
+    UI_CSS_COLOR_OLIVE,
+    UI_CSS_COLOR_OLIVEDRAB,
+    UI_CSS_COLOR_ORANGE,
+    UI_CSS_COLOR_ORANGERED,
+    UI_CSS_COLOR_ORCHID,
+    UI_CSS_COLOR_PALEGOLDENROD,
+    UI_CSS_COLOR_PALEGREEN,
+    UI_CSS_COLOR_PALETURQUOISE,
+    UI_CSS_COLOR_PALEVIOLETRED,
+    UI_CSS_COLOR_PAPAYAWHIP,
+    UI_CSS_COLOR_PEACHPUFF,
+    UI_CSS_COLOR_PERU,
+    UI_CSS_COLOR_PINK,
+    UI_CSS_COLOR_PLUM,
+    UI_CSS_COLOR_POWDERBLUE,
+    UI_CSS_COLOR_PURPLE,
+    UI_CSS_COLOR_REBECCAPURPLE,
+    UI_CSS_COLOR_RED,
+    UI_CSS_COLOR_ROSYBROWN,
+    UI_CSS_COLOR_ROYALBLUE,
+    UI_CSS_COLOR_SADDLEBROWN,
+    UI_CSS_COLOR_SALMON,
+    UI_CSS_COLOR_SANDYBROWN,
+    UI_CSS_COLOR_SEAGREEN,
+    UI_CSS_COLOR_SEASHELL,
+    UI_CSS_COLOR_SIENNA,
+    UI_CSS_COLOR_SILVER,
+    UI_CSS_COLOR_SKYBLUE,
+    UI_CSS_COLOR_SLATEBLUE,
+    UI_CSS_COLOR_SLATEGRAY,
+    UI_CSS_COLOR_SLATEGREY,
+    UI_CSS_COLOR_SNOW,
+    UI_CSS_COLOR_SPRINGGREEN,
+    UI_CSS_COLOR_STEELBLUE,
+    UI_CSS_COLOR_TAN,
+    UI_CSS_COLOR_TEAL,
+    UI_CSS_COLOR_THISTLE,
+    UI_CSS_COLOR_TOMATO,
+    UI_CSS_COLOR_TURQUOISE,
+    UI_CSS_COLOR_VIOLET,
+    UI_CSS_COLOR_WHEAT,
+    UI_CSS_COLOR_WHITE,
+    UI_CSS_COLOR_WHITESMOKE,
+    UI_CSS_COLOR_YELLOW,
+    UI_CSS_COLOR_YELLOWGREEN,
+    UI_CSS_COLOR_CANVAS,
+    UI_CSS_COLOR_CANVASTEXT,
+    UI_CSS_COLOR_LINKTEXT,
+    UI_CSS_COLOR_VISITEDTEXT,
+    UI_CSS_COLOR_ACTIVETEXT,
+    UI_CSS_COLOR_BUTTONFACE,
+    UI_CSS_COLOR_BUTTONTEXT,
+    UI_CSS_COLOR_BUTTONBORDER,
+    UI_CSS_COLOR_FIELD,
+    UI_CSS_COLOR_FIELDTEXT,
+    UI_CSS_COLOR_HIGHLIGHT,
+    UI_CSS_COLOR_HIGHLIGHTTEXT,
+    UI_CSS_COLOR_SELECTEDITEM,
+    UI_CSS_COLOR_SELECTEDITEMTEXT,
+    UI_CSS_COLOR_MARK,
+    UI_CSS_COLOR_MARKTEXT,
+    UI_CSS_COLOR_GRAYTEXT,
+    UI_CSS_COLOR_ACCENTCOLOR,
+    UI_CSS_COLOR_ACCENTCOLORTEXT,
+    UI_CSS_COLOR_RGB,
+    UI_CSS_COLOR_RGBA,
+    UI_CSS_COLOR_HSL,
+    UI_CSS_COLOR_HSLA,
+    UI_CSS_COLOR_HWB,
+    UI_CSS_COLOR_LAB,
+    UI_CSS_COLOR_LCH,
+    UI_CSS_COLOR_OKLAB,
+    UI_CSS_COLOR_OKLCH,
+    UI_CSS_COLOR_COLOR,
+};
+
+typedef unsigned int ui_css_color_type_t;
+
+enum
+{
+    UI_CSS_DIRECTION_LTR,
+    UI_CSS_DIRECTION_RTL,
+};
+
+typedef unsigned int ui_css_direction_type_t;
+
+enum
+{
+    UI_CSS_DISPLAY_BLOCK,
+    UI_CSS_DISPLAY_INLINE,
+    UI_CSS_DISPLAY_RUN_IN,
+    UI_CSS_DISPLAY_FLOW,
+    UI_CSS_DISPLAY_FLOW_ROOT,
+    UI_CSS_DISPLAY_TABLE,
+    UI_CSS_DISPLAY_FLEX,
+    UI_CSS_DISPLAY_GRID,
+    UI_CSS_DISPLAY_RUBY,
+    UI_CSS_DISPLAY_LIST_ITEM,
+    UI_CSS_DISPLAY_TABLE_ROW_GROUP,
+    UI_CSS_DISPLAY_TABLE_HEADER_GROUP,
+    UI_CSS_DISPLAY_TABLE_FOOTER_GROUP,
+    UI_CSS_DISPLAY_TABLE_ROW,
+    UI_CSS_DISPLAY_TABLE_CELL,
+    UI_CSS_DISPLAY_TABLE_COLUMN_GROUP,
+    UI_CSS_DISPLAY_TABLE_COLUMN,
+    UI_CSS_DISPLAY_TABLE_CAPTION,
+    UI_CSS_DISPLAY_RUBY_BASE,
+    UI_CSS_DISPLAY_RUBY_TEXT,
+    UI_CSS_DISPLAY_RUBY_BASE_CONTAINER,
+    UI_CSS_DISPLAY_RUBY_TEXT_CONTAINER,
+    UI_CSS_DISPLAY_CONTENTS,
+    UI_CSS_DISPLAY_NONE,
+    UI_CSS_DISPLAY_INLINE_BLOCK,
+    UI_CSS_DISPLAY_INLINE_TABLE,
+    UI_CSS_DISPLAY_INLINE_FLEX,
+    UI_CSS_DISPLAY_INLINE_GRID,
+};
+
+typedef unsigned int ui_css_display_type_t;
+
+enum
+{
+    UI_CSS_DOMINANT_BASELINE_AUTO,
+    UI_CSS_DOMINANT_BASELINE_TEXT_BOTTOM,
+    UI_CSS_DOMINANT_BASELINE_ALPHABETIC,
+    UI_CSS_DOMINANT_BASELINE_IDEOGRAPHIC,
+    UI_CSS_DOMINANT_BASELINE_MIDDLE,
+    UI_CSS_DOMINANT_BASELINE_CENTRAL,
+    UI_CSS_DOMINANT_BASELINE_MATHEMATICAL,
+    UI_CSS_DOMINANT_BASELINE_HANGING,
+    UI_CSS_DOMINANT_BASELINE_TEXT_TOP,
+};
+
+typedef unsigned int ui_css_dominant_baseline_type_t;
+
+enum
+{
+    UI_CSS_FLEX_NONE,
+};
+
+typedef unsigned int ui_css_flex_type_t;
+
+enum
+{
+    UI_CSS_FLEX_BASIS_CONTENT,
+    UI_CSS_FLEX_BASIS_LENGTH,
+    UI_CSS_FLEX_BASIS_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_flex_basis_type_t;
+
+enum
+{
+    UI_CSS_FLEX_DIRECTION_ROW,
+    UI_CSS_FLEX_DIRECTION_ROW_REVERSE,
+    UI_CSS_FLEX_DIRECTION_COLUMN,
+    UI_CSS_FLEX_DIRECTION_COLUMN_REVERSE,
+};
+
+typedef unsigned int ui_css_flex_direction_type_t;
+
+
+enum
+{
+    UI_CSS_FLEX_GROW_NUMBER,
+};
+
+typedef unsigned int ui_css_flex_grow_type_t;
+
+enum
+{
+    UI_CSS_FLEX_SHRINK_NUMBER,
+};
+
+typedef unsigned int ui_css_flex_shrink_type_t;
+
+enum
+{
+    UI_CSS_FLEX_WRAP_NOWRAP,
+    UI_CSS_FLEX_WRAP_WRAP,
+    UI_CSS_FLEX_WRAP_WRAP_REVERSE,
+};
+
+typedef unsigned int ui_css_flex_wrap_type_t;
+
+enum
+{
+    UI_CSS_FLOAT_BLOCK_START,
+    UI_CSS_FLOAT_BLOCK_END,
+    UI_CSS_FLOAT_INLINE_START,
+    UI_CSS_FLOAT_INLINE_END,
+    UI_CSS_FLOAT_SNAP_BLOCK,
+    UI_CSS_FLOAT_START,
+    UI_CSS_FLOAT_END,
+    UI_CSS_FLOAT_NEAR,
+    UI_CSS_FLOAT_SNAP_INLINE,
+    UI_CSS_FLOAT_LEFT,
+    UI_CSS_FLOAT_RIGHT,
+    UI_CSS_FLOAT_TOP,
+    UI_CSS_FLOAT_BOTTOM,
+    UI_CSS_FLOAT_NONE,
+};
+
+typedef unsigned int ui_css_float_type_t;
+
+enum
+{
+    UI_CSS_FLOAT_DEFER_INTEGER,
+    UI_CSS_FLOAT_DEFER_LAST,
+    UI_CSS_FLOAT_DEFER_NONE,
+};
+
+typedef unsigned int ui_css_float_defer_type_t;
+
+enum
+{
+    UI_CSS_FLOAT_OFFSET_LENGTH,
+    UI_CSS_FLOAT_OFFSET_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_float_offset_type_t;
+
+enum
+{
+    UI_CSS_FLOAT_REFERENCE_INLINE,
+    UI_CSS_FLOAT_REFERENCE_COLUMN,
+    UI_CSS_FLOAT_REFERENCE_REGION,
+    UI_CSS_FLOAT_REFERENCE_PAGE,
+};
+
+typedef unsigned int ui_css_float_reference_type_t;
+
+enum
+{
+    UI_CSS_FONT_FAMILY_SERIF,
+    UI_CSS_FONT_FAMILY_SANS_SERIF,
+    UI_CSS_FONT_FAMILY_CURSIVE,
+    UI_CSS_FONT_FAMILY_FANTASY,
+    UI_CSS_FONT_FAMILY_MONOSPACE,
+    UI_CSS_FONT_FAMILY_SYSTEM_UI,
+    UI_CSS_FONT_FAMILY_EMOJI,
+    UI_CSS_FONT_FAMILY_MATH,
+    UI_CSS_FONT_FAMILY_FANGSONG,
+    UI_CSS_FONT_FAMILY_UI_SERIF,
+    UI_CSS_FONT_FAMILY_UI_SANS_SERIF,
+    UI_CSS_FONT_FAMILY_UI_MONOSPACE,
+    UI_CSS_FONT_FAMILY_UI_ROUNDED,
+};
+
+typedef unsigned int ui_css_font_family_type_t;
+
+enum
+{
+    UI_CSS_FONT_SIZE_XX_SMALL,
+    UI_CSS_FONT_SIZE_X_SMALL,
+    UI_CSS_FONT_SIZE_SMALL,
+    UI_CSS_FONT_SIZE_MEDIUM,
+    UI_CSS_FONT_SIZE_LARGE,
+    UI_CSS_FONT_SIZE_X_LARGE,
+    UI_CSS_FONT_SIZE_XX_LARGE,
+    UI_CSS_FONT_SIZE_XXX_LARGE,
+    UI_CSS_FONT_SIZE_LARGER,
+    UI_CSS_FONT_SIZE_SMALLER,
+    UI_CSS_FONT_SIZE_MATH,
+    UI_CSS_FONT_SIZE_LENGTH,
+};
+
+typedef unsigned int ui_css_font_size_type_t;
+
+enum
+{
+    UI_CSS_FONT_STRETCH_NORMAL,
+    UI_CSS_FONT_STRETCH_PERCENTAGE,
+    UI_CSS_FONT_STRETCH_ULTRA_CONDENSED,
+    UI_CSS_FONT_STRETCH_EXTRA_CONDENSED,
+    UI_CSS_FONT_STRETCH_CONDENSED,
+    UI_CSS_FONT_STRETCH_SEMI_CONDENSED,
+    UI_CSS_FONT_STRETCH_SEMI_EXPANDED,
+    UI_CSS_FONT_STRETCH_EXPANDED,
+    UI_CSS_FONT_STRETCH_EXTRA_EXPANDED,
+    UI_CSS_FONT_STRETCH_ULTRA_EXPANDED,
+};
+
+typedef unsigned int ui_css_font_stretch_type_t;
+
+enum
+{
+    UI_CSS_FONT_STYLE_NORMAL,
+    UI_CSS_FONT_STYLE_ITALIC,
+    UI_CSS_FONT_STYLE_OBLIQUE,
+};
+
+typedef unsigned int ui_css_font_style_type_t;
+
+enum
+{
+    UI_CSS_FONT_WEIGHT_NORMAL,
+    UI_CSS_FONT_WEIGHT_BOLD,
+    UI_CSS_FONT_WEIGHT_NUMBER,
+    UI_CSS_FONT_WEIGHT_BOLDER,
+    UI_CSS_FONT_WEIGHT_LIGHTER,
+};
+
+typedef unsigned int ui_css_font_weight_type_t;
+
+enum
+{
+    UI_CSS_HANGING_PUNCTUATION_NONE,
+    UI_CSS_HANGING_PUNCTUATION_FIRST,
+    UI_CSS_HANGING_PUNCTUATION_FORCE_END,
+    UI_CSS_HANGING_PUNCTUATION_ALLOW_END,
+    UI_CSS_HANGING_PUNCTUATION_LAST,
+};
+
+typedef unsigned int ui_css_hanging_punctuation_type_t;
+
+enum
+{
+    UI_CSS_HEIGHT_AUTO,
+    UI_CSS_HEIGHT_MIN_CONTENT,
+    UI_CSS_HEIGHT_MAX_CONTENT,
+    UI_CSS_HEIGHT_LENGTH,
+    UI_CSS_HEIGHT_PERCENTAGE,
+    UI_CSS_HEIGHT_NUMBER,
+    UI_CSS_HEIGHT_ANGLE,
+};
+
+typedef unsigned int ui_css_height_type_t;
+
+enum
+{
+    UI_CSS_HYPHENS_NONE,
+    UI_CSS_HYPHENS_MANUAL,
+    UI_CSS_HYPHENS_AUTO,
+};
+
+typedef unsigned int ui_css_hyphens_type_t;
+
+enum
+{
+    UI_CSS_INSET_BLOCK_END_AUTO,
+    UI_CSS_INSET_BLOCK_END_LENGTH,
+    UI_CSS_INSET_BLOCK_END_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_inset_block_end_type_t;
+
+enum
+{
+    UI_CSS_INSET_BLOCK_START_AUTO,
+    UI_CSS_INSET_BLOCK_START_LENGTH,
+    UI_CSS_INSET_BLOCK_START_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_inset_block_start_type_t;
+
+enum
+{
+    UI_CSS_INSET_INLINE_END_AUTO,
+    UI_CSS_INSET_INLINE_END_LENGTH,
+    UI_CSS_INSET_INLINE_END_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_inset_inline_end_type_t;
+
+enum
+{
+    UI_CSS_INSET_INLINE_START_AUTO,
+    UI_CSS_INSET_INLINE_START_LENGTH,
+    UI_CSS_INSET_INLINE_START_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_inset_inline_start_type_t;
+
+enum
+{
+    UI_CSS_JUSTIFY_CONTENT_FLEX_START,
+    UI_CSS_JUSTIFY_CONTENT_FLEX_END,
+    UI_CSS_JUSTIFY_CONTENT_CENTER,
+    UI_CSS_JUSTIFY_CONTENT_SPACE_BETWEEN,
+    UI_CSS_JUSTIFY_CONTENT_SPACE_AROUND,
+    UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY,
+};
+
+typedef unsigned int ui_css_justify_content_type_t;
+
+enum
+{
+    UI_CSS_LETTER_SPACING_NORMAL,
+    UI_CSS_LETTER_SPACING_LENGTH,
+};
+
+typedef unsigned int ui_css_letter_spacing_type_t;
+
+enum
+{
+    UI_CSS_LINE_BREAK_AUTO,
+    UI_CSS_LINE_BREAK_LOOSE,
+    UI_CSS_LINE_BREAK_NORMAL,
+    UI_CSS_LINE_BREAK_STRICT,
+    UI_CSS_LINE_BREAK_ANYWHERE,
+};
+
+typedef unsigned int ui_css_line_break_type_t;
+
+enum
+{
+    UI_CSS_LINE_HEIGHT_NORMAL,
+    UI_CSS_LINE_HEIGHT_NUMBER,
+    UI_CSS_LINE_HEIGHT_LENGTH,
+    UI_CSS_LINE_HEIGHT_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_line_height_type_t;
+
+enum
+{
+    UI_CSS_MARGIN_AUTO,
+    UI_CSS_MARGIN_LENGTH,
+    UI_CSS_MARGIN_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_margin_type_t, ui_css_margin_bottom_type_t, ui_css_margin_left_type_t,
+                     ui_css_margin_right_type_t, ui_css_margin_top_type_t;
+
+enum
+{
+    UI_CSS_MAX_HEIGHT_NONE,
+    UI_CSS_MAX_HEIGHT_MIN_CONTENT,
+    UI_CSS_MAX_HEIGHT_MAX_CONTENT,
+    UI_CSS_MAX_HEIGHT_LENGTH,
+    UI_CSS_MAX_HEIGHT_PERCENTAGE,
+    UI_CSS_MAX_HEIGHT_NUMBER,
+    UI_CSS_MAX_HEIGHT_ANGLE,
+};
+
+typedef unsigned int ui_css_max_height_type_t;
+
+enum
+{
+    UI_CSS_MAX_WIDTH_NONE,
+    UI_CSS_MAX_WIDTH_MIN_CONTENT,
+    UI_CSS_MAX_WIDTH_MAX_CONTENT,
+    UI_CSS_MAX_WIDTH_LENGTH,
+    UI_CSS_MAX_WIDTH_PERCENTAGE,
+    UI_CSS_MAX_WIDTH_NUMBER,
+    UI_CSS_MAX_WIDTH_ANGLE,
+};
+
+typedef unsigned int ui_css_max_width_type_t;
+
+enum
+{
+    UI_CSS_MIN_HEIGHT_AUTO,
+    UI_CSS_MIN_HEIGHT_MIN_CONTENT,
+    UI_CSS_MIN_HEIGHT_MAX_CONTENT,
+    UI_CSS_MIN_HEIGHT_LENGTH,
+    UI_CSS_MIN_HEIGHT_PERCENTAGE,
+    UI_CSS_MIN_HEIGHT_NUMBER,
+    UI_CSS_MIN_HEIGHT_ANGLE,
+};
+
+typedef unsigned int ui_css_min_height_type_t;
+
+enum
+{
+    UI_CSS_MIN_WIDTH_AUTO,
+    UI_CSS_MIN_WIDTH_MIN_CONTENT,
+    UI_CSS_MIN_WIDTH_MAX_CONTENT,
+    UI_CSS_MIN_WIDTH_LENGTH,
+    UI_CSS_MIN_WIDTH_PERCENTAGE,
+    UI_CSS_MIN_WIDTH_NUMBER,
+    UI_CSS_MIN_WIDTH_ANGLE,
+};
+
+typedef unsigned int ui_css_min_width_type_t;
+
+enum
+{
+    UI_CSS_OPACITY_NUMBER,
+    UI_CSS_OPACITY_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_opacity_type_t;
+
+enum
+{
+    UI_CSS_ORDER_INTEGER,
+};
+
+typedef unsigned int ui_css_order_type_t;
+
+enum
+{
+    UI_CSS_OVERFLOW_BLOCK_VISIBLE,
+    UI_CSS_OVERFLOW_BLOCK_HIDDEN,
+    UI_CSS_OVERFLOW_BLOCK_CLIP,
+    UI_CSS_OVERFLOW_BLOCK_SCROLL,
+    UI_CSS_OVERFLOW_BLOCK_AUTO,
+};
+
+typedef unsigned int ui_css_overflow_block_type_t;
+
+enum
+{
+    UI_CSS_OVERFLOW_INLINE_VISIBLE,
+    UI_CSS_OVERFLOW_INLINE_HIDDEN,
+    UI_CSS_OVERFLOW_INLINE_CLIP,
+    UI_CSS_OVERFLOW_INLINE_SCROLL,
+    UI_CSS_OVERFLOW_INLINE_AUTO,
+};
+
+typedef unsigned int ui_css_overflow_inline_type_t;
+
+enum
+{
+    UI_CSS_OVERFLOW_WRAP_NORMAL,
+    UI_CSS_OVERFLOW_WRAP_BREAK_WORD,
+    UI_CSS_OVERFLOW_WRAP_ANYWHERE,
+};
+
+typedef unsigned int ui_css_overflow_wrap_type_t;
+
+enum
+{
+    UI_CSS_OVERFLOW_X_VISIBLE,
+    UI_CSS_OVERFLOW_X_HIDDEN,
+    UI_CSS_OVERFLOW_X_CLIP,
+    UI_CSS_OVERFLOW_X_SCROLL,
+    UI_CSS_OVERFLOW_X_AUTO,
+};
+
+typedef unsigned int ui_css_overflow_x_type_t;
+
+enum
+{
+    UI_CSS_OVERFLOW_Y_VISIBLE,
+    UI_CSS_OVERFLOW_Y_HIDDEN,
+    UI_CSS_OVERFLOW_Y_CLIP,
+    UI_CSS_OVERFLOW_Y_SCROLL,
+    UI_CSS_OVERFLOW_Y_AUTO,
+};
+
+typedef unsigned int ui_css_overflow_y_type_t;
+
+enum
+{
+    UI_CSS_PADDING_AUTO,
+    UI_CSS_PADDING_LENGTH,
+    UI_CSS_PADDING_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_padding_type_t, ui_css_padding_bottom_type_t, ui_css_padding_left_type_t,
+                     ui_css_padding_right_type_t, ui_css_padding_top_type_t;
+
+enum
+{
+    UI_CSS_POSITION_STATIC,
+    UI_CSS_POSITION_RELATIVE,
+    UI_CSS_POSITION_ABSOLUTE,
+    UI_CSS_POSITION_STICKY,
+    UI_CSS_POSITION_FIXED,
+};
+
+typedef unsigned int ui_css_position_type_t;
+
+enum
+{
+    UI_CSS_TOP_AUTO,
+    UI_CSS_TOP_LENGTH,
+    UI_CSS_TOP_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_top_type_t;
+
+enum
+{
+    UI_CSS_BOTTOM_AUTO,
+    UI_CSS_BOTTOM_LENGTH,
+    UI_CSS_BOTTOM_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_bottom_type_t;
+
+enum
+{
+    UI_CSS_LEFT_AUTO,
+    UI_CSS_LEFT_LENGTH,
+    UI_CSS_LEFT_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_left_type_t;
+
+enum
+{
+    UI_CSS_RIGHT_AUTO,
+    UI_CSS_RIGHT_LENGTH,
+    UI_CSS_RIGHT_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_right_type_t;
+
+enum
+{
+    UI_CSS_TAB_SIZE_NUMBER,
+    UI_CSS_TAB_SIZE_LENGTH,
+};
+
+typedef unsigned int ui_css_tab_size_type_t;
+
+enum
+{
+    UI_CSS_TEXT_ALIGN_START,
+    UI_CSS_TEXT_ALIGN_END,
+    UI_CSS_TEXT_ALIGN_LEFT,
+    UI_CSS_TEXT_ALIGN_RIGHT,
+    UI_CSS_TEXT_ALIGN_CENTER,
+    UI_CSS_TEXT_ALIGN_JUSTIFY,
+    UI_CSS_TEXT_ALIGN_MATCH_PARENT,
+    UI_CSS_TEXT_ALIGN_JUSTIFY_ALL,
+};
+
+typedef unsigned int ui_css_text_align_type_t;
+
+enum
+{
+    UI_CSS_TEXT_ALIGN_ALL_START,
+    UI_CSS_TEXT_ALIGN_ALL_END,
+    UI_CSS_TEXT_ALIGN_ALL_LEFT,
+    UI_CSS_TEXT_ALIGN_ALL_RIGHT,
+    UI_CSS_TEXT_ALIGN_ALL_CENTER,
+    UI_CSS_TEXT_ALIGN_ALL_JUSTIFY,
+    UI_CSS_TEXT_ALIGN_ALL_MATCH_PARENT,
+};
+
+typedef unsigned int ui_css_text_align_all_type_t;
+
+enum
+{
+    UI_CSS_TEXT_ALIGN_LAST_AUTO,
+    UI_CSS_TEXT_ALIGN_LAST_START,
+    UI_CSS_TEXT_ALIGN_LAST_END,
+    UI_CSS_TEXT_ALIGN_LAST_LEFT,
+    UI_CSS_TEXT_ALIGN_LAST_RIGHT,
+    UI_CSS_TEXT_ALIGN_LAST_CENTER,
+    UI_CSS_TEXT_ALIGN_LAST_JUSTIFY,
+    UI_CSS_TEXT_ALIGN_LAST_MATCH_PARENT,
+};
+
+typedef unsigned int ui_css_text_align_last_type_t;
+
+enum
+{
+    UI_CSS_TEXT_COMBINE_UPRIGHT_NONE,
+    UI_CSS_TEXT_COMBINE_UPRIGHT_ALL,
+    UI_CSS_TEXT_COMBINE_UPRIGHT_DIGITS,
+};
+
+typedef unsigned int ui_css_text_combine_upright_type_t;
+
+
+enum
+{
+    UI_CSS_TEXT_DECORATION_LINE_NONE,
+    UI_CSS_TEXT_DECORATION_LINE_UNDERLINE,
+    UI_CSS_TEXT_DECORATION_LINE_OVERLINE,
+    UI_CSS_TEXT_DECORATION_LINE_LINE_THROUGH,
+    UI_CSS_TEXT_DECORATION_LINE_BLINK,
+};
+
+typedef unsigned int ui_css_text_decoration_line_type_t;
+
+enum
+{
+    UI_CSS_TEXT_DECORATION_STYLE_SOLID,
+    UI_CSS_TEXT_DECORATION_STYLE_DOUBLE,
+    UI_CSS_TEXT_DECORATION_STYLE_DOTTED,
+    UI_CSS_TEXT_DECORATION_STYLE_DASHED,
+    UI_CSS_TEXT_DECORATION_STYLE_WAVY,
+};
+
+typedef unsigned int ui_css_text_decoration_style_type_t;
+
+enum
+{
+    UI_CSS_TEXT_INDENT_LENGTH,
+    UI_CSS_TEXT_INDENT_PERCENTAGE,
+    UI_CSS_TEXT_INDENT_HANGING,
+    UI_CSS_TEXT_INDENT_EACH_LINE,
+};
+
+typedef unsigned int ui_css_text_indent_type_t;
+
+enum
+{
+    UI_CSS_TEXT_JUSTIFY_AUTO,
+    UI_CSS_TEXT_JUSTIFY_NONE,
+    UI_CSS_TEXT_JUSTIFY_INTER_WORD,
+    UI_CSS_TEXT_JUSTIFY_INTER_CHARACTER,
+};
+
+typedef unsigned int ui_css_text_justify_type_t;
+
+enum
+{
+    UI_CSS_TEXT_ORIENTATION_MIXED,
+    UI_CSS_TEXT_ORIENTATION_UPRIGHT,
+    UI_CSS_TEXT_ORIENTATION_SIDEWAYS,
+};
+
+typedef unsigned int ui_css_text_orientation_type_t;
+
+enum
+{
+    UI_CSS_TEXT_OVERFLOW_CLIP,
+    UI_CSS_TEXT_OVERFLOW_ELLIPSIS,
+};
+
+typedef unsigned int ui_css_text_overflow_type_t;
+
+enum
+{
+    UI_CSS_TEXT_TRANSFORM_NONE,
+    UI_CSS_TEXT_TRANSFORM_CAPITALIZE,
+    UI_CSS_TEXT_TRANSFORM_UPPERCASE,
+    UI_CSS_TEXT_TRANSFORM_LOWERCASE,
+    UI_CSS_TEXT_TRANSFORM_FULL_WIDTH,
+    UI_CSS_TEXT_TRANSFORM_FULL_SIZE_KANA,
+};
+
+typedef unsigned int ui_css_text_transform_type_t;
+
+enum
+{
+    UI_CSS_UNICODE_BIDI_NORMAL,
+    UI_CSS_UNICODE_BIDI_EMBED,
+    UI_CSS_UNICODE_BIDI_ISOLATE,
+    UI_CSS_UNICODE_BIDI_BIDI_OVERRIDE,
+    UI_CSS_UNICODE_BIDI_ISOLATE_OVERRIDE,
+    UI_CSS_UNICODE_BIDI_PLAINTEXT,
+};
+
+typedef unsigned int ui_css_unicode_bidi_type_t;
+
+enum
+{
+    UI_CSS_VERTICAL_ALIGN_FIRST,
+    UI_CSS_VERTICAL_ALIGN_LAST,
+};
+
+typedef unsigned int ui_css_vertical_align_type_t;
+
+enum
+{
+    UI_CSS_VISIBILITY_VISIBLE,
+    UI_CSS_VISIBILITY_HIDDEN,
+    UI_CSS_VISIBILITY_COLLAPSE,
+};
+
+typedef unsigned int ui_css_visibility_type_t;
+
+enum
+{
+    UI_CSS_WHITE_SPACE_NORMAL,
+    UI_CSS_WHITE_SPACE_PRE,
+    UI_CSS_WHITE_SPACE_NOWRAP,
+    UI_CSS_WHITE_SPACE_PRE_WRAP,
+    UI_CSS_WHITE_SPACE_BREAK_SPACES,
+    UI_CSS_WHITE_SPACE_PRE_LINE,
+};
+
+typedef unsigned int ui_css_white_space_type_t;
+
+enum
+{
+    UI_CSS_WIDTH_AUTO,
+    UI_CSS_WIDTH_MIN_CONTENT,
+    UI_CSS_WIDTH_MAX_CONTENT,
+    UI_CSS_WIDTH_LENGTH,
+    UI_CSS_WIDTH_PERCENTAGE,
+    UI_CSS_WIDTH_NUMBER,
+    UI_CSS_WIDTH_ANGLE,
+};
+
+typedef unsigned int ui_css_width_type_t;
+
+enum
+{
+    UI_CSS_WORD_BREAK_NORMAL,
+    UI_CSS_WORD_BREAK_KEEP_ALL,
+    UI_CSS_WORD_BREAK_BREAK_ALL,
+    UI_CSS_WORD_BREAK_BREAK_WORD,
+};
+
+typedef unsigned int ui_css_word_break_type_t;
+
+enum
+{
+    UI_CSS_WORD_SPACING_NORMAL,
+    UI_CSS_WORD_SPACING_LENGTH,
+};
+
+typedef unsigned int ui_css_word_spacing_type_t;
+
+enum
+{
+    UI_CSS_WORD_WRAP_NORMAL,
+    UI_CSS_WORD_WRAP_BREAK_WORD,
+    UI_CSS_WORD_WRAP_ANYWHERE,
+};
+
+typedef unsigned int ui_css_word_wrap_type_t;
+
+enum
+{
+    UI_CSS_WRAP_FLOW_AUTO,
+    UI_CSS_WRAP_FLOW_BOTH,
+    UI_CSS_WRAP_FLOW_START,
+    UI_CSS_WRAP_FLOW_END,
+    UI_CSS_WRAP_FLOW_MINIMUM,
+    UI_CSS_WRAP_FLOW_MAXIMUM,
+    UI_CSS_WRAP_FLOW_CLEAR,
+};
+
+typedef unsigned int ui_css_wrap_flow_type_t;
+
+enum
+{
+    UI_CSS_WRAP_THROUGH_WRAP,
+    UI_CSS_WRAP_THROUGH_NONE,
+};
+
+typedef unsigned int ui_css_wrap_through_type_t;
+
+enum
+{
+    UI_CSS_WRITING_MODE_HORIZONTAL_TB,
+    UI_CSS_WRITING_MODE_VERTICAL_RL,
+    UI_CSS_WRITING_MODE_VERTICAL_LR,
+    UI_CSS_WRITING_MODE_SIDEWAYS_RL,
+    UI_CSS_WRITING_MODE_SIDEWAYS_LR,
+};
+
+typedef unsigned int ui_css_writing_mode_type_t;
+
+enum
+{
+    UI_CSS_Z_INDEX_AUTO,
+    UI_CSS_Z_INDEX_INTEGER,
+};
+
+typedef unsigned int ui_css_z_index_type_t;
+
+enum
+{
+    UI_CSS_FILTER_NONE,
+    UI_CSS_FILTER_CUSTOM0,
+    UI_CSS_FILTER_CUSTOM1,
+    UI_CSS_FILTER_CUSTOM2,
+    UI_CSS_FILTER_CUSTOM3,
+    UI_CSS_FILTER_CUSTOM4,
+    UI_CSS_FILTER_CUSTOM5,
+    UI_CSS_FILTER_CUSTOM6,
+    UI_CSS_FILTER_CUSTOM7,
+    UI_CSS_FILTER_CUSTOM8,
+    UI_CSS_FILTER_CUSTOM9,
+};
+
+typedef unsigned int ui_css_filter_type_t;

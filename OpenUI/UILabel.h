@@ -81,15 +81,7 @@ public:
 	UISignalAsRaw<UIString> linkActivated;
 
 private:
-	UIWidgetPrivateRaw m_PrivateLabel;
+	UIPrivateRaw m_Private;
 };
 using UILabelRef = UIRef<UILabel>;
 using UILabelRaw = UIRaw<UILabel>;
-
-/// @brief Label factory
-class OPENUI_API UILabelFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
-};

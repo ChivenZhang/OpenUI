@@ -13,6 +13,8 @@
 #include "../SDL3InputEnum.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+
+#include "SDLGPUMerger.h"
 #include "SDLGPUPainter.h"
 #include "SDLGPURender.h"
 
@@ -54,163 +56,11 @@ SDLGPUDevice::SDLGPUDevice()
 
     UIConfig config{.DisplayScale = scale};
     auto canvas = UINew<UICanvas>(this, config);
-    canvas->setPainter(UINew<SDLGPUPainter>(w, h, canvas.get()));
-    canvas->setRender(UINew<SDLGPURender>(w, h, canvas.get()));
-    m_UICanvas = canvas;
-
-	const std::string html_content = R"(
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<title>Lexbor: development of web browser engine</title>
-			<meta charset="utf-8">
-			<meta name="description" content="">
-			<meta name="keywords" content="">
-			<link rel="apple-touch-icon" sizes="120x120" href="/img/apple-touch-icon.png">
-			<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
-			<link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
-			<link rel="manifest" href="/img/site.webmanifest">
-			<link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#da532c">
-			<meta name="msapplication-TileColor" content="#da532c">
-			<meta name="theme-color" content="#ffffff">
-			<link rel="stylesheet" href="/css/bootstrap-grid.min.css">
-			<link rel="stylesheet" href="/css/style.css?time=1569523147.4017382">
-			<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-		</head>
-
-		<body>
-			<div class="page">
-				<div class="head">
-					<div class="head-content">
-
-						<div class="head-left"><span>lexbor</span></div>
-
-						<div class="head-right">
-							<ul>
-								<li><a href="/download/">Download</a></li>
-								<li><a href="/docs/lexbor/">Documentation</a></li>
-								<li><a href="/support/">Support</a></li>
-								<li><a href="/license/">License</a></li>
-								<li><a href="/roadmap/">Roadmap</a></li>
-							</ul>
-						</div>
-					</div>
-				</div>
-				<div class="body">
-					<div class="content ">
-						<div class="markdown-body"><div class="body">
-		    <div class="container">
-		        <div class="row">
-		            <div class="col-md">
-		                <h3>What is lexbor?</h3>
-		                <p>
-		                    Lexbor is development of web browser engine available as a software library; it ships with a free license and has no extra dependencies.
-		                </p>
-		            </div>
-		            <div class="col-md">
-		                <h3>What’s the news?</h3>
-		                <p>
-		                    You can check out the latest version of the library and our roadmap for the future <a href="roadmap/">here</a>. All development occurs on <a href="https://github.com/lexbor/lexbor">GitHub</a>.
-		                </p>
-		            </div>
-		        </div>
-		    </div>
-		    <div class="container">
-		        <div class="row-md">
-		            <div class="col-md">
-		                <h2 style="text-align: center; max-width: 450px; margin: 60px auto 10px">Targets</h2>
-		            </div>
-		        </div>
-		    </div>
-		    <div class="container pr">
-		        <div class="row">
-		            <div class="col-md">
-		                <img class="pr-icons" src="img/speed.png">
-		                <div class="pr-icons">
-		                    <h1 class="pr-title">FAST</h1>
-		                    <p>
-		                        For us, speed is an absolute must-have.
-		                    <p>
-		                        In our development process, we focus on fastest parsing techniques for HTML, CSS, and fonts, fastest data processing methods, and fastest ways to serve content to end users.
-		                    <p>
-		                        Whether you are building a backend that handles millions of HTML documents or a UI-heavy user app, your software’s response rate always matters to users and developers alike.
-		                    </p>
-		                </div>
-		            </div>
-		            <div class="col-md">
-		                <img class="pr-icons" src="img/embedding.png">
-		                <div class="pr-icons">
-		                    <h1 class="pr-title">EMBEDDABLE</h1>
-		                    <p>
-		                        Lexbor’s code is optimized for ease of access in end-user applications and across programming languages.
-		                    <p>
-		                        You can effortlessly wrap all the capabilities of the library in, say, Python to power your end-user or backend applications in a new environment. In other words, lexbor offers a feature-rich core that developers can build upon as they see fit.
-		                    </p>
-		                </div>
-		            </div>
-		        </div>
-		        <div class="row">
-		            <div class="col-md">
-		                <img class="pr-icons" src="img/cross-platform.png">
-		                <div class="pr-icons">
-		                    <h1 class="pr-title">CROSS-PLATFORM</h1>
-		                    <p>
-		                        Lexbor’s availability and support across various platforms and environments is a priority for us.
-		                    <p>
-		                        When you develop with lexbor, you have zero reasons to worry about your application’s portability. Moreover, the library can be easily ported to various devices such as Smart TVs or other IoT appliances.
-		                    </p>
-		                </div>
-		            </div>
-		            <div class="col-md">
-		                <img class="pr-icons" src="img/simple.png">
-		                <div class="pr-icons">
-		                    <h1 class="pr-title">SIMPLE</h1>
-		                    <p>
-		                        Easy-to-use, simple, comprehensible API is key to fast and safe software development.
-		                    <p>
-		                        Lexbor’s API allows you to fine-tune a variety of HTML processing aspects, offering you the degree of flexibility you wish for in your application development.
-		                    </p>
-		                </div>
-		            </div>
-		        </div>
-		    </div>
-		    <div class="container">
-		        <div class="row">
-		            <div class="col-md">
-		                <h3>Articles</h3>
-		                <p>
-		                    In this article, I will tell you how to create a superfast HTML parser supporting DOM. We will look at the HTML specification and its disadvantages in terms of performance and resource consumption during HTML parsing.
-		                <p>
-		                    I assume the reader has a basic knowledge of HTML: tags, nodes, elements, and namespace.
-		                </p>
-		                <div class="row">
-		                    <div class="col-md"><a href="/articles/html/">Read more</a></div>
-		                </div>
-		            </div>
-		        </div>
-		    </div>
-		</div></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="footer">
-				<div class="footer-content">
-					<span class="copy">© 2018-2019 Alexander Borisov</span>
-				</div>
-			</div>
-			<!-- Global site tag (gtag.js) - Google Analytics -->
-			<script async src="https://www.googletagmanager.com/gtag/js?id=UA-130050727-1"></script>
-			<script>
-				window.dataLayer = window.dataLayer || [];
-				function gtag(){dataLayer.push(arguments);}
-				gtag('js', new Date());
-				gtag('config', 'UA-130050727-1');
-			</script>
-		</body>
-		</html>
-    )";
-	canvas->getBuilder()->buildWidget(html_content);
+	auto render = UINew<SDLGPUMerger>(canvas.get(), w, h);
+	auto painter = UINew<SDLGPUPainter>(canvas.get(), w, h);
+    canvas->setRender(render);
+    canvas->setPainter(painter);
+    m_Canvas = canvas;
 
     SDL_ShowWindow(window);
     m_Window = window;
@@ -219,7 +69,8 @@ SDLGPUDevice::SDLGPUDevice()
 
 SDLGPUDevice::~SDLGPUDevice()
 {
-    m_UICanvas = nullptr;
+    m_Canvas = nullptr;
+
 	SDL_ReleaseWindowFromGPUDevice(m_Device, m_Window);
 	SDL_DestroyGPUDevice(m_Device);
     SDL_DestroyWindow(m_Window);
@@ -227,7 +78,7 @@ SDLGPUDevice::~SDLGPUDevice()
 
 UICanvasRaw SDLGPUDevice::getCanvas() const
 {
-    return m_UICanvas.get();
+    return m_Canvas.get();
 }
 
 void SDLGPUDevice::setCursor(UIString type)
@@ -420,14 +271,8 @@ bool SDLGPUDevice::update()
 		}
 	}
 
-	// Update layout and paint
-
-	int width, height;
-	SDL_GetWindowSize(window, &width, &height);
-	UIRect client{0, 0, (float)width, (float)height};
-	canvas->updateWidget(::clock() * 0.001f, client);
-
 	// Output frame to screen
+
 
 	// 获取命令缓冲区 (Command Buffer)
 	SDL_GPUCommandBuffer *cmdBuf = SDL_AcquireGPUCommandBuffer(m_Device);
@@ -436,32 +281,37 @@ bool SDLGPUDevice::update()
 		UI_ERROR("获取 GPU Command Buffer 失败: %s", SDL_GetError());
 		return false;
 	}
-	// 获取当前帧的交换链纹理
-	SDL_GPUTexture* swapchainTexture = nullptr;
-	uint32_t swapchainWidth = 0, swapchainHeight = 0;
-	if (SDL_AcquireGPUSwapchainTexture(cmdBuf, window, &swapchainTexture, &swapchainWidth, &swapchainHeight) && swapchainTexture)
+
+	SDL_GPUTexture* screenRT = nullptr;
+	uint32_t screenWidth = 0, screenHeight = 0;
+	if (SDL_AcquireGPUSwapchainTexture(cmdBuf, window, &screenRT, &screenWidth, &screenHeight) && screenRT)
 	{
+		SDL_SubmitGPUCommandBuffer(cmdBuf);
+
 		UIImage target
 		{
-			.Width = swapchainWidth,
-			.Height = swapchainHeight,
-			.Stride = swapchainWidth * 4,
+			.Width = screenWidth,
+			.Height = screenHeight,
+			.Stride = screenWidth * 4,
 			.Channel = 4,
-			.Data = (uint64_t)swapchainTexture,
-			.Type = UIImage::GPUByte,
+			.Handle = reinterpret_cast<uint64_t>(screenRT),
+			.Format = UIImage::GPUByte,
 		};
 		canvas->setTarget(target);
 
-		canvas->renderWidget(client);
+		canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)screenWidth, (float)screenHeight});
 	}
-	// 提交命令缓冲区并呈现到屏幕
-	SDL_SubmitGPUCommandBuffer(cmdBuf);
 	return true;
 }
 
 SDL_Window* SDLGPUDevice::getWindow() const
 {
     return m_Window;
+}
+
+SDL_GPUDevice* SDLGPUDevice::getDevice() const
+{
+	return m_Device;
 }
 
 #endif

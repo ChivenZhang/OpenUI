@@ -350,6 +350,12 @@ inline const uint32_t UIHash(UIStringView value) noexcept
 }
 #endif
 
+template<class T, class U>
+bool UITypeC(T const& src, U& dst) { return false; }
+
+template<class T>
+bool UITypeC(T const& src, T& dst) { dst = src; return true;}
+
 // ============================================
 
 #define UINAN (NAN)
@@ -674,11 +680,10 @@ inline bool operator ==(UIColor const& a, UIColor const& b)
 struct UIImage
 {
 	uint32_t Width = 0, Height = 0, Stride = 0, Channel = 0;
-	union { void* Pixel; uint64_t /*For GPU Handle*/ Data = 0; };
-	enum { Byte = 0, Float, GPUByte, GPUFloat, } Type = Byte;
+	union { void* Pixels; uint64_t /*For GPU Handle*/ Handle = 0; };
+	enum { Byte = 0, Float, GPUByte, GPUFloat, } Format = Byte;
 };
 using UIImageRaw = UIRaw<UIImage>;
-
 
 class UIStyle;
 using UIStyleRaw = UIRaw<UIStyle>;
@@ -897,64 +902,8 @@ using UIValue4F = UIArray<UIValueF, 4>;
 
 namespace UI
 {
-	enum DisplayType
-	{
-		DisplayFlex,
-		DisplayNone,
-	};
-
-	enum PositionType
-	{
-		PositionStatic,
-		PositionRelative,
-		PositionAbsolute,
-	};
-
-	enum AlignItems
-	{
-		AlignAuto,
-		AlignFlexStart,
-		AlignCenter,
-		AlignFlexEnd,
-		AlignStretch,
-		AlignBaseline,
-		AlignSpaceBetween,
-		AlignSpaceAround,
-		AlignSpaceEvenly,
-	};
-	enum FlexDirection
-	{
-		FlexDirectionColumn,
-		FlexDirectionColumnReverse,
-		FlexDirectionRow,
-		FlexDirectionRowReverse,
-	};
-	enum FlexWrap
-	{
-		FlexNoWrap,
-		FlexDoWrap,
-		FlexWrapReverse,
-	};
-	using AlignContent = AlignItems;
-	enum JustifyContent
-	{
-		JustifyFlexStart,
-		JustifyCenter,
-		JustifyFlexEnd,
-		JustifySpaceBetween,
-		JustifySpaceAround,
-		JustifySpaceEvenly,
-	};
-
-	using FlexGrow = UIValueF;
-	using FlexBasis = UIValueF;
-	using FlexShrink = UIValueF;
-	using AlignSelf = AlignItems;
-
-	enum ValueUnit : uint8_t { UnitNone = 0, UnitPoint, UnitPercent, UnitAuto, };
-
 	enum Orientation : uint8_t { Horizontal = 0, Vertical = 1, };
-};
+}
 
 // ============================================
 

@@ -1,22 +1,16 @@
 /*=================================================
-* Copyright @ 2020-2025 ChivenZhang.
+* Copyright © 2020-2026 ChivenZhang.
 * All Rights Reserved.
 * =====================Note=========================
 *
 *
 * ====================History=======================
-* Created by ChivenZhang at 2025/03/30 14:03:10.
+* Created by chivenzhang@gmail.com.
 *
 * =================================================*/
-#include "../UIFactory.h"
+#include "SDLGPUEffector.h"
 
-UIFactory::UIFactory(UICanvasRaw canvas)
-	:
-	m_Context(canvas)
+void SDLGPUEffector::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style)
 {
-}
 
-UICanvasRaw UIFactory::getContext() const
-{
-	return m_Context;
 }

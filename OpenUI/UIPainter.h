@@ -9,11 +9,10 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include "UI.h"
+#include "UIPublic.h"
+
 class UICanvas;
 using UICanvasRaw = UIRaw<UICanvas>;
-class UIPainterPrivate {};
-using UIPainterPrivateRaw = UIRaw<UIPainterPrivate>;
 
 /// @brief 
 class OPENUI_API UIPainter
@@ -22,6 +21,10 @@ public:
 	virtual ~UIPainter() = default;
 
 	virtual UICanvasRaw getCanvas() const = 0;
+
+	virtual UIImageRaw getTarget() const = 0;
+
+	virtual void setTarget(UIImageRaw value) = 0;
 
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect = nullptr) = 0;
 
@@ -63,15 +66,13 @@ public:
 
 	virtual void setViewport(float x, float y, float width, float height) = 0;
 
-	virtual void shear(float sh, float sv) = 0;
+	virtual void skew(float sh, float sv) = 0;
 
 	virtual void rotate(float angle) = 0;
 
 	virtual void scale(float dx, float dy) = 0;
 
 	virtual void translate(float dx, float dy) = 0;
-
-	virtual UIList<UIGeometry>& getGeometry() = 0;
 };
 using UIPainterRef = UIRef<UIPainter>;
 using UIPainterRaw = UIRaw<UIPainter>;

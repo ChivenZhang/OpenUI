@@ -10,40 +10,39 @@
 * =================================================*/
 #include "../UIFlow.h"
 
-class UIFlowPrivateData : public UIWidgetPrivate
+struct UIFlowPrivate : UIPrivate
 {
-public:
 	UIFlowStyle Style;
 };
-#define PRIVATE() ((UIFlowPrivateData*) m_PrivateFlow)
+#define PRIVATE() ((UIFlowPrivate*) m_Private)
 
 UIFlow::UIFlow(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateFlow = new UIFlowPrivateData;
+	m_Private = new UIFlowPrivate;
 }
 
 UIFlow::~UIFlow()
 {
-	delete m_PrivateFlow; m_PrivateFlow = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIFlow::arrange(UIRect client)
 {
-	this->setFlexWrap(UI::FlexDoWrap);
-	this->setAlignItems(UI::AlignFlexStart);
-	this->setAlignContent(UI::AlignFlexStart);
-	this->setFlexDirection(UI::FlexDirectionRow);
-	this->setJustifyContent(UI::JustifyFlexStart);
+	this->setFlexWrap({UI_CSS_FLEX_WRAP_WRAP});
+	this->setAlignItems({UI_CSS_ALIGN_ITEMS_FLEX_START});
+	this->setAlignContent({UI_CSS_ALIGN_CONTENT_FLEX_START});
+	this->setFlexDirection({UI_CSS_FLEX_DIRECTION_ROW});
+	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_FLEX_START});
 
 	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
 		auto child = getWidgets()[i];
-		if (child->getFixedWidth().Unit == UI::UnitNone) child->setFlexGrow(1.0f);
-		else child->setFlexGrow(0.0f);
-		if (child->getFixedHeight().Unit == UI::UnitNone) child->setAlignSelf(UI::AlignStretch);
-		else child->setAlignSelf(UI::AlignFlexStart);
+		if (child->getFixedWidth().Type == UI_CSS_WIDTH_AUTO) child->setFlexGrow({1.0f, UI_CSS_FLEX_GROW_NUMBER});
+		else child->setFlexGrow({0.0f, UI_CSS_FLEX_GROW_NUMBER});
+		if (child->getFixedHeight().Type == UI_CSS_HEIGHT_AUTO) child->setAlignSelf({UI_CSS_ALIGN_SELF_STRETCH});
+		else child->setAlignSelf({UI_CSS_ALIGN_SELF_FLEX_START});
 	}
 }
 
@@ -63,16 +62,4 @@ UIFlowStyle UIFlow::getStyle() const
 void UIFlow::setStyle(UIFlowStyle value)
 {
 	PRIVATE()->Style = value;
-}
-
-UIString UIFlowFactory::getTagName() const
-{
-	return "flow";
-}
-
-UIWidgetRef UIFlowFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UIFlow>(getContext());
-	result->setStyleText(style);
-	return result;
 }

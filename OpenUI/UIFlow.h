@@ -32,13 +32,5 @@ public:
 	void setStyle(UIFlowStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateFlow;
-};
-
-/// @brief Flow factory
-class OPENUI_API UIFlowFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIPrivateRaw m_Private;
 };

@@ -1,30 +1,19 @@
 ﻿if(OPENUI_ENABLE_SAMPLE)
 
-if(OPENUI_ENABLE_OPENGL)
-	add_definitions(-DOPENUI_ENABLE_OPENGL)
-endif ()
-if(OPENUI_ENABLE_VULKAN)
-	add_definitions(-DOPENUI_ENABLE_VULKAN)
-endif ()
-if(OPENUI_ENABLE_DIRECTX)
-	add_definitions(-DOPENUI_ENABLE_DIRECTX -DNOMINMAX)
-endif ()
-if(OPENUI_ENABLE_METAL)
-	add_definitions(-DOPENUI_ENABLE_METAL)
-endif ()
 if(OPENUI_ENABLE_SDLGPU)
 	add_definitions(-DOPENUI_ENABLE_SDLGPU)
-endif ()
-if(OPENUI_ENABLE_CAIRO)
-	add_definitions(-DOPENUI_ENABLE_CAIRO)
 endif ()
 if(CMAKE_HOST_WIN32)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 file(GLOB_RECURSE OPENUI_SAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-add_executable (Sample ${OPENUI_SAMPLE_SRC})
-add_dependencies(Sample OpenUI)
+add_executable (Sample ${OPENUI_SAMPLE_SRC}
+		SDLGPU/SDLGPUEffector.cpp
+		SDLGPU/SDLGPUEffector.h
+		SDLGPU/SDLGPUMerger.cpp
+		SDLGPU/SDLGPUMerger.h)
+add_dependencies(Sample OpenUI OpenVG)
 
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(Sample PRIVATE SDL3::SDL3)
@@ -86,50 +75,18 @@ else()
 target_link_directories(Sample PRIVATE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
 
-if(OPENUI_ENABLE_CAIRO)
-	if(CMAKE_BUILD_TYPE MATCHES Debug)
-	target_link_libraries(Sample PRIVATE OpenUI
-			cairo cairo-gobject cairo-script-interpreter
-			pango-1.0 pangocairo-1.0 pangoft2-1.0 pixman-1
-			brotlicommon brotlidec brotlienc bz2d iconv
-			ffi fontconfig freetyped fribidi
-			glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
-			harfbuzz-subset harfbuzz intl
-	)
-	else()
-	target_link_libraries(Sample PRIVATE OpenUI
-			cairo cairo-gobject cairo-script-interpreter
-			pango-1.0 pangocairo-1.0 pangoft2-1.0 pixman-1
-			brotlicommon brotlidec brotlienc bz2 iconv
-			ffi fontconfig freetype fribidi
-			glib-2.0 gmodule-2.0 gobject-2.0 gthread-2.0 gio-2.0 girepository-2.0
-			harfbuzz-subset harfbuzz intl
-	)
-	endif()
-endif()
-
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-target_link_libraries(Sample PRIVATE OpenUI
+target_link_libraries(Sample PRIVATE OpenUI OpenVG
 
 )
 else()
-target_link_libraries(Sample PRIVATE OpenUI
+target_link_libraries(Sample PRIVATE OpenUI OpenVG
 
 )
 endif()
 
 if(CMAKE_HOST_APPLE)
 target_link_libraries(Sample PRIVATE expat GenericCodeGen MachineIndependent OSDependent pcre2-8 pcre2-16 pcre2-32 pcre2-posix png png16 z)
-endif()
-
-if(CMAKE_HOST_WIN32)
-if(OPENUI_ENABLE_CAIRO)
-target_link_libraries(Sample PRIVATE pangowin32-1.0 Ws2_32 Dwrite)
-endif()
-endif()
-
-if(OPENUI_ENABLE_CAIRO)
-file(COPY ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/etc/fonts DESTINATION ${CMAKE_BINARY_DIR})
 endif()
 
 endif()

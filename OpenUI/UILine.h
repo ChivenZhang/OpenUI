@@ -31,7 +31,7 @@ public:
 	void setStyle(UILineStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateLine;
+	UIPrivateRaw m_Private;
 };
 
 /// @brief VLine
@@ -46,21 +46,5 @@ public:
 	void setStyle(UILineStyle value);
 
 private:
-	UIWidgetPrivateRaw m_PrivateLine;
-};
-
-/// @brief HLine factory
-class UIHLineFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
-};
-
-/// @brief VLine factory
-class UIVLineFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIPrivateRaw m_Private;
 };

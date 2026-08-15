@@ -1,6 +1,6 @@
-<mxfile host="drawio-plugin" modified="2026-07-30T15:12:26.503Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" etag="0psyli0lalhNW9LUOVHH" version="22.1.22" type="embed" pages="2">
+<mxfile host="drawio-plugin" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" modified="2026-08-13T16:47:04.680Z" etag="Y3MmWrHgwKkVh_u0fL6r" version="22.1.22" type="embed" pages="3">
   <diagram id="G7-4dMvRM-vJRnt78NFY" name="类图">
-    <mxGraphModel dx="1354" dy="1145" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1354" dy="1145" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -242,7 +242,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="bhJp79oWiWZBz3Ctcb3p" name="数据">
-    <mxGraphModel dx="1354" dy="745" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="855" dy="546" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -382,6 +382,73 @@
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="420" y="725" as="sourcePoint" />
             <mxPoint x="470" y="675" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="d7bORBiqh0P1t-LM73Cb" name="渲染">
+    <mxGraphModel dx="1354" dy="745" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-2" value="外部 Pass 1" style="html=1;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="80" y="80" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-3" value="Widget Paint&lt;br&gt;Pass" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#60a917;strokeColor=#2D7600;fontColor=#ffffff;" parent="1" vertex="1">
+          <mxGeometry x="240" y="80" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-4" value="" style="endArrow=classic;html=1;" parent="1" source="4WabDlsTL6BiiDR4aAGK-2" target="4WabDlsTL6BiiDR4aAGK-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="140" y="260" as="sourcePoint" />
+            <mxPoint x="190" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-5" value="CSS Filter Pass" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#fa6800;strokeColor=#C73500;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="360" y="160" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-6" value="存在 Filter" style="shape=rhombus;html=1;dashed=0;whiteSpace=wrap;perimeter=rhombusPerimeter;" parent="1" vertex="1">
+          <mxGeometry x="260" y="160" width="60" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-7" value="" style="endArrow=classic;html=1;" parent="1" source="4WabDlsTL6BiiDR4aAGK-6" target="4WabDlsTL6BiiDR4aAGK-5" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="350" y="300" as="sourcePoint" />
+            <mxPoint x="400" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-8" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="4WabDlsTL6BiiDR4aAGK-7" connectable="0" vertex="1">
+          <mxGeometry x="-0.2028" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-9" value="" style="endArrow=classic;html=1;" parent="1" source="4WabDlsTL6BiiDR4aAGK-3" target="4WabDlsTL6BiiDR4aAGK-6" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="370" y="280" as="sourcePoint" />
+            <mxPoint x="420" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-10" value="Canvas Combine&lt;br&gt;Pass" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="240" y="240" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-11" value="" style="endArrow=classic;html=1;" parent="1" source="4WabDlsTL6BiiDR4aAGK-6" target="4WabDlsTL6BiiDR4aAGK-10" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="360" y="280" as="sourcePoint" />
+            <mxPoint x="410" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-12" value="外部 Pass 2" style="html=1;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="400" y="240" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-13" value="" style="endArrow=classic;html=1;" parent="1" source="4WabDlsTL6BiiDR4aAGK-10" target="4WabDlsTL6BiiDR4aAGK-12" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="360" y="310" as="sourcePoint" />
+            <mxPoint x="410" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4WabDlsTL6BiiDR4aAGK-14" value="" style="endArrow=classic;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="4WabDlsTL6BiiDR4aAGK-5" target="4WabDlsTL6BiiDR4aAGK-6" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="430" y="180" as="sourcePoint" />
+            <mxPoint x="480" y="130" as="targetPoint" />
           </mxGeometry>
         </mxCell>
       </root>

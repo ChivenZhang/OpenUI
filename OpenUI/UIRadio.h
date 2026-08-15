@@ -71,7 +71,7 @@ public:
 	UISignalAsRaw<> hovered;
 
 private:
-	UIWidgetPrivateRaw m_PrivateRadio;
+	UIPrivateRaw m_Private;
 };
 using UIRadioRef = UIRef<UIRadio>;
 using UIRadioRaw = UIRaw<UIRadio>;
@@ -82,12 +82,4 @@ class UIRadioGroup
 private:
 	friend class UIRadio;
 	UIRadioRaw Active = nullptr;
-};
-
-/// @brief Radio Factory
-class OPENUI_API UIRadioFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
 };

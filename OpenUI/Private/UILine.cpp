@@ -10,23 +10,22 @@
 * =================================================*/
 #include "../UILine.h"
 
-class UILinePrivate : public UIWidgetPrivate
+struct UILinePrivate : UIPrivate
 {
-public:
 	UILineStyle Style;
 };
-#define PRIVATE() ((UILinePrivate*)m_PrivateLine)
+#define PRIVATE() ((UILinePrivate*)m_Private)
 
 UIHLine::UIHLine(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateLine = new UILinePrivate;
+	m_Private = new UILinePrivate;
 }
 
 UIHLine::~UIHLine()
 {
-	delete m_PrivateLine; m_PrivateLine = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIHLine::paint(UIRect client, UIPainterRaw painter)
@@ -47,28 +46,16 @@ void UIHLine::setStyle(UILineStyle value)
 	PRIVATE()->Style = value;
 }
 
-UIString UIHLineFactory::getTagName() const
-{
-	return "hline";
-}
-
-UIWidgetRef UIHLineFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UIHLine>(getContext());
-	result->setStyleText(style);
-	return result;
-}
-
 UIVLine::UIVLine(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateLine = new UILinePrivate;
+	m_Private = new UILinePrivate;
 }
 
 UIVLine::~UIVLine()
 {
-	delete m_PrivateLine; m_PrivateLine = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIVLine::paint(UIRect client, UIPainterRaw painter)
@@ -87,16 +74,4 @@ UILineStyle UIVLine::getStyle() const
 void UIVLine::setStyle(UILineStyle value)
 {
 	PRIVATE()->Style = value;
-}
-
-UIString UIVLineFactory::getTagName() const
-{
-	return "vline";
-}
-
-UIWidgetRef UIVLineFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UIVLine>(getContext());
-	result->setStyleText(style);
-	return result;
 }

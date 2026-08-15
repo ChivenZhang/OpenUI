@@ -11,27 +11,26 @@
 #include "../UIScroll.h"
 #include "../UICanvas.h"
 
-class UIScrollPrivate : public UIWidgetPrivate
+struct UIScrollPrivate : UIPrivate
 {
-public:
 	UIScroll::policy_t HorizontalPolicy = UIScroll::PolicyAsNeeded;
 	UIScroll::policy_t VerticalPolicy = UIScroll::PolicyAsNeeded;
 	UIScrollBarRef HorizontalScrollBar;
 	UIScrollBarRef VerticalScrollBar;
 	UIScrollStyle Style;
 };
-#define PRIVATE() ((UIScrollPrivate*)m_PrivateScroll)
+#define PRIVATE() ((UIScrollPrivate*)m_Private)
 
 UIScroll::UIScroll(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateScroll = new UIScrollPrivate;
+	m_Private = new UIScrollPrivate;
 
 	PRIVATE()->HorizontalScrollBar = UINew<UIScrollBar>(canvas);
 	addWidget(PRIVATE()->HorizontalScrollBar);
-	PRIVATE()->HorizontalScrollBar->setFixedHeight(12);
-	PRIVATE()->HorizontalScrollBar->setMinWidth(12);
+	PRIVATE()->HorizontalScrollBar->setFixedHeight({12, UI_CSS_HEIGHT_LENGTH});
+	PRIVATE()->HorizontalScrollBar->setMinWidth({12, UI_CSS_MIN_WIDTH_LENGTH});
 	PRIVATE()->HorizontalScrollBar->setOrientation(UI::Horizontal);
 	PRIVATE()->HorizontalScrollBar->setSingleStep(80);
 	auto style = PRIVATE()->HorizontalScrollBar->getHandle()->getStyle();
@@ -41,8 +40,8 @@ UIScroll::UIScroll(UICanvasRaw canvas)
 
 	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(canvas);
 	addWidget(PRIVATE()->VerticalScrollBar);
-	PRIVATE()->VerticalScrollBar->setFixedWidth(12);
-	PRIVATE()->VerticalScrollBar->setMinHeight(12);
+	PRIVATE()->VerticalScrollBar->setFixedWidth({12, UI_CSS_WIDTH_LENGTH});
+	PRIVATE()->VerticalScrollBar->setMinHeight({12, UI_CSS_MIN_HEIGHT_LENGTH});
 	PRIVATE()->VerticalScrollBar->setOrientation(UI::Vertical);
 	PRIVATE()->VerticalScrollBar->setSingleStep(80);
 	style = PRIVATE()->VerticalScrollBar->getHandle()->getStyle();
@@ -53,23 +52,23 @@ UIScroll::UIScroll(UICanvasRaw canvas)
 
 UIScroll::~UIScroll()
 {
-	delete m_PrivateScroll; m_PrivateScroll = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIScroll::arrange(UIRect client)
 {
-	this->setJustifyContent(UI::JustifyFlexEnd);
+	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_FLEX_END});
 
-	PRIVATE()->HorizontalScrollBar->setFixedHeight(12 * getCanvas()->getConfig().DisplayScale);
-	PRIVATE()->HorizontalScrollBar->setMinWidth(12 * getCanvas()->getConfig().DisplayScale);
+	PRIVATE()->HorizontalScrollBar->setFixedHeight({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH});
+	PRIVATE()->HorizontalScrollBar->setMinWidth({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_MIN_WIDTH_LENGTH});
 
-	PRIVATE()->VerticalScrollBar->setFixedWidth(12 * getCanvas()->getConfig().DisplayScale);
-	PRIVATE()->VerticalScrollBar->setMinHeight(12 * getCanvas()->getConfig().DisplayScale);
+	PRIVATE()->VerticalScrollBar->setFixedWidth({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_WIDTH_LENGTH});
+	PRIVATE()->VerticalScrollBar->setMinHeight({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_MIN_HEIGHT_LENGTH});
 
 	if (2 < getWidgets().size())
 	{
-		getWidgets()[2]->setFixedPos(0, 0);
-		getWidgets()[2]->setPositionType(UI::PositionAbsolute);
+		getWidgets()[2]->setFixedPos({0, UI_CSS_WIDTH_LENGTH}, {0, UI_CSS_HEIGHT_LENGTH});
+		getWidgets()[2]->setPositionType({UI_CSS_POSITION_ABSOLUTE});
 	}
 }
 
@@ -95,8 +94,8 @@ void UIScroll::layout(UIRect client)
 		PRIVATE()->HorizontalScrollBar->setVisible(showH);
 		PRIVATE()->VerticalScrollBar->setVisible(showV);
 
-		auto width = PRIVATE()->VerticalScrollBar->getFixedWidth();
-		auto height = PRIVATE()->HorizontalScrollBar->getFixedHeight();
+		auto width = PRIVATE()->VerticalScrollBar->getFixedWidth().Value;
+		auto height = PRIVATE()->HorizontalScrollBar->getFixedHeight().Value;
 
 		if (showH)
 		{
@@ -286,16 +285,4 @@ void UIScroll::wheelEvent(UIMouseWheelEventRaw event)
 
 		if (getCanvas()) getCanvas()->layoutWidget();
 	}
-}
-
-UIString UIScrollFactory::getTagName() const
-{
-	return "scroll";
-}
-
-UIWidgetRef UIScrollFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UIScroll>(getContext());
-	result->setStyleText(style);
-	return result;
 }

@@ -17,19 +17,19 @@ public:
 	UIBuilder(UICanvasRaw canvas);
 	virtual ~UIBuilder();
 	UICanvasRaw getCanvas() const;
-	virtual bool addFactory(UIFactoryRef value);
-	virtual bool removeFactory(UIString name);
-	virtual void removeFactory();
+	virtual bool setFactory(UIString tag, UIFactoryRef value);
+	virtual bool unsetFactory(UIString tag);
+	virtual void unsetFactory();
 	virtual UIWidgetRef buildWidget(UIString html) const;
 
 	template<class T, class... Args>
-	UIRef<T> create(Args... args)
+	UIRef<T> newWidget(Args... args)
 	{
 		return UINew<T>(getCanvas(), std::forward<Args>(args)...);
 	}
 
 private:
-	UIWidgetPrivateRaw m_Private;
+	UIPrivateRaw m_Private;
 };
 using UIBuilderRaw = UIRaw<UIBuilder>;
 using UIBuilderRef = UIRef<UIBuilder>;

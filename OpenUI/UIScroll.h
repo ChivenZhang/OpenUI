@@ -67,15 +67,7 @@ protected:
 	void wheelEvent(UIMouseWheelEventRaw event) override;
 
 private:
-	UIWidgetPrivateRaw m_PrivateScroll;
+	UIPrivateRaw m_Private;
 };
 using UIScrollRef = UIRef<UIScroll>;
 using UIScrollRaw = UIRaw<UIScroll>;
-
-/// @brief Scroll factory
-class OPENUI_API UIScrollFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
-};

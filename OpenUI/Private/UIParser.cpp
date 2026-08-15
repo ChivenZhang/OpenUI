@@ -12,7 +12,6 @@
 #include <lexbor/css/css.h>
 #include <lexbor/html/html.h>
 #include <lexbor/style/style.h>
-#include <lexbor/selectors/selectors.h>
 
 bool UIParser::parse(UIString html, widget_t& result) const
 {
@@ -48,23 +47,14 @@ bool UIParser::parse(UIString html, widget_t& result) const
     UILambda<void(lxb_dom_node_t*, widget_t*)> dom_func;
     dom_func = [&dom_func](lxb_dom_node_t* node, widget_t* parent)
     {
-        if (node->type == LXB_DOM_NODE_TYPE_DOCUMENT)
-        {
-            auto document = lxb_dom_interface_document(node);
-            parent->Type = "root";
-
-            for (auto child = node->first_child; child; child = child->next)
-            {
-                dom_func(child, parent);
-            }
-        }
-        else if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
+        if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
         {
             auto element = lxb_dom_interface_element(node);
-            auto widget = &parent->Children.emplace_back();
 
             size_t tag_len = 0;
             auto tag = lxb_dom_element_local_name(element, &tag_len);
+
+            auto widget = &parent->Children.emplace_back();
             widget->Type = UIStringView(reinterpret_cast<const char*>(tag), tag_len);
 
             for (auto attr = element->first_attr; attr; attr = attr->next)
@@ -86,6 +76,7 @@ bool UIParser::parse(UIString html, widget_t& result) const
             auto css_func = [](lxb_dom_element_t* element, const lxb_css_rule_declaration_t* decl, void* ctx, lxb_css_selector_specificity_t spec, bool is_weak)->lxb_status_t
             {
                 auto widget = (widget_t*)ctx;
+                if (is_weak) return LXB_STATUS_OK;
 
                 UIString styleName;
                 auto status = lxb_css_property_serialize_name(decl->u.user, decl->type,
@@ -129,7 +120,7 @@ bool UIParser::parse(UIString html, widget_t& result) const
             parent->Text = textValue;
         }
     };
-    dom_func(lxb_dom_interface_node(document), &result);
+    dom_func(lxb_dom_interface_node(document->body), &result);
 
     /* Destroy resources. */
 

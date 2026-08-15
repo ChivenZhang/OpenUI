@@ -9,11 +9,11 @@
 * Created by chivenzhang@gmail.com.
 *
 * =================================================*/
-#include "UI.h"
+#include "SDLGPURender.h"
 
-class OPENUI_API UIShader
+class SDLGPUMerger : public SDLGPURender
 {
 public:
-    virtual ~UIShader() = default;
-    virtual void render(UIImage const& canvas, UIListView<const UIPrimitive> data) const = 0;
+    SDLGPUMerger(UICanvasRaw canvas, int width, int height);
+    void render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style) override;
 };

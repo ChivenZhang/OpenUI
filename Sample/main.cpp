@@ -43,10 +43,10 @@ int main()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	{
 		auto device = UINew<CairoGLDevice>();
-		auto openui = device->getCanvas();
+		auto canvas = device->getCanvas();
 		auto window = device->getWindow();
-		sample(openui, window);
-		while (device->update());
+		sample(canvas, window);
+		while (device->update()) continue;
 		device = nullptr;
 	}
 	SDL_Quit();
@@ -104,10 +104,10 @@ int main()
 	if (result != VK_SUCCESS) UI_FATAL("vkCreateDebugUtilsMessengerEXT failed");
 	{
 		auto device = UINew<CairoVKDevice>(instance);
-		auto openui = device->getCanvas();
+		auto canvas = device->getCanvas();
 		auto window = device->getWindow();
-		sample(openui, window);
-		while (device->update());
+		sample(canvas, window);
+		while (device->update()) continue;
 		device = nullptr;
 	}
 	pfnVkDestroyDebugUtilsMessengerEXT(instance, messenger, nullptr);
@@ -143,10 +143,10 @@ int main()
 	}
 	{
 		auto device = UINew<CairoDXDevice>(instance);
-		auto openui = device->getCanvas();
+		auto canvas = device->getCanvas();
 		auto window = device->getWindow();
-		sample(openui, window);
-		while (device->update());
+		sample(canvas, window);
+		while (device->update()) continue;
 		device = nullptr;
 	}
 	SDL_Quit();
@@ -156,10 +156,10 @@ int main()
 	SDL_Init(SDL_INIT_VIDEO);
 	{
 		auto device = UINew<CairoMTDevice>();
-		auto openui = device->getCanvas();
+		auto canvas = device->getCanvas();
 		auto window = device->getWindow();
-		sample(openui, window);
-		while (device->update());
+		sample(canvas, window);
+		while (device->update()) continue;
 		device = nullptr;
 	}
 	SDL_Quit();
@@ -169,10 +169,23 @@ int main()
 	SDL_Init(SDL_INIT_VIDEO);
 	{
 		auto device = UINew<SDLGPUDevice>();
-		auto openui = device->getCanvas();
-		auto window = device->getWindow();
-		sample(openui, window);
-		while (device->update());
+		auto canvas = device->getCanvas();
+
+		canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
+			<style>
+				div {
+					height: 30px;
+				}
+				button {
+					width: auto;
+				}
+			</style>
+			<div>
+				<button>My Button</button>
+			</div>
+	    )"));
+		
+		while (device->update()) continue;
 		device = nullptr;
 	}
 	SDL_Quit();
@@ -185,19 +198,19 @@ void sample(UICanvasRaw context, SDL_Window* window)
 	auto builder = context->getBuilder();
 	auto scale = context->getConfig().DisplayScale;
 
-	auto layout = builder->create<UIFlow>();
+	auto layout = builder->newWidget<UIFlow>();
 	context->addWidget(layout);
 
 	//if (false)
 	{
-		auto scroll = builder->create<UIScroll>();
+		auto scroll = builder->newWidget<UIScroll>();
 		layout->addWidget(scroll);
 		scroll->setFixedSize(300 * scale, 200 * scale);
 		scroll->setHorizontalValue(150);
 		scroll->setVerticalValue(150);
 		//if (false)
 		{
-			auto label = builder->create<UILabel>();
+			auto label = builder->newWidget<UILabel>();
 			scroll->addWidget(label);
 			label->setFixedSize(300 * scale, 300 * scale);
 			label->setScaledContents(UILabel::ScaleKeepRatio);
@@ -210,117 +223,117 @@ void sample(UICanvasRaw context, SDL_Window* window)
 	}
 	//if (false)
 	{
-		auto vbox = builder->create<UIVBox>();
+		auto vbox = builder->newWidget<UIVBox>();
 		layout->addWidget(vbox);
 		vbox->setFixedSize(200 * scale, 200 * scale);
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			vbox->addWidget(button);
 			button->setText("Button0");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			vbox->addWidget(button);
 			button->setText("Button1");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			vbox->addWidget(button);
 			button->setText("Button2");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			vbox->addWidget(button);
 			button->setText("Button3");
 		}
 	}
 	//if (false)
 	{
-		auto hbox = builder->create<UIHBox>();
+		auto hbox = builder->newWidget<UIHBox>();
 		layout->addWidget(hbox);
 		hbox->setFixedSize(250 * scale, 200 * scale);
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			hbox->addWidget(button);
 			button->setText("Button0");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			hbox->addWidget(button);
 			button->setText("Button1");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			hbox->addWidget(button);
 			button->setText("Button2");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			hbox->addWidget(button);
 			button->setText("Button3");
 		}
 	}
 	//if (false)
 	{
-		auto grid = builder->create<UIGrid>();
+		auto grid = builder->newWidget<UIGrid>();
 		layout->addWidget(grid);
 		grid->setRowStretch({ 1,1,1 });
 		grid->setColumnStretch({ 1,1,1 });
 		grid->setFixedSize(200 * scale, 200 * scale);
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			grid->addWidget(button, 0, 0, 2, 2);
 			button->setText("Button0");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			grid->addWidget(button, 0, 2, 3, 1);
 			button->setText("Button1");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			grid->addWidget(button, 2, 0, 1, 1);
 			button->setText("Button2");
 		}
 		{
-			auto button = builder->create<UIButton>();
+			auto button = builder->newWidget<UIButton>();
 			grid->addWidget(button, 2, 1, 1, 1);
 			button->setText("Button3");
 		}
 	}
 	//if (false)
 	{
-		auto group = builder->create<UIVBox>();
+		auto group = builder->newWidget<UIVBox>();
 		layout->addWidget(group);
 		group->setFixedSize(200 * scale, 200 * scale);
 		{
-			auto radio = builder->create<UIRadio>();
+			auto radio = builder->newWidget<UIRadio>();
 			group->addWidget(radio);
 			radio->setFixedSize(100 * scale, 30 * scale);
 			radio->setText("Radio");
 			radio->setChecked(true);
 
-			auto radio0 = builder->create<UIRadio>();
+			auto radio0 = builder->newWidget<UIRadio>();
 			group->addWidget(radio0);
 			radio0->setFixedSize(100 * scale, 30 * scale);
 			radio0->setText("Radio");
 			radio0->setExclusive(radio->getExclusive());
 
-			auto radio1 = builder->create<UIRadio>();
+			auto radio1 = builder->newWidget<UIRadio>();
 			group->addWidget(radio1);
 			radio1->setFixedSize(100 * scale, 30 * scale);
 			radio1->setText("Radio");
 			radio1->setExclusive(radio->getExclusive());
 		}
 		{
-			auto check = builder->create<UICheck>();
+			auto check = builder->newWidget<UICheck>();
 			group->addWidget(check);
 			check->setFixedSize(100 * scale, 30 * scale);
 			check->setText("Check");
 			check->setChecked(true);
 		}
 		{
-			auto check = builder->create<UICheck>();
+			auto check = builder->newWidget<UICheck>();
 			group->addWidget(check);
 			check->setFixedSize(100 * scale, 30 * scale);
 			check->setText("Check");
@@ -328,21 +341,21 @@ void sample(UICanvasRaw context, SDL_Window* window)
 	}
 	//if (false)
 	{
-		auto label = builder->create<UILabel>();
+		auto label = builder->newWidget<UILabel>();
 		layout->addWidget(label);
 		label->setFixedSize(100 * scale, 30 * scale);
 		label->setText("Label");
 	}
 	//if (false)
 	{
-		auto button = builder->create<UIButton>();
+		auto button = builder->newWidget<UIButton>();
 		layout->addWidget(button);
 		button->setFixedSize(100 * scale, 30 * scale);
 		button->setText("Button");
 	}
 	//if (false)
 	{
-		auto slider = builder->create<UISlider>();
+		auto slider = builder->newWidget<UISlider>();
 		layout->addWidget(slider);
 		slider->setFixedSize(100 * scale, 30 * scale);
 		slider->setRange(0, 100 * scale);
@@ -350,7 +363,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 	}
 	//if (false)
 	{
-		auto slider = builder->create<UISlider>();
+		auto slider = builder->newWidget<UISlider>();
 		layout->addWidget(slider);
 		slider->setOrientation(UI::Vertical);
 		slider->setFixedSize(30 * scale, 100 * scale);
@@ -359,19 +372,19 @@ void sample(UICanvasRaw context, SDL_Window* window)
 	}
 	//if(false)
 	{
-		auto hline = builder->create<UIHLine>();
+		auto hline = builder->newWidget<UIHLine>();
 		layout->addWidget(hline);
 		hline->setFixedSize(100 * scale, 30 * scale);
 	}
 	//if(false)
 	{
-		auto vline = builder->create<UIVLine>();
+		auto vline = builder->newWidget<UIVLine>();
 		layout->addWidget(vline);
 		vline->setFixedSize(30 * scale, 100 * scale);
 	}
 	//if (false)
 	{
-		auto combo = builder->create<UICombo>();
+		auto combo = builder->newWidget<UICombo>();
 		layout->addWidget(combo);
 		combo->setFixedSize(100 * scale, 30 * scale);
 		combo->setMaxCount(4);
@@ -381,7 +394,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 			printf("combo1 %s\n", text.c_str());
 			});
 
-		auto combo2 = builder->create<UICombo>();
+		auto combo2 = builder->newWidget<UICombo>();
 		layout->addWidget(combo2);
 		combo2->setFixedSize(100 * scale, 30 * scale);
 		combo2->setItems({ (char*)u8"黄金糕狮子头螺蛳粉", (char*)u8"黄金糕", (char*)u8"狮子头", (char*)u8"螺蛳粉", (char*)u8"蚵仔煎", (char*)u8"双皮奶", (char*)u8"龙须面" });
@@ -392,7 +405,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 	}
 	// if(false)
 	{
-		auto input = builder->create<UIInput>();
+		auto input = builder->newWidget<UIInput>();
 		layout->addWidget(input);
 		input->setFixedSize(100 * scale, 30 * scale);
 		input->setText("Hello,OpenUI");

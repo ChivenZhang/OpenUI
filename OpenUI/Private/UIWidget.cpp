@@ -13,7 +13,7 @@
 #include "../UIPainter.h"
 #include <yoga/Yoga.h>
 
-class UIWidgetPrivateData : public UIWidgetPrivate
+struct UIWidgetPrivate : UIPrivate
 {
 public:
 	UIString Identity;
@@ -21,55 +21,37 @@ public:
 	UIList<UIWidgetRef> Children;
 	UIFilterRaw Filter = nullptr;
 	UICanvasRaw Canvas = nullptr;
+	UIImage Target = {};
 
 	// =============================Flex Layout==========================
 
-	UI::DisplayType DisplayType = UI::DisplayFlex;
-	UI::PositionType PositionType = UI::PositionRelative;
-	UIValue2F Position{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
 	float Scale = 1.0f;
 	float Rotate = 0.0f;
 	UIFloat2 Translate;
-	UIValueF MinWidth = { UINAN, 0 }, MinHeight = { UINAN, 0 };
-	UIValueF MaxWidth = { UINAN, 0 }, MaxHeight = { UINAN, 0 };
-	UIValueF FixedWidth = { UINAN, 0 }, FixedHeight = { UINAN, 0 };
-	UIValue4F Border{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
-	UIValue4F Margin{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
-	UIValue4F Padding{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
-	UIValue2F Spacing{ UIValueF{UINAN, 0}, UIValueF{UINAN, 0} };
 	UIRect LocalRect, ClientRect, ViewRect;
 	bool Enable = true, Visible = true, Animate = false;
+	UIPropBorder Border;
+	UIPropMargin Margin;
+	UIPropPadding Padding;
 
-	struct
-	{
-		UI::FlexDirection FlexDirection = UI::FlexDirectionRow;
-		UI::FlexWrap FlexWrap = UI::FlexNoWrap;
-	} FlexFlow;
-	UI::JustifyContent JustifyContent = UI::JustifyFlexStart;
-	UI::AlignItems AlignItems = UI::AlignStretch;
-	UI::AlignContent AlignContent = UI::AlignStretch;
+	// =============================DOM Attrib===========================
 
-	struct
-	{
-		UI::FlexGrow FlexGrow = UIValueF{ 0, 0 };
-		UI::FlexShrink FlexShrink = UIValueF{ 1, 0 };
-		UI::FlexBasis FlexBasis = UIValueF{ UINAN, 0 };
-	} Flex;
-	// int32_t Order;
-	UI::AlignSelf AlignSelf = UI::AlignAuto;
+	UIAttribRef Attribs;
 
 	// ==============================CSS Style===========================
 
 	UIStyleRef Styles;
+	UIComputedStyleRef ComputedStyles;
 };
-#define PRIVATE() ((UIWidgetPrivateData*) m_Private)
+#define PRIVATE() ((UIWidgetPrivate*) m_Private)
 
 UIWidget::UIWidget(UICanvasRaw canvas)
 {
-	m_Private = new UIWidgetPrivateData;
-
+	m_Private = new UIWidgetPrivate;
 	PRIVATE()->Canvas = canvas;
 	PRIVATE()->Styles = UINew<UIStyle>();
+	PRIVATE()->ComputedStyles = UINew<UIComputedStyle>(PRIVATE()->Styles.get());
+	PRIVATE()->Attribs = UINew<UIAttrib>();
 }
 
 UIWidget::~UIWidget()
@@ -106,33 +88,6 @@ UIFilterRaw UIWidget::getEventFilter() const
 void UIWidget::setEventFilter(UIFilterRaw value)
 {
 	PRIVATE()->Filter = value;
-}
-
-UIString UIWidget::getStyleText() const
-{
-	return UIString();
-}
-
-void UIWidget::setStyleText(UIString value)
-{
-}
-
-UIString UIWidget::getStyleText(UIString name) const
-{
-	return UIString();
-}
-
-void UIWidget::setStyleText(UIString name, UIString value)
-{
-}
-
-UIString UIWidget::getAttribute(UIString name) const
-{
-	return UIString();
-}
-
-void UIWidget::setAttribute(UIString name, UIString value)
-{
 }
 
 bool UIWidget::addWidget(UIWidgetRef value)
@@ -484,287 +439,431 @@ bool UIWidget::inBounds(float x, float y)
 		&& viewport.Y <= y && y <= viewport.Y + viewport.H);
 }
 
-UI::DisplayType UIWidget::getDisplayType() const
+UIPropDisplay UIWidget::getDisplayType() const
 {
-	return PRIVATE()->DisplayType;
+	return getStyle<UIPropDisplay>("display");
 }
 
-void UIWidget::setDisplayType(UI::DisplayType value)
+void UIWidget::setDisplayType(UIPropDisplay value)
 {
-	PRIVATE()->DisplayType = value;
+	setStyle("display", value);
 }
 
-UI::PositionType UIWidget::getPositionType() const
+UIPropPosition UIWidget::getPositionType() const
 {
-	return PRIVATE()->PositionType;
+	return getStyle<UIPropPosition>("position");
 }
 
-void UIWidget::setPositionType(UI::PositionType value)
+void UIWidget::setPositionType(UIPropPosition value)
 {
-	PRIVATE()->PositionType = value;
+	setStyle("position", value);
 }
 
-UIValueF UIWidget::getFixedPosX() const
+UIPropLeft UIWidget::getFixedPosX() const
 {
-	return PRIVATE()->Position[0];
+	return getStyle<UIPropLeft>("left");
 }
 
-void UIWidget::setFixedPosX(UIValueF value)
+void UIWidget::setFixedPosX(UIPropLeft value)
 {
-	PRIVATE()->Position[0] = value;
+	setStyle("left", value);
 }
 
-UIValueF UIWidget::getFixedPosY() const
+void UIWidget::setFixedPosX(float value)
 {
-	return PRIVATE()->Position[1];
+	setFixedPosX({value, UI_CSS_LEFT_LENGTH});
 }
 
-void UIWidget::setFixedPosY(UIValueF value)
+UIPropTop UIWidget::getFixedPosY() const
 {
-	PRIVATE()->Position[1] = value;
+	return getStyle<UIPropTop>("top");
 }
 
-UIValue2F UIWidget::getFixedPos() const
+void UIWidget::setFixedPosY(UIPropTop value)
 {
-	return PRIVATE()->Position;
+	setStyle("top", value);
 }
 
-void UIWidget::setFixedPos(UIValueF left, UIValueF top)
+void UIWidget::setFixedPosY(float value)
+{
+	setFixedPosY({value, UI_CSS_TOP_LENGTH});
+}
+
+void UIWidget::setFixedPos(UIPropLeft left, UIPropTop top)
 {
 	setFixedPosX(left);
 	setFixedPosY(top);
 }
 
-UIValueF UIWidget::getMinWidth() const
+void UIWidget::setFixedPos(float left, float top)
 {
-	return PRIVATE()->MinWidth;
+	setFixedPos({left, UI_CSS_LEFT_LENGTH}, {top, UI_CSS_TOP_LENGTH});
 }
 
-void UIWidget::setMinWidth(UIValueF value)
+UIPropMinWidth UIWidget::getMinWidth() const
 {
-	PRIVATE()->MinWidth = value;
+	return getStyle<UIPropMinWidth>("min-width");
 }
 
-UIValueF UIWidget::getMaxWidth() const
+void UIWidget::setMinWidth(UIPropMinWidth value)
 {
-	return PRIVATE()->MaxWidth;
+	setStyle("min-width", value);
 }
 
-void UIWidget::setMaxWidth(UIValueF value)
+void UIWidget::setMinWidth(float value)
 {
-	PRIVATE()->MaxWidth = value;
+	setMinWidth({value, UI_CSS_MIN_WIDTH_LENGTH});
 }
 
-UIValueF UIWidget::getFixedWidth() const
+UIPropMaxWidth UIWidget::getMaxWidth() const
 {
-	return PRIVATE()->FixedWidth;
+	return getStyle<UIPropMaxWidth>("max-width");
 }
 
-void UIWidget::setFixedWidth(UIValueF value)
+void UIWidget::setMaxWidth(UIPropMaxWidth value)
 {
-	PRIVATE()->FixedWidth = value;
+	setStyle("max-width", value);
 }
 
-UIValueF UIWidget::getMinHeight() const
+void UIWidget::setMaxWidth(float value)
 {
-	return PRIVATE()->MinHeight;
+	setMaxWidth({value, UI_CSS_MAX_WIDTH_LENGTH});
 }
 
-void UIWidget::setMinHeight(UIValueF value)
+UIPropWidth UIWidget::getFixedWidth() const
 {
-	PRIVATE()->MinHeight = value;
+	return getStyle<UIPropWidth>("width");
 }
 
-UIValueF UIWidget::getMaxHeight() const
+void UIWidget::setFixedWidth(UIPropWidth value)
 {
-	return PRIVATE()->MaxHeight;
+	setStyle("width", value);
 }
 
-void UIWidget::setMaxHeight(UIValueF value)
+void UIWidget::setFixedWidth(float value)
 {
-	PRIVATE()->MaxHeight = value;
+	setFixedWidth({value, UI_CSS_WIDTH_LENGTH});
 }
 
-UIValueF UIWidget::getFixedHeight() const
+UIPropMinHeight UIWidget::getMinHeight() const
 {
-	return PRIVATE()->FixedHeight;
+	return getStyle<UIPropMinHeight>("min-height");
 }
 
-void UIWidget::setFixedHeight(UIValueF value)
+void UIWidget::setMinHeight(UIPropMinHeight value)
 {
-	PRIVATE()->FixedHeight = value;
+	setStyle("min-height", value);
 }
 
-UIValue2F UIWidget::getMinSize() const
+void UIWidget::setMinHeight(float value)
 {
-	return UIValue2F{ PRIVATE()->MinWidth, PRIVATE()->MinHeight };
+	setMinHeight({value, UI_CSS_MIN_HEIGHT_LENGTH});
 }
 
-void UIWidget::setMinSize(UIValueF width, UIValueF height)
+UIPropMaxHeight UIWidget::getMaxHeight() const
+{
+	return getStyle<UIPropMaxHeight>("max-height");
+}
+
+void UIWidget::setMaxHeight(UIPropMaxHeight value)
+{
+	setStyle("max-height", value);
+}
+
+void UIWidget::setMaxHeight(float value)
+{
+	setMaxHeight({value, UI_CSS_MAX_HEIGHT_LENGTH});
+}
+
+UIPropHeight UIWidget::getFixedHeight() const
+{
+	return getStyle<UIPropHeight>("height");
+}
+
+void UIWidget::setFixedHeight(UIPropHeight value)
+{
+	setStyle("height", value);
+}
+
+void UIWidget::setFixedHeight(float value)
+{
+	setFixedHeight({value, UI_CSS_HEIGHT_LENGTH});
+}
+
+void UIWidget::setMinSize(UIPropMinWidth width, UIPropMinHeight height)
 {
 	setMinWidth(width);
 	setMinHeight(height);
 }
 
-UIValue2F UIWidget::getMaxSize() const
+void UIWidget::setMinSize(float width, float height)
 {
-	return UIValue2F{ PRIVATE()->MaxWidth, PRIVATE()->MaxHeight };
+	setMinSize({width, UI_CSS_MIN_WIDTH_LENGTH}, {height, UI_CSS_MIN_HEIGHT_LENGTH});
 }
 
-void UIWidget::setMaxSize(UIValueF width, UIValueF height)
+void UIWidget::setMaxSize(UIPropMaxWidth width, UIPropMaxHeight height)
 {
 	setMaxWidth(width);
 	setMaxHeight(height);
 }
 
-UIValue2F UIWidget::getFixedSize() const
+void UIWidget::setMaxSize(float width, float height)
 {
-	return UIValue2F{ PRIVATE()->FixedWidth, PRIVATE()->FixedHeight };
+	setMaxSize({width, UI_CSS_MAX_WIDTH_LENGTH}, {height, UI_CSS_MAX_HEIGHT_LENGTH});
 }
 
-void UIWidget::setFixedSize(UIValueF width, UIValueF height)
+void UIWidget::setFixedSize(UIPropWidth width, UIPropHeight height)
 {
 	setFixedWidth(width);
 	setFixedHeight(height);
 }
 
-UIValue4F UIWidget::getBorder() const
+void UIWidget::setFixedSize(float width, float height)
 {
-	return PRIVATE()->Border;
+	setFixedSize({width, UI_CSS_WIDTH_LENGTH}, {height, UI_CSS_HEIGHT_LENGTH});
 }
 
-void UIWidget::setBorder(UIValue4F value)
+void UIWidget::setBorder(UIPropBorderLeft left, UIPropBorderTop top, UIPropBorderRight right, UIPropBorderBottom bottom)
 {
-	PRIVATE()->Border = value;
+	setBorderLeft(left);
+	setBorderTop(top);
+	setBorderRight(right);
+	setBorderBottom(bottom);
 }
 
-UIValue4F UIWidget::getMargin() const
+UIPropBorderTop UIWidget::getBorderTop() const
 {
-	return PRIVATE()->Margin;
+	return getStyle<UIPropBorderTop>("border-top");
 }
 
-void UIWidget::setMargin(UIValue4F value)
+void UIWidget::setBorderTop(UIPropBorderTop value)
 {
-	PRIVATE()->Margin = value;
+	setStyle("border-top", value);
 }
 
-UIValue4F UIWidget::getPadding() const
+UIPropBorderBottom UIWidget::getBorderBottom() const
 {
-	return PRIVATE()->Padding;
+	return getStyle<UIPropBorderBottom>("border-bottom");
 }
 
-void UIWidget::setPadding(UIValue4F value)
+void UIWidget::setBorderBottom(UIPropBorderBottom value)
 {
-	PRIVATE()->Padding = value;
+	setStyle("border-bottom", value);
 }
 
-UIValue2F UIWidget::getSpacing() const
+UIPropBorderLeft UIWidget::getBorderLeft() const
 {
-	return PRIVATE()->Spacing;
+	return getStyle<UIPropBorderLeft>("border-left");
 }
 
-void UIWidget::setSpacing(UIValue2F value)
+void UIWidget::setBorderLeft(UIPropBorderLeft value)
 {
-	PRIVATE()->Spacing = value;
+	setStyle("border-left", value);
 }
 
-UI::FlexDirection UIWidget::getFlexDirection() const
+UIPropBorderRight UIWidget::getBorderRight() const
 {
-	return PRIVATE()->FlexFlow.FlexDirection;
+	return getStyle<UIPropBorderRight>("border-right");
 }
 
-void UIWidget::setFlexDirection(UI::FlexDirection value)
+void UIWidget::setBorderRight(UIPropBorderRight value)
 {
-	PRIVATE()->FlexFlow.FlexDirection = value;
+	setStyle("border-right", value);
 }
 
-UI::FlexWrap UIWidget::getFlexWrap() const
+void UIWidget::setMargin(UIPropMarginLeft left, UIPropMarginTop top, UIPropMarginRight right, UIPropMarginBottom bottom)
 {
-	return PRIVATE()->FlexFlow.FlexWrap;
+	setMarginLeft(left);
+	setMarginTop(top);
+	setMarginRight(right);
+	setMarginBottom(bottom);
 }
 
-void UIWidget::setFlexWrap(UI::FlexWrap value)
+UIPropMarginTop UIWidget::getMarginTop() const
 {
-	PRIVATE()->FlexFlow.FlexWrap = value;
+	return getStyle<UIPropMarginTop>("margin-top");
 }
 
-UI::JustifyContent UIWidget::getJustifyContent() const
+void UIWidget::setMarginTop(UIPropMarginTop value)
 {
-	return PRIVATE()->JustifyContent;
+	setStyle("margin-top", value);
 }
 
-void UIWidget::setJustifyContent(UI::JustifyContent value)
+UIPropMarginBottom UIWidget::getMarginBottom() const
 {
-	PRIVATE()->JustifyContent = value;
+	return getStyle<UIPropMarginBottom>("margin-bottom");
 }
 
-UI::AlignItems UIWidget::getAlignItems() const
+void UIWidget::setMarginBottom(UIPropMarginBottom value)
 {
-	return PRIVATE()->AlignItems;
+	setStyle("margin-bottom", value);
 }
 
-void UIWidget::setAlignItems(UI::AlignItems value)
+UIPropMarginLeft UIWidget::getMarginLeft() const
 {
-	PRIVATE()->AlignItems = value;
+	return getStyle<UIPropMarginLeft>("margin-left");
 }
 
-UI::AlignContent UIWidget::getAlignContent() const
+void UIWidget::setMarginLeft(UIPropMarginLeft value)
 {
-	return PRIVATE()->AlignContent;
+	setStyle("margin-left", value);
 }
 
-void UIWidget::setAlignContent(UI::AlignContent value)
+UIPropMarginRight UIWidget::getMarginRight() const
 {
-	PRIVATE()->AlignContent = value;
+	return getStyle<UIPropMarginRight>("margin-right");
 }
 
-void UIWidget::setFlexFlow(UI::FlexDirection direction, UI::FlexWrap wrap)
+void UIWidget::setMarginRight(UIPropMarginRight value)
+{
+	setStyle("margin-right", value);
+}
+
+void UIWidget::setPadding(UIPropPaddingLeft left, UIPropPaddingTop top, UIPropPaddingRight right, UIPropPaddingBottom bottom)
+{
+	setPaddingLeft(left);
+	setPaddingTop(top);
+	setPaddingRight(right);
+	setPaddingBottom(bottom);
+}
+
+UIPropPaddingTop UIWidget::getPaddingTop() const
+{
+	return getStyle<UIPropPaddingTop>("padding-top");
+}
+
+void UIWidget::setPaddingTop(UIPropPaddingTop value)
+{
+	setStyle("padding-top", value);
+}
+
+UIPropPaddingBottom UIWidget::getPaddingBottom() const
+{
+	return getStyle<UIPropPaddingBottom>("padding-bottom");
+}
+
+void UIWidget::setPaddingBottom(UIPropPaddingBottom value)
+{
+	setStyle("padding-bottom", value);
+}
+
+UIPropPaddingLeft UIWidget::getPaddingLeft() const
+{
+	return getStyle<UIPropPaddingLeft>("padding-left");
+}
+
+void UIWidget::setPaddingLeft(UIPropPaddingLeft value)
+{
+	setStyle("padding-left", value);
+}
+
+UIPropPaddingRight UIWidget::getPaddingRight() const
+{
+	return getStyle<UIPropPaddingRight>("padding-right");
+}
+
+void UIWidget::setPaddingRight(UIPropPaddingRight value)
+{
+	setStyle("padding-right", value);
+}
+
+UIPropFlexDirection UIWidget::getFlexDirection() const
+{
+	return getStyle<UIPropFlexDirection>("flex-direction");
+}
+
+void UIWidget::setFlexDirection(UIPropFlexDirection value)
+{
+	setStyle("flex-direction", value);
+}
+
+UIPropFlexWrap UIWidget::getFlexWrap() const
+{
+	return getStyle<UIPropFlexWrap>("flex-wrap");
+}
+
+void UIWidget::setFlexWrap(UIPropFlexWrap value)
+{
+	setStyle("flex-wrap", value);
+}
+
+UIPropJustifyContent UIWidget::getJustifyContent() const
+{
+	return getStyle<UIPropJustifyContent>("justify-content");
+}
+
+void UIWidget::setJustifyContent(UIPropJustifyContent value)
+{
+	setStyle("justify-content", value);
+}
+
+UIPropAlignItems UIWidget::getAlignItems() const
+{
+	return getStyle<UIPropAlignItems>("align-items");
+}
+
+void UIWidget::setAlignItems(UIPropAlignItems value)
+{
+	setStyle("align-items", value);
+}
+
+UIPropAlignContent UIWidget::getAlignContent() const
+{
+	return getStyle<UIPropAlignContent>("align-content");
+}
+
+void UIWidget::setAlignContent(UIPropAlignContent value)
+{
+	setStyle("align-content", value);
+}
+
+void UIWidget::setFlexFlow(UIPropFlexDirection direction, UIPropFlexWrap wrap)
 {
 	setFlexDirection(direction);
 	setFlexWrap(wrap);
 }
 
-UI::FlexGrow UIWidget::getFlexGrow() const
+UIPropFlexGrow UIWidget::getFlexGrow() const
 {
-	return PRIVATE()->Flex.FlexGrow;
+	return getStyle<UIPropFlexGrow>("flex-grow");
 }
 
-void UIWidget::setFlexGrow(UI::FlexGrow value)
+void UIWidget::setFlexGrow(UIPropFlexGrow value)
 {
-	PRIVATE()->Flex.FlexGrow = value;
+	setStyle("flex-grow", value);
 }
 
-UI::FlexShrink UIWidget::getFlexShrink() const
+UIPropFlexShrink UIWidget::getFlexShrink() const
 {
-	return PRIVATE()->Flex.FlexShrink;
+	return getStyle<UIPropFlexShrink>("flex-shrink");
 }
 
-void UIWidget::setFlexShrink(UI::FlexShrink value)
+void UIWidget::setFlexShrink(UIPropFlexShrink value)
 {
-	PRIVATE()->Flex.FlexShrink = value;
+	setStyle("flex-shrink", value);
 }
 
-UI::FlexBasis UIWidget::getFlexBasis() const
+UIPropFlexBasis UIWidget::getFlexBasis() const
 {
-	return PRIVATE()->Flex.FlexBasis;
+	return getStyle<UIPropFlexBasis>("flex-basis");
 }
 
-void UIWidget::setFlexBasis(UI::FlexBasis value)
+void UIWidget::setFlexBasis(UIPropFlexBasis value)
 {
-	PRIVATE()->Flex.FlexBasis = value;
+	setStyle("flex-basis", value);
 }
 
-UI::AlignSelf UIWidget::getAlignSelf() const
+UIPropAlignSelf UIWidget::getAlignSelf() const
 {
-	return PRIVATE()->AlignSelf;
+	return getStyle<UIPropAlignSelf>("align-self");
 }
 
-void UIWidget::setAlignSelf(UI::AlignSelf value)
+void UIWidget::setAlignSelf(UIPropAlignSelf value)
 {
-	PRIVATE()->AlignSelf = value;
+	setStyle("align-self", value);
 }
 
-void UIWidget::setFlex(UI::FlexGrow grow, UI::FlexShrink shrink, UI::FlexBasis basis)
+void UIWidget::setFlex(UIPropFlexGrow grow, UIPropFlexShrink shrink, UIPropFlexBasis basis)
 {
 	setFlexGrow(grow);
 	setFlexShrink(shrink);
@@ -779,6 +878,151 @@ UIStyleRaw UIWidget::getStyles() const
 void UIWidget::setStyles(UIStyleRef value)
 {
 	PRIVATE()->Styles = value;
+}
+
+UIComputedStyleRaw UIWidget::getStyleComputed() const
+{
+	return PRIVATE()->ComputedStyles.get();
+}
+
+UIString UIWidget::getStyleText() const
+{
+	return UIString();
+}
+
+void UIWidget::setStyleText(UIString value)
+{
+}
+
+UIString UIWidget::getStyleText(UIString name) const
+{
+	return getStyles()->getStyleText(name);
+}
+
+bool UIWidget::setStyleText(UIString name, UIString value)
+{
+	if (getStyles()->setStyleText(name, value) == false)
+	{
+		switch(UIHash(name))
+		{
+		default: setStyle(name, value); break;
+		case UIHash("align-content"): setStyle<UIPropAlignContent>(name); break;
+		case UIHash("align-items"): setStyle<UIPropAlignItems>(name); break;
+		case UIHash("align-self"): setStyle<UIPropAlignSelf>(name); break;
+		case UIHash("alignment-baseline"): setStyle<UIPropAlignmentBaseline>(name); break;
+		case UIHash("baseline-shift"): setStyle<UIPropBaselineShift>(name); break;
+		case UIHash("baseline-source"): setStyle<UIPropBaselineSource>(name); break;
+		case UIHash("border"): setEmbedStyle(name, PRIVATE()->Border); break;
+		case UIHash("border-bottom"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Bottom); break;
+		case UIHash("border-left"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Left); break;
+		case UIHash("border-right"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Right); break;
+		case UIHash("border-top"): setEmbedStyle("border", PRIVATE()->Border); setEmbedStyle(name, PRIVATE()->Border.Top); break;
+		case UIHash("bottom"): setStyle<UIPropBottom>(name); break;
+		case UIHash("box-sizing"): setStyle<UIPropBoxSizing>(name); break;
+		case UIHash("clear"): setStyle<UIPropClear>(name); break;
+		case UIHash("color"): setStyle<UIPropColor>(name, {}, true); break;
+		case UIHash("direction"): setStyle<UIPropDirection>(name, {}, true); break;
+		case UIHash("display"): setStyle<UIPropDisplay>(name); break;
+		//case UIHash("dominant-baseline"): setStyle<UIPropDominantBaseline>(name); break;
+		//case UIHash("flex"): setStyle<UIPropFlex>(name); break;
+		case UIHash("flex-basis"): setStyle<UIPropFlexBasis>(name); break;
+		//case UIHash("flex-direction"): setStyle<UIPropFlexDirection>(name); break;
+		case UIHash("flex-grow"): setStyle<UIPropFlexGrow>(name); break;
+		case UIHash("flex-shrink"): setStyle<UIPropFlexShrink>(name); break;
+		//case UIHash("flex-wrap"): setStyle<UIPropFlexWrap>(name); break;
+		//case UIHash("float"): setStyle<UIPropFloat>(name); break;
+		//case UIHash("float-defer"): setStyle<UIPropFloatDefer>(name); break;
+		case UIHash("float-offset"): setStyle<UIPropFloatOffset>(name); break;
+		//case UIHash("float-reference"): setStyle<UIPropFloatReference>(name); break;
+		//case UIHash("font-family"): setStyle<UIPropFontFamily>(name, {}, true); break;
+		case UIHash("font-size"): setStyle<UIPropFontSize>(name, {}, true); break;
+		case UIHash("font-stretch"): setStyle<UIPropFontStretch>(name); break;
+		//case UIHash("font-style"): setStyle<UIPropFontStyle>(name, {}, true); break;
+		case UIHash("font-weight"): setStyle<UIPropFontWeight>(name, {}, true); break;
+		//case UIHash("hanging-punctuation"): setStyle<UIPropHangingPunctuation>(name); break;
+		case UIHash("height"): setStyle<UIPropHeight>(name); break;
+		//case UIHash("hyphens"): setStyle<UIPropHyphens>(name); break;
+		case UIHash("inset-block-end"): setStyle<UIPropInsetBlockEnd>(name); break;
+		case UIHash("inset-block-start"): setStyle<UIPropInsetBlockStart>(name); break;
+		case UIHash("inset-inline-end"): setStyle<UIPropInsetInlineEnd>(name); break;
+		case UIHash("inset-inline-start"): setStyle<UIPropInsetInlineStart>(name); break;
+		case UIHash("justify-content"): setStyle<UIPropJustifyContent>(name); break;
+		case UIHash("left"): setStyle<UIPropLeft>(name); break;
+		case UIHash("letter-spacing"): setStyle<UIPropLetterSpacing>(name, {}, true); break;
+		//case UIHash("line-break"): setStyle<UIPropLineBreak>(name); break;
+		case UIHash("line-height"): setStyle<UIPropLineHeight>(name, {}, true); break;
+		case UIHash("margin"): setEmbedStyle(name, PRIVATE()->Margin); break;
+		case UIHash("margin-bottom"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Bottom); break;
+		case UIHash("margin-left"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Left); break;
+		case UIHash("margin-right"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Right); break;
+		case UIHash("margin-top"): setEmbedStyle("margin", PRIVATE()->Margin); setEmbedStyle(name, PRIVATE()->Margin.Top); break;
+		case UIHash("max-height"): setStyle<UIPropMaxHeight>(name); break;
+		case UIHash("max-width"): setStyle<UIPropMaxWidth>(name); break;
+		case UIHash("min-height"): setStyle<UIPropMinHeight>(name); break;
+		case UIHash("min-width"): setStyle<UIPropMinWidth>(name); break;
+		//case UIHash("opacity"): setStyle<UIPropOpacity>(name); break;
+		//case UIHash("order"): setStyle<UIPropOrder>(name); break;
+		//case UIHash("overflow-block"): setStyle<UIPropOverflowBlock>(name); break;
+		//case UIHash("overflow-inline"): setStyle<UIPropOverflowInline>(name); break;
+		//case UIHash("overflow-wrap"): setStyle<UIPropOverflowWrap>(name); break;
+		case UIHash("overflow-x"): setStyle<UIPropOverflowX>(name); break;
+		//case UIHash("overflow-y"): setStyle<UIPropOverflowY>(name); break;
+		case UIHash("padding"): setEmbedStyle(name, PRIVATE()->Padding); break;
+		case UIHash("padding-bottom"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Bottom); break;
+		case UIHash("padding-left"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Left); break;
+		case UIHash("padding-right"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Right); break;
+		case UIHash("padding-top"): setEmbedStyle("padding", PRIVATE()->Padding); setEmbedStyle(name, PRIVATE()->Padding.Top); break;
+		case UIHash("position"): setStyle<UIPropPosition>(name); break;
+		case UIHash("right"): setStyle<UIPropRight>(name); break;
+		case UIHash("tab-size"): setStyle<UIPropTabSize>(name); break;
+		//case UIHash("text-align"): setStyle<UIPropTextAlign>(name, {}, true); break;
+		//case UIHash("text-align-all"): setStyle<UIPropTextAlignAll>(name); break;
+		//case UIHash("text-align-last"): setStyle<UIPropTextAlignLast>(name); break;
+		//case UIHash("text-combine-upright"): setStyle<UIPropTextCombineUpright>(name); break;
+		//case UIHash("text-decoration-line"): setStyle<UIPropTextDecorationLine>(name); break;
+		//case UIHash("text-decoration-style"): setStyle<UIPropTextDecorationStyle>(name); break;
+		case UIHash("text-indent"): setStyle<UIPropTextIndent>(name, {}, true); break;
+		//case UIHash("text-justify"): setStyle<UIPropTextJustify>(name); break;
+		//case UIHash("text-orientation"): setStyle<UIPropTextOrientation>(name); break;
+		//case UIHash("text-overflow"): setStyle<UIPropTextOverflow>(name); break;
+		//case UIHash("text-transform"): setStyle<UIPropTextTransform>(name, {}, true); break;
+		case UIHash("top"): setStyle<UIPropTop>(name); break;
+		//case UIHash("unicode-bidi"): setStyle<UIPropUnicodeBidi>(name); break;
+		//case UIHash("vertical-align"): setStyle<UIPropVerticalAlign>(name); break;
+		case UIHash("visibility"): setStyle<UIPropVisibility>(name, {}, true); break;
+		//case UIHash("white-space"): setStyle<UIPropWhiteSpace>(name, {}, true); break;
+		case UIHash("width"): setStyle<UIPropWidth>(name); break;
+		//case UIHash("word-break"): setStyle<UIPropWordBreak>(name); break;
+		//case UIHash("word-spacing"): setStyle<UIPropWordSpacing>(name, {}, true); break;
+		//case UIHash("word-wrap"): setStyle<UIPropWordWrap>(name); break;
+		//case UIHash("wrap-flow"): setStyle<UIPropWrapFlow>(name); break;
+		//case UIHash("wrap-through"): setStyle<UIPropWrapThrough>(name); break;
+		case UIHash("writing-mode"): setStyle<UIPropWritingMode>(name); break;
+		case UIHash("z-index"): setStyle<UIPropZIndex>(name); break;
+		}
+		getStyles()->setStyleText(name, value);
+	}
+	return true;
+}
+
+UIAttribRaw UIWidget::getAttribs() const
+{
+	return PRIVATE()->Attribs.get();
+}
+
+void UIWidget::setAttribs(UIAttribRef value)
+{
+	PRIVATE()->Attribs = value;
+}
+
+UIString UIWidget::getAttribText(UIString name) const
+{
+	return getAttribs()->getAttribText(name);
+}
+
+void UIWidget::setAttribText(UIString name, UIString value)
+{
+	getAttribs()->setAttribText(name, value);
 }
 
 void UIWidget::closeEvent(UICloseEventRaw event)
@@ -876,6 +1120,16 @@ void UIWidget::timerEvent(UITimerEventRaw event)
 UICanvasRaw UIWidget::getCanvas() const
 {
 	return PRIVATE()->Canvas;
+}
+
+UIImageRaw UIWidget::getTarget() const
+{
+	return &PRIVATE()->Target;
+}
+
+void UIWidget::setTarget(UIImage value)
+{
+	PRIVATE()->Target = value;
 }
 
 void UIWidget::setContext(UICanvasRaw value)

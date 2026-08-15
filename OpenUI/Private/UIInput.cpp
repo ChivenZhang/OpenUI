@@ -12,9 +12,8 @@
 #include "../UICanvas.h"
 #include "UIPieceTable.h"
 
-class UIInputPrivate : public UIWidgetPrivate
+struct UIInputPrivate : UIPrivate
 {
-public:
 	UIInputStyle Style;
 	UIRef<UIPieceTable> PieceTable;
 	UIRect Selection;
@@ -34,13 +33,13 @@ public:
 	UISignalAs<UIString& /*text*/> OnTextPasted;
 	UISignalAs<UIString const& /*text*/> OnTextCopied;
 };
-#define PRIVATE() ((UIInputPrivate*) m_PrivateInput)
+#define PRIVATE() ((UIInputPrivate*) m_Private)
 
 UIInput::UIInput(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateInput = new UIInputPrivate;
+	m_Private = new UIInputPrivate;
 	PRIVATE()->PieceTable = UINew<UIPieceTable>();
 
 	cursorPositionChanged = &PRIVATE()->OnCursorPositionChanged;
@@ -57,7 +56,7 @@ UIInput::UIInput(UICanvasRaw canvas)
 
 UIInput::~UIInput()
 {
-	delete m_PrivateInput; m_PrivateInput = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIInput::arrange(UIRect client)
@@ -497,16 +496,4 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 			if (getCanvas()) getCanvas()->layoutWidget();
 		}
 	}
-}
-
-UIString UIInputFactory::getTagName() const
-{
-	return "input";
-}
-
-UIWidgetRef UIInputFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UIInput>(getContext());
-	result->setStyleText(style);
-	return result;
 }

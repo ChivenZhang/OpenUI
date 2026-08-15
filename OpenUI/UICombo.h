@@ -120,15 +120,7 @@ public:
 	UISignalAsRaw<UIString /*text*/> textHighlighted;
 
 private:
-	UIWidgetPrivateRaw m_PrivateCombo;
+	UIPrivateRaw m_Private;
 };
 using UIComboRef = UIRef<UICombo>;
 using UIComboRaw = UIRaw<UICombo>;
-
-/// @brief Combo Factory
-class OPENUI_API UIComboFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
-};

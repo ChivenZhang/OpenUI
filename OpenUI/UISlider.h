@@ -77,15 +77,7 @@ public:
 	UISignalAsRaw<int32_t /*min*/, int32_t /*max*/> rangeChanged;
 
 private:
-	UIWidgetPrivateRaw m_PrivateSlider;
+	UIPrivateRaw m_Private;
 };
 using UISliderRef = UIRef<UISlider>;
 using UISliderRaw = UIRaw<UISlider>;
-
-/// @brief Handle factory
-class OPENUI_API UISliderFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
-};

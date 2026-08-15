@@ -13,9 +13,8 @@
 #include "../UIScroll.h"
 #include "../UICanvas.h"
 
-class UIComboPrivate : public UIWidgetPrivate
+struct UIComboPrivate : UIPrivate
 {
-public:
 	int32_t Index = -1;
 	int32_t MaxCount = -1;
 	UIStringList Items;
@@ -31,13 +30,13 @@ public:
 	UISignalAs<UIString /*text*/> OnTextActivated;
 	UISignalAs<UIString /*text*/> OnTextHighlighted;
 };
-#define PRIVATE() ((UIComboPrivate*)m_PrivateCombo)
+#define PRIVATE() ((UIComboPrivate*)m_Private)
 
 UICombo::UICombo(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateCombo = new UIComboPrivate;
+	m_Private = new UIComboPrivate;
 
 	activated = &PRIVATE()->OnActivated;
 	currentIndexChanged = &PRIVATE()->OnCurrentIndexChanged;
@@ -55,7 +54,7 @@ UICombo::UICombo(UICanvasRaw canvas)
 	PRIVATE()->Button->clicked->connect(this, [=](bool checked) {
 		auto posX = PRIVATE()->Button->getPosX();
 		auto posY = PRIVATE()->Button->getPosY() + PRIVATE()->Button->getHeight() + 2;
-		PRIVATE()->Popup->setFixedPos(posX, posY);
+		PRIVATE()->Popup->setFixedPos({posX, UI_CSS_LEFT_LENGTH}, {posY, UI_CSS_TOP_LENGTH});
 		PRIVATE()->Popup->getHorizontalBar()->setValue(0);
 		PRIVATE()->Popup->getVerticalBar()->setValue(0);
 		getCanvas()->addWidget(PRIVATE()->Popup, 1);
@@ -64,20 +63,25 @@ UICombo::UICombo(UICanvasRaw canvas)
 
 UICombo::~UICombo()
 {
-	delete m_PrivateCombo; m_PrivateCombo = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UICombo::arrange(UIRect client)
 {
-	setMinWidth(30);
-	setJustifyContent(UI::JustifySpaceEvenly);
-	PRIVATE()->Button->setFlexGrow(1);
-	PRIVATE()->Button->getLabel()->setMargin({ 8, 0, 20, 0 });
+	setMinWidth({30});
+	setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
+	PRIVATE()->Button->setFlexGrow({1});
+	PRIVATE()->Button->getLabel()->setMargin(
+		{8, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH},
+		{20, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH}
+		);
 
-	PRIVATE()->Popup->setAlignItems(UI::AlignStretch);
-	PRIVATE()->Popup->setJustifyContent(UI::JustifySpaceEvenly);
-	PRIVATE()->Popup->setPositionType(UI::PositionAbsolute);
-	PRIVATE()->Popup->setFixedHeight(0);
+	PRIVATE()->Popup->setAlignItems({UI_CSS_ALIGN_ITEMS_STRETCH});
+	PRIVATE()->Popup->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
+	PRIVATE()->Popup->setPositionType({UI_CSS_POSITION_ABSOLUTE});
+	PRIVATE()->Popup->setFixedHeight({0, UI_CSS_HEIGHT_LENGTH});
 
 	auto painter = getCanvas()->getPainter();
 	painter->setFont(PRIVATE()->Style.Button.Label.Normal.Foreground.Font);
@@ -85,36 +89,36 @@ void UICombo::arrange(UIRect client)
 	auto content = PRIVATE()->Popup->getContentView();
 	if (content)
 	{
-		content->setFixedWidth(0);
-		content->setFixedHeight(0);
+		content->setFixedWidth({0, UI_CSS_WIDTH_LENGTH});
+		content->setFixedHeight({0, UI_CSS_HEIGHT_LENGTH});
 		for (size_t i = 0; content && i < content->getWidgets().size(); ++i)
 		{
 			auto itemWidget = UICast<UIButton>(content->getWidgets()[i]);
 			auto textRect = painter->boundingRect(0, 0, FLT_MAX, FLT_MAX, itemWidget->getText(), 0);
 
-			content->getWidgets()[i]->setFlexGrow(1);
-			content->getWidgets()[i]->setMinWidth(textRect.W);
-			content->getWidgets()[i]->setMinHeight(textRect.H);
-			content->setFixedWidth(std::max(content->getFixedWidth().Value, textRect.W + 8 + 20));
-			content->setFixedHeight(content->getFixedHeight() + textRect.H);
+			content->getWidgets()[i]->setFlexGrow({1, UI_CSS_FLEX_GROW_NUMBER});
+			content->getWidgets()[i]->setMinWidth({textRect.W, UI_CSS_MIN_WIDTH_LENGTH});
+			content->getWidgets()[i]->setMinHeight({textRect.H, UI_CSS_MIN_HEIGHT_LENGTH});
+			content->setFixedWidth({std::max(content->getFixedWidth().Value, textRect.W + 8 + 20), UI_CSS_WIDTH_LENGTH});
+			content->setFixedHeight({content->getFixedHeight().Value + textRect.H, UI_CSS_HEIGHT_LENGTH});
 
-			if (std::isnan(getFixedWidth()) == false)
+			if (std::isnan(getFixedWidth().Value) == false)
 			{
-				content->setFixedWidth(std::max<float>(getFixedWidth(), content->getFixedWidth()));
-				PRIVATE()->Popup->setFixedWidth(std::max<float>(getFixedWidth(), content->getFixedWidth()));
+				content->setFixedWidth({std::max<float>(getFixedWidth().Value, content->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
+				PRIVATE()->Popup->setFixedWidth({std::max<float>(getFixedWidth().Value, content->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
 			}
-			PRIVATE()->Popup->setFixedWidth(std::max<float>(PRIVATE()->Popup->getFixedWidth(), content->getFixedWidth()));
-			if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight(content->getFixedHeight());
+			PRIVATE()->Popup->setFixedWidth({std::max<float>(PRIVATE()->Popup->getFixedWidth().Value, content->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
+			if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight({content->getFixedHeight().Value, UI_CSS_HEIGHT_LENGTH});
 		}
 	}
 	else
 	{
-		if (std::isnan(getFixedWidth()) == false)
+		if (std::isnan(getFixedWidth().Value) == false)
 		{
-			PRIVATE()->Popup->setFixedWidth(std::max<float>(getFixedWidth(), PRIVATE()->Popup->getFixedWidth()));
+			PRIVATE()->Popup->setFixedWidth({std::max<float>(getFixedWidth().Value, PRIVATE()->Popup->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
 		}
 	}
-	PRIVATE()->Popup->setFixedHeight(std::max<float>(painter->getFont().Size, PRIVATE()->Popup->getFixedHeight()));
+	PRIVATE()->Popup->setFixedHeight({std::max<float>(painter->getFont().Size, PRIVATE()->Popup->getFixedHeight().Value), UI_CSS_HEIGHT_LENGTH});
 }
 
 void UICombo::layout(UIRect client)
@@ -154,7 +158,12 @@ void UICombo::setItems(UIStringList const& texts)
 		itemsWidget->addWidget(button);
 		button->setText(text);
 		button->setStyle(PRIVATE()->Style.Items);
-		button->getLabel()->setMargin({ 8, 0, 20, 0 });
+		button->getLabel()->setMargin(
+			{ 8, UI_CSS_MARGIN_LENGTH},
+			{0, UI_CSS_MARGIN_LENGTH},
+			{20, UI_CSS_MARGIN_LENGTH},
+			{0, UI_CSS_MARGIN_LENGTH}
+			);
 
 		button->hovered->connect(this, [=]() {
 			PRIVATE()->OnHighlighted.signal(i);
@@ -274,16 +283,4 @@ bool UICombo::filter(UIReactorRaw source, UIEventRaw event)
 	} break;
 	}
 	return false;
-}
-
-UIString UIComboFactory::getTagName() const
-{
-	return "combo";
-}
-
-UIWidgetRef UIComboFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UICombo>(getContext());
-	result->setStyleText(style);
-	return result;
 }

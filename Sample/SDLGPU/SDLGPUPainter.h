@@ -15,8 +15,11 @@
 class SDLGPUPainter : public UIPainter
 {
 public:
-    SDLGPUPainter(int width, int height, UICanvasRaw canvas);
+    SDLGPUPainter(UICanvasRaw canvas, int width, int height);
+    ~SDLGPUPainter() override;
     UICanvasRaw getCanvas() const override;
+    UIImageRaw getTarget() const override;
+    void setTarget(UIImageRaw value) override;
     UIRect boundingRect(float x, float y, float width, float height, const UIString& text, float cursor, UIRectRaw cursorRect) override;
     UIRect boundingRect(float x, float y, float width, float height, const UIString& text, float posX, float posY, int* cursor, UIRectRaw cursorRect) override;
     void drawPoint(float x, float y) override;
@@ -37,16 +40,14 @@ public:
     void setClipping(bool enable) override;
     void setClipRect(float x, float y, float width, float height) override;
     void setViewport(float x, float y, float width, float height) override;
-    void shear(float sh, float sv) override;
+    void skew(float sh, float sv) override;
     void rotate(float angle) override;
     void scale(float dx, float dy) override;
     void translate(float dx, float dy) override;
-    UIList<UIGeometry>& getGeometry() override;
 
 protected:
     UICanvasRaw m_Canvas;
-    UIRect m_ClipRect;
-    UIList<UIGeometry> m_Geometry;
+    UIPrivateRaw m_Private;
 };
 
 #endif

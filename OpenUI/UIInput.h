@@ -110,13 +110,5 @@ public:
 	UISignalAsRaw<UIString const& /*text*/> textCopied;
 
 private:
-	UIWidgetPrivateRaw m_PrivateInput;
-};
-
-/// @brief Input factory
-class OPENUI_API UIInputFactory : public UIFactory
-{
-public:
-	UIString getTagName() const override;
-	UIWidgetRef newWidget(UIString style) const override;
+	UIPrivateRaw m_Private;
 };

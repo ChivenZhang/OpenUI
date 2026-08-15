@@ -11,39 +11,38 @@
 #include "../UIVBox.h"
 
 /// @brief 
-class UIVBoxPrivate : public UIWidgetPrivate
+struct UIVBoxPrivate : UIPrivate
 {
-public:
 	UIVBoxStyle Style;
 };
-#define PRIVATE() ((UIVBoxPrivate*) m_PrivateVBox)
+#define PRIVATE() ((UIVBoxPrivate*) m_Private)
 
 UIVBox::UIVBox(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateVBox = new UIVBoxPrivate;
+	m_Private = new UIVBoxPrivate;
 }
 
 UIVBox::~UIVBox()
 {
-	delete m_PrivateVBox; m_PrivateVBox = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UIVBox::arrange(UIRect client)
 {
-	this->setFlexWrap(UI::FlexNoWrap);
-	this->setAlignItems(UI::AlignStretch);
-	this->setFlexDirection(UI::FlexDirectionColumn);
-	this->setJustifyContent(UI::JustifySpaceEvenly);
+	this->setFlexWrap({UI_CSS_FLEX_WRAP_NOWRAP});
+	this->setAlignItems({UI_CSS_ALIGN_ITEMS_STRETCH});
+	this->setFlexDirection({UI_CSS_FLEX_DIRECTION_COLUMN});
+	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
 	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
 		auto child = getWidgets()[i];
-		if (child->getFixedHeight().Unit == UI::UnitNone) child->setFlexGrow(1.0f);
-		else child->setFlexGrow(0.0f);
-		if (child->getFixedWidth().Unit == UI::UnitNone) child->setAlignSelf(UI::AlignStretch);
-		else child->setAlignSelf(UI::AlignCenter);
+		if (child->getFixedHeight().Type == UI_CSS_HEIGHT_AUTO) child->setFlexGrow({1.0f, UI_CSS_FLEX_GROW_NUMBER});
+		else child->setFlexGrow({0.0f, UI_CSS_FLEX_GROW_NUMBER});
+		if (child->getFixedWidth().Type == UI_CSS_WIDTH_AUTO) child->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
+		else child->setAlignSelf({UI_CSS_ALIGN_SELF_CENTER});
 	}
 }
 
@@ -72,16 +71,3 @@ void UIVBox::setStyle(UIVBoxStyle value)
 {
 	PRIVATE()->Style = value;
 }
-
-UIString UIVBoxFactory::getTagName() const
-{
-	return "vbox";
-}
-
-UIWidgetRef UIVBoxFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UIVBox>(getContext());
-	result->setStyleText(style);
-	return result;
-}
-

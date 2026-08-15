@@ -15,9 +15,8 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize2.h>
 
-class UILabelPrivate : public UIWidgetPrivate
+struct UILabelPrivate : UIPrivate
 {
-public:
 	UILabelStyle Style;
 	UIString Text;
 	UIImage Image, ImageScaled;
@@ -26,13 +25,13 @@ public:
 	bool Hovered = false;
 	UISignalAs<UIString> LinkHovered, LinkActivated;
 };
-#define PRIVATE() ((UILabelPrivate*)m_PrivateLabel)
+#define PRIVATE() ((UILabelPrivate*)m_Private)
 
 UILabel::UILabel(UICanvasRaw canvas)
 	:
 	UIWidget(canvas)
 {
-	m_PrivateLabel = new UILabelPrivate;
+	m_Private = new UILabelPrivate;
 
 	linkHovered = &PRIVATE()->LinkHovered;
 	linkActivated = &PRIVATE()->LinkActivated;
@@ -53,13 +52,13 @@ UILabel::UILabel(UICanvasRaw canvas)
 
 UILabel::~UILabel()
 {
-	delete m_PrivateLabel; m_PrivateLabel = nullptr;
+	delete m_Private; m_Private = nullptr;
 }
 
 void UILabel::layout(UIRect client)
 {
-	if (PRIVATE()->Image.Pixel == nullptr) return;
-	auto rawPixels = PRIVATE()->Image.Pixel;
+	if (PRIVATE()->Image.Pixels == nullptr) return;
+	auto rawPixels = PRIVATE()->Image.Pixels;
 	auto rawWidth = PRIVATE()->Image.Width;
 	auto rawHeight = PRIVATE()->Image.Height;
 	auto rawStride = PRIVATE()->Image.Stride;
@@ -95,7 +94,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
+			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	case ScaleNoRatio:
@@ -111,7 +110,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
+			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	case ScaleKeepRatio:
@@ -137,7 +136,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Pixel = PRIVATE()->PixelScaled.data();
+			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
 	}
@@ -162,7 +161,7 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 	}
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 
-	if (PRIVATE()->Image.Pixel)
+	if (PRIVATE()->Image.Pixels)
 	{
 		switch (PRIVATE()->ScaledContents)
 		{
@@ -271,13 +270,13 @@ UIImage UILabel::getPixmap() const
 
 void UILabel::setPixmap(UIImage image)
 {
-	if (image.Pixel && image.Type == UIImage::Byte && image.Width * 4 == image.Stride)
+	if (image.Pixels && image.Format == UIImage::Byte && image.Width * 4 == image.Stride)
 	{
 		auto channel = image.Stride / image.Width;
 		PRIVATE()->Pixel.resize(image.Width * image.Height * 4);
 		PRIVATE()->Image = UIImage{ image.Width, image.Height, image.Width * 4, 0, PRIVATE()->Pixel.data() };
 		auto dstPixels = PRIVATE()->Pixel.data();
-		auto srcPixels = (uint8_t*)image.Pixel;
+		auto srcPixels = (uint8_t*)image.Pixels;
 		auto numPixels = image.Width * image.Height;
 		for (uint32_t i = 0; i < numPixels; ++i)
 		{
@@ -361,16 +360,4 @@ void UILabel::enterEvent(UIMouseEventRaw event)
 void UILabel::leaveEvent(UIMouseEventRaw event)
 {
 	PRIVATE()->Hovered = false;
-}
-
-UIString UILabelFactory::getTagName() const
-{
-	return "label";
-}
-
-UIWidgetRef UILabelFactory::newWidget(UIString style) const
-{
-	auto result = UINew<UILabel>(getContext());
-	result->setStyleText(style);
-	return result;
 }

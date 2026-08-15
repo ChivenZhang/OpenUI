@@ -26,25 +26,16 @@ public:
 };
 
 /// @brief 
-class UICanvasPrivate
-{
-public:
-	virtual ~UICanvasPrivate() = default;
-};
-using UIContextPrivateRaw = UIRaw<UICanvasPrivate>;
-
-/// @brief 
 class OPENUI_API UICanvas
 {
 public:
 	explicit UICanvas(UIDeviceRaw device, UIConfig config = {});
 	~UICanvas();
 	UIConfig const& getConfig() const;
-
 	UIDeviceRaw getDevice() const;
 	UIBuilderRaw getBuilder() const;
 
-	UIImage getTarget() const;
+	UIImageRaw getTarget() const;
 	void setTarget(UIImage value);
 
 	UIPainterRaw getPainter() const;
@@ -70,12 +61,11 @@ public:
 	bool layoutWidget(UIRect client);
 	void paintWidget();
 	bool paintWidget(UIRect client);
-	void renderWidget(UIRect client);
 	void animateWidget(float time);
 	void updateWidget(float time, UIRect client);
 
 private:
-	UIContextPrivateRaw m_Private;
+	UIPrivateRaw m_Private;
 };
 using UICanvasRef = UIRef<UICanvas>;
 using UICanvasRaw = UIRaw<UICanvas>;
