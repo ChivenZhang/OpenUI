@@ -652,48 +652,50 @@ bool UICanvas::layoutWidget(UIRect client)
 
 bool UICanvas::paintWidget(UIRect client)
 {
-	auto painter = PRIVATE()->Painter.get();
 	auto render = PRIVATE()->Render.get();
+	auto painter = PRIVATE()->Painter.get();
 	auto screenRT = &PRIVATE()->Target;
-	if (painter == nullptr || render == nullptr) return false;
+	if (render == nullptr || painter == nullptr) return false;
 	if (screenRT == nullptr || !screenRT->Handle) return false;
 
 	UILambda<void(UIWidgetRaw, UIRect, UIMat4)> foreach_func;
 	foreach_func = [&](UIWidgetRaw widget, UIRect client, UIMat4 matrix)
 	{
 		if (widget->getVisible() == false) return;
-		auto childList = widget->getWidgets();
-
-		auto widgetRT = render->newImage(screenRT->Width, screenRT->Height);
-		widget->setTarget(widgetRT);
+		auto subWidgets = widget->getWidgets();
 
 		// Paint Widget
 
+		auto widgetRT = render->newImage(screenRT->Width, screenRT->Height);
+		widget->setTarget(widgetRT);
+		painter->setTarget(widget->getTarget()); // Begin Paint
 		widget->paint(client, painter);
+		(void)painter->getTarget();
+		painter->setTarget(nullptr); // End Paint
 
-		for (size_t i = 0; i < childList.size(); ++i)
+		for (size_t i = 0; i < subWidgets.size(); ++i)
 		{
-			auto child = childList[i].get();
-			auto transform = glm::translate(matrix, glm::vec3(child->getTranslate().X, child->getTranslate().Y, 0.0f));
-			transform = glm::rotate(transform, glm::radians(child->getRotate()), {0.0f, 0.0f, 1.0f});
-			transform = glm::scale(transform, glm::vec3(child->getScale()));
+			auto subWidget = subWidgets[i].get();
+			auto transform = glm::translate(matrix, glm::vec3(subWidget->getTranslate().X, subWidget->getTranslate().Y, 0.0f));
+			transform = glm::rotate(transform, glm::radians(subWidget->getRotate()), {0.0f, 0.0f, 1.0f});
+			transform = glm::scale(transform, glm::vec3(subWidget->getScale()));
 
-			foreach_func(child, child->getBounds(), transform);
+			foreach_func(subWidget, subWidget->getBounds(), transform);
 		}
 
 		// Merge Widget
 
-		for (size_t i = 0; i < childList.size(); ++i)
+		for (size_t i = 0; i < subWidgets.size(); ++i)
 		{
-			auto child = childList[i].get();
-			auto transform = glm::translate(matrix, glm::vec3(child->getTranslate().X, child->getTranslate().Y, 0.0f));
-			transform = glm::rotate(transform, glm::radians(child->getRotate()), {0.0f, 0.0f, 1.0f});
-			transform = glm::scale(transform, glm::vec3(child->getScale()));
+			auto subWidget = subWidgets[i].get();
+			auto transform = glm::translate(matrix, glm::vec3(subWidget->getTranslate().X, subWidget->getTranslate().Y, 0.0f));
+			transform = glm::rotate(transform, glm::radians(subWidget->getRotate()), {0.0f, 0.0f, 1.0f});
+			transform = glm::scale(transform, glm::vec3(subWidget->getScale()));
 
-			render->render(client, transform, child->getTarget(), &widgetRT, child->getStyleComputed());
+			render->render(client, transform, subWidget->getTarget(), widget->getTarget(), subWidget->getStyleComputed());
 
-			render->delImage(*child->getTarget());
-			child->setTarget({});
+			render->delImage(*subWidget->getTarget());
+			subWidget->setTarget({});
 		}
 
 		// Filter Widget
@@ -701,7 +703,10 @@ bool UICanvas::paintWidget(UIRect client)
 		auto& cssFilter = widget->getStyle<UIPropFilter>("filter");
 		if (auto filter = this->getRender(cssFilter.Func))
 		{
-			filter->render(client, matrix, &widgetRT, nullptr, widget->getStyleComputed());
+			auto filterRT = render->newImage(screenRT->Width, screenRT->Height);
+			filter->render(client, matrix, widget->getTarget(), &filterRT, widget->getStyleComputed());
+			render->delImage(*widget->getTarget());
+			widget->setTarget(filterRT);
 		}
 	};
 

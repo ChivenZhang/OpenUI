@@ -12,7 +12,9 @@ add_executable (Sample ${OPENUI_SAMPLE_SRC}
 		SDLGPU/SDLGPUEffector.cpp
 		SDLGPU/SDLGPUEffector.h
 		SDLGPU/SDLGPUMerger.cpp
-		SDLGPU/SDLGPUMerger.h)
+		SDLGPU/SDLGPUMerger.h
+        SDLGPU/SDLGPUInverter.cpp
+        SDLGPU/SDLGPUInverter.h)
 add_dependencies(Sample OpenUI OpenVG)
 
 find_package(SDL3 CONFIG REQUIRED)

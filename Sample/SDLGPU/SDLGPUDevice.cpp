@@ -10,13 +10,22 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_SDLGPU
 #include "SDLGPUDevice.h"
+#include "SDLGPUMerger.h"
+#include "SDLGPUInverter.h"
+#include "SDLGPUPainter.h"
+#include "SDLGPURender.h"
 #include "../SDL3InputEnum.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+#include <screen.vert.h>
+#include <screen.frag.h>
 
-#include "SDLGPUMerger.h"
-#include "SDLGPUPainter.h"
-#include "SDLGPURender.h"
+static const UIPointUV vertices[]
+{
+	{-1.0f, -1.0f, 0.0f, 1.0f}, // 左下
+	{3.0f, -1.0f, 2.0f, 1.0f}, // 右下（超出右边界）
+	{-1.0f, 3.0f, 0.0f, -1.0f}, // 左上（超出上边界）
+};
 
 SDLGPUDevice::SDLGPUDevice()
 {
@@ -33,7 +42,7 @@ SDLGPUDevice::SDLGPUDevice()
 
 	// Initialize SDLGPU Context
 
-	auto device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
+	auto device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, "vulkan");
 	if (device == nullptr)
 	{
 		SDL_DestroyWindow(window);
@@ -41,6 +50,8 @@ SDLGPUDevice::SDLGPUDevice()
 		SDL_Quit();
 		UI_FATAL("SDLGPU could not be initialized!");
 	}
+	m_Device = device;
+    m_Window = window;
 
 	UI_INFO("Use GPU backend: %s", SDL_GetGPUDeviceDriver(device));
 
@@ -60,20 +71,155 @@ SDLGPUDevice::SDLGPUDevice()
 	auto painter = UINew<SDLGPUPainter>(canvas.get(), w, h);
     canvas->setRender(render);
     canvas->setPainter(painter);
+	canvas->setRender(UINew<SDLGPUInverter>(canvas.get(), w, h));
     m_Canvas = canvas;
 
     SDL_ShowWindow(window);
-    m_Window = window;
-	m_Device = device;
+
+	SDL_GPUShaderCreateInfo vs_info = {
+		.code_size = sizeof(screen_vert),
+		.code = (uint8_t*)screen_vert,
+		.entrypoint = "VSMain",
+		.format = SDL_GPU_SHADERFORMAT_SPIRV,
+		.stage = SDL_GPU_SHADERSTAGE_VERTEX,
+		.num_samplers = 0,
+		.num_storage_textures = 0,
+		.num_storage_buffers = 0,
+		.num_uniform_buffers = 0,
+	};
+	SDL_GPUShader *vs_shader = SDL_CreateGPUShader(device, &vs_info);
+
+	SDL_GPUShaderCreateInfo fs_info = {
+		.code_size = sizeof(screen_frag),
+		.code = (uint8_t*)screen_frag,
+		.entrypoint = "FSMain",
+		.format = SDL_GPU_SHADERFORMAT_SPIRV,
+		.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
+		.num_samplers = 1,
+		.num_storage_textures = 0,
+		.num_storage_buffers = 0,
+		.num_uniform_buffers = 0,
+	};
+	SDL_GPUShader *fs_shader = SDL_CreateGPUShader(device, &fs_info);
+
+	SDL_GPUVertexBufferDescription vb_desc = {
+		.slot = 0,
+		.pitch = sizeof(UIPointUV),
+		.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+		.instance_step_rate = 0,
+	};
+
+	SDL_GPUVertexAttribute attrs[2] = {
+		{
+			.location = 0,
+			.buffer_slot = 0,
+			.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+			.offset = offsetof(UIPointUV, X),
+		},
+		{
+			.location = 1,
+			.buffer_slot = 0,
+			.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+			.offset = offsetof(UIPointUV, U),
+		},
+	};
+
+	SDL_GPUVertexInputState vertex_input = {
+		.vertex_buffer_descriptions = &vb_desc,
+		.num_vertex_buffers = 1,
+		.vertex_attributes = attrs,
+		.num_vertex_attributes = 2,
+	};
+
+	SDL_GPUTextureFormat swap_fmt = SDL_GetGPUSwapchainTextureFormat(device, window);
+
+	SDL_GPUColorTargetDescription color_desc = {
+		.format = swap_fmt,
+		.blend_state = {
+			.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+			.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+			.color_blend_op = SDL_GPU_BLENDOP_ADD,
+			.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+			.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+			.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+			.enable_blend = false,
+		},
+	};
+
+	SDL_GPUMultisampleState ms_state = {
+		.sample_count = SDL_GPU_SAMPLECOUNT_1,
+	};
+
+	SDL_GPUGraphicsPipelineTargetInfo target_info = {
+		.color_target_descriptions = &color_desc,
+		.num_color_targets = 1,
+	};
+
+	SDL_GPUGraphicsPipelineCreateInfo pipe_info = {
+		.vertex_shader = vs_shader,
+		.fragment_shader = fs_shader,
+		.vertex_input_state = vertex_input,
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+		.multisample_state = ms_state,
+		.target_info = target_info,
+	};
+	m_Pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipe_info);
+	SDL_ReleaseGPUShader(device, vs_shader);
+	SDL_ReleaseGPUShader(device, fs_shader);
+
+	SDL_GPUSamplerCreateInfo sampler_info = {
+		.min_filter = SDL_GPU_FILTER_LINEAR,
+		.mag_filter = SDL_GPU_FILTER_LINEAR,
+		.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+		.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+		.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+	};
+	m_Sampler = SDL_CreateGPUSampler(device, &sampler_info);
+
+	SDL_GPUBufferCreateInfo buf_info = {
+		.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+		.size = sizeof(vertices),
+	};
+	m_Buffer = SDL_CreateGPUBuffer(device, &buf_info);
+
+	// 上传顶点数据
+	SDL_GPUCommandBuffer *upload_cmd = SDL_AcquireGPUCommandBuffer(device);
+	SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(upload_cmd);
+	SDL_GPUTransferBufferCreateInfo tbInfo = {
+		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		.size = sizeof(vertices),
+	};
+	SDL_GPUTransferBuffer *staging = SDL_CreateGPUTransferBuffer( device, &tbInfo);
+	memcpy(SDL_MapGPUTransferBuffer(device, staging, false), vertices, sizeof(vertices));
+	SDL_UnmapGPUTransferBuffer(device, staging);
+
+	SDL_GPUBufferRegion buf_region = {
+		.buffer = m_Buffer,
+		.offset = 0,
+		.size = sizeof(vertices),
+	};
+	SDL_GPUTransferBufferLocation transfer_loc = {
+		.transfer_buffer = staging,
+		.offset = 0,
+	};
+	SDL_UploadToGPUBuffer(copy_pass, &transfer_loc, &buf_region, false);
+	SDL_EndGPUCopyPass(copy_pass);
+	SDL_SubmitGPUCommandBuffer(upload_cmd);
+	SDL_ReleaseGPUTransferBuffer(device, staging);
 }
 
 SDLGPUDevice::~SDLGPUDevice()
 {
     m_Canvas = nullptr;
 
+	SDL_ReleaseGPUGraphicsPipeline(m_Device, m_Pipeline); m_Pipeline = nullptr;
+	SDL_ReleaseGPUSampler(m_Device, m_Sampler); m_Sampler = nullptr;
+	SDL_ReleaseGPUBuffer(m_Device, m_Buffer); m_Buffer = nullptr;
+
 	SDL_ReleaseWindowFromGPUDevice(m_Device, m_Window);
-	SDL_DestroyGPUDevice(m_Device);
-    SDL_DestroyWindow(m_Window);
+	SDL_DestroyGPUDevice(m_Device); m_Device = nullptr;
+    SDL_DestroyWindow(m_Window); m_Window = nullptr;
 }
 
 UICanvasRaw SDLGPUDevice::getCanvas() const
@@ -112,6 +258,8 @@ bool SDLGPUDevice::update()
 {
 	auto canvas = getCanvas();
 	auto window = getWindow();
+	auto device = getDevice();
+	auto render = canvas->getRender({});
 
 	// Send events to OpenUI
 
@@ -273,34 +421,43 @@ bool SDLGPUDevice::update()
 
 	// Output frame to screen
 
+	int32_t width = 0, height = 0;
+	SDL_GetWindowSize(window, &width, &height);
 
-	// 获取命令缓冲区 (Command Buffer)
-	SDL_GPUCommandBuffer *cmdBuf = SDL_AcquireGPUCommandBuffer(m_Device);
-	if (cmdBuf == NULL)
-	{
-		UI_ERROR("获取 GPU Command Buffer 失败: %s", SDL_GetError());
-		return false;
-	}
+	auto source = render->newImage(width, height);
+	canvas->setTarget(source);
+	canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)width, (float)height});
 
+	// Copy frame to screen
+
+	auto cmd = SDL_AcquireGPUCommandBuffer(m_Device);
 	SDL_GPUTexture* screenRT = nullptr;
-	uint32_t screenWidth = 0, screenHeight = 0;
-	if (SDL_AcquireGPUSwapchainTexture(cmdBuf, window, &screenRT, &screenWidth, &screenHeight) && screenRT)
+	if (cmd && SDL_AcquireGPUSwapchainTexture(cmd, window, &screenRT, nullptr, nullptr) && screenRT)
 	{
-		SDL_SubmitGPUCommandBuffer(cmdBuf);
-
-		UIImage target
-		{
-			.Width = screenWidth,
-			.Height = screenHeight,
-			.Stride = screenWidth * 4,
-			.Channel = 4,
-			.Handle = reinterpret_cast<uint64_t>(screenRT),
-			.Format = UIImage::GPUByte,
+		SDL_GPUColorTargetInfo color_attachment = {
+			.texture = screenRT,
+			.clear_color = {0, 0, 0, 1},
+			.load_op = SDL_GPU_LOADOP_CLEAR,
+			.store_op = SDL_GPU_STOREOP_STORE,
 		};
-		canvas->setTarget(target);
-
-		canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)screenWidth, (float)screenHeight});
+		auto pass = SDL_BeginGPURenderPass(cmd, &color_attachment, 1, nullptr);
+		SDL_GPUBufferBinding vb_binding = {
+			.buffer = m_Buffer,
+			.offset = 0,
+		};
+		SDL_BindGPUVertexBuffers(pass, 0, &vb_binding, 1);
+		SDL_GPUTextureSamplerBinding sampler_binding = {
+			.texture = (SDL_GPUTexture*)source.Handle,
+			.sampler = m_Sampler,
+		};
+		SDL_BindGPUFragmentSamplers(pass, 0, &sampler_binding, 1);
+		SDL_BindGPUGraphicsPipeline(pass, m_Pipeline);
+		SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
+		SDL_EndGPURenderPass(pass);
+		SDL_SubmitGPUCommandBuffer(cmd);
 	}
+
+	render->delImage(source);
 	return true;
 }
 

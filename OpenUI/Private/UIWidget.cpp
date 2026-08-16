@@ -924,6 +924,7 @@ bool UIWidget::setStyleText(UIString name, UIString value)
 		case UIHash("direction"): setStyle<UIPropDirection>(name, {}, true); break;
 		case UIHash("display"): setStyle<UIPropDisplay>(name); break;
 		//case UIHash("dominant-baseline"): setStyle<UIPropDominantBaseline>(name); break;
+		case UIHash("filter"): setStyle<UIPropFilter>(name); break;
 		//case UIHash("flex"): setStyle<UIPropFlex>(name); break;
 		case UIHash("flex-basis"): setStyle<UIPropFlexBasis>(name); break;
 		//case UIHash("flex-direction"): setStyle<UIPropFlexDirection>(name); break;

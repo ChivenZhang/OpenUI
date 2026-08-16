@@ -2590,6 +2590,38 @@ inline bool UITypeC(UIPropZIndex const& src, UIString& dst)
     }
 }
 
+// Filter (func)
+template <>
+inline bool UITypeC(UIString const& src, UIPropFilter& dst)
+{
+    auto s = UITrim(src);
+    switch (UIHash(s))
+    {
+    default: break;
+    case UIHash("none"): dst.Value = UI_CSS_FILTER_NONE;
+        return true;
+    }
+    dst.Value = UI_CSS_FILTER_CUSTOM0;
+    char buffer0[256] = {};
+    char buffer1[256] = {};
+    std::sscanf(src.c_str(), "%255[^(](%255[^)]", buffer0, buffer1);
+    dst.Func = buffer0;
+    dst.Args = buffer1;
+    return true;
+}
+template <>
+inline bool UITypeC(UIPropFilter const& src, UIString& dst)
+{
+    switch (src.Value)
+    {
+    default: return false;
+    case UI_CSS_FILTER_NONE: dst = "none";
+        return true;
+    case UI_CSS_FILTER_CUSTOM0: dst = src.Func + "(" + src.Args + ")";
+        return true;
+    }
+}
+
 // Note: Not all properties' tokens/keywords are exhaustively implemented here. This provides full numeric parsing for length/percentage/number where applicable and common keyword mappings. Further refinements can be added per-property on request.
 
 
