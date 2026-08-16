@@ -11,6 +11,7 @@
 #ifdef OPENUI_ENABLE_SDLGPU
 #include "SDLGPUDevice.h"
 #include "SDLGPUMerger.h"
+#include "SDLGPUInverter.h"
 #include "SDLGPUPainter.h"
 #include "SDLGPURender.h"
 #include "../SDL3InputEnum.h"
@@ -19,7 +20,12 @@
 #include <screen.vert.h>
 #include <screen.frag.h>
 
-struct Vertex { float x, y, u, v; };
+static const UIPointUV vertices[]
+{
+	{-1.0f, -1.0f, 0.0f, 1.0f}, // 左下
+	{3.0f, -1.0f, 2.0f, 1.0f}, // 右下（超出右边界）
+	{-1.0f, 3.0f, 0.0f, -1.0f}, // 左上（超出上边界）
+};
 
 SDLGPUDevice::SDLGPUDevice()
 {
@@ -65,6 +71,7 @@ SDLGPUDevice::SDLGPUDevice()
 	auto painter = UINew<SDLGPUPainter>(canvas.get(), w, h);
     canvas->setRender(render);
     canvas->setPainter(painter);
+	canvas->setRender(UINew<SDLGPUInverter>(canvas.get(), w, h));
     m_Canvas = canvas;
 
     SDL_ShowWindow(window);
@@ -97,7 +104,7 @@ SDLGPUDevice::SDLGPUDevice()
 
 	SDL_GPUVertexBufferDescription vb_desc = {
 		.slot = 0,
-		.pitch = sizeof(Vertex),
+		.pitch = sizeof(UIPointUV),
 		.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
 		.instance_step_rate = 0,
 	};
@@ -107,13 +114,13 @@ SDLGPUDevice::SDLGPUDevice()
 			.location = 0,
 			.buffer_slot = 0,
 			.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-			.offset = offsetof(Vertex, x),
+			.offset = offsetof(UIPointUV, X),
 		},
 		{
 			.location = 1,
 			.buffer_slot = 0,
 			.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-			.offset = offsetof(Vertex, u),
+			.offset = offsetof(UIPointUV, U),
 		},
 	};
 
@@ -169,12 +176,6 @@ SDLGPUDevice::SDLGPUDevice()
 		.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 	};
 	m_Sampler = SDL_CreateGPUSampler(device, &sampler_info);
-
-	const Vertex vertices[] = {
-		{-1.0f, -1.0f, 0.0f, 0.0f},  // 左下
-		{ 3.0f, -1.0f, 2.0f, 0.0f},  // 右下
-		{-1.0f,  3.0f, 0.0f, 2.0f},  // 左上
-	};
 
 	SDL_GPUBufferCreateInfo buf_info = {
 		.usage = SDL_GPU_BUFFERUSAGE_VERTEX,

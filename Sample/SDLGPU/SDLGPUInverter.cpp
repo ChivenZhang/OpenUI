@@ -8,11 +8,11 @@
 * Created by chivenzhang@gmail.com.
 *
 * =================================================*/
-#include "SDLGPUMerger.h"
+#include "SDLGPUInverter.h"
 #include "SDLGPUDevice.h"
 #include <SDL3/SDL_gpu.h>
-#include <merge.vert.h>
-#include <merge.frag.h>
+#include <invert.vert.h>
+#include <invert.frag.h>
 
 static const UIPointUV vertices[]
 {
@@ -21,18 +21,18 @@ static const UIPointUV vertices[]
     {-1.0f, 3.0f, 0.0f, -1.0f}, // 左上（超出上边界）
 };
 
-SDLGPUMerger::SDLGPUMerger(UICanvasRaw canvas, int width, int height)
+SDLGPUInverter::SDLGPUInverter(UICanvasRaw canvas, int width, int height)
     :
     SDLGPURender(canvas, width, height)
 {
     auto device = UICast<SDLGPUDevice>(getCanvas()->getDevice())->getDevice();
 
     // Create Graphics Pipeline
-    
+
     SDL_GPUShaderCreateInfo vsInfo
     {
-        .code_size = sizeof(merge_vert),
-        .code = (uint8_t*)(void*)merge_vert,
+        .code_size = sizeof(invert_vert),
+        .code = (uint8_t*)(void*)invert_vert,
         .entrypoint = "VSMain",
         .format = SDL_GPU_SHADERFORMAT_SPIRV,
         .stage = SDL_GPU_SHADERSTAGE_VERTEX,
@@ -46,8 +46,8 @@ SDLGPUMerger::SDLGPUMerger(UICanvasRaw canvas, int width, int height)
 
     SDL_GPUShaderCreateInfo fsInfo
     {
-        .code_size = sizeof(merge_frag),
-        .code = (uint8_t*)(void*)merge_frag,
+        .code_size = sizeof(invert_frag),
+        .code = (uint8_t*)(void*)invert_frag,
         .entrypoint = "FSMain",
         .format = SDL_GPU_SHADERFORMAT_SPIRV,
         .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
@@ -124,7 +124,7 @@ SDLGPUMerger::SDLGPUMerger(UICanvasRaw canvas, int width, int height)
     SDL_ReleaseGPUShader(device, fshader);
 
     // Create Vertex Buffer
-    
+
     SDL_GPUBufferCreateInfo bufInfo = {0};
     bufInfo.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
     bufInfo.size = sizeof(vertices);
@@ -162,9 +162,9 @@ SDLGPUMerger::SDLGPUMerger(UICanvasRaw canvas, int width, int height)
     SDL_EndGPUCopyPass(copyPass);
     SDL_SubmitGPUCommandBuffer(cmd);
     SDL_ReleaseGPUTransferBuffer(device, transferBuf);
-    
+
     // Create Texture Sampler
-    
+
     SDL_GPUSamplerCreateInfo samplerInfo
     {
         .min_filter = SDL_GPU_FILTER_LINEAR,
@@ -178,7 +178,7 @@ SDLGPUMerger::SDLGPUMerger(UICanvasRaw canvas, int width, int height)
     if (!m_Sampler) UI_FATAL("sampler create failed: %s", SDL_GetError());
 }
 
-SDLGPUMerger::~SDLGPUMerger()
+SDLGPUInverter::~SDLGPUInverter()
 {
     auto device = UICast<SDLGPUDevice>(getCanvas()->getDevice())->getDevice();
     SDL_WaitForGPUIdle(device);
@@ -191,7 +191,12 @@ SDLGPUMerger::~SDLGPUMerger()
     m_Pipeline = nullptr;
 }
 
-void SDLGPUMerger::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style)
+UIString SDLGPUInverter::getName() const
+{
+    return "invert";
+}
+
+void SDLGPUInverter::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style)
 {
     if (srcImg == nullptr || dstImg == nullptr) return;
     auto device = UICast<SDLGPUDevice>(getCanvas()->getDevice())->getDevice();
@@ -199,32 +204,33 @@ void SDLGPUMerger::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIIma
     auto dstTexture = (SDL_GPUTexture*)dstImg->Handle;
 
     auto cmdBuf = SDL_AcquireGPUCommandBuffer(device);
-    UIAssert(cmdBuf);
 
-    SDL_GPUColorTargetInfo colorTarget = {};
-    colorTarget.texture = dstTexture;
-    colorTarget.clear_color = SDL_FColor{0, 0, 0, 1};
-    colorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTarget.store_op = SDL_GPU_STOREOP_STORE;
+    if (cmdBuf)
+    {
+        SDL_GPUColorTargetInfo colorTarget = {};
+        colorTarget.texture = dstTexture;
+        colorTarget.clear_color = SDL_FColor{0, 0, 0, 1};
+        colorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
+        colorTarget.store_op = SDL_GPU_STOREOP_STORE;
+        auto pass = SDL_BeginGPURenderPass(
+            cmdBuf,
+            &colorTarget,
+            1,
+            nullptr
+        );
 
-    auto pass = SDL_BeginGPURenderPass(
-        cmdBuf,
-        &colorTarget,
-        1,
-        nullptr
-    );
+        SDL_BindGPUGraphicsPipeline(pass, m_Pipeline);
 
-    SDL_BindGPUGraphicsPipeline(pass, m_Pipeline);
+        SDL_GPUBufferBinding bindBuffer{.buffer = m_Buffer, .offset = 0,};
+        SDL_BindGPUVertexBuffers(pass, 0, &bindBuffer, 1);
 
-    SDL_GPUBufferBinding bindBuffer{.buffer = m_Buffer, .offset = 0,};
-    SDL_BindGPUVertexBuffers(pass, 0, &bindBuffer, 1);
+        SDL_GPUTextureSamplerBinding bindSampler = {.texture = srcTexture, .sampler = m_Sampler};
+        SDL_BindGPUFragmentSamplers(pass, 0, &bindSampler, 1);
 
-    SDL_GPUTextureSamplerBinding bindSampler = {.texture = srcTexture, .sampler = m_Sampler};
-    SDL_BindGPUFragmentSamplers(pass, 0, &bindSampler, 1);
+        SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
 
-    SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
-
-    SDL_EndGPURenderPass(pass);
+        SDL_EndGPURenderPass(pass);
+    }
 
     SDL_SubmitGPUCommandBuffer(cmdBuf);
 }

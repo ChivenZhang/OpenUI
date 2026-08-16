@@ -21,5 +21,6 @@ SamplerState linearSampler : register(s0, space2);
 
 [shader("fragment")]
 float4 FSMain(VSOutput input) : SV_Target0 {
-  return srcTexture.Sample(linearSampler, input.uv);
+  float4 color = srcTexture.Sample(linearSampler, input.uv);
+  return float4(1.0 - color.rgb, color.a);
 }

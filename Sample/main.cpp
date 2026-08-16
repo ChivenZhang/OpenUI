@@ -39,7 +39,7 @@ int main()
 				}
 			</style>
 			<div>
-				<button>My Button</button>
+				<button style='filter:invert()'>My Button</button>
 			</div>
 	    )"));
 		
