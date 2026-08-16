@@ -303,6 +303,8 @@ struct mem_resource_t;
 struct ovg_path_t;
 // 矢量对象
 struct rvg_t;
+// 录制
+struct ovg_recording_t;
 
 // 接口
 struct ovg_canvas_cb {
@@ -440,7 +442,7 @@ struct ovg_ctx_cb {
 	void(*elliptic_arc_to)(rvg_t* ctx, float x, float y, bool large_arc_flag, bool sweep_flag, float rx, float ry, float phi);
 	void(*rel_elliptic_arc_to)(rvg_t* ctx, float x, float y, bool large_arc_flag, bool sweep_flag, float rx, float ry, float phi);
 	void(*circle)(rvg_t* ctx, float x, float y, float radius);
-	// 配置
+	// 配置状态
 	void(*set_opacity)(rvg_t* ctx, float opacity);
 	void(*set_source_color)(rvg_t* ctx, uint32_t c);
 	void(*set_source_rgba)(rvg_t* ctx, float r, float g, float b, float a);
@@ -473,8 +475,8 @@ struct ovg_ctx_cb {
 	void(*pattern_set_extend)(vg_pattern_t* pat, int extend);
 	void(*pattern_set_filter)(vg_pattern_t* pat, int filter);
 
-	void(*save)(rvg_t* v);
-	void(*restore)(rvg_t* v);
+	void(*save)(rvg_t* v);		// 保存状态，（裁剪状态暂不实现）
+	void(*restore)(rvg_t* v);	// 恢复状态
 	void(*stroke)(rvg_t* v);
 	void(*stroke_preserve)(rvg_t* v);
 	void(*fill)(rvg_t* v);
@@ -497,6 +499,14 @@ struct ovg_ctx_cb {
 	void (*add_geometry)(rvg_t* dc, vg_surface_t* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
 	// 添加3D几何数据到缓冲区，xyz顶点坐标，color顶点颜色（双面则要双倍），uv顶点纹理坐标，indices索引数据
 	void (*add_geometry3d)(rvg_t* dc, vg_surface_t* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
+	// todo 录制
+	void (*start_recording)(rvg_t* ctx);
+	ovg_recording_t* (*stop_recording)(rvg_t* ctx);
+	void (*replay)(rvg_t* ctx, ovg_recording_t* rec);
+	void (*replay_command)(rvg_t* ctx, ovg_recording_t* rec, uint32_t cmdIndex);
+	uint32_t(*recording_get_count)(ovg_recording_t* rec);
+	void* (*recording_get_data)(ovg_recording_t* rec);
+	void  (*recording_destroy)(ovg_recording_t* rec);
 
 };
 

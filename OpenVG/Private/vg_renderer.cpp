@@ -139,15 +139,9 @@ bool VG_Init(VGState* g, int width, int height) {
 
 	// 3. 通过属性创建 GPU 设备
 	SDL_PropertiesID props = SDL_CreateProperties();
-	SDL_SetPointerProperty(props,
-		SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER,
-		&vkOpts);
-	SDL_SetStringProperty(props,
-		SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING,
-		"vulkan");
-	SDL_SetBooleanProperty(props,
-		SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN,
-		true);
+	SDL_SetPointerProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, &vkOpts);
+	SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "vulkan");
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, true);
 	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
 
 	SDL_GPUDevice* device = g->device = SDL_CreateGPUDeviceWithProperties(props);
@@ -157,17 +151,9 @@ bool VG_Init(VGState* g, int width, int height) {
 		return false;
 	}
 	SDL_ClaimWindowForGPUDevice(g->device, g->window);
-
-	/* ── 6a. Shaders ─────────────────────────────────────── */
-	/* Vertex:   set=1 has 1 uniform buffer (PushConsts + uboGrad) */
-	SDL_GPUShader* vs = CreateShader(g, "vg.vert.spv",
-		SDL_GPU_SHADERSTAGE_VERTEX,
-		0, 0, 0, 1);
-	/* Fragment: set=2 has 1 sampler (sourceTex)
-	 *           set=3 has 1 uniform buffer            */
-	SDL_GPUShader* fs = CreateShader(g, "vg.frag.spv",
-		SDL_GPU_SHADERSTAGE_FRAGMENT,
-		1, 0, 0, 1);
+	 
+	SDL_GPUShader* vs = CreateShader(g, "vg.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 1); 
+	SDL_GPUShader* fs = CreateShader(g, "vg.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 1);
 	if (!vs || !fs) return false;
 
 	/* ── 6b. Vertex input layout ─────────────────────────── */
@@ -319,6 +305,7 @@ bool resize_res(VGState* g, size_t vcount) {
 		g->vertexBuffer = SDL_CreateGPUBuffer(g->device, &bc);
 		if (!g->vertexBuffer) return false;
 	}
+	return true;
 }
 SDL_GPUTexture* CreateWhiteTexture16x16(SDL_GPUDevice* device) {
 	const int W = 16, H = 16;
