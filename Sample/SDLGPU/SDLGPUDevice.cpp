@@ -258,6 +258,7 @@ bool SDLGPUDevice::update()
 	auto canvas = getCanvas();
 	auto window = getWindow();
 	auto device = getDevice();
+	auto render = canvas->getRender({});
 
 	// Send events to OpenUI
 
@@ -422,7 +423,6 @@ bool SDLGPUDevice::update()
 	int32_t width = 0, height = 0;
 	SDL_GetWindowSize(window, &width, &height);
 
-	auto render = canvas->getRender({});
 	auto source = render->newImage(width, height);
 	canvas->setTarget(source);
 	canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)width, (float)height});
@@ -430,8 +430,6 @@ bool SDLGPUDevice::update()
 	// Copy frame to screen
 
 	auto cmd = SDL_AcquireGPUCommandBuffer(m_Device);
-	if (cmd == nullptr) UI_ERROR("获取 GPU Command Buffer 失败: %s", SDL_GetError());
-
 	SDL_GPUTexture* screenRT = nullptr;
 	if (cmd && SDL_AcquireGPUSwapchainTexture(cmd, window, &screenRT, nullptr, nullptr) && screenRT)
 	{
@@ -456,9 +454,9 @@ bool SDLGPUDevice::update()
 		SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
 		SDL_EndGPURenderPass(pass);
 		SDL_SubmitGPUCommandBuffer(cmd);
-
-		render->delImage(source);
 	}
+
+	render->delImage(source);
 	return true;
 }
 

@@ -89,13 +89,13 @@ if (OPENUI_ENABLE_SAMPLE)
         )
     endforeach()
 
-    add_custom_target(SampleShaders ALL
+    add_custom_target(Shader ALL
             DEPENDS ${SHADER_OUTPUTS}
     )
 
     add_subdirectory(Sample)
 
-    add_dependencies(Sample SampleShaders)
+    add_dependencies(Sample Shader)
 
     target_include_directories(Sample PUBLIC ${SPV_OUT_DIR})
 endif ()
