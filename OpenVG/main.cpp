@@ -68,7 +68,7 @@ void r_grid_fill(ovg_canvas_cb* cr, rvg_t* vg, vg_state_save_t* sst, ovg_path_t*
 }
 int main()
 {
-	LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
+	//LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
 	std::cout << "Hello OpenVG!" << std::endl;
 	VGState g[1] = {};
 

@@ -405,7 +405,7 @@ struct ovg_canvas_cb {
 
 // 命令模式，没有destroy函数的对象都不需要手动释放
 struct ovg_ctx_cb {
-	mem_resource_t* ac;	// 内存分配器 	
+	mem_resource_t* ac;	// 内存分配器，由new_ctx_cb自己创建 	
 	// 渲染操作，rvg_t可以多次执行fill或stroke/clip
 	rvg_t* (*new_rvg)(mem_resource_t* ac);
 	void (*destroy_rvg)(rvg_t* p);
@@ -473,6 +473,8 @@ struct ovg_ctx_cb {
 	void(*pattern_set_extend)(vg_pattern_t* pat, int extend);
 	void(*pattern_set_filter)(vg_pattern_t* pat, int filter);
 
+	void(*save)(rvg_t* v);
+	void(*restore)(rvg_t* v);
 	void(*stroke)(rvg_t* v);
 	void(*stroke_preserve)(rvg_t* v);
 	void(*fill)(rvg_t* v);
