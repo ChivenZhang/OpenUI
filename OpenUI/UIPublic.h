@@ -13,8 +13,8 @@
 
 struct UIPrivate
 {
+    virtual ~UIPrivate() = default;
 };
-
 using UIPrivateRaw = UIRaw<UIPrivate>;
 
 enum

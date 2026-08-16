@@ -33,6 +33,9 @@ public:
 protected:
 	SDL_Window* m_Window;
 	SDL_GPUDevice* m_Device;
+	SDL_GPUBuffer* m_Buffer;
+	SDL_GPUSampler* m_Sampler;
+	SDL_GPUGraphicsPipeline* m_Pipeline;
 	UICanvasRef m_Canvas;
 };
 

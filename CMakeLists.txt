@@ -62,7 +62,7 @@ if (OPENUI_ENABLE_SAMPLE)
         )
         add_custom_command(
                 OUTPUT "${VERT_H}"
-                COMMAND ${GLSLANG_VALIDATOR} ${VERT_GLSL} -V -S vert --vn ${SHADER_NAME}_vert -o ${VERT_H}
+                COMMAND ${GLSLANG_VALIDATOR} ${VERT_GLSL} -V -S vert --source-entrypoint main -e VSMain --vn ${SHADER_NAME}_vert -o ${VERT_H}
                 DEPENDS "${VERT_GLSL}"
                 COMMENT "[${SHADER_NAME}] GLSL → SPIR-V header (vert)"
                 VERBATIM
@@ -77,7 +77,7 @@ if (OPENUI_ENABLE_SAMPLE)
         )
         add_custom_command(
                 OUTPUT "${FRAG_H}"
-                COMMAND ${GLSLANG_VALIDATOR} ${FRAG_GLSL} -V -S frag --vn ${SHADER_NAME}_frag -o ${FRAG_H}
+                COMMAND ${GLSLANG_VALIDATOR} ${FRAG_GLSL} -V -S frag --source-entrypoint main -e FSMain --vn ${SHADER_NAME}_frag -o ${FRAG_H}
                 DEPENDS "${FRAG_GLSL}"
                 COMMENT "[${SHADER_NAME}] GLSL → SPIR-V header (frag)"
                 VERBATIM

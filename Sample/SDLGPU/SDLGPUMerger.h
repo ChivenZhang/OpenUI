@@ -20,6 +20,7 @@ public:
     void render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style) override;
 
 protected:
-    SDL_GPUShader* m_VShader;
-    SDL_GPUShader* m_FShader;
+    SDL_GPUBuffer* m_Buffer;
+    SDL_GPUSampler* m_Sampler;
+    SDL_GPUGraphicsPipeline* m_Pipeline;
 };
