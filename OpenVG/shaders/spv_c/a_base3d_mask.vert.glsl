@@ -7,16 +7,14 @@ layout(row_major) buffer;
 struct PushConsts_0
 {
     mat4x4 mvp_0;
-    float masktime_0;
 };
 
 
-#line 26
-layout(push_constant)
+#line 31
+layout(binding = 0, set = 1)
 layout(scalar) uniform block_PushConsts_0
 {
     mat4x4 mvp_0;
-    float masktime_0;
 }pc_0;
 
 #line 1
@@ -53,7 +51,7 @@ struct VSOutput_0
 };
 
 
-#line 44
+#line 49
 void main()
 {
     VSOutput_0 output_0;
@@ -65,16 +63,16 @@ void main()
 
     VSOutput_0 _S1 = output_0;
 
-#line 53
+#line 58
     gl_Position = output_0.pos_0;
 
-#line 53
+#line 58
     entryPointParam_main_uv_0 = _S1.uv_0;
 
-#line 53
+#line 58
     entryPointParam_main_color_0 = _S1.color_0;
 
-#line 53
+#line 58
     return;
 }
 

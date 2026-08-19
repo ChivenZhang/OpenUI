@@ -14,8 +14,12 @@ else()
     add_compile_options(-finput-charset=UTF-8)
 endif()
 
-file(GLOB_RECURSE OPENVG_SOURCE_FILES "*.cpp" "*.h")
-add_executable(TestVG ${OPENVG_SOURCE_FILES})
+file(GLOB_RECURSE OPENVG_SOURCE_FILES "Private/*.cpp" "*.h" "Private/*.c")
+ set(SRC
+    main.cpp
+    ${OPENVG_SOURCE_FILES}
+)
+add_executable(TestVG ${SRC})
 target_include_directories(TestVG PUBLIC ./)
 
 find_package(SDL3 CONFIG REQUIRED)
@@ -23,3 +27,5 @@ find_package(glm CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 target_link_libraries(TestVG PRIVATE glm::glm-header-only Vulkan::Vulkan GPUOpen::VulkanMemoryAllocator SDL3::SDL3)
+
+target_include_directories(TestVG PRIVATE "Private/tess2/Include"})

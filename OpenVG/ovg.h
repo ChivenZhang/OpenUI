@@ -86,7 +86,7 @@ enum vg_clip_state_t :uint8_t {
 	vg_clip_state_clip_saved = 0x06,
 };
 
-enum vg_operator_t :uint8_t {
+enum class vg_operator_t :uint8_t {
 	VG_OPERATOR_CLEAR,
 
 	VG_OPERATOR_SOURCE,
@@ -94,16 +94,22 @@ enum vg_operator_t :uint8_t {
 	VG_OPERATOR_DIFFERENCE,
 	VG_OPERATOR_MAX,
 };
+enum vg_pipe_t :uint8_t {
+	VG_PIPE_OVER,
+	VG_PIPE_CLEAR,
+	VG_PIPE_SUB,
+	VG_PIPE_CLIPPING
+};
 
 // 渲染命令
 #if 1
 struct push_constants_t {
-	glm::vec4          source;
-	glm::vec2          size;
-	uint32_t      fsq_patternType;
-	float         opacity;
 	glm::mat3x2 mat;
 	glm::mat3x2 matInv;
+	glm::vec4 source;
+	glm::vec2 size;
+	uint32_t fsq_patternType;
+	float opacity;
 };
 #define MAX_STOPS 32
 struct vg_gradient_t {
@@ -136,7 +142,7 @@ struct vg_state_save_t {
 	uint32_t	dashCount;  // value count in dash array, 0 if dash not set.
 	float		dashOffset; // an offset for dash
 	float* dashes;     // an array of alternate lengths of on and off stroke.
-	uint8_t		curOperator;
+	vg_operator_t curOperator;
 	uint8_t		lineCap;
 	uint8_t		lineJoin;
 	uint8_t		curFillRule;
@@ -145,8 +151,7 @@ struct vg_state_save_t {
 	vg_pattern_t* pattern;
 	vg_clip_state_t		clippingState;
 	uint32_t			references = 1;
-	bool aa = true;
-	bool glutessEnable = false;
+	bool aa = false;
 };
 enum class depth_stencil_State :uint8_t {
 	d_depthtest_enable = 0x01,
@@ -231,7 +236,7 @@ struct geomVertex2 {
 	uint32_t color;
 	uint32_t color1;
 };
-struct ovg_draw_data {
+struct ovg_draw_data_t {
 	gcmd_t* d;				// 渲染命令列表
 	size_t count;
 	ovgVertex* vg_vertex;	// 矢量顶点
@@ -509,11 +514,13 @@ struct ovg_ctx_cb {
 	void  (*recording_destroy)(ovg_recording_t* rec);
 
 };
-
+// 对象模式接口
 ovg_canvas_cb* new_canvas_cb();
 void free_canvas_cb(ovg_canvas_cb*);
-
+// 状态机模式接口，两个模式接口创建的对象不能混用
 ovg_ctx_cb* new_ctx_cb();
 void free_ctx_cb(ovg_ctx_cb*);
 
-ovg_draw_data get_draw_list(rvg_t* p);
+ovg_draw_data_t get_draw_list(rvg_t* p);
+
+void draw_grid_fill(rvg_t* vg, glm::vec2 size, glm::ivec2 cols, int width);
