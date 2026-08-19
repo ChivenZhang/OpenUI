@@ -184,12 +184,11 @@ void draw(ovg_ctx_cb* cb, rvg_t* vg, const glm::ivec2& surfsize)
 	cb->clear(vg);
 	cb->set_fill_rule(vg, VG_FILL_RULE_NON_ZERO);
 	glm::vec2 sf = surfsize;
-	//sf *= 0.5;
+	sf *= 0.5;
 	draw_grid_fill(vg, sf, glm::ivec2(-1, 0xffdfdfdf), 20);
-
-
-	//cb->rounded_rectangle(vg, 20, 20, 600, 600, 10);
-	//cb->clip(vg);
+	cb->reset_clip(vg, 0); // 清空模板裁剪值
+	cb->rounded_rectangle(vg, 20, 20, 600, 600, 10);
+	cb->clip(vg);
 	cb->set_source_color(vg, 0xff0080ff);
 	auto pat = cb->new_pattern_linear(vg, 0, 0, 0, 256);
 	cb->pattern_add_color_stop(pat, 0, 0, 0, 1, 1);// 蓝
@@ -208,6 +207,7 @@ void draw(ovg_ctx_cb* cb, rvg_t* vg, const glm::ivec2& surfsize)
 		cb->rectangle(vg, 20, 20, 300, 300);
 		cb->fill(vg);
 	}
+	cb->reset_clip(vg, STENCIL_CLIP_BIT);// 重置裁剪
 	cb->translate(vg, 0, -460);
 	cb->translate(vg, 120, 250);
 	cb->circle(vg, 150, 150, 160);
@@ -257,13 +257,10 @@ void draw(ovg_ctx_cb* cb, rvg_t* vg, const glm::ivec2& surfsize)
 	cb->new_sub_path(vg);	cb->arc_negative(vg, 192, 64, 40, 0, -2 * M_PI);
 	cb->set_fill_rule(vg, VG_FILL_RULE_EVEN_ODD);
 	cb->set_source_rgba(vg, 0, 0.7, 0, 1);
-
-
 	cb->fill_preserve(vg);//填充
-	cb->set_source_rgba(vg, 0, 0, 0, 1);	cb->stroke(vg); //描边
+	cb->set_source_rgba(vg, 0, 0, 0, 1);
+	cb->stroke(vg); //描边
 
-	//cb->rectangle(vg, 20, 150, 200, 100, 10);
-	//cb->clip(vg, vg);// 圆角矩形裁剪
 	cb->set_line_width(vg, 6);
 	cb->save(vg);
 	cb->translate(vg, 0, 128);
@@ -285,13 +282,16 @@ void draw(ovg_ctx_cb* cb, rvg_t* vg, const glm::ivec2& surfsize)
 
 	cb->set_dash(vg, dashes, ndash, offset);
 
-	cb->set_source_rgba(vg, 0, 0, 0, 1);	
+	cb->set_source_rgba(vg, 0, 0, 0, 1);
 	cb->stroke(vg); //描边
 	cb->restore(vg);
 	//cb->translate(vg, 0, -128);
-	cb->reset_clip(vg);
-	//cb->rectangle(vg, 128,128, 300, 200);
+	//cb->reset_clip(vg, 0);
+
 	cb->translate(vg, 300, 0);
+	//cb->rectangle(vg, 20, 150, 200, 100, 10);
+	//cb->clip(vg, vg);// 圆角矩形裁剪
+	cb->clip_rect(vg, 20, 150, 300, 500);// 矩形裁剪会接受当前矩阵影响
 	{
 		auto pat = cb->new_pattern_radial(vg, 150, 100, 25.6, 102.4, 102.4, 128.0, false);
 		cb->pattern_add_color_stop(pat, 0, 0, 0, 1, 0);// 蓝
@@ -320,7 +320,7 @@ void draw(ovg_ctx_cb* cb, rvg_t* vg, const glm::ivec2& surfsize)
 
 int main()
 {
-	LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
+	//LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
 	cout << "Hello ovg." << endl;
 	glm::ivec2 surfsize = { 1024,800 };
 	auto cb = new_ctx_cb();

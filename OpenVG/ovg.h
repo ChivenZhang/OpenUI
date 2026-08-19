@@ -209,12 +209,13 @@ struct geom_cmd_t {
 // 矢量命令
 struct vgcmd_t {
 	int stype = 0;
-	int full_screen_quad = 0;
+	int full_screen_quad = -1;
 	glm::ivec2 vertex = {};			// 顶点开始、数量
 	glm::ivec2 index = {};			// 索引开始、数量
 	vg_state_save_t* state = {};	// 渲染参数
 	glm::vec4 bounds = {};			// 全屏填充,odd/clip专用
 	int8_t type = 0;				// 类型：填充0、描边1、裁剪2、全屏3、清屏4
+	int8_t ref = 0;					// 参考值
 };
 union gcmd_t {
 	vgcmd_t vg;
@@ -302,6 +303,10 @@ struct text_box_rt {
 	int8_t ellipsis = 0;	// 省略号
 };
 
+// Stencil 位平面
+#ifndef STENCIL_CLIP_BIT
+#define STENCIL_CLIP_BIT    0x1   // bit1: 裁剪掩码（REPLACE 写入）
+#endif
 // 内存资源分配器
 struct mem_resource_t;
 // 路径对象
@@ -390,7 +395,7 @@ struct ovg_canvas_cb {
 	void(*fill)(rvg_t* v);
 	void(*fill_preserve)(rvg_t* v);
 	void(*paint)(rvg_t* v);			// 全屏渲染
-	void(*reset_clip)(rvg_t* v);	// 重置裁剪
+	void(*reset_clip)(rvg_t* v, uint8_t ref);	// 重置裁剪
 	void(*clip)(rvg_t* v);			// 路径裁剪，清空当前路径
 	void(*clip_preserve)(rvg_t* v);	// 路径裁剪
 	void(*clip_rect)(rvg_t* v, int x, int y, int width, int height);	// 矩形裁剪
@@ -487,7 +492,7 @@ struct ovg_ctx_cb {
 	void(*fill)(rvg_t* v);
 	void(*fill_preserve)(rvg_t* v);
 	void(*paint)(rvg_t* v);			// 全屏渲染
-	void(*reset_clip)(rvg_t* v);	// 重置裁剪
+	void(*reset_clip)(rvg_t* v, uint8_t ref);	// 重置裁剪，0清空，1全部通过
 	void(*clip)(rvg_t* v);			// 路径裁剪，清空当前路径
 	void(*clip_preserve)(rvg_t* v);	// 路径裁剪
 	void(*clip_rect)(rvg_t* v, int x, int y, int width, int height);	// 矩形裁剪

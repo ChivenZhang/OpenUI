@@ -1703,14 +1703,12 @@ public:
 	void fill();
 	void paint();
 	void clip();
-	void clip0();
+	void clip0(uint8_t ref);
 	void clip(const glm::ivec4* rc);
 
 	void save();
 	void restore();
 public:
-	void poly_fill(ovg_path_t* ctx, glm::vec4* bounds, vgcmd_t& c);
-	void fill_non_zero_tess(ovg_path_t* p);
 	void fill_non_zero_tess2(ovg_path_t* p);
 	void fill_non_zero(ovg_path_t* p);
 
@@ -1920,37 +1918,14 @@ void rvg_t::fill_preserve()
 	uint32_t color = t->color;
 	p->color = color;
 	vgcmd_t c = {};
-#if 0
-
-	if (p->t->curFillRule == VG_FILL_RULE_EVEN_ODD) {
-
-		glm::vec4 bounds = { FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN };
-		c.type = 0;
-		poly_fill(p, &bounds, c);
-		c.full_screen_quad = _vertex.size();
-		Vertex v = {};
-		v.pos = { -1,-1 };
-		v.color = p->t->color;
-
-		_vertex.push_back(v);
-		v.pos = { 3,-1 };
-		_vertex.push_back(v);
-		v.pos = { -1,3 };
-		_vertex.push_back(v);
-	}
-	else
-#endif
-	{
-		c.vertex.x = _vertex.size();
-		c.index.x = _indices.size();
-		c.type = 0;
-		cp_cmdt(&c, cur_st);
-		p->curVertOffset = c.vertex.x;
-		fill_non_zero(p);
-		c.vertex.y = _vertex.size() - c.vertex.x;
-		c.index.y = _indices.size() - c.index.x;
-
-	}
+	c.vertex.x = _vertex.size();
+	c.index.x = _indices.size();
+	c.type = 0;
+	cp_cmdt(&c, cur_st);
+	p->curVertOffset = c.vertex.x;
+	fill_non_zero(p);
+	c.vertex.y = _vertex.size() - c.vertex.x;
+	c.index.y = _indices.size() - c.index.x;
 	cmdlist.push_back({ .vg = c });
 }
 
@@ -1964,10 +1939,6 @@ void rvg_t::clip_preserve()
 	auto t = cur_st;
 	vgcmd_t c = {};
 	c.type = 2;
-	//if (t->curFillRule == VG_FILL_RULE_EVEN_ODD) {
-	//	poly_fill(p, NULL, c);
-	//}
-	//else 
 	{
 		c.vertex.x = _vertex.size();
 		c.index.x = _indices.size();
@@ -1976,10 +1947,8 @@ void rvg_t::clip_preserve()
 		fill_non_zero(p);
 		c.vertex.y = _vertex.size() - c.vertex.x;
 		c.index.y = _indices.size() - c.index.x;
-
 	}
 	c.full_screen_quad = _vertex.size();
-	//gt->push(&c);
 	cmdlist.push_back({ .vg = c });
 	Vertex v = {};
 	v.pos = { -1,-1 };
@@ -1990,10 +1959,20 @@ void rvg_t::clip_preserve()
 	v.pos = { -1,3 };
 	_vertex.push_back(v);
 }
-void rvg_t::clip0()
+void rvg_t::clip0(uint8_t ref)
 {
 	vgcmd_t c = {};
 	c.type = 2;
+	c.ref = ref;
+	c.full_screen_quad = _vertex.size();
+	Vertex v = {};
+	v.pos = { -1,-1 };
+	v.color = cur_st->color;
+	_vertex.push_back(v);
+	v.pos = { 3,-1 };
+	_vertex.push_back(v);
+	v.pos = { -1,3 };
+	_vertex.push_back(v);
 	cmdlist.push_back({ .vg = c });
 }
 
@@ -2006,10 +1985,17 @@ void rvg_t::clip(const glm::ivec4* rc)
 {
 	if (rc)
 	{
+		auto ct = _cst.size() ? _cst.top() : cur_st;
 		curClip = *rc;
+		if (ct)
+		{
+			glm::vec3 ps = { curClip.x ,curClip.y,1.0 };
+			auto nps = ct->pushConsts.mat * ps;
+			curClip.x = nps.x; curClip.y = nps.y;
+		}
 		vgcmd_t c = {};
 		c.type = 2;
-		c.bounds = *rc;// vec4{ (float)rc->x, (float)rc->y, (float)rc->z, (float)rc->w };
+		c.bounds = curClip;
 		cmdlist.push_back({ .vg = c });
 	}
 }
@@ -2121,130 +2107,6 @@ static inline uint8_t mul_unorm8(uint8_t a, uint8_t b)
 {
 	return (uint8_t)((a * b + 127) / 255);
 }
-void rvg_t::poly_fill(ovg_path_t* ctx, glm::vec4* bounds, vgcmd_t& c)
-{
-	Vertex v = {}; v.color = ctx->color; v.uv = { };
-	uint32_t fillColor = ctx->color; // 自带 alpha
-	uint8_t fillA = COLOR_A(fillColor);
-
-	uint32_t ptrPath = 0;
-	uint32_t firstPtIdx = 0;
-	size_t nc = 0;
-	while (ptrPath < ctx->pathPtr) {
-		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
-		if (pathPointCount > 2) {
-			nc++;
-		}
-		if (o_path_has_curves(ctx->pathes.data(), ptrPath)) {
-			ptrPath++;
-			uint32_t totPts = 0;
-			while (totPts < pathPointCount)
-				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
-		}
-		else
-			ptrPath++;
-	}
-	if (!nc)return;
-	ptrPath = 0;
-
-	cp_cmdt(&c, ctx->t);
-	ctx->curVertOffset = _vertex.size();
-	c.vertex.x = _vertex.size();
-#if 1
-	auto& polyPoints = _normals;
-	while (ptrPath < ctx->pathPtr) {
-		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
-		if (pathPointCount > 2) {
-			uint32_t firstVertIdx = (uint32_t)_vertex.size();
-
-			polyPoints.resize(pathPointCount);
-			// ---- 1. 先收集局部坐标 + 算 bounds（避免展开时重复 transform）----
-			for (uint32_t i = 0; i < pathPointCount; i++) {
-				glm::vec2 localPos = ctx->points[i + firstPtIdx];
-				polyPoints[i] = localPos;
-
-				if (bounds) {
-					glm::vec2 transformedPos = localPos;
-					matrix_transform_point(&c.state->pushConsts.mat,
-						&transformedPos.x, &transformedPos.y);
-					if (transformedPos.x < bounds->x) bounds->x = transformedPos.x;
-					if (transformedPos.x > bounds->z) bounds->z = transformedPos.x;
-					if (transformedPos.y < bounds->y) bounds->y = transformedPos.y;
-					if (transformedPos.y > bounds->w) bounds->w = transformedPos.y;
-				}
-			}
-			v.color = fillColor;
-			// ---- 2. 展开为 TRIANGLE_LIST ----
-			// 原 FAN 语义: v0 是共享顶点，三角形为 (v0, v_i, v_{i+1})
-			for (uint32_t i = 1; i < pathPointCount - 1; i++) {
-				// 三角形 (v0, v_i, v_{i+1})
-				v.pos = polyPoints[0];
-				_vertex.push_back(v);
-
-				v.pos = polyPoints[i];
-				_vertex.push_back(v);
-
-				v.pos = polyPoints[i + 1];
-				_vertex.push_back(v); c.vertex.y += 3;
-			}
-
-
-		}
-		firstPtIdx += pathPointCount;
-
-		// 跳过曲线数据（和原来一样）
-		if (o_path_has_curves(ctx->pathes.data(), ptrPath)) {
-			ptrPath++;
-			uint32_t totPts = 0;
-			while (totPts < pathPointCount)
-				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
-		}
-		else {
-			ptrPath++;
-		}
-	}
-#else
-	while (ptrPath < ctx->pathPtr) {
-		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
-		if (pathPointCount > 2) {
-			uint32_t firstVertIdx = (uint32_t)_vertex.size();
-			c.vertex.x = _vertex.size();
-			for (uint32_t i = 0; i < pathPointCount; i++) {
-				v.pos = ctx->points[i + firstPtIdx];
-				_vertex.push_back(v);
-				if (!bounds)
-					continue;
-				matrix_transform_point(&c.state->pushConsts.mat, &v.pos.x, &v.pos.y);
-				if (v.pos.x < bounds->x)
-					bounds->x = v.pos.x;
-				if (v.pos.x > bounds->z)
-					bounds->z = v.pos.x;
-				if (v.pos.y < bounds->y)
-					bounds->y = v.pos.y;
-				if (v.pos.y > bounds->w)
-					bounds->w = v.pos.y;
-			}
-			cv->firstVertex = firstVertIdx;
-			cv->vertexCount = pathPointCount;
-			cv++;
-		}
-		firstPtIdx += pathPointCount;
-
-		if (o_path_has_curves(ctx->pathes.data(), ptrPath)) {
-			ptrPath++;
-			uint32_t totPts = 0;
-			while (totPts < pathPointCount)
-				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
-		}
-		else
-			ptrPath++;
-	}
-	if (bounds)
-		c.bounds = *bounds;
-#endif
-}
-
-
 // ---------------------------------------------------------------------------
 // 工具函数：计算有符号面积，判断绕向
 //   area > 0 : CCW (逆时针, 外轮廓)
@@ -2863,9 +2725,9 @@ void ovg_set_path(rvg_t* v, ovg_path_t* path, vg_state_save_t* st)
 	if (!v)return;
 	v->set_path(path, st);
 }
-void ovg_reset_clip(rvg_t* v)
+void ovg_reset_clip(rvg_t* v, uint8_t ref)
 {
-	if (v)v->clip0();
+	if (v)v->clip0(ref);
 }
 void ovg_clip(rvg_t* v)
 {
@@ -3836,7 +3698,7 @@ void vctx_stroke_preserve(rvg_t* v);
 void vctx_fill(rvg_t* v);
 void vctx_fill_preserve(rvg_t* v);
 void vctx_paint(rvg_t* v);			// 全屏渲染
-void vctx_reset_clip(rvg_t* v);	// 重置裁剪
+void vctx_reset_clip(rvg_t* v, uint8_t ref);	// 重置裁剪
 void vctx_clip(rvg_t* v);			// 路径裁剪，清空当前路径
 void vctx_clip_preserve(rvg_t* v);	// 路径裁剪
 void vctx_clip_rect(rvg_t* v, int x, int y, int width, int height);	// 矩形裁剪
@@ -4220,8 +4082,8 @@ void vctx_paint(rvg_t* v) {
 	if (v) ovg_paint(v);
 }
 
-void vctx_reset_clip(rvg_t* v) {
-	if (v) ovg_reset_clip(v);
+void vctx_reset_clip(rvg_t* v, uint8_t ref) {
+	if (v) ovg_reset_clip(v, ref);
 }
 
 void vctx_clip(rvg_t* v) {
