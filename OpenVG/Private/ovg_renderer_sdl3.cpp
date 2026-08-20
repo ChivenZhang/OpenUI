@@ -2156,7 +2156,7 @@ void* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo) {
 	SDL_GPUTexture* swapchain = NULL;
 	if (fbo->window) {
 		bool aq = SDL_AcquireGPUSwapchainTexture(cmd, fbo->window, &swapchain, &sw, &sh);
-		fbo->dw = sw; fbo->dh = sh;
+		fbo->display_size = { sw,sh };
 		if (!aq || !sw || !sh) {
 			SDL_CancelGPUCommandBuffer(cmd);
 			return 0;

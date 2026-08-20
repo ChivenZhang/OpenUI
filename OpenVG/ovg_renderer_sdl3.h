@@ -41,7 +41,7 @@ struct VGState {
 // FBO 结构体 - SDL3 GPU 版本
 struct vg_fbo_t {
 	uint32_t width, height;
-	uint32_t dw, dh;
+	glm::ivec2 display_size;
 	ovg_ctx_t* ctx = 0;
 	SDL_Window* window;
 	SDL_GPUTexture* color;				// 窗口主颜色纹理

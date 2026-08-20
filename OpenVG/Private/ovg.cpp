@@ -1368,6 +1368,7 @@ int  ovg_pattern_add_color_stop(vg_pattern_t* pat, float o, float r, float g, fl
 #endif
 		grad->count++;
 	}
+	return 0;
 }
 int  ovg_pattern_set_color_stop(vg_pattern_t* pat, int idx, float o, float r, float g, float b, float a) {
 	if (!pat)return -1;
@@ -1437,6 +1438,7 @@ vg_pattern_t* ovg_new_pattern_linear(mem_resource_t* ac0, float x0, float y0, fl
 	_vg_pattern_edit_linear(pat, x0, y0, x1, y1);
 	pat->matrix = glm::mat3x2(1.0);
 	pat->references = 1;
+	return pat;
 }
 int vg_pattern_edit_radial(pat_act* pat, float cx0, float cy0, float radius0, float cx1, float cy1, float radius1, bool is_ellipse) {
 	if (!(pat))
@@ -1492,6 +1494,7 @@ vg_pattern_t* ovg_new_pattern_radial(mem_resource_t* ac0, float cx0, float cy0, 
 	pat->matrix = glm::mat3x2(1.0);
 	vg_pattern_edit_radial(pat, cx0, cy0, radius0, cx1, cy1, radius1, is_ellipse);
 	pat->references = 1;
+	return pat;
 }
 vg_pattern_t* ovg_new_pattern_sweep(mem_resource_t* ac0, float cx, float cy, float start_angle, float end_angle) {
 	auto ac = (usp_ac_cx*)ac0;
@@ -1509,6 +1512,7 @@ vg_pattern_t* ovg_new_pattern_sweep(mem_resource_t* ac0, float cx, float cy, flo
 	pat->matrix = glm::mat3x2(1.0);
 	vg_pattern_edit_sweep(pat, cx, cy, start_angle, end_angle);
 	pat->references = 1;
+	return pat;
 }
 ovg_path_t* ovg_new_path(mem_resource_t* ac0) {
 	auto ac = (usp_ac_cx*)ac0;
