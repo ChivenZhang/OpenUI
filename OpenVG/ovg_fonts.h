@@ -29,42 +29,9 @@ enum class SubpixelLayout {
 	VRGB,        // 垂直 R-G-B
 	VBGR,        // 垂直 B-G-R
 };
-#define MINSUBPIXEL 36
-//struct vg_font_extents_t {
-//	float ascent;
-//	float descent;
-//	float height;
-//	float max_x_advance;
-//	float max_y_advance;
-//};
-//struct vg_text_extents_t {
-//	float x_bearing;
-//	float y_bearing;
-//	float width;
-//	float height;
-//	float x_advance;
-//	float y_advance;
-//};
-//struct vg_glyph_info_t {
-//	int32_t x_advance;
-//	int32_t y_advance;
-//	int32_t x_offset;
-//	int32_t y_offset;
-//	/* private */
-//	uint32_t codepoint; // should be named glyphIndex, but for harfbuzz compatibility...
-//};
+#define MINSUBPIXEL 36 
 struct vg_font;
 struct FontStyle;
-//struct vg_text_run_t {
-//	vg_text_extents_t extents;
-//	const char* text;
-//	unsigned int glyph_count;
-//	hb_buffer_t* hbBuf;
-//	vg_glyph_info_t* glyphs;
-//	vg_font* font;
-//};
-//class text_run_cx;
-//typedef class text_run_cx* vgText;
 class usp_ac_cx;
 
 // 纹理图像打包器接口
@@ -193,10 +160,6 @@ private:
 
 	size_t mk_font(std::map<std::string, std::vector<FontStyle*>>* p, const char* family, const char* style, int weight, int slant);
 };
-// 渲染普通文本
-void render_text(const font_familys_t* ffs, const void* str8, size_t len, float x, float y, ovg_ctx_cb* ovg, rvg_t* ovg_ctx, const glm::uvec3& color);
-
-
 
 //vgText text_run_new(const font_familys_t* familys, int font_size, const char* text);
 //vgText text_run_new_with_length(const font_familys_t* familys, int font_size, const char* text, uint32_t length);
@@ -286,7 +249,7 @@ public:
 
 	// 设置字体参数
 	void set_font(hb_font_t* font, int fontsize);
-	
+
 	// 设置字体集（多 family fallback）
 	void set_font_families(const font_familys_t* ffs, int fontsize);
 
@@ -301,17 +264,6 @@ public:
 	const vg_text_extents_t& extents() const { return _extents; }
 	const std::vector<vg_glyph_info_t>& glyphs() const { return _glyphs; }
 	uint32_t glyph_count() const { return _glyph_count; }
-
-	// 遍历回调（方便渲染）
-	template<typename Fn>
-	void for_each_glyph(Fn&& fn) const {
-		float x = 0, y = 0;
-		for (const auto& g : _glyphs) {
-			fn(g, x, y);
-			x += g.x_advance;
-			y += g.y_advance;
-		}
-	}
 
 private:
 	void free_buffer();
