@@ -1,19 +1,34 @@
 ﻿/*
  * ovg_renderer_sdl3.cpp
- * SDL3 GPU 矢量渲染后端 — "ref 动态切"版
- *
- * 核心设计（stencil 位平面）：
- *   bit0 = STENCIL_FILL_BIT (0x1) → 奇偶填充（INVERT 翻转）
- *   bit1 = STENCIL_CLIP_BIT (0x2) → 裁剪掩码（REPLACE 写入）
- *
- * 原则：
- *   - compareOp / compareMask / writeMask / passOp → pipeline 静态
- *   - ref → SDL_SetGPUStencilReference() 动态切
- *   - 每次 bind pipeline 后立刻 SetStencilReference
-set0 vert 纹理
-set1 vert ubo
-set2 frag 纹理
-set3 frag ubo
+ * SDL3 GPU 矢量渲染后端
+
+
+
+
+
+2026/8/31 后端支持普通三角形渲染
+
+
+shader规则：
+每set的binding排列
+ Category 1: read resources
+	  samplerCount,
+	  storageTextureCount,
+	  storageBufferCount,
+ Category 2: write resources
+	  writeStorageTextureCount,
+	  writeStorageBufferCount,
+ Category 3: uniform buffers
+	  uniformBufferCount
+
+顶点	set=0[num_samplers, num_storageTextures, num_storageBuffers]
+	set=1[num_uniformBuffers]
+像素	set=2[num_samplers, num_storageTextures, num_storageBuffers]
+	set=3[numUniformBuffers]
+计算	set=0[num_samplers, num_readonly_storage_textures, num_readonly_storage_buffers]
+	set=1[num_readwrite_storage_textures, num_readwrite_storage_buffers]
+	set=2[num_uniform_buffers]
+
 
  */
 
@@ -27,6 +42,7 @@ set3 frag ubo
 
 #include <array>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 #include <cstring>
@@ -62,13 +78,7 @@ set3 frag ubo
 // ========================================================================
 // 内部数据结构
 // ========================================================================
-struct sdl3gpu_buffer {
-	SDL_GPUBuffer* buffer = nullptr;
-	SDL_GPUDevice* device = nullptr;
-	uint32_t        size = 0;
-	uint32_t        stride = 0;
-	bool            isUniform = false;
-};
+
 
 struct sdl3gpu_texture {
 	SDL_GPUTexture* texture = nullptr;
@@ -77,8 +87,10 @@ struct sdl3gpu_texture {
 	SDL_GPUTextureFormat format = SDL_GPU_TEXTUREFORMAT_INVALID;
 	int                  width = 0;
 	int                  height = 0;
-	bool                 hasStencil = false;
 	uint32_t             references = 0;
+	void* user_ptr = 0;
+	uint32_t id = 0;
+	bool                 hasStencil = false;
 };
 
 struct shadermodule_vf {
@@ -111,18 +123,20 @@ struct ovg_device_t {
 
 	sdl3gpu_texture* emptyTexture = nullptr;
 	SDL_GPUShaderFormat supportedFormats = SDL_GPU_SHADERFORMAT_INVALID;
+
 };
 class gpu_buffer_cx
 {
 public:
 	SDL_GPUBuffer* buf = 0;
 	SDL_GPUDevice* dev = 0;
-	SDL_GPUBufferCreateInfo info = {};
-	size_t size = 0;
+	SDL_GPUBufferCreateInfo info = {};	// 保存了分配大小
+	size_t size = 0;					// 正在用的大小
 public:
 	gpu_buffer_cx();
 	~gpu_buffer_cx();
 	void init(SDL_GPUDevice* d, const SDL_GPUBufferCreateInfo* createinfo);
+	void init(SDL_GPUDevice* d, uint32_t usage, size_t capacity);
 	void resize(size_t newsize);
 
 private:
@@ -135,13 +149,13 @@ public:
 
 	gpu_buffer_cx _vbo = {};
 	gpu_buffer_cx _ibo = {};
-	gpu_buffer_cx _ubo = {}; // storage
+	gpu_buffer_cx _ssbo = {};
 
 	SDL_GPUTransferBuffer* _staging = nullptr;
 	size_t _stagingSize = 0;
 	size_t vbo_ps = 0;
 	size_t ibo_ps = 0;
-	size_t ubo_ps = 0;
+	size_t ssbo_ps = 0;
 	char* mapdt = 0;
 	size_t _offset = 0;
 public:
@@ -150,25 +164,27 @@ public:
 
 	// 初始化（只调用一次）
 	void init(SDL_GPUDevice* device);
-	void begin(size_t vcs, size_t ics, size_t ucs);
-	// 返回offset,
+	// 总顶点大小、索引大小、ssbo大小
+	void begin(size_t vcs, size_t ics, size_t ssbocs);
+	// 分片添加数据，返回offset,
 	uint32_t add_vbo(const void* data, uint32_t size);
 	uint32_t add_ibo(const void* data, uint32_t size);
 	uint32_t add_ssbo(const void* data, uint32_t size);
+
 	void end(SDL_GPUCommandBuffer* cmd);
 
 
 	// 绑定接口（RenderPass 内）
 	void bindVBO(SDL_GPURenderPass* pass, uint32_t offset = 0);
 	void bindIBO(SDL_GPURenderPass* pass, uint32_t offset = 0);
+	// 偏移需要自行在ubo指定
+	void bindSSBO(SDL_GPURenderPass* pass, bool is_vertex);
 	void bind_v_ssbo(SDL_GPURenderPass* pass, SDL_GPUBuffer** storage_buffers, uint32_t num_bindings);
 	void bind_f_ssbo(SDL_GPURenderPass* pass, SDL_GPUBuffer** storage_buffers, uint32_t num_bindings);
 
 	// getter（用于创建 pipeline / bind）
 	SDL_GPUBuffer* vbo() const { return _vbo.buf; }
 	SDL_GPUBuffer* ibo() const { return _ibo.buf; }
-	SDL_GPUBuffer* ubo() const { return _ubo.buf; }
-
 private:
 };
 
@@ -200,15 +216,11 @@ struct ovg_ctx_t {
 
 	// ─── 缓冲区 ────────────────────────────────────
 	OvgGpuBuffers* gpubuf = 0;
-	//sdl3gpu_buffer uboGrad;       // 渐变 UBO
-	//uint32_t        uboSize = 0;
-	//uint32_t        uboStride = 0;
-
-	//sdl3gpu_buffer vboVG;         // VG 顶点
-	//sdl3gpu_buffer iboVG;         // VG 索引
-	//sdl3gpu_buffer vboGeom;       // 几何顶点
-	//sdl3gpu_buffer iboGeom;       // 几何索引
-
+	// 纹理管理
+	std::pmr::unordered_map<uint32_t, sdl3gpu_texture*> textures;
+	// 释放列队
+	std::queue<sdl3gpu_texture*> texq;
+	uint32_t next_image_id = 0;
 	sdl3gpu_texture* currentTexture = nullptr;
 	uint32_t         gradientOffset = 0;
 
@@ -248,7 +260,28 @@ inline size_t align_up(size_t val, size_t align)
 {
 	return (val + align - 1) / align * align;
 }
-
+//inline uint32_t align_up(uint32_t v, uint32_t a) {
+//	return (v + a - 1) & ~(a - 1);
+//}
+/*
+	VG_FORMAT_RGBA8 = 0,
+	VG_FORMAT_BGRA8,
+	VG_FORMAT_RGBA8_SRGB, //SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB
+	VG_FORMAT_BGRA8_SRGB,
+	VG_FORMAT_RGBA16F,
+	VG_FORMAT_RGBA32F,
+*/
+inline SDL_GPUTextureFormat vg_to_sdl_format(vg_format_t fmt) {
+	switch (fmt) {
+	case VG_FORMAT_RGBA8:   return SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+	case VG_FORMAT_BGRA8:   return SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
+	case VG_FORMAT_RGBA8_SRGB:   return SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB;
+	case VG_FORMAT_BGRA8_SRGB:   return SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB;
+	case VG_FORMAT_RGBA16F: return SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
+	case VG_FORMAT_RGBA32F: return SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
+	default:                return SDL_GPU_TEXTUREFORMAT_INVALID;
+	}
+}
 static SDL_GPUShaderFormat detect_supported_shader_format(SDL_GPUDevice* dev) {
 	SDL_GPUShaderFormat fmt = SDL_GetGPUShaderFormats(dev);
 	if (fmt & SDL_GPU_SHADERFORMAT_SPIRV)  return SDL_GPU_SHADERFORMAT_SPIRV;
@@ -311,6 +344,18 @@ void gpu_buffer_cx::init(SDL_GPUDevice* d, const SDL_GPUBufferCreateInfo* create
 		info = *createinfo;
 	}
 }
+void gpu_buffer_cx::init(SDL_GPUDevice* d, uint32_t usage, size_t capacity)
+{
+	SDL_GPUBufferCreateInfo c = {};
+	if ((!d && !dev) || !usage)return;
+	c.usage = usage;
+	c.size = align_up(capacity, 256);
+	if (d)
+		dev = d;
+	buf = SDL_CreateGPUBuffer(dev, &c);
+	info = c;
+	size = c.size;
+}
 void gpu_buffer_cx::resize(size_t newsize)
 {
 	size = newsize;
@@ -323,92 +368,6 @@ void gpu_buffer_cx::resize(size_t newsize)
 	}
 }
 
-static void create_uniform_buffer(ovg_device_t* dev, sdl3gpu_buffer* buf, uint32_t stride, uint32_t count) {
-	buf->device = dev->gpuDevice;
-	buf->stride = stride;
-	buf->size = align_up(stride * count, 256);
-	buf->isUniform = true;
-
-	SDL_GPUBufferCreateInfo info = {};
-	info.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-	info.size = buf->size;
-
-	buf->buffer = SDL_CreateGPUBuffer(dev->gpuDevice, &info);
-	assert(buf->buffer && "Failed to create uniform buffer");
-}
-
-static void create_vertex_buffer(ovg_device_t* dev, sdl3gpu_buffer* buf, uint32_t size, uint32_t stride) {
-	buf->device = dev->gpuDevice;
-	buf->stride = stride;
-	buf->size = align_up(size, 256);
-
-	SDL_GPUBufferCreateInfo info = {};
-	info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
-	info.size = buf->size;
-
-	buf->buffer = SDL_CreateGPUBuffer(dev->gpuDevice, &info);
-	assert(buf->buffer && "Failed to create vertex buffer");
-}
-
-static void create_index_buffer(ovg_device_t* dev, sdl3gpu_buffer* buf, uint32_t size) {
-	buf->device = dev->gpuDevice;
-	buf->stride = sizeof(uint32_t);
-	buf->size = size;
-
-	SDL_GPUBufferCreateInfo info = {};
-	info.usage = SDL_GPU_BUFFERUSAGE_INDEX;
-	info.size = buf->size;
-
-	buf->buffer = SDL_CreateGPUBuffer(dev->gpuDevice, &info);
-	assert(buf->buffer && "Failed to create index buffer");
-}
-
-static void resize_buffer(sdl3gpu_buffer* buf, uint32_t newSize) {
-	if (buf->size >= newSize) return;
-
-	SDL_GPUBufferUsageFlags usage;
-	if (buf->isUniform) {
-		usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-	}
-	else {
-		usage = SDL_GPU_BUFFERUSAGE_VERTEX | SDL_GPU_BUFFERUSAGE_INDEX;
-	}
-
-	SDL_GPUBufferCreateInfo info = {};
-	info.usage = usage;
-	info.size = align_up(newSize, 256);;
-
-	SDL_GPUBuffer* newBuf = SDL_CreateGPUBuffer(buf->device, &info);
-	assert(newBuf && "Failed to resize buffer");
-
-	// 复制旧数据
-	//SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(buf->device);
-	//if (cmd) {
-	//	SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
-	//	if (copyPass) {
-	//		// 源：旧缓冲区
-	//		SDL_GPUBufferRegion srcRegion = {};
-	//		srcRegion.buffer = buf->buffer;
-	//		srcRegion.offset = 0;
-	//		srcRegion.size = buf->size;
-
-	//		// 目的：新缓冲区
-	//		SDL_GPUBufferRegion dstRegion = {};
-	//		dstRegion.buffer = newBuf;
-	//		dstRegion.offset = 0;
-	//		dstRegion.size = buf->size;
-
-	//		SDL_CopyGPUBuffer(copyPass, &srcRegion, &dstRegion);
-	//		SDL_EndGPUCopyPass(copyPass);
-	//	}
-	//	SDL_SubmitGPUCommandBuffer(cmd);
-	//	SDL_WaitForGPUIdle(buf->device);
-	//}
-
-	SDL_ReleaseGPUBuffer(buf->device, buf->buffer);
-	buf->buffer = newBuf;
-	buf->size = info.size;
-}
 OvgGpuBuffers::~OvgGpuBuffers()
 {
 	if (_staging)
@@ -419,19 +378,17 @@ OvgGpuBuffers::~OvgGpuBuffers()
 void OvgGpuBuffers::init(SDL_GPUDevice* device)
 {
 	_device = device;
-	SDL_GPUBufferCreateInfo info = {};
-	info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
-	info.size = 1024;
-	_vbo.init(_device, &info);
-	info.usage = SDL_GPU_BUFFERUSAGE_INDEX;
-	_ibo.init(_device, &info);
-	info.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-	_ubo.init(_device, &info);
+	_vbo.init(_device, SDL_GPU_BUFFERUSAGE_VERTEX, 1024);
+	_ibo.init(_device, SDL_GPU_BUFFERUSAGE_INDEX, 1024);
+	_ssbo.init(_device, SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ, 1024);
 }
 
-void OvgGpuBuffers::begin(size_t vcs, size_t ics, size_t ucs)
+void OvgGpuBuffers::begin(size_t vcs, size_t ics, size_t ssbocs)
 {
-	size_t ss = vcs + ics + ucs;
+	vcs = align_up(vcs, 64);
+	ics = align_up(ics, 64);
+	ssbocs = align_up(ssbocs, 64);
+	size_t ss = vcs + ics + ssbocs;
 	if (_device && ss > _stagingSize)
 	{
 		ss = align_up(ss, 256);
@@ -450,46 +407,49 @@ void OvgGpuBuffers::begin(size_t vcs, size_t ics, size_t ucs)
 	}
 	_vbo.resize(vcs);
 	_ibo.resize(ics);
-	_ubo.resize(ucs);
+	_ssbo.resize(ssbocs);
 	mapdt = (char*)SDL_MapGPUTransferBuffer(_device, _staging, true);
-	vbo_ps = ibo_ps = ibo_ps = 0;
+	vbo_ps = ibo_ps = ssbo_ps = 0;
 	if (!mapdt)return;
 }
 
 uint32_t OvgGpuBuffers::add_vbo(const void* data, uint32_t size)
 {
 	assert(mapdt);
-	if (!mapdt || !size)return 0;
+	if (!mapdt || !size || !data)return 0;
 	auto dst = mapdt + vbo_ps;
 	memcpy(dst, data, size);
+	auto ret = vbo_ps;
 	vbo_ps += size;
-	return vbo_ps;
+	return ret;
 }
 
 uint32_t OvgGpuBuffers::add_ibo(const void* data, uint32_t size)
 {
 	assert(mapdt);
-	if (!mapdt || !size)return 0;
+	if (!mapdt || !size || !data)return 0;
 	auto dst = mapdt + ibo_ps + _vbo.size;
 	memcpy(dst, data, size);
+	auto ret = ibo_ps;
 	ibo_ps += size;
-	return ibo_ps;
+	return ret;
 }
 
 uint32_t OvgGpuBuffers::add_ssbo(const void* data, uint32_t size)
 {
 	assert(mapdt);
-	if (!mapdt || !size)return 0;
-	auto dst = mapdt + ubo_ps + _vbo.size + _ibo.size;
+	if (!mapdt || !size || !data)return 0;
+	auto dst = mapdt + ssbo_ps + _vbo.size + _ibo.size;
 	memcpy(dst, data, size);
-	ubo_ps += size;
-	return ubo_ps;
+	auto ret = ssbo_ps;
+	ssbo_ps += size;
+	return ret;
 }
 
 void OvgGpuBuffers::end(SDL_GPUCommandBuffer* cmd)
 {
 	SDL_UnmapGPUTransferBuffer(_device, _staging);
-	if (!(_vbo.size + _ibo.size + _ubo.size > 0))return;
+	if (!(_vbo.size + _ibo.size > 0))return;
 	auto copyPass = SDL_BeginGPUCopyPass(cmd);
 	SDL_GPUTransferBufferLocation tbl = { .transfer_buffer = _staging, .offset = 0 };
 	SDL_GPUBufferRegion vbr = { .buffer = _vbo.buf, .offset = 0, .size = (uint32_t)_vbo.size };
@@ -502,7 +462,7 @@ void OvgGpuBuffers::end(SDL_GPUCommandBuffer* cmd)
 		tbl.offset = vbr.size;
 		SDL_UploadToGPUBuffer(copyPass, &tbl, &ibr, true);
 	}
-	SDL_GPUBufferRegion ubr = { .buffer = _ubo.buf, .offset = 0, .size = (uint32_t)_ubo.size };
+	SDL_GPUBufferRegion ubr = { .buffer = _ssbo.buf, .offset = 0, .size = (uint32_t)_ssbo.size };
 	if (ubr.size) {
 		tbl.offset += ibr.size;
 		SDL_UploadToGPUBuffer(copyPass, &tbl, &ubr, true);
@@ -526,6 +486,14 @@ void OvgGpuBuffers::bindIBO(SDL_GPURenderPass* pass, uint32_t offset)
 	SDL_BindGPUIndexBuffer(pass, &binding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 }
 
+void OvgGpuBuffers::bindSSBO(SDL_GPURenderPass* pass, bool is_vertex)
+{
+	if (is_vertex)
+		SDL_BindGPUVertexStorageBuffers(pass, 0, &_ssbo.buf, 1);
+	else
+		SDL_BindGPUFragmentStorageBuffers(pass, 0, &_ssbo.buf, 1);
+}
+
 void OvgGpuBuffers::bind_v_ssbo(SDL_GPURenderPass* pass, SDL_GPUBuffer** storage_buffers, uint32_t num_bindings)
 {
 	SDL_BindGPUVertexStorageBuffers(pass, 0, storage_buffers, num_bindings);
@@ -536,26 +504,82 @@ void OvgGpuBuffers::bind_f_ssbo(SDL_GPURenderPass* pass, SDL_GPUBuffer** storage
 	SDL_BindGPUFragmentStorageBuffers(pass, 0, storage_buffers, num_bindings);
 }
 
-static void destroy_buffer(sdl3gpu_buffer* buf) {
-	if (buf->buffer) {
-		SDL_ReleaseGPUBuffer(buf->device, buf->buffer);
-		buf->buffer = nullptr;
-	}
-	buf->size = 0;
+
+struct gpu_ssbo_t {
+	SDL_GPUDevice* device;
+	SDL_GPUBuffer* buf;
+	Uint32          capacity;
+	Uint32          size;
+};
+bool matrix_buffer_create(SDL_GPUDevice* device, Uint32 max_count, gpu_ssbo_t* out)
+{
+	if (max_count == 0) return false;
+	Uint32 size = align_up(max_count * 64, 256);
+
+	SDL_GPUBufferCreateInfo bi = {
+		.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+		.size = size,
+	};
+	SDL_GPUBuffer* buf = SDL_CreateGPUBuffer(device, &bi);
+	if (!buf) return false;
+
+	out->device = device;
+	out->buf = buf;
+	out->capacity = max_count;
+	out->size = size;
+	return true;
 }
 
+bool matrix_buffer_update(gpu_ssbo_t* mb, const glm::mat4* matrices, Uint32 count)
+{
+	if (count > mb->capacity) return false;
+
+	SDL_GPUDevice* device = mb->device;
+	Uint32 raw = count * 64;
+
+	SDL_GPUTransferBufferCreateInfo ti = {
+		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		.size = raw,
+	};
+	SDL_GPUTransferBuffer* tb = SDL_CreateGPUTransferBuffer(device, &ti);
+	if (!tb) return false;
+
+	void* ptr = SDL_MapGPUTransferBuffer(device, tb, false);
+	if (!ptr) { SDL_ReleaseGPUTransferBuffer(device, tb); return false; }
+	SDL_memcpy(ptr, matrices, raw);
+	SDL_UnmapGPUTransferBuffer(device, tb);
+
+	SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(device);
+	SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+
+	SDL_GPUTransferBufferLocation src = { .transfer_buffer = tb, .offset = 0 };
+	SDL_GPUBufferRegion dst = { .buffer = mb->buf, .offset = 0, .size = raw };
+	SDL_UploadToGPUBuffer(cp, &src, &dst, true);
+
+	SDL_EndGPUCopyPass(cp);
+	SDL_SubmitGPUCommandBuffer(cmd);
+
+	SDL_ReleaseGPUTransferBuffer(device, tb);
+	return true;
+}
+
+void matrix_buffer_bind_vertex(gpu_ssbo_t* mb, SDL_GPURenderPass* pass, Uint32 slot)
+{
+	SDL_BindGPUVertexStorageBuffers(pass, slot, &mb->buf, 1);
+}
+
+void matrix_buffer_destroy(gpu_ssbo_t* mb) {
+	if (mb && mb->buf) {
+		SDL_WaitForGPUIdle(mb->device);
+		SDL_ReleaseGPUBuffer(mb->device, mb->buf);
+		mb->buf = NULL;
+	}
+}
 // ========================================================================
 // 纹理管理
 // ========================================================================
-static sdl3gpu_texture* create_texture(
-	ovg_device_t* dev,
-	SDL_GPUTextureFormat  format,
-	int                   width,
-	int                   height,
-	SDL_GPUTextureUsageFlags extraUsage = 0)
+static sdl3gpu_texture* new_texture(sdl3gpu_texture* tex, ovg_device_t* dev, SDL_GPUTextureFormat  format, int width, int height, SDL_GPUTextureUsageFlags extraUsage = 0)
 {
-	sdl3gpu_texture* tex = new sdl3gpu_texture();
-	//tex->device = dev->gpuDevice;
 	tex->format = format;
 	tex->width = width;
 	tex->height = height;
@@ -563,12 +587,13 @@ static sdl3gpu_texture* create_texture(
 
 	SDL_GPUTextureCreateInfo info = {};
 	info.format = format;
+	info.type = SDL_GPU_TEXTURETYPE_2D;
 	info.width = (Uint32)width;
 	info.height = (Uint32)height;
 	info.layer_count_or_depth = 1;
 	info.num_levels = 1;
 	info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-	info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | extraUsage;
+	info.usage = extraUsage ? extraUsage : SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
 
 	tex->device = dev->gpuDevice;
 	tex->texture = SDL_CreateGPUTexture(dev->gpuDevice, &info);
@@ -577,15 +602,8 @@ static sdl3gpu_texture* create_texture(
 	return tex;
 }
 
-static sdl3gpu_texture* create_msaa_texture(
-	ovg_device_t* dev,
-	SDL_GPUTextureFormat format,
-	int                  width,
-	int                  height,
-	SDL_GPUSampleCount   samples)
+static sdl3gpu_texture* new_msaa_texture(sdl3gpu_texture* tex, ovg_device_t* dev, SDL_GPUTextureFormat format, int width, int height, SDL_GPUSampleCount samples)
 {
-	sdl3gpu_texture* tex = new sdl3gpu_texture();
-	//tex->device = dev->gpuDevice;
 	tex->format = format;
 	tex->width = width;
 	tex->height = height;
@@ -593,6 +611,7 @@ static sdl3gpu_texture* create_msaa_texture(
 
 	SDL_GPUTextureCreateInfo info = {};
 	info.format = format;
+	info.type = SDL_GPU_TEXTURETYPE_2D;
 	info.width = (Uint32)width;
 	info.height = (Uint32)height;
 	info.layer_count_or_depth = 1;
@@ -607,15 +626,8 @@ static sdl3gpu_texture* create_msaa_texture(
 	return tex;
 }
 
-static sdl3gpu_texture* create_depth_stencil_texture(
-	ovg_device_t* dev,
-	SDL_GPUTextureFormat format,
-	int                  width,
-	int                  height,
-	SDL_GPUSampleCount   samples)
+static sdl3gpu_texture* new_depth_stencil_texture(sdl3gpu_texture* tex, ovg_device_t* dev, SDL_GPUTextureFormat format, int width, int height, SDL_GPUSampleCount samples)
 {
-	sdl3gpu_texture* tex = new sdl3gpu_texture();
-	//tex->device = dev->gpuDevice;
 	tex->format = format;
 	tex->width = width;
 	tex->height = height;
@@ -624,6 +636,7 @@ static sdl3gpu_texture* create_depth_stencil_texture(
 
 	SDL_GPUTextureCreateInfo info = {};
 	info.format = format;
+	info.type = SDL_GPU_TEXTURETYPE_2D;
 	info.width = (Uint32)width;
 	info.height = (Uint32)height;
 	info.layer_count_or_depth = 1;
@@ -635,6 +648,33 @@ static sdl3gpu_texture* create_depth_stencil_texture(
 	assert(tex->texture && "Failed to create depth/stencil texture");
 
 	return tex;
+}
+sdl3gpu_texture* new_texture(ovg_device_t* dev, SDL_GPUTextureFormat  format, int width, int height, SDL_GPUTextureUsageFlags extraUsage = 0)
+{
+	auto p = new sdl3gpu_texture();
+	if (p)
+	{
+		new_texture(p, dev, format, width, height, extraUsage);
+	}
+	return p;
+}
+static sdl3gpu_texture* new_msaa_texture(ovg_device_t* dev, SDL_GPUTextureFormat format, int width, int height, SDL_GPUSampleCount samples)
+{
+	auto p = new sdl3gpu_texture();
+	if (p)
+	{
+		new_msaa_texture(p, dev, format, width, height, samples);
+	}
+	return p;
+}
+static sdl3gpu_texture* new_depth_stencil_texture(ovg_device_t* dev, SDL_GPUTextureFormat format, int width, int height, SDL_GPUSampleCount samples)
+{
+	auto p = new sdl3gpu_texture();
+	if (p)
+	{
+		new_depth_stencil_texture(p, dev, format, width, height, samples);
+	}
+	return p;
 }
 
 static void create_sampler(
@@ -679,67 +719,6 @@ static void destroy_texture(sdl3gpu_texture* tex) {
 // ========================================================================
 // 混合模式转换
 // ========================================================================
-static void set_blend_params(blend_params& bp, blendMode_e mode) {
-	// 默认值（normal）
-	bp.srcColor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
-	bp.dstColor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-	bp.colorOp = SDL_GPU_BLENDOP_ADD;
-	bp.srcAlpha = SDL_GPU_BLENDFACTOR_ONE;
-	bp.dstAlpha = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-	bp.alphaOp = SDL_GPU_BLENDOP_ADD;
-	bp.blendEnable = true;
-
-	switch (mode) {
-	case blendMode_e::none:
-		bp.srcColor = SDL_GPU_BLENDFACTOR_ONE;
-		bp.dstColor = SDL_GPU_BLENDFACTOR_ZERO;
-		bp.colorOp = SDL_GPU_BLENDOP_ADD;
-		bp.srcAlpha = SDL_GPU_BLENDFACTOR_ONE;
-		bp.dstAlpha = SDL_GPU_BLENDFACTOR_ZERO;
-		bp.alphaOp = SDL_GPU_BLENDOP_ADD;
-		bp.blendEnable = false;
-		break;
-	case blendMode_e::normal:
-		// 默认值已是 normal
-		break;
-	case blendMode_e::normal_prem:
-		bp.srcColor = SDL_GPU_BLENDFACTOR_ONE;
-		bp.dstColor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-		break;
-	case blendMode_e::additive:
-		bp.srcColor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
-		bp.dstColor = SDL_GPU_BLENDFACTOR_ONE;
-		bp.srcAlpha = SDL_GPU_BLENDFACTOR_ZERO;
-		bp.dstAlpha = SDL_GPU_BLENDFACTOR_ONE;
-		break;
-	case blendMode_e::additive_prem:
-		bp.srcColor = SDL_GPU_BLENDFACTOR_ONE;
-		bp.dstColor = SDL_GPU_BLENDFACTOR_ONE;
-		bp.srcAlpha = SDL_GPU_BLENDFACTOR_ZERO;
-		bp.dstAlpha = SDL_GPU_BLENDFACTOR_ONE;
-		break;
-	case blendMode_e::multiply:
-		bp.srcColor = SDL_GPU_BLENDFACTOR_DST_COLOR;
-		bp.dstColor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-		bp.srcAlpha = SDL_GPU_BLENDFACTOR_ZERO;
-		bp.dstAlpha = SDL_GPU_BLENDFACTOR_ONE;
-		break;
-	case blendMode_e::modulate:
-		bp.srcColor = SDL_GPU_BLENDFACTOR_ZERO;
-		bp.dstColor = SDL_GPU_BLENDFACTOR_SRC_COLOR;
-		bp.srcAlpha = SDL_GPU_BLENDFACTOR_ZERO;
-		bp.dstAlpha = SDL_GPU_BLENDFACTOR_ONE;
-		break;
-	case blendMode_e::screen:
-		bp.srcColor = SDL_GPU_BLENDFACTOR_ONE;
-		bp.dstColor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_COLOR;
-		bp.srcAlpha = SDL_GPU_BLENDFACTOR_ONE;
-		bp.dstAlpha = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_COLOR;
-		break;
-	default:
-		break;
-	}
-}
 
 #if 1
 #define SDL_BLENDMODE_NONE_FULL(blend) \
@@ -830,11 +809,9 @@ static void set_blend_params(blend_params& bp, blendMode_e mode) {
         (blend).alpha_blend_op = SDL_GPU_BLENDOP_ADD; \
     } while(0)
 
-void gpu_set_blend(SDL_GPUColorTargetBlendState& blend, uint32_t blendMode)
+void gpu_set_blend(SDL_GPUColorTargetBlendState& blend, blendMode_e bm)
 {
 	blend = {};
-	auto bm = static_cast<blendMode_e>(blendMode);
-
 	switch (bm)
 	{
 	case blendMode_e::none:
@@ -941,7 +918,6 @@ struct vg_pipeline_inputs {
 static SDL_GPUGraphicsPipeline* create_graphics_pipeline(ovg_device_t* dev, const vg_pipeline_inputs* inputs, ovg_ctx_t* ctx)
 {
 	blend_params bp = {};
-	set_blend_params(bp, inputs->blendMode);
 	SDL_GPUColorTargetDescription colorTarget = {};
 	colorTarget.format = inputs->colorFormat;
 	colorTarget.blend_state.enable_blend = bp.blendEnable;
@@ -957,7 +933,7 @@ static SDL_GPUGraphicsPipeline* create_graphics_pipeline(ovg_device_t* dev, cons
 		SDL_GPU_COLORCOMPONENT_B |
 		SDL_GPU_COLORCOMPONENT_A;
 
-	gpu_set_blend(colorTarget.blend_state, (uint32_t)inputs->blendMode);
+	gpu_set_blend(colorTarget.blend_state, inputs->blendMode);
 	if (inputs->logicOpEnable)
 		colorTarget.blend_state.alpha_blend_op = colorTarget.blend_state.color_blend_op = inputs->logicOp;
 	SDL_GPUDepthStencilState dsState = {};
@@ -1022,14 +998,12 @@ static SDL_GPUGraphicsPipeline* create_graphics_pipeline(ovg_device_t* dev, cons
 // ★ 核心：5 条 VG 管道初始化（ref 动态切方案）
 // ========================================================================
 //
-// 位平面分配：
-//   bit0 (STENCIL_FILL_BIT = 0x1) → 奇偶填充，由 pipePolyFill 的 INVERT 翻转
-//   bit1 (STENCIL_CLIP_BIT = 0x2) → 裁剪掩码，由 pipeClipping 的 REPLACE 写入
+//   bit1 (STENCIL_CLIP_BIT = 0x1) → 裁剪掩码，由 pipeClipping 的 REPLACE 写入
 //
 // 动态 ref 切换：
 //   - 填充阶段：ref 无关（INVERT 不依赖 ref）
-//   - 裁剪阶段：ref = STENCIL_CLIP_BIT (0x2)，写入掩码
-//   - 绘制阶段：ref = STENCIL_CLIP_BIT (0x2)，通过测试
+//   - 裁剪阶段：ref = STENCIL_CLIP_BIT，写入掩码
+//   - 绘制阶段：ref = STENCIL_CLIP_BIT，通过测试
 //
 // ========================================================================
 static void init_vg_pipelines(ovg_ctx_t* ctx) {
@@ -1050,7 +1024,7 @@ static void init_vg_pipelines(ovg_ctx_t* ctx) {
 
 	// ═══════════════════════════════════════════════════════════════
 	// ② pipeClipping — 裁剪掩码写入
-	//   职责：把通过的像素 bit1 写成 ref（= STENCIL_CLIP_BIT = 0x2）
+	//   职责：把通过的像素 bit1 写成 ref（= STENCIL_CLIP_BIT = 0x1）
 	//   使用：TRIANGLE_LIST，compareOp=ALWAYS
 	//   绘制前需：SDL_SetGPUStencilReference(pass, STENCIL_CLIP_BIT)
 	// ═══════════════════════════════════════════════════════════════
@@ -1109,8 +1083,8 @@ static void init_vg_pipelines(ovg_ctx_t* ctx) {
 		//   compareOp = EQUAL → (stencil & compare_mask) == (ref & compare_mask)
 		//   compare_mask = CLIP_BIT → 只比 bit1
 		//   writeMask = 0 → 不改 stencil
-		//   ref = STENCIL_CLIP_BIT (0x2) → 动态设置
-		inputs.ds.compare_mask = STENCIL_CLIP_BIT;      // 0x2
+		//   ref = STENCIL_CLIP_BIT (0x1) → 动态设置
+		inputs.ds.compare_mask = STENCIL_CLIP_BIT;
 		inputs.ds.write_mask = 0x0;                   // 不改 stencil
 		inputs.stencilFront.compare_op = SDL_GPU_COMPAREOP_EQUAL;
 		inputs.stencilFront.pass_op = SDL_GPU_STENCILOP_KEEP;
@@ -1324,12 +1298,10 @@ static void init_vg_pipelines(ovg_ctx_t* ctx) {
 // ========================================================================
 // 几何管道创建
 // ========================================================================
-static pipelinestate_p_internal create_geom_pipeline(
-	ovg_device_t* dev,
-	const gem_info_t* info)
+static pipelinestate_p_internal create_geom_pipeline(ovg_ctx_t* ctx, const gem_info_t* info)
 {
 	pipelinestate_p_internal result = {};
-
+	auto dev = ctx->device;
 	int shaderIdx = info->shader;
 	if (shaderIdx < 0 || shaderIdx >= 5) shaderIdx = 0;
 	bool doublesided = info->shader == ST_INSTANCE_DOUBLESIDED || info->shader == ST_DOUBLESIDED;
@@ -1344,7 +1316,7 @@ static pipelinestate_p_internal create_geom_pipeline(
 	};
 
 	SDL_GPUColorTargetDescription colorTarget = {};
-	colorTarget.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+	colorTarget.format = ctx->colorFormat;
 	colorTarget.blend_state.enable_color_write_mask = true;
 	colorTarget.blend_state.color_write_mask = SDL_GPU_COLORCOMPONENT_R |
 		SDL_GPU_COLORCOMPONENT_G |
@@ -1352,7 +1324,6 @@ static pipelinestate_p_internal create_geom_pipeline(
 		SDL_GPU_COLORCOMPONENT_A;
 
 	blend_params bp = {};
-	set_blend_params(bp, (blendMode_e)info->blendMode);
 	colorTarget.blend_state.enable_blend = bp.blendEnable;
 	colorTarget.blend_state.src_color_blendfactor = bp.srcColor;
 	colorTarget.blend_state.dst_color_blendfactor = bp.dstColor;
@@ -1360,6 +1331,7 @@ static pipelinestate_p_internal create_geom_pipeline(
 	colorTarget.blend_state.src_alpha_blendfactor = bp.srcAlpha;
 	colorTarget.blend_state.dst_alpha_blendfactor = bp.dstAlpha;
 	colorTarget.blend_state.alpha_blend_op = bp.alphaOp;
+	gpu_set_blend(colorTarget.blend_state, (blendMode_e)info->blendMode);
 
 	SDL_GPUDepthStencilState dsState = {};
 	dsState.enable_depth_test = (info->flags & (uint8_t)depth_stencil_State::d_depthtest_enable) != 0;
@@ -1367,7 +1339,7 @@ static pipelinestate_p_internal create_geom_pipeline(
 	dsState.compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL;
 	dsState.enable_stencil_test = (info->flags & (uint8_t)depth_stencil_State::d_stenciltest_enable) != 0;
 	dsState.compare_mask = 0xFF;
-	dsState.write_mask = 0xFF;
+	dsState.write_mask = 0;
 	dsState.front_stencil_state.compare_op = SDL_GPU_COMPAREOP_ALWAYS;
 	dsState.front_stencil_state.pass_op = SDL_GPU_STENCILOP_KEEP;
 	dsState.front_stencil_state.fail_op = SDL_GPU_STENCILOP_KEEP;
@@ -1377,11 +1349,11 @@ static pipelinestate_p_internal create_geom_pipeline(
 	SDL_GPURasterizerState rasterState = {};
 	rasterState.fill_mode = (SDL_GPUFillMode)info->polygon;
 	rasterState.cull_mode = SDL_GPU_CULLMODE_NONE;
-	rasterState.front_face = info->frontFace ? SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE : SDL_GPU_FRONTFACE_CLOCKWISE;
+	rasterState.front_face = info->frontFace ? SDL_GPU_FRONTFACE_CLOCKWISE : SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
 	rasterState.enable_depth_clip = false;
 
 	SDL_GPUMultisampleState msState = {};
-	msState.sample_count = SDL_GPU_SAMPLECOUNT_1;
+	msState.sample_count = ctx->samples;
 	msState.sample_mask = 0;// 0xFFFFFFFF;
 
 	SDL_GPUVertexBufferDescription vbDesc = {};
@@ -1407,7 +1379,7 @@ static pipelinestate_p_internal create_geom_pipeline(
 	//pci.color_target_descriptions = &colorTarget;
 	//pci.enable_primitive_restart = false;
 	pci.target_info.has_depth_stencil_target = true;
-	pci.target_info.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+	pci.target_info.depth_stencil_format = ctx->depthFormat;
 	pci.target_info.num_color_targets = 1;
 	pci.target_info.color_target_descriptions = &colorTarget;
 
@@ -1440,7 +1412,7 @@ static pipelinestate_p_internal* get_geom_pipeline(ovg_ctx_t* ctx, const gem_inf
 	ctx->currentState = key;
 	auto it = ctx->geomPipelines.find(key);
 	if (it == ctx->geomPipelines.end()) {
-		pipelinestate_p_internal p = create_geom_pipeline(ctx->device, info);
+		pipelinestate_p_internal p = create_geom_pipeline(ctx, info);
 		ctx->geomPipelines[key] = p;
 		ctx->currentPipeline = &ctx->geomPipelines[key];
 	}
@@ -1456,9 +1428,9 @@ static pipelinestate_p_internal* get_geom_pipeline(ovg_ctx_t* ctx, const gem_inf
 //
 // 每次 bind pipeline 后立刻设置正确的 stencil reference：
 //   pipePolyFill → ref 无关（ALWAYS），设 0 即可
-//   pipeClipping → ref = STENCIL_CLIP_BIT (0x2)，REPLACE 写入
-//   pipeOVER     → ref = STENCIL_CLIP_BIT (0x2)，EQUAL 比较
-//   pipeSUB      → ref = STENCIL_CLIP_BIT (0x2)，EQUAL 比较
+//   pipeClipping → ref = STENCIL_CLIP_BIT，REPLACE 写入
+//   pipeOVER     → ref = STENCIL_CLIP_BIT，EQUAL 比较
+//   pipeSUB      → ref = STENCIL_CLIP_BIT，EQUAL 比较
 //   pipeCLEAR    → stencil 已禁用，ref 无关
 //
 // ========================================================================
@@ -1482,13 +1454,13 @@ void ovg_bind_vg_pipeline(ovg_ctx_t* ctx, SDL_GPUCommandBuffer* cmdBuf, SDL_GPUR
 	switch (pipeIndex) {
 	case VG_PIPE_CLIPPING:
 		// REPLACE 写入：ref = STENCIL_CLIP_BIT → 通过的像素 bit1 = 1
-		SDL_SetGPUStencilReference(pass, STENCIL_CLIP_BIT);  // 0x2
+		SDL_SetGPUStencilReference(pass, STENCIL_CLIP_BIT);
 		break;
 
 	case VG_PIPE_OVER:
 	case VG_PIPE_SUB:
 		// EQUAL 比较：只画 bit1 == 1 的像素
-		SDL_SetGPUStencilReference(pass, STENCIL_CLIP_BIT);  // 0x2
+		SDL_SetGPUStencilReference(pass, STENCIL_CLIP_BIT);
 		break;
 	case VG_PIPE_CLEAR:
 		// stencil 已禁用，ref 无关
@@ -1528,7 +1500,7 @@ ovg_device_t* new_sdl3gpu_device(SDL_GPUDevice* gpuDevice) {
 	init_shader_modules(dev);
 
 	// 创建默认空纹理
-	dev->emptyTexture = create_texture(dev, SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM, 16, 16,
+	dev->emptyTexture = new_texture(dev, SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM, 16, 16,
 		SDL_GPU_TEXTUREUSAGE_SAMPLER |
 		SDL_GPU_TEXTUREUSAGE_COLOR_TARGET);
 	create_sampler(dev->emptyTexture,
@@ -1609,7 +1581,8 @@ ovg_ctx_t* new_ovgctx_sdl3(ovg_device_t* dev, SDL_GPUTextureFormat colorFormat, 
 	ctx->samples = samples;
 	ctx->gpubuf = new OvgGpuBuffers();
 	ctx->gpubuf->init(dev->gpuDevice);
-
+	ctx->textures[0] = dev->emptyTexture;
+	ctx->next_image_id++;
 	init_vg_pipelines(ctx);
 
 	return ctx;
@@ -1617,14 +1590,19 @@ ovg_ctx_t* new_ovgctx_sdl3(ovg_device_t* dev, SDL_GPUTextureFormat colorFormat, 
 
 void free_ovgctx_sdl3(ovg_ctx_t* ctx) {
 	if (!ctx) return;
+	SDL_WaitForGPUIdle(ctx->device->gpuDevice);
 	for (auto p : ctx->freepipe)
 	{
 		if (p) SDL_ReleaseGPUGraphicsPipeline(ctx->device->gpuDevice, p);
+	}
+	for (auto& [k, v] : ctx->textures) {
+		if (v) destroy_texture(v);
 	}
 	for (auto& [key, p] : ctx->geomPipelines) {
 		if (p.pipeline)      SDL_ReleaseGPUGraphicsPipeline(ctx->device->gpuDevice, p.pipeline);
 		if (p.defaultSampler) SDL_ReleaseGPUSampler(ctx->device->gpuDevice, p.defaultSampler);
 	}
+	ctx->textures.clear();
 	ctx->freepipe.clear();
 	ctx->geomPipelines.clear();
 
@@ -1646,15 +1624,13 @@ vg_fbo_t new_vgfbo_sdl3(ovg_ctx_t* ctx, int width, int height, SDL_Window* windo
 	if (window)
 		fbo.window = window;
 	else
-		fbo.colorTex = create_texture(dev, ctx->colorFormat, width, height,
-			SDL_GPU_TEXTUREUSAGE_SAMPLER |
-			SDL_GPU_TEXTUREUSAGE_COLOR_TARGET);
+		fbo.colorTex = new_texture(dev, ctx->colorFormat, width, height, SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET);
 
 	if (ctx->samples > SDL_GPU_SAMPLECOUNT_1) {
-		fbo.colorTexMS = create_msaa_texture(dev, ctx->colorFormat, width, height, ctx->samples);
+		fbo.colorTexMS = new_msaa_texture(dev, ctx->colorFormat, width, height, ctx->samples);
 	}
 
-	fbo.depthStencilTex = create_depth_stencil_texture(dev, ctx->depthFormat, width, height, ctx->samples);
+	fbo.depthStencilTex = new_depth_stencil_texture(dev, ctx->depthFormat, width, height, ctx->samples);
 	fbo.hasStencil = true;
 
 	return fbo;
@@ -1722,7 +1698,7 @@ SDL_GPUCommandBuffer* ovg_begin_frame(ovg_ctx_t* ctx, vg_fbo_t* fbo, bool clearA
 	sdl3gpu_texture* colorTexMS = (sdl3gpu_texture*)fbo->colorTexMS;
 	sdl3gpu_texture* depthStencil = (sdl3gpu_texture*)fbo->depthStencilTex;
 
-	auto ct = fbo->color ? fbo->color : colorTex->texture;
+	auto ct = fbo->swapchain ? fbo->swapchain : colorTex->texture;
 	if (!ct || !depthStencil) {
 		SDL_SubmitGPUCommandBuffer(cmdBuf);
 		return nullptr;
@@ -1810,15 +1786,6 @@ void ovg_bind_texture(ovg_ctx_t* ctx, SDL_GPUCommandBuffer* cmdBuf, SDL_GPURende
 	SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
 }
 
-// 绑定 UBO（渐变数据）
-void ovg_bind_ubo(ovg_ctx_t* ctx, SDL_GPUCommandBuffer* cmdBuf, SDL_GPURenderPass* pass, uint32_t offset) {
-	if (!ctx || !pass) return;
-
-	SDL_GPUBufferBinding uboBinding = {};
-	uboBinding.buffer = ctx->gpubuf->ubo();
-	uboBinding.offset = offset;
-	SDL_BindGPUVertexStorageBuffers(pass, 0, &uboBinding.buffer, 1);
-}
 
 // ========================================================================
 // 几何管道绑定
@@ -1911,10 +1878,6 @@ void ovg_wait_idle(ovg_ctx_t* ctx) {
 	SDL_WaitForGPUIdle(ctx->device->gpuDevice);
 }
 
-// ========================================================================
-// 一次性绘制入口
-// ========================================================================
-
 void ovg_sort_gradient_stops(vg_gradient_t* grad, float* stops, uint32_t count) {
 	auto colors = grad->colors;
 	for (uint32_t i = 1; i < count; i++) {
@@ -1930,10 +1893,10 @@ void ovg_sort_gradient_stops(vg_gradient_t* grad, float* stops, uint32_t count) 
 		colors[j + 1] = key_color;
 	}
 }
-void ovg_mul_pat(vg_gradient_t* grad, int type, const glm::mat3& mat, const glm::mat3& pat_mat) {
+void ovg_mul_pat(vg_gradient_t* grad, int type, const glm::mat3& mat, const glm::mat3& pat_mat, bool hasMatrix) {
 	glm::vec3 cp0[2] = { glm::vec3(grad->cp[0].x, grad->cp[0].y,1.0f) ,glm::vec3(grad->cp[0].z, grad->cp[0].w,1.0f) };
 	glm::vec3 cp1[2] = { glm::vec3(grad->cp[1].x, grad->cp[1].y,1.0f) ,glm::vec3(grad->cp[1].z, grad->cp[1].w,1.0f) };
-	auto m = mat * pat_mat;
+	auto m = mat * glm::inverse(pat_mat);
 	cp0[0] = m * cp0[0];
 	if (type == vg_pattern_type_t::VG_PATTERN_TYPE_LINEAR) {
 		cp0[1] = m * cp0[1];
@@ -1960,6 +1923,18 @@ SDL_Rect set_scissor_sdl3(vg_fbo_t* fbo, SDL_GPURenderPass* pass, glm::vec4* sci
 		if (scissor)
 		{
 			r.x = scissor->x; r.y = scissor->y;
+			r.w = scissor->z;
+			if (scissor->x < 0)
+			{
+				r.w += scissor->x;
+				r.x = 0;
+			}
+			r.h = scissor->w;
+			if (scissor->y < 0)
+			{
+				r.h += scissor->y;
+				r.y = 0;
+			}
 			r.w = (uint32_t)glm::max(scissor->z, 1.0f); r.h = (uint32_t)std::max(scissor->w, 1.0f);
 		}
 		SDL_SetGPUScissor(pass, &r);
@@ -2055,40 +2030,74 @@ void draw_ct(SDL_GPURenderPass* pass, vgcmd_t* c)
 		SDL_DrawGPUPrimitives(pass, c->vertex.y, 1, c->vertex.x, 0);
 	}
 }
-void draw_vg_sdl3(vg_fbo_t* fbo, SDL_GPURenderPass* pass, vgcmd_t* c, SDL_Rect* cuclip)
+void draw_vg(vg_fbo_t* fbo, SDL_GPURenderPass* pass, vgcmd_t* c, SDL_Rect* cuclip, const glm::uvec2& offset)
 {
 	push_constants_t pc = {};
 	auto t = c->state;
-	if (t) {
-		ovg_bind_vg_pipeline(fbo->ctx, fbo->cmd, pass, (int)t->curOperator);
+	fbo->ctx->gpubuf->bindVBO(pass, offset.x);
+	fbo->ctx->gpubuf->bindIBO(pass, offset.y);
+	SDL_GPUTextureSamplerBinding binding = { .texture = fbo->ctx->device->emptyTexture->texture,	.sampler = fbo->ctx->device->emptyTexture->sampler, };
 
+	if (t) {
 		int smax = std::max(fbo->width, fbo->height);
 		pc = t->pushConsts;
 		pc.size = { fbo->width,fbo->height };
 		ovg_bind_vg_pipeline(fbo->ctx, fbo->cmd, pass, (int)t->curOperator);
-		fbo->ctx->gpubuf->bindVBO(pass, 0);
-		fbo->ctx->gpubuf->bindIBO(pass, 0);
-		SDL_GPUTextureSamplerBinding binding = { .texture = fbo->ctx->device->emptyTexture->texture,	.sampler = fbo->ctx->device->emptyTexture->sampler, };
-		SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
 		if (t->pattern && t->pattern->type != vg_pattern_type_t::VG_PATTERN_TYPE_SOLID) {
 			pc.source = { smax,smax,0,0 };
 		}
+		glm::mat3x3 inv = pc.mat;
+		pc.matInv = glm::inverse(inv);
 		if (t->pattern)
+		{
 			pc.fsq_patternType = (pc.fsq_patternType & FULLSCREEN_BIT) + t->pattern->type;
-		//glm::transpose(pc.mat);
-		if (t->pattern) {
-			auto gr = *(vg_gradient_t*)t->pattern->data;
-			glm::mat3 patmat = t->pattern->matrix;
-			ovg_mul_pat(&gr, t->pattern->type, pc.mat, patmat);
+			if (t->pattern->type == vg_pattern_type_t::VG_PATTERN_TYPE_SURFACE) {
+				auto tex = (sdl3gpu_texture*)t->pattern->data;
+				if (tex)
+				{
+					binding.texture = tex->texture;
+					binding.sampler = tex->sampler;
+					pc.source.x;// 在vg设置了
+					pc.source.y;
+					pc.source.z = (float)fbo->width;
+					pc.source.w = (float)fbo->height;
+					glm::mat3x3 mat;
+					if (t->pattern->hasMatrix) {
+						mat = t->pattern->matrix;
+						pc.matInv = pc.matInv * mat;
+					}
+				}
+			}
+		}
+		if (t->pattern && t->pattern->data) {
+			auto gr = *((vg_gradient_t*)t->pattern->data);
+			glm::mat3 patmat = glm::mat3(1.0);
+			if (t->pattern->hasMatrix)
+			{
+				patmat = t->pattern->matrix;
+			}
+			ovg_mul_pat(&gr, t->pattern->type, pc.mat, patmat, t->pattern->hasMatrix);
+			SDL_PushGPUFragmentUniformData(fbo->cmd, 0, &gr, sizeof(vg_gradient_t));
+		}
+		else {
+			vg_gradient_t gr = {};
 			SDL_PushGPUFragmentUniformData(fbo->cmd, 0, &gr, sizeof(vg_gradient_t));
 		}
 		SDL_PushGPUVertexUniformData(fbo->cmd, 0, &pc, sizeof(pc));
 	}
+	else {
+		pc.mat = glm::mat3x2(1.0);
+		glm::mat3x3 inv = pc.mat;
+		pc.matInv = glm::inverse(inv);
+		ovg_bind_vg_pipeline(fbo->ctx, fbo->cmd, pass, (int)vg_operator_t::VG_OPERATOR_SOURCE);
+		SDL_PushGPUVertexUniformData(fbo->cmd, 0, &pc, sizeof(pc));
+	}
+	SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
 	switch (c->type) {
 	case 0:
 	case 1:
-	{ draw_ct(pass, c); }
-	break;
+		draw_ct(pass, c);
+		break;
 	case 2:
 	{
 		const int bw = c->bounds.z;
@@ -2108,7 +2117,7 @@ void draw_vg_sdl3(vg_fbo_t* fbo, SDL_GPURenderPass* pass, vgcmd_t* c, SDL_Rect* 
 			SDL_PopGPUDebugGroup(fbo->cmd);
 #endif
 		}
-		else {
+		else if (c->full_screen_quad >= 0) {
 			SDL_BindGPUGraphicsPipeline(pass, fbo->ctx->pipeStencilClear);
 			SDL_SetGPUStencilReference(pass, c->ref);
 			cmd_draw_full_screen_quad_sdl3(fbo, pass, c, nullptr, 0, pc);
@@ -2123,23 +2132,6 @@ void draw_vg_sdl3(vg_fbo_t* fbo, SDL_GPURenderPass* pass, vgcmd_t* c, SDL_Rect* 
 	break;
 	case 4:
 	{
-		//SDL_GPUColorTarget colorTarget = {
-		//	.clear_color = {
-		//		static_cast<float>(c->bounds.x),
-		//		static_cast<float>(c->bounds.y),
-		//		static_cast<float>(c->bounds.z),
-		//		static_cast<float>(c->bounds.w)
-		//	},
-		//	.load_op = SDL_GPU_LOADOP_CLEAR,
-		//	.store_op = SDL_GPU_STOREOP_STORE
-		//};
-
-		//SDL_GPUDepthStencilTarget depthStencilTarget = {
-		//	.clear_depth = 1.0f,
-		//	.clear_stencil = 0,
-		//	.load_op = SDL_GPU_LOADOP_CLEAR,
-		//	.store_op = SDL_GPU_STOREOP_STORE
-		//};
 		//SDL_ClearGPUColorTarget(cmd, pass, &colorTarget);
 		//SDL_ClearGPUDepthStencilTarget(cmd, pass, &depthStencilTarget);
 	}
@@ -2147,7 +2139,56 @@ void draw_vg_sdl3(vg_fbo_t* fbo, SDL_GPURenderPass* pass, vgcmd_t* c, SDL_Rect* 
 	}
 }
 
-void* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo) {
+void draw_geom(vg_fbo_t* fbo, SDL_GPURenderPass* pass, geom_cmd_t* c, const glm::uvec3& offset)
+{
+	if (!c)return;
+	pipelinestate_p_internal* pipe = get_geom_pipeline(fbo->ctx, &c->state);
+	if (pipe && pipe->pipeline) {
+		SDL_BindGPUGraphicsPipeline(pass, pipe->pipeline);
+	}
+	fbo->ctx->gpubuf->bindVBO(pass, c->v_offset ? offset.y : offset.x);
+	fbo->ctx->gpubuf->bindIBO(pass, offset.z);
+	if (c->instance_count > 1)
+		fbo->ctx->gpubuf->bindSSBO(pass, true);
+	SDL_GPUTextureSamplerBinding binding = { .texture = fbo->ctx->device->emptyTexture->texture,	.sampler = fbo->ctx->device->emptyTexture->sampler, };
+	if (c->texture) {
+		auto texid = (vg_image_t*)c->texture;
+		auto tex = fbo->ctx->textures[texid->id];
+		if (tex)
+		{
+			binding.texture = tex->texture;
+			binding.sampler = tex->sampler;
+		}
+	}
+	SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
+	if (c->texture_mask) {
+		auto tex = (sdl3gpu_texture*)c->texture_mask;
+		if (tex)
+		{
+			binding.texture = tex->texture;
+			binding.sampler = tex->sampler;
+		}
+		SDL_BindGPUFragmentSamplers(pass, 1, &binding, 1);
+		SDL_PushGPUFragmentUniformData(fbo->cmd, 0, &c->mask_time, sizeof(float));
+	}
+	struct PushConsts
+	{
+		glm::mat4 mvp;
+		uint32_t instance_pos;
+	};
+	PushConsts pc = { c->mat, c->instance_ssbo_pos };
+	SDL_PushGPUVertexUniformData(fbo->cmd, 0, &pc, sizeof(PushConsts));
+	if (c->firstIndex >= 0)
+	{
+		SDL_DrawGPUIndexedPrimitives(pass, c->elemCount, c->instance_count > 1 ? c->instance_count : 1, c->firstIndex, c->vertexOffset, 0);
+	}
+	else
+	{
+		SDL_DrawGPUPrimitives(pass, c->elemCount, c->instance_count > 1 ? c->instance_count : 1, c->vertexOffset, 0);
+	}
+}
+
+SDL_GPUCommandBuffer* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo) {
 
 	if (!ctx || !fbo || !(fbo->window || fbo->colorTex))return 0;
 	SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(ctx->device->gpuDevice);
@@ -2166,58 +2207,469 @@ void* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo) {
 			SDL_WaitForGPUSwapchain(ctx->device->gpuDevice, fbo->window);
 			free_vgfbo_sdl3(fbo);
 			*fbo = new_vgfbo_sdl3(ctx, sw, sh, fbo->window);
+			fbo->display_size = { sw,sh };
 		}
 	}
 
-	fbo->color = swapchain;
+	fbo->swapchain = swapchain;
 	fbo->cmd = cmd;
 	return cmd;
 }
-void ovg_draw_data(ovg_ctx_t* ctx, vg_fbo_t* fbo, ovg_draw_data_t* data)
+void upload_pixels(ovg_ctx_t* r, sdl3gpu_texture* tex, vg_image_desc_t* desc)
 {
-	if (!ctx || !fbo || !(fbo->window || fbo->colorTex) || !data || !data->count)return;
+	uint32_t bpp = (desc->format == VG_FORMAT_RGBA8) ? 4 : desc->stride;
+	uint32_t pitch = desc->width * bpp;
+	uint32_t size = pitch * desc->height;
+	if (size == 0) return;
+
+	SDL_GPUTransferBufferCreateInfo ti = {
+		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		.size = size,
+	};
+	auto dev = r->device->gpuDevice;
+	SDL_GPUTransferBuffer* tb = SDL_CreateGPUTransferBuffer(dev, &ti);
+	if (!tb) return;
+
+	void* ptr = SDL_MapGPUTransferBuffer(dev, tb, false);
+	if (ptr) {
+		SDL_memcpy(ptr, desc->pixels, size);
+		SDL_UnmapGPUTransferBuffer(dev, tb);
+	}
+
+	SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(dev);
+	SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+
+	SDL_GPUTextureTransferInfo src = { .transfer_buffer = tb, .offset = 0 };
+	SDL_GPUTextureRegion dst = {
+		.texture = tex->texture, .x = desc->x, .y = desc->y, .z = 0,
+		.w = desc->w, .h = desc->h, .d = 1,
+	};
+	SDL_UploadToGPUTexture(cp, &src, &dst, false);
+
+	SDL_EndGPUCopyPass(cp);
+	SDL_SubmitGPUCommandBuffer(cmd);
+
+	SDL_ReleaseGPUTransferBuffer(dev, tb);
+}
+
+
+struct upload_desc_t {
+	void* pixels;     /* CPU 像素数据，调用方持有生命周期 */
+	uint32_t width;
+	uint32_t height;
+	uint32_t stride;     /* 每行字节数（0 = 按 bpp * width 自动算） */
+	vg_format_t format;     /* 像素格式 */
+	sdl3gpu_texture* dst_texture;/* 目标 GPU 纹理 */
+	uint32_t x, y;       /* 目标区域起点（纹理空间） */
+	uint32_t w, h;       /* 目标区域尺寸（0 = 整张） */
+	vg_image_t* img;
+	bool is_copy_rect;		// 是否从区域复制
+};
+
+/* 批量上传结果 */
+typedef struct {
+	uint32_t           submitted;  /* 实际提交的数量 */
+	uint32_t           skipped;    /* 因 size==0 / 非法而跳过的数量 */
+} upload_result_t;
+
+/*
+ * 批量上传：只创建一个 SDL_GPUTransferBuffer，所有纹理数据连续拷贝，
+ * 用 offset 寻址，一次 CopyPass + 一次 Submit 全部推上去。
+ *
+ * 要求：
+ *   - descs[i].pixels 必须在本次调用期间保持有效（在 Submit 之前）
+ *   - 所有 dst_texture 属于同一个 SDL_GPUDevice
+ */
+upload_result_t upload_pixels_batched(SDL_GPUDevice* device, SDL_GPUCommandBuffer* cmd, const upload_desc_t* descs, uint32_t count);
+
+uint32_t format_bpp(vg_format_t fmt) {
+	switch (fmt) {
+	case VG_FORMAT_RGBA8:
+	case VG_FORMAT_BGRA8:
+	case VG_FORMAT_RGBA8_SRGB:
+	case VG_FORMAT_BGRA8_SRGB:return 4;
+	case VG_FORMAT_RGBA16F: return 8;   /* R16G16B16A16_FLOAT = 8 字节 */
+	case VG_FORMAT_RGBA32F: return 16;  /* R32G32B32A32_FLOAT = 16 字节 */
+	default: return 4;
+	}
+}
+
+upload_result_t upload_pixels_batched(
+	SDL_GPUDevice* device,
+	SDL_GPUCommandBuffer* cmd,
+	const upload_desc_t* descs,
+	uint32_t count)
+{
+	upload_result_t result = { 0, 0 };
+
+	if (!device || !descs || count == 0) return result;
+
+	const uint32_t align = 256;
+
+	struct per_item_t {
+		uint32_t src_offset;       /* CPU 源像素起始字节（原始纹理坐标系） */
+		uint32_t gpu_offset;       /* transfer buffer 中的字节偏移 */
+		uint32_t pixels_per_row;   /* 传给 SDL：源 buffer 每行像素数（0=紧密） */
+		uint32_t copy_h;           /* 拷贝行数（= 脏矩形高） */
+		uint32_t dirty_w;          /* 脏矩形宽 */
+		uint32_t dirty_h;          /* 脏矩形高 */
+		uint32_t bpp;              /* 每像素字节 */
+		uint32_t stride;           /* 原始纹理每行字节（含 padding） */
+		uint32_t row_pitch;        /* memcpy 每行字节数（= dirty_w * bpp） */
+		uint32_t gpu_row_bytes;    /* buffer 里每行实际字节（紧密 or 对齐后） */
+	};
+	std::vector<per_item_t> items(count);
+
+	uint32_t total_size = 0;
+
+	/* ── 1. 预扫描：计算每张图的源偏移、buffer 布局、对齐 ── */
+	for (uint32_t i = 0; i < count; i++) {
+		const upload_desc_t* d = &descs[i];
+
+		/* 非法条目跳过 */
+		if (!d->pixels || !d->dst_texture || d->width == 0 || d->height == 0) {
+			items[i].copy_h = 0;
+			result.skipped++;
+			continue;
+		}
+
+		uint32_t bpp = format_bpp(d->format);
+		uint32_t stride = (d->stride != 0) ? d->stride : (d->width * bpp);
+
+		/* 目标区域（纹理空间），0 表示整张 */
+		uint32_t dst_x = d->x;
+		uint32_t dst_y = d->y;
+		uint32_t dst_w = (d->w != 0) ? d->w : d->width;
+		uint32_t dst_h = (d->h != 0) ? d->h : d->height;
+
+		/* 裁剪到纹理边界，防止越界 */
+		if (dst_x + dst_w > d->width)  dst_w = d->width - dst_x;
+		if (dst_y + dst_h > d->height) dst_h = d->height - dst_y;
+		if (dst_w == 0 || dst_h == 0) {
+			items[i].copy_h = 0;
+			result.skipped++;
+			continue;
+		}
+
+		bool is_full_upload = (dst_x == 0 && dst_y == 0 &&
+			dst_w == d->width && dst_h == d->height);
+
+		uint32_t dirty_pitch = dst_w * bpp;  /* 每行有效像素字节数 */
+
+		if (is_full_upload) {
+			/* ── 整图上传：紧密打包，pixels_per_row = 0 ── */
+			items[i].src_offset = 0;
+			items[i].gpu_offset = total_size;
+			items[i].pixels_per_row = 0;          /* 驱动按 region.w 推导行距 */
+			items[i].copy_h = d->height;
+			items[i].dirty_w = d->width;
+			items[i].dirty_h = d->height;
+			items[i].bpp = bpp;
+			items[i].stride = stride;
+			items[i].row_pitch = d->width * bpp;
+			items[i].gpu_row_bytes = d->width * bpp;  /* 紧密：行距 = 行宽 */
+			total_size += stride * d->height;
+		}
+		else {
+			/* ── 脏矩形上传：buffer 每行对齐 256 字节 ── */
+			uint32_t aligned_pitch = align_up(dirty_pitch, align);
+
+			items[i].src_offset = dst_y * stride + dst_x * bpp;
+			items[i].gpu_offset = total_size;
+			items[i].pixels_per_row = aligned_pitch / bpp;  /* ← 关键：源 buffer 真实行像素宽 */
+			items[i].copy_h = dst_h;
+			items[i].dirty_w = dst_w;
+			items[i].dirty_h = dst_h;
+			items[i].bpp = bpp;
+			items[i].stride = stride;
+			items[i].row_pitch = dirty_pitch;          /* memcpy 只拷有效部分 */
+			items[i].gpu_row_bytes = aligned_pitch;        /* buffer 行距 = 对齐后 */
+			total_size += aligned_pitch * dst_h;
+		}
+	}
+
+	if (total_size == 0) return result;
+
+	/* ── 2. 创建唯一一个 transfer buffer ── */
+	SDL_GPUTransferBufferCreateInfo ti = {
+		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		.size = total_size,
+	};
+	SDL_GPUTransferBuffer* tb = SDL_CreateGPUTransferBuffer(device, &ti);
+	if (!tb) return result;
+
+	/* ── 3. 映射一次，逐张拷贝（各自按 gpu_offset / gpu_row_bytes 落位） ── */
+	uint8_t* base = (uint8_t*)SDL_MapGPUTransferBuffer(device, tb, false);
+	if (base) {
+		for (uint32_t i = 0; i < count; i++) {
+			if (items[i].copy_h == 0) continue;
+
+			const upload_desc_t* d = &descs[i];
+			const per_item_t* it = &items[i];
+
+			uint8_t* src = (uint8_t*)d->pixels + it->src_offset;   /* 原始纹理脏区起点 */
+			uint8_t* dst = base + it->gpu_offset;                    /* buffer 脏区起点 */
+
+			/* 逐行拷贝：源按 stride 跳行，目的按 gpu_row_bytes 跳行 */
+			for (uint32_t row = 0; row < it->copy_h; row++) {
+				SDL_memcpy(
+					dst + row * it->gpu_row_bytes,
+					src + row * it->stride,
+					it->row_pitch
+				);
+			}
+		}
+		SDL_UnmapGPUTransferBuffer(device, tb);
+	}
+
+	/* ── 4. 一个 CopyPass，全部上传（offset 寻址） ── */
+	bool own_cmd = (cmd == NULL);
+	if (own_cmd) cmd = SDL_AcquireGPUCommandBuffer(device);
+	SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+
+	for (uint32_t i = 0; i < count; i++) {
+		if (items[i].copy_h == 0) continue;
+
+		const upload_desc_t* d = &descs[i];
+		const per_item_t* it = &items[i];
+
+		SDL_GPUTextureTransferInfo src = {
+			.transfer_buffer = tb,
+			.offset = it->gpu_offset,
+			.pixels_per_row = it->pixels_per_row,   /* 0 或 aligned_pitch/bpp */
+			.rows_per_layer = 0,
+		};
+		SDL_GPUTextureRegion dst = {
+			.texture = d->dst_texture->texture,
+			.x = d->x,  .y = d->y,  .z = 0,
+			.w = it->dirty_w,
+			.h = it->copy_h,
+			.d = 1,
+		};
+		SDL_UploadToGPUTexture(cp, &src, &dst, false);
+		result.submitted++;
+	}
+
+	SDL_EndGPUCopyPass(cp);
+	if (own_cmd) SDL_SubmitGPUCommandBuffer(cmd);
+
+	/* ── 5. 提交后释放 transfer buffer（GPU 已读完，引用计数回收） ── */
+	SDL_ReleaseGPUTransferBuffer(device, tb);
+	return result;
+}
+#if 0
+struct pending_upload_t {
+	SDL_GPUTransferBuffer* tb;
+	SDL_GPUTexture* texture;
+	uint32_t               x, y, w, h;
+};
+void upload_pixels_batched(ovg_ctx_t* r, vg_image_desc_t* descs, sdl3gpu_texture** texs, uint32_t count)
+{
+	auto dev = r->device->gpuDevice;
+	std::vector<pending_upload_t> uploads;
+	uploads.reserve(count);
+
+	// ── 第一遍：建所有 transfer buffer + 拷贝数据 ──
+	for (uint32_t i = 0; i < count; i++) {
+		vg_image_desc_t* desc = &descs[i];
+		sdl3gpu_texture* tex = texs[i];
+
+		uint32_t bpp = (desc->format == VG_FORMAT_RGBA8) ? 4 : desc->stride;
+		uint32_t pitch = desc->width * bpp;
+		uint32_t size = pitch * desc->height;
+		if (size == 0) continue;
+
+		SDL_GPUTransferBufferCreateInfo ti = {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = size,
+		};
+		SDL_GPUTransferBuffer* tb = SDL_CreateGPUTransferBuffer(dev, &ti);
+		if (!tb) continue;
+
+		void* ptr = SDL_MapGPUTransferBuffer(dev, tb, false);
+		if (ptr) {
+			SDL_memcpy(ptr, desc->pixels, size);
+			SDL_UnmapGPUTransferBuffer(dev, tb);
+		}
+
+		uploads.push_back({ tb, tex->texture, desc->x, desc->y, desc->w, desc->h });
+	}
+
+	if (uploads.empty()) return;
+
+	// ── 第二遍：一次 command buffer + 一次 copy pass 提交全部 ──
+	SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(dev);
+	SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+
+	for (auto& up : uploads) {
+		SDL_GPUTextureTransferInfo src = {
+			.transfer_buffer = up.tb,
+			.offset = 0,
+		};
+		SDL_GPUTextureRegion dst = {
+			.texture = up.texture,
+			.x = up.x, .y = up.y, .z = 0,
+			.w = up.w, .h = up.h, .d = 1,
+		};
+		SDL_UploadToGPUTexture(cp, &src, &dst, false);
+	}
+
+	SDL_EndGPUCopyPass(cp);
+	SDL_SubmitGPUCommandBuffer(cmd);
+
+	// ── 释放所有 transfer buffer ──
+	for (auto& up : uploads) {
+		SDL_ReleaseGPUTransferBuffer(dev, up.tb);
+	}
+}
+#endif
+/* ---- 延迟释放 ---- */
+
+void deferred_free_push(ovg_ctx_t* ctx, sdl3gpu_texture* tex) {
+	ctx->texq.push(tex);
+}
+
+void deferred_free_advance(ovg_ctx_t* r) {
+	auto dev = r->device->gpuDevice;
+	if (r->texq.size())
+	{
+		SDL_WaitForGPUIdle(r->device->gpuDevice);
+		for (; r->texq.size();)
+		{
+			auto p = r->texq.front();
+			if (p && p->id > 0)
+			{
+				r->textures.erase(p->id);
+				destroy_texture(p);
+			}
+			r->texq.pop();
+		}
+	}
+}
+
+int build_devres(ovg_ctx_t* ctx, SDL_GPUCommandBuffer* cmd, ovg_draw_data_t* kd) {
+	int errornum = 0;
+	for (size_t y = 0; y < kd->pipeinfo_count; y++)
+	{
+		auto it = kd->pipeinfo + y;
+		if (it)
+		{
+			pipelinestate_p_internal* p = get_geom_pipeline(ctx, it);
+			if (!p) {
+				errornum++;
+			}
+		}
+	}
+	std::vector<upload_desc_t> uploads;
+	for (size_t i = 0; i < kd->image_desc_count; i++)
+	{
+		auto it = kd->image_desc[i];
+		auto tex = ctx->textures[it->img->id];
+		if (tex && it->is_destroy && tex != ctx->device->emptyTexture)
+		{
+			ctx->texq.push(tex);
+		}
+		if (it->img->id == 0)tex = 0;
+		if (!tex) {
+			tex = new_texture_def(ctx, it->width, it->height, it->format);
+			if (tex)
+			{
+				create_sampler(tex, SDL_GPU_FILTER_NEAREST, SDL_GPU_FILTER_NEAREST, SDL_GPU_SAMPLERMIPMAPMODE_NEAREST, SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE);
+				it->img->id = ctx->next_image_id++;
+				tex->id = it->img->id;
+				ctx->textures[it->img->id] = tex;
+			}
+			else {
+				it->img->id = 0;
+			}
+		}
+		if (!tex)continue;
+		upload_desc_t d = {};
+		d.pixels = (void*)it->pixels;     /* CPU 像素数据，调用方持有生命周期 */
+		d.width = it->width;
+		d.height = it->height;
+		d.stride = it->stride;     /* 每行字节数（0 = 按 bpp * width 自动算） */
+		d.format = it->format;     /* 像素格式 */
+		d.dst_texture = tex;/* 目标 GPU 纹理 */
+		d.x = it->x, d.y = it->y;       /* 目标区域起点（纹理空间） */
+		d.w = it->w, d.h = it->h;       /* 目标区域尺寸（0 = 整张） */
+		d.is_copy_rect = !it->is_copy;
+		d.img = it->img;
+		uploads.push_back(d);
+	}
+
+	upload_result_t hr = upload_pixels_batched(ctx->device->gpuDevice, cmd, uploads.data(), uploads.size());
+	return errornum;
+}
+void ovg_draw_data(ovg_ctx_t* ctx, vg_fbo_t* fbo, ovg_draw_data_t* data, size_t count)
+{
+	if (!ctx || !fbo || !(fbo->window || fbo->colorTex) || !data || !count)return;
 	if (!fbo->cmd)return;
 	auto cmd = fbo->cmd;
 	int smax = std::max(fbo->width, fbo->height);
 	ctx->currentCmdBuf = fbo->cmd;
-	size_t ress[] = { data->v_count * sizeof(ovgVertex),data->i_count * sizeof(uint32_t)
-		,data->g_count * sizeof(uint32_t)
-		,data->v1_count * sizeof(geomVertex1)
-		,data->v2_count * sizeof(geomVertex2) };
-	ctx->gpubuf->begin(ress[0] + ress[3] + ress[4], ress[1] + ress[2], 0);
-	ctx->gpubuf->add_vbo(data->vg_vertex, ress[0]);
-	ctx->gpubuf->add_ibo(data->vg_indices, ress[1]);
-	ctx->gpubuf->add_vbo(data->vertex1, ress[3]);
-	ctx->gpubuf->add_vbo(data->vertex2, ress[4]);
-	ctx->gpubuf->add_ibo(data->geom_indices, ress[2]);
+	size_t total_vbo = 0;
+	size_t total_ibo = 0;
+	size_t total_ssbo = 0;
+	int errornum = 0;
+	for (size_t i = 0; i < count; i++) {
+		auto kd = &data[i];
+		total_vbo += data[i].v_count * sizeof(ovgVertex);
+		total_vbo += data[i].v1_count * sizeof(geomVertex1);
+		total_vbo += data[i].v2_count * sizeof(geomVertex2);
+
+		total_ibo += data[i].i_count * sizeof(uint32_t);
+		total_ibo += data[i].ig_count * sizeof(uint32_t);
+		total_ssbo += data[i].instance_count * sizeof(glm::mat4);
+		errornum += build_devres(ctx, cmd, kd);
+	}
+
+	assert(errornum == 0);
+
+	ctx->gpubuf->begin(total_vbo, total_ibo, total_ssbo);
+
+	for (size_t i = 0; i < count; i++) {
+		auto kd = &data[i];
+		kd->vg_offset.x = ctx->gpubuf->add_vbo(kd->vg_vertex, kd->v_count * sizeof(ovgVertex));
+		kd->vg_offset.y = ctx->gpubuf->add_ibo(kd->vg_indices, kd->i_count * sizeof(uint32_t));
+		kd->geom_offset.x = ctx->gpubuf->add_vbo(kd->vertex1, kd->v1_count * sizeof(geomVertex1));
+		kd->geom_offset.y = ctx->gpubuf->add_vbo(kd->vertex2, kd->v2_count * sizeof(geomVertex2));
+		kd->geom_offset.z = ctx->gpubuf->add_ibo(kd->geom_indices, kd->ig_count * sizeof(uint32_t));
+		ctx->gpubuf->add_ssbo(kd->instance_data, kd->instance_count * sizeof(glm::mat4));
+	}
 	ctx->gpubuf->end(cmd);
 	auto cmd0 = ovg_begin_frame(ctx, fbo, true);
 	auto pass = ctx->pass;
 	SDL_Rect cuClip = {};
-	for (size_t i = 0; data && i < data->count; i++)
+	for (size_t d = 0; d < count; d++)
 	{
-		auto& it = data->d[i];
-		switch (it.g.stype) {
-		case 0:
+		auto kd = data + d;
+		for (size_t i = 0; i < kd->count; i++)
 		{
-			draw_vg_sdl3(fbo, pass, &it.vg, &cuClip);
-		}
-		break;
-		case 1:
-		{
-
-		}
-		break;
+			auto& it = kd->d[i];
+			switch ((cmd_type_e)it.g.stype) {
+			case cmd_type_e::DRAW_VG:
+			{
+				draw_vg(fbo, pass, &it.vg, &cuClip, kd->vg_offset);
+			}
+			break;
+			case cmd_type_e::DRAW_GEOM:
+			{
+				draw_geom(fbo, pass, &it.g, kd->geom_offset);
+			}
+			break;
+			}
 		}
 	}
 
 	ovg_end_frame(ctx, fbo);
 	SDL_SubmitGPUCommandBuffer(cmd);
-	//SDL_WaitForGPUIdle(ctx->device->gpuDevice);
+
+	deferred_free_advance(ctx);
 }
 
 
-bool VG_Init(VGState* g, int width, int height) {
+bool vg_sdl3_init(ovg_sdl3_ctx* g, int width, int height, bool is_vulkan) {
 	SDL_Init(SDL_INIT_VIDEO);
 
 	g->window = SDL_CreateWindow("SDL3 GPU Vector Graphics",
@@ -2225,51 +2677,58 @@ bool VG_Init(VGState* g, int width, int height) {
 		SDL_WINDOW_RESIZABLE |
 		SDL_WINDOW_HIGH_PIXEL_DENSITY);
 	if (!g->window) return false;
-	SDL_GPUVulkanOptions vo = {};
-	VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES,
-		.pNext = NULL,
-		.scalarBlockLayout = VK_TRUE,
-	};
-	VkPhysicalDeviceVulkan12Features enabledFeatures12 = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
+	SDL_PropertiesID props = SDL_CreateProperties();
+	if (is_vulkan)
+	{
+		SDL_GPUVulkanOptions vo = {};
+		VkPhysicalDeviceScalarBlockLayoutFeatures scalarFeatures = {
+			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES,
+			.pNext = NULL,
+			.scalarBlockLayout = VK_TRUE,
+		};
+		VkPhysicalDeviceVulkan12Features enabledFeatures12 = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
 
-	enabledFeatures12.scalarBlockLayout = VK_TRUE;
-	// 1b. Vulkan 1.1 复合特性（包含 shaderDrawParameters） 
-	VkPhysicalDeviceVulkan11Features vk11Features = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,	   .pNext = &enabledFeatures12, };
-	// 其他 1.1 特性默认由驱动填充，我们只关心 shaderDrawParameters
-	vk11Features.shaderDrawParameters = VK_TRUE;
-	// 以下字段留 0，让 SDL/Vulkan 使用默认值
-	vk11Features.storageBuffer16BitAccess = VK_FALSE;
-	vk11Features.uniformAndStorageBuffer16BitAccess = VK_FALSE;
-	vk11Features.storagePushConstant16 = VK_FALSE;
-	vk11Features.storageInputOutput16 = VK_FALSE;
-	vk11Features.multiview = VK_FALSE;
-	vk11Features.multiviewGeometryShader = VK_FALSE;
-	vk11Features.multiviewTessellationShader = VK_FALSE;
-	vk11Features.variablePointersStorageBuffer = VK_FALSE;
-	vk11Features.variablePointers = VK_FALSE;
-	vk11Features.protectedMemory = VK_FALSE;
-	vk11Features.samplerYcbcrConversion = VK_TRUE;
-	const char* devext[] = { VK_KHR_MAINTENANCE_4_EXTENSION_NAME,
-			VK_KHR_MAINTENANCE_5_EXTENSION_NAME,VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME };
-	const char* insext[] = { VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME };
-	// 2. 填充 SDL_GPUVulkanOptions
-	SDL_GPUVulkanOptions vkOpts = {
-		.vulkan_api_version = VK_API_VERSION_1_2,  // 必须 >= 1.2 才能启用 scalarBlockLayout
-		.feature_list = &vk11Features,             // pNext 链头
-		.vulkan_10_physical_device_features = NULL, // 不需要额外 1.0 特性
-		.device_extension_count = 3,
-		.device_extension_names = devext,
-		.instance_extension_count = 1,
-		.instance_extension_names = insext,
-	};
+		enabledFeatures12.scalarBlockLayout = VK_TRUE;
+		// 1b. Vulkan 1.1 复合特性（包含 shaderDrawParameters） 
+		VkPhysicalDeviceVulkan11Features vk11Features = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,	   .pNext = &enabledFeatures12, };
+		// 其他 1.1 特性默认由驱动填充，我们只关心 shaderDrawParameters
+		vk11Features.shaderDrawParameters = VK_TRUE;
+		// 以下字段留 0，让 SDL/Vulkan 使用默认值
+		vk11Features.storageBuffer16BitAccess = VK_FALSE;
+		vk11Features.uniformAndStorageBuffer16BitAccess = VK_FALSE;
+		vk11Features.storagePushConstant16 = VK_FALSE;
+		vk11Features.storageInputOutput16 = VK_FALSE;
+		vk11Features.multiview = VK_FALSE;
+		vk11Features.multiviewGeometryShader = VK_FALSE;
+		vk11Features.multiviewTessellationShader = VK_FALSE;
+		vk11Features.variablePointersStorageBuffer = VK_FALSE;
+		vk11Features.variablePointers = VK_FALSE;
+		vk11Features.protectedMemory = VK_FALSE;
+		vk11Features.samplerYcbcrConversion = VK_TRUE;
+		const char* devext[] = { VK_KHR_MAINTENANCE_4_EXTENSION_NAME,
+				VK_KHR_MAINTENANCE_5_EXTENSION_NAME,VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME };
+		const char* insext[] = { VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME };
+		// 2. 填充 SDL_GPUVulkanOptions
+		SDL_GPUVulkanOptions vkOpts = {
+			.vulkan_api_version = VK_API_VERSION_1_2,  // 必须 >= 1.2 才能启用 scalarBlockLayout
+			.feature_list = &vk11Features,             // pNext 链头
+			.vulkan_10_physical_device_features = NULL, // 不需要额外 1.0 特性
+			.device_extension_count = 3,
+			.device_extension_names = devext,
+			.instance_extension_count = 1,
+			.instance_extension_names = insext,
+		};
+		SDL_SetPointerProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, &vkOpts);
+		SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "vulkan");
+		SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+	}
+	bool debugmode = false;
+#ifdef _DEBUG
+	debugmode = true;
+#endif // _DEBUG
 
 	// 3. 通过属性创建 GPU 设备
-	SDL_PropertiesID props = SDL_CreateProperties();
-	SDL_SetPointerProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, &vkOpts);
-	SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "vulkan");
-	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, true);
-	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, debugmode);
 
 	SDL_GPUDevice* device = g->device = SDL_CreateGPUDeviceWithProperties(props);
 	SDL_DestroyProperties(props);
@@ -2280,4 +2739,11 @@ bool VG_Init(VGState* g, int width, int height) {
 	SDL_ClaimWindowForGPUDevice(g->device, g->window);
 
 	return true;
+}
+
+sdl3gpu_texture* new_texture_def(ovg_ctx_t* ctx, int w, int h, vg_format_t format)
+{
+	SDL_GPUTextureFormat f = vg_to_sdl_format(format);
+	auto p = new_texture(ctx->device, f, w, h, 0);
+	return p;
 }

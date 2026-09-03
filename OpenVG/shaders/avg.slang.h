@@ -25,6 +25,7 @@ struct uboGrad_
 	float2  scale;
 	uint	count;
 	int		extend;
+	int		type;
 };
 
 [[vk::constant_id(0)]] const int NUM_SAMPLES = 8;

@@ -20,22 +20,23 @@ struct VSOutput
 
 struct PushConsts
 {
-	float4x4 mvp; 
+	float4x4 mvp;
+	uint instance_pos;
 };
 
 struct fragubo
-{ 
+{
 	float masktime;
 };
 //[[vk::push_constant]] PushConsts pc;
 [[vk::binding(0, 1)]] ConstantBuffer<PushConsts> pc;
 #ifdef ID_INSTANCING
-[[vk::binding(1, 1)]] StructuredBuffer<float4x4> instance_model_matrix;
+[[vk::binding(0, 0)]] StructuredBuffer<float4x4> instance_model_matrix;
 [shader("vertex")]
 VSOutput main(VSInput input, uint InstanceIndex : SV_InstanceID)
 {
 	VSOutput output;
-	float4x4 m = mul(pc.mvp, instance_model_matrix[InstanceIndex]);
+	float4x4 m = mul(pc.mvp, instance_model_matrix[InstanceIndex + pc.instance_pos]);
 	output.pos = mul(m, float4(input.pos, 1.0));
 	output.uv = input.uv;
 	output.color = input.color;
@@ -71,12 +72,10 @@ float4 fragMain(VSOutput input, bool FrontFacing : SV_IsFrontFace) : SV_TARGET
 #ifdef DOUBLESIDEDCOLOR
 	color = FrontFacing ? input.color : input.color1;
 #endif
-	color *= samplerColor.Sample(input.uv);
+	float4 c = samplerColor.Sample(input.uv);
+	color *= c;
 #ifdef COLOR_MASK
 	color *= 1.0 - step(pu.masktime, samplerMask.Sample(input.uv).r);
-#endif
-#ifndef NOT_PREMULT_ALPHA
-	color.rgb *= color.a;
 #endif
 	return color;
 }

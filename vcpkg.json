@@ -36,15 +36,18 @@
       "name": "vulkan-memory-allocator"
     },
     {
+      "name": "pkgconf"
+    },
+    {
       "name": "harfbuzz",
-      "version>=": "13.0.1",
+      "version>=": "14.3.1",
       "features": [ "freetype", "icu" ]
     },
     {
       "name": "fontconfig"
     },
     {
-      "name": "libraqm" 
+      "name": "libraqm"
     }
   ]
 }

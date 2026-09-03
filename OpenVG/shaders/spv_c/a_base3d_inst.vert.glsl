@@ -8,18 +8,20 @@ layout(row_major) buffer;
 struct PushConsts_0
 {
     mat4x4 mvp_0;
+    uint instance_pos_0;
 };
 
 
-#line 31
+#line 32
 layout(binding = 0, set = 1)
 layout(scalar) uniform block_PushConsts_0
 {
     mat4x4 mvp_0;
+    uint instance_pos_0;
 }pc_0;
 
-#line 33
-layout(scalar, binding = 1, set = 1) readonly buffer StructuredBuffer_matrixx3Cfloatx2C4x2C4x3E_t_0 {
+#line 34
+layout(scalar, binding = 0) readonly buffer StructuredBuffer_matrixx3Cfloatx2C4x2C4x3E_t_0 {
     mat4x4 _data[];
 } instance_model_matrix_0;
 
@@ -33,22 +35,22 @@ layout(location = 1)
 out vec4 entryPointParam_main_color_0;
 
 
-#line 3120 1
+#line 1
 layout(location = 0)
 in vec3 input_pos_0;
 
 
-#line 3120
+#line 1
 layout(location = 1)
 in vec2 input_uv_0;
 
 
-#line 3120
+#line 1
 layout(location = 2)
 in vec4 input_color_0;
 
 
-#line 11 0
+#line 11
 struct VSOutput_0
 {
     vec4 pos_0;
@@ -57,12 +59,12 @@ struct VSOutput_0
 };
 
 
-#line 35
+#line 36
 void main()
 {
     VSOutput_0 output_0;
 
-    output_0.pos_0 = (((vec4(input_pos_0, 1.0)) * ((((instance_model_matrix_0._data[uint(uint(gl_InstanceIndex - gl_BaseInstance))]) * (pc_0.mvp_0))))));
+    output_0.pos_0 = (((vec4(input_pos_0, 1.0)) * ((((instance_model_matrix_0._data[uint(uint(gl_InstanceIndex - gl_BaseInstance) + pc_0.instance_pos_0)]) * (pc_0.mvp_0))))));
     output_0.uv_0 = input_uv_0;
     output_0.color_0 = input_color_0;
 
@@ -70,16 +72,16 @@ void main()
 
     VSOutput_0 _S1 = output_0;
 
-#line 45
+#line 46
     gl_Position = output_0.pos_0;
 
-#line 45
+#line 46
     entryPointParam_main_uv_0 = _S1.uv_0;
 
-#line 45
+#line 46
     entryPointParam_main_color_0 = _S1.color_0;
 
-#line 45
+#line 46
     return;
 }
 

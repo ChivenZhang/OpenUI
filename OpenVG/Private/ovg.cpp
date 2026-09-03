@@ -1,5 +1,7 @@
 ﻿/*
+矢量渲染
 
+2026/8/31 支持普通三角形渲染
 2026/8/13 版本1.0
 2026/8/8 创建文件
 
@@ -42,6 +44,10 @@
 #define VG_FILL_NZ_GLUTESS2
 #endif
 
+#include <harfbuzz/hb.h> 
+#include <fontconfig/fontconfig.h>
+#include "ovg_fonts.h"
+
 void init_ovg_cb(ovg_canvas_cb* cb);
 void init_ovg_ctx_cb(ovg_ctx_cb* cb);
 
@@ -52,16 +58,31 @@ using uspool_t = std::pmr::unsynchronized_pool_resource;	// 线程不安全
 using mbpool_t = std::pmr::monotonic_buffer_resource;		// 线程不安全，多次分配，统一释放
 using spool_t = std::pmr::synchronized_pool_resource;		// 线程安全的
 
-class usp_ac_cx
+
+vg_alloc_cx::vg_alloc_cx()
+{}
+
+vg_alloc_cx::~vg_alloc_cx()
+{}
+void* vg_alloc_cx::alloc(const size_t _Bytes, const size_t align)
+{
+	return nullptr;
+}
+void vg_alloc_cx::dealloc(void* t, size_t n)
+{}
+class usp_ac_cx :public vg_alloc_cx
 {
 public:
-	uspool_t _alloc = {};				// pmr内存分配
 	size_t _Align = 16;
 	void* ptr = 0;
+	uspool_t _alloc = {};				// pmr内存分配
 public:
 	usp_ac_cx() {}
 	~usp_ac_cx() {}
 public:
+	void* alloc(const size_t _Bytes, const size_t align = 0) {
+		return  _alloc.allocate(_Bytes, align > 0 ? align : _Align);
+	}
 	void* allocate(const size_t _Bytes, const size_t align = 0) {
 		return  _alloc.allocate(_Bytes, align > 0 ? align : _Align);
 	}
@@ -131,6 +152,14 @@ public:
 			_alloc.deallocate(t, n, _Align);
 		}
 	}
+	void dealloc(void* t, size_t n)
+	{
+		auto ptr = t;
+		if (t && n > 0)
+		{
+			_alloc.deallocate(t, n, _Align);
+		}
+	}
 	template<class T, class... Ts>
 	T* new_obj(Ts &&... args)
 	{
@@ -159,12 +188,46 @@ public:
 
 #endif // !MEMAC_PMR
 
-ovg_canvas_cb* new_canvas_cb()
+class ovg_canvas_cx :public ovg_canvas_cb
 {
-	auto p = new ovg_canvas_cb();
-	auto ac = new usp_ac_cx();
-	p->ac = (mem_resource_t*)ac;
-	init_ovg_cb(p);
+public:
+	font_cache_cx* font_ctx = 0;
+public:
+	ovg_canvas_cx();
+	~ovg_canvas_cx();
+
+	void add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box);
+private:
+
+};
+
+ovg_canvas_cx::ovg_canvas_cx()
+{
+	auto a = new usp_ac_cx();
+	ac = (mem_resource_t*)a;
+	ac->ptr = this;
+	init_ovg_cb(this);
+}
+
+ovg_canvas_cx::~ovg_canvas_cx()
+{
+	free_font_cache(font_ctx);
+	font_ctx = 0;
+	if (ac) {
+		auto ac1 = (usp_ac_cx*)ac;
+		if (ac1)
+			delete ac1;
+	}
+	ac = 0;
+}
+
+ovg_canvas_cb* new_canvas_cb(font_cache_cx* fctx)
+{
+	auto p = new ovg_canvas_cx();
+	if (p) {
+		if (fctx)fctx->references++;
+		p->font_ctx = fctx;
+	}
 	return p;
 }
 void free_canvas_cb(ovg_canvas_cb* p) {
@@ -173,14 +236,18 @@ void free_canvas_cb(ovg_canvas_cb* p) {
 		delete p;
 	}
 }
+
+class font_cache_cx;
+
 class ovg_ctx_cx :public ovg_ctx_cb
 {
 public:
-
+	font_cache_cx* font_ctx = 0;
 public:
 	ovg_ctx_cx();
 	~ovg_ctx_cx();
 
+	void add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box);
 private:
 
 };
@@ -198,11 +265,18 @@ ovg_ctx_cx::~ovg_ctx_cx()
 	auto ac1 = (usp_ac_cx*)ac;
 	if (ac1)
 		delete ac1;
+	free_font_cache(font_ctx);
+	font_ctx = 0;
 	ac = 0;
 }
-ovg_ctx_cb* new_ctx_cb()
+ovg_ctx_cb* new_ctx_cb(font_cache_cx* fctx)
 {
 	auto p = new ovg_ctx_cx();
+	if (p)
+	{
+		if (fctx)fctx->references++;
+		p->font_ctx = fctx;
+	}
 	return p;
 }
 void free_ctx_cb(ovg_ctx_cb* p) {
@@ -219,13 +293,13 @@ struct ovg_path_t {
 	std::pmr::vector<uint32_t> pathes;	// 每段大小
 	std::pmr::vector<uint32_t> colors;	// 颜色数组，和pathes大小一样
 	uint32_t color = 0xffffffff;		// 默认颜色
-	uint32_t segmentPtr;   // current segment count in current path having curves
-	uint32_t subpathCount; // store count of subpath, not straight forward to retrieve from segmented path array
+	uint32_t segmentPtr = 0;   // current segment count in current path having curves
+	uint32_t subpathCount = 0; // store count of subpath, not straight forward to retrieve from segmented path array
 
 	uint32_t  pathPtr = 0;		// 路径数组中的指针pointer in the path array  
 	vg_state_save_t* t = 0;
 	uint32_t curVertOffset = 0;
-	bool     simpleConvex; // true if path is single rect or concave closed curve.
+	bool     simpleConvex = false; // true if path is single rect or concave closed curve.
 };
 
 #define PATH_CLOSED_BIT 0x80000000 /* most significant bit of path elmts is closed/open path state */
@@ -257,46 +331,6 @@ void _matrix_get_scale(const glm::mat3x2* matrix, float* sx, float* sy) {
 	 *sy = -*sy;*/
 }
 
-void o_finish_path(ovg_path_t* ctx) {
-	if (!ctx)return;
-	do {
-		if (ctx->pathes.empty())
-			ctx->pathes.push_back(0);
-		if (ctx->pathes[ctx->pathPtr] == 0) // empty
-			break;
-		if ((ctx->pathes[ctx->pathPtr] & PATH_ELT_MASK) < 2) {
-			// only current pos is in path
-			auto pointCount = ctx->points.size();
-			pointCount -= ctx->pathes[ctx->pathPtr]; // what about the bounds?
-			ctx->points.resize(pointCount);
-			ctx->pathes[ctx->pathPtr] = 0;
-			ctx->segmentPtr = 0;
-			break;
-		}
-
-		if (ctx->pathPtr == 0 && ctx->simpleConvex)
-			ctx->pathes[0] |= PATH_IS_CONVEX_BIT;
-
-		if (ctx->segmentPtr > 0) { // pathes having curves are segmented
-			ctx->pathes[ctx->pathPtr] |= PATH_HAS_CURVES_BIT;
-			// curved segment increment segmentPtr on curve end,
-			// so if last segment is not a curve and point count > 0
-			if ((ctx->pathes[ctx->pathPtr + ctx->segmentPtr] & PATH_HAS_CURVES_BIT) == 0 &&
-				(ctx->pathes[ctx->pathPtr + ctx->segmentPtr] & PATH_ELT_MASK) > 0)
-				ctx->segmentPtr++; // current segment has to be included
-			ctx->pathPtr += ctx->segmentPtr;
-		}
-		else
-			ctx->pathPtr++;
-
-		//if (_check_pathes_array(ctx))
-		ctx->pathes.push_back(0);
-		ctx->segmentPtr = 0;
-		ctx->subpathCount++;
-		ctx->simpleConvex = false;
-	} while (0);
-
-}
 void o_remove_last_point(ovg_path_t* ctx) {
 	ctx->points.pop_back();
 	ctx->pathes[ctx->pathPtr]--;
@@ -442,7 +476,81 @@ glm::vec2 _get_current_point(ovg_path_t* ctx) {
 	}
 	return cp;
 }
+#define VG_ARRAY_THRESHOLD 8
+#define VG_PATHES_SIZE 16
+bool _check_pathes_array(ovg_path_t* ctx) {
+	if (ctx->pathes.size() - ctx->pathPtr - ctx->segmentPtr > VG_ARRAY_THRESHOLD)
+		return false;
+	ctx->pathes.resize(ctx->pathes.size() + VG_PATHES_SIZE);
+	return false;
+}
+#if 1
+void _set_curve_start(ovg_path_t* ctx) {
+	_check_pathes_array(ctx);
+	if (ctx->segmentPtr > 0) {
+		// check if current segment has points (straight)
+		if ((ctx->pathes[ctx->pathPtr + ctx->segmentPtr] & PATH_ELT_MASK) > 0)
+			ctx->segmentPtr++;
+	}
+	else {
+		// not yet segmented path, first segment length is copied
+		if (ctx->pathes[ctx->pathPtr] > 0) { // create first straight segment first
+			ctx->pathes[ctx->pathPtr + 1] = ctx->pathes[ctx->pathPtr];
+			ctx->segmentPtr = 2;
+		}
+		else
+			ctx->segmentPtr = 1;
+	}
+	ctx->pathes[ctx->pathPtr + ctx->segmentPtr] = 0;
+}
+void _set_curve_end(ovg_path_t* ctx) {
+	_check_pathes_array(ctx);
+	ctx->pathes[ctx->pathPtr + ctx->segmentPtr] |= PATH_HAS_CURVES_BIT;
+	ctx->segmentPtr++;
+	ctx->pathes[ctx->pathPtr + ctx->segmentPtr] = 0;
+}
 
+void o_finish_path(ovg_path_t* ctx) {
+	if (!ctx)return;
+	do {
+		if (ctx->pathes.empty())
+			ctx->pathes.push_back(0);
+		if (ctx->pathes[ctx->pathPtr] == 0) // empty
+			break;
+		if ((ctx->pathes[ctx->pathPtr] & PATH_ELT_MASK) < 2) {
+			// only current pos is in path
+			auto pointCount = ctx->points.size();
+			pointCount -= ctx->pathes[ctx->pathPtr];
+			ctx->points.resize(pointCount);
+			ctx->pathes[ctx->pathPtr] = 0;
+			ctx->segmentPtr = 0;
+			break;
+		}
+
+		if (ctx->pathPtr == 0 && ctx->simpleConvex)
+			ctx->pathes[0] |= PATH_IS_CONVEX_BIT;
+
+		if (ctx->segmentPtr > 0) {
+			ctx->pathes[ctx->pathPtr] |= PATH_HAS_CURVES_BIT;
+			if ((ctx->pathes[ctx->pathPtr + ctx->segmentPtr] & PATH_HAS_CURVES_BIT) == 0 &&
+				(ctx->pathes[ctx->pathPtr + ctx->segmentPtr] & PATH_ELT_MASK) > 0)
+				ctx->segmentPtr++;
+			ctx->pathPtr += ctx->segmentPtr;
+		}
+		else
+			ctx->pathPtr++;
+
+		if (_check_pathes_array(ctx))
+			return;
+
+		ctx->pathes[ctx->pathPtr] = 0;
+		ctx->segmentPtr = 0;
+		ctx->subpathCount++;
+		ctx->simpleConvex = false;
+	} while (0);
+
+}
+#else
 void _set_curve_start(ovg_path_t* ctx) {
 	if (ctx->segmentPtr > 0) {
 		// check if current segment has points (straight)
@@ -460,12 +568,14 @@ void _set_curve_start(ovg_path_t* ctx) {
 	}
 	//_check_pathes_array(ctx); 
 	ctx->pathes.push_back(0);
+	assert(ctx->pathes.size() > ctx->pathPtr + ctx->segmentPtr + 1);
 }
 void _set_curve_end(ovg_path_t* ctx) {
 	ctx->pathes[ctx->pathPtr + ctx->segmentPtr] |= PATH_HAS_CURVES_BIT;
 	ctx->segmentPtr++;
 	ctx->pathes.push_back(0);
 }
+#endif
 bool _path_is_closed(ovg_path_t* ctx, uint32_t ptrPath) { return ctx->pathes[ptrPath] & PATH_CLOSED_BIT; }
 void _add_point(ovg_path_t* ctx, float x, float y) {
 	if (isnan(x) || isnan(y)) {
@@ -863,21 +973,26 @@ void ovg_add_path(ovg_path_t* path, float* data, size_t count)
 		d += 3;
 		switch (t) {
 		case path_type_et::e_vmove:
-			ovg_move_to(path, x, y);
+			ovg_move_to(path, x, y);//2
 			break;
 		case path_type_et::e_vline:
-			ovg_line_to(path, x, y);
+			ovg_line_to(path, x, y);//2
 			break;
 		case path_type_et::e_vcurve:
 		{
-			ovg_quadratic_to(path, x, y, d[0], d[1]);
+			ovg_quadratic_to(path, x, y, d[0], d[1]);//5
 			d += 2;
 		}
 		break;
 		case path_type_et::e_vcubic:
 		{
-			ovg_curve_to(path, x, y, d[0], d[1], d[2], d[3]);
+			ovg_curve_to(path, x, y, d[0], d[1], d[2], d[3]);//6
 			d += 4;
+		}
+		break;
+		case path_type_et::e_close:
+		{
+			ovg_close_path(path); d -= 2; //1
 		}
 		break;
 		}
@@ -1087,9 +1202,9 @@ void ovg_rectangle(ovg_path_t* path, float x, float y, float w, float h)
 	o_finish_path(path);
 	if (w <= 0 || h <= 0)
 		return;
-	_add_point(path, x, y);
-	_add_point(path, x + w, y);
-	_add_point(path, x + w, y + h);
+	ovg_move_to(path, x, y);
+	ovg_line_to(path, x + w, y);
+	ovg_line_to(path, x + w, y + h);
 	_add_point(path, x, y + h);
 	assert(path->pathPtr < path->pathes.size());
 	path->pathes[path->pathPtr] |= (PATH_CLOSED_BIT | PATH_IS_CONVEX_BIT);
@@ -1160,7 +1275,7 @@ void ovg_ellipse(ovg_path_t* path, float radiusX, float radiusY, float x, float 
 	float bottomLeftY = bottomCenterY - dy2;
 
 	o_finish_path(path);
-	_add_point(path, bottomCenterX, bottomCenterY);
+	ovg_move_to(path, bottomCenterX, bottomCenterY);
 
 	ovg_curve_to(path, bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
 	ovg_curve_to(path, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
@@ -1184,8 +1299,8 @@ void ovg_rel_elliptic_arc_to(ovg_path_t* path, float x, float y, bool large_arc_
 	_elliptic_arc(path, cp.x, cp.y, x + cp.x, y + cp.y, large_arc_flag, sweep_flag, rx, ry, phi);
 }
 void ovg_circle(ovg_path_t* path, float x, float y, float radius) {
-	ovg_arc(path, x, y, radius, 0, 2.0 * glm::pi<float>());
-
+	//ovg_arc(path, x, y, radius, 0, 2.0 * glm::pi<float>());
+	ovg_ellipse(path, radius, radius, x, y, 0.0f);
 }
 
 #ifdef CreateRgbaf
@@ -1214,6 +1329,7 @@ vg_pattern_t* ovg_pattern_create_for_surface(usp_ac_cx* ac, void* surf) {
 	if (!pat) {
 		return 0;
 	}
+	*pat = {};
 	pat->ac = ac;
 	pat->type = vg_pattern_type_t::VG_PATTERN_TYPE_SURFACE;
 	pat->extend = vg_extend_t::VG_EXTEND_NONE;
@@ -1253,7 +1369,7 @@ void ovg_set_line_cap(vg_state_save_t* ctx, int cap) {
 void ovg_set_line_join(vg_state_save_t* ctx, int join) {
 	if (ctx)ctx->lineJoin = join;
 }
-void ovg_set_source_surface(vg_state_save_t* ctx, vg_surface_t* surf, float x, float y) {
+void ovg_set_source_surface(vg_state_save_t* ctx, vg_image_t* surf, float x, float y) {
 	auto p = (ss_act*)ctx;
 	p->pushConsts.source.x = x;
 	p->pushConsts.source.y = y;
@@ -1353,6 +1469,12 @@ void ovg_identity_matrix(vg_state_save_t* ctx) {
 	ctx->pushConsts.matInv = glm::inverse(inv);
 }
 
+void ovg_matrix_init(void* mat, float xx, float yx, float xy, float yy, float x0, float y0)
+{
+	if (!mat)return;
+	*((glm::mat3x2*)mat) = glm::mat3x2(xx, yx, xy, yy, x0, y0);
+}
+
 int  ovg_pattern_add_color_stop(vg_pattern_t* pat, float o, float r, float g, float b, float a) {
 	if (pat->type == vg_pattern_type_t::VG_PATTERN_TYPE_SURFACE || pat->type == vg_pattern_type_t::VG_PATTERN_TYPE_SOLID)
 		return -1;
@@ -1408,6 +1530,8 @@ void ovg_pattern_destroy(vg_pattern_t* pat) {
 	}
 }
 
+
+
 int _vg_pattern_edit_linear(vg_pattern_t* pat, float x0, float y0, float x1, float y1) {
 	if (!pat)
 		return -2;
@@ -1419,6 +1543,7 @@ int _vg_pattern_edit_linear(vg_pattern_t* pat, float x0, float y0, float x1, flo
 	grad->m = glm::ivec4(1024, 0, 0, 1024);
 	grad->extend = pat->extend;
 	grad->scale = glm::vec2{ 1.0,1.0 };
+	grad->type = vg_pattern_type_t::VG_PATTERN_TYPE_LINEAR;
 	return 0;
 }
 // 自定义分配
@@ -1462,6 +1587,7 @@ int vg_pattern_edit_radial(pat_act* pat, float cx0, float cy0, float radius0, fl
 	grad->m = glm::ivec4(1024, 0, 0, 1024);
 	grad->extend = pat->extend;
 	grad->scale = glm::vec2{ 1.0,1.0 };
+	grad->type = vg_pattern_type_t::VG_PATTERN_TYPE_RADIAL;
 	if (is_ellipse)grad->scale.x *= 2;
 	return 0;
 }
@@ -1476,6 +1602,7 @@ int vg_pattern_edit_sweep(pat_act* pat, float cx, float cy, float start_angle, f
 	grad->m = glm::ivec4(1024, 0, 0, 1024);
 	grad->extend = pat->extend;
 	grad->scale = glm::vec2{ 1.0,1.0 };
+	grad->type = vg_pattern_type_t::VG_PATTERN_TYPE_SWEEP;
 	return 0;
 }
 vg_pattern_t* ovg_new_pattern_radial(mem_resource_t* ac0, float cx0, float cy0, float radius0, float cx1, float cy1, float radius1, bool is_ellipse) {
@@ -1514,6 +1641,8 @@ vg_pattern_t* ovg_new_pattern_sweep(mem_resource_t* ac0, float cx, float cy, flo
 	pat->references = 1;
 	return pat;
 }
+
+
 ovg_path_t* ovg_new_path(mem_resource_t* ac0) {
 	auto ac = (usp_ac_cx*)ac0;
 	ovg_path_t* p = 0;
@@ -1524,7 +1653,7 @@ ovg_path_t* ovg_new_path(mem_resource_t* ac0) {
 	}
 	return p;
 }
-void ovg_path_destroy(ovg_path_t* path) {
+void ovg_destroy_path(ovg_path_t* path) {
 	if (path && path->ac)
 		path->ac->free_obj(path);
 }
@@ -1592,6 +1721,7 @@ struct stroke_context_t {
 	float               lhMax;    // miter limit * line width
 	float arcStep; // cached arcStep, prevent compute multiple times for same stroke, 0 if not yet computed
 };
+struct rvg_cx;
 
 class mesh2d_x
 {
@@ -1615,7 +1745,7 @@ public:
 	void set_clip(const glm::ivec4& rc);
 	// 清除数据,保留viewport
 	void clear_m2d();
-	bool nohas_clip(glm::ivec4 a);
+	bool nohas_clip(const glm::ivec4&);
 	// 添加相同纹理/裁剪区域则自动合批
 	void add(void* user_image, std::vector<vertex_t>& vertex, std::vector<int>& vt_index, const glm::ivec4& clip);
 	void add(void* user_image, vertex_t* vertex, size_t vcount, int* vt_index, size_t icount, const glm::ivec4& clip);
@@ -1646,10 +1776,14 @@ public:
 	std::pmr::vector<Vertex1> vd1;	// 单面顶点
 	std::pmr::vector<Vertex2> vd2;	// 双面顶点
 	std::pmr::vector<uint32_t> ids;	// 索引 
+	std::pmr::vector<glm::mat4> instance_mat;	// 实例矩阵 
 	glm::mat4 mat = glm::mat4(1.0f);// 当前矩阵
 	gem_info_t curState = {};		// 当前状态	 
 	std::pmr::vector<gcmd_t>* gt = 0;
-	rvg_t* dc = 0;
+	std::pmr::vector<gem_info_t> build_pipes;
+	rvg_cx* dc = 0;
+	size_t inst_count = 0;			// 当前实例
+	size_t inst_idx = 0;			// 当前实例
 public:
 	geom_primitive();
 	~geom_primitive();
@@ -1657,17 +1791,18 @@ public:
 	// 清空数据
 	void clear();
 	void set_state(gem_info_t* info, const glm::mat4* matrix);
+	size_t set_instance_mat(const glm::mat4* matrix, size_t count);
 	// 添加几何数据到缓冲区，xy顶点坐标，color顶点颜色，uv顶点纹理坐标，indices索引数据，color_type=0表示float4，1表示uint32_t
 	bool add_geometry(void* texture, const float* xy, int xy_stride, const void* color, int color_stride
 		, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
 	// 添加3D几何数据到缓冲区，xyz顶点坐标，color顶点颜色（双面则要双倍），uv顶点纹理坐标，indices索引数据
 	bool add_geometry3d(void* texture, const float* xyz, int xyz_stride, const void* color, int color_stride
 		, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
-	void add_text(text_st_t* p, text_style_t* ts, text_box_rt* box);
+
 	void add_image(ovg_image_r* r);
 };
 
-struct rvg_t {
+struct rvg_cx :public rvg_t {
 	struct Vertex {
 		glm::vec2	pos;
 		glm::vec2	uv;
@@ -1686,19 +1821,21 @@ struct rvg_t {
 	// 临时缓冲用
 	std::pmr::vector<ear_clip_point> ecpsd;
 	std::pmr::vector<glm::vec2> _normals;
+
+	std::pmr::map<vg_image_t*, vg_image_desc_t> _images;
+	std::pmr::vector<vg_image_desc_t*> _images_up;
+
 	// 23d
 	geom_primitive gps = {};
 
-	vg_state_save_t* cur_st = 0;
-	ovg_path_t* cur_path = 0;
 	size_t gCount = 0;	// ubo数量
 	size_t _curVertOffset = 0;
 	uint32_t curColor = 0;
 	glm::ivec4 curClip = {};
 	std::stack<vg_state_save_t*> _cst;	// 保存栈 
 public:
-	rvg_t();
-	~rvg_t();
+	rvg_cx();
+	~rvg_cx();
 	void clear_all();
 	void set_path(ovg_path_t* path, vg_state_save_t* st);
 	void stroke_preserve();
@@ -1712,6 +1849,9 @@ public:
 
 	void save();
 	void restore();
+
+	void image_update(vg_image_t* img, vg_image_desc_t* desc);
+	void image_destroy(vg_image_t* img);
 public:
 	void fill_non_zero_tess2(ovg_path_t* p);
 	void fill_non_zero(ovg_path_t* p);
@@ -1733,17 +1873,18 @@ public:
 	void swap_state(vg_state_save_t* p, vg_state_save_t* p1);
 };
 
-rvg_t::rvg_t()
+rvg_cx::rvg_cx()
 {
 	gps.gt = &cmdlist;
 	gps.dc = this;
 }
 
-rvg_t::~rvg_t()
+rvg_cx::~rvg_cx()
 {}
-void rvg_t::clear_all()
+void rvg_cx::clear_all()
 {
-	ovg_clear_path(cur_path);
+	gps.clear();
+	ovg_clear_path(path);
 	_curVertOffset = 0;
 	gCount = 0;
 	mac.release();
@@ -1756,22 +1897,28 @@ void rvg_t::clear_all()
 		free_state(c);
 		_cst.pop();
 	}
-	free_state(cur_st);
-	cur_st = new_state();
+	free_state(st);
+	st = new_state();
+	for (auto& [k, v] : _images) {
+		if (v.is_copy && v.pixels) {
+			ac->free_mem0(v.pixels, v.px_size);
+		}
+	}
+	_images.clear();
 }
-void rvg_t::set_path(ovg_path_t* path, vg_state_save_t* st)
+void rvg_cx::set_path(ovg_path_t* path0, vg_state_save_t* st0)
 {
-	cur_path = path;
-	cur_path->t = st;
-	cur_st = st;
+	path = path0;
+	path->t = st0;
+	st = st0;
 }
-void rvg_t::stroke_preserve()
+void rvg_cx::stroke_preserve()
 {
-	o_finish_path(cur_path);
-	if (!cur_path || !cur_path->pathPtr || !cur_st)
+	o_finish_path(path);
+	if (!path || !path->pathPtr || !st)
 		return;
-	auto p = cur_path;
-	p->t = cur_st;
+	auto p = path;
+	p->t = st;
 	if (p->t->pattern)
 		gCount++;
 	auto ctx = p;
@@ -1779,7 +1926,7 @@ void rvg_t::stroke_preserve()
 	c.vertex.x = _vertex.size();
 	c.index.x = _indices.size();
 	c.type = 1;
-	cp_cmdt(&c, cur_st);
+	cp_cmdt(&c, st);
 	ctx->curVertOffset = c.vertex.x;
 	stroke_context_t str = { 0 };
 	str.hw = p->t->lineWidth * 0.5f;
@@ -1909,13 +2056,13 @@ void rvg_t::stroke_preserve()
 
 }
 
-void rvg_t::fill_preserve()
+void rvg_cx::fill_preserve()
 {
-	o_finish_path(cur_path);
-	if (!cur_path || !cur_path->pathPtr || !cur_st)
+	o_finish_path(path);
+	if (!path || !path->pathPtr || !st)
 		return;
-	auto p = cur_path;
-	p->t = cur_st;
+	auto p = path;
+	p->t = st;
 	if (p->t->pattern)
 		gCount++;
 	auto t = p->t;
@@ -1925,7 +2072,7 @@ void rvg_t::fill_preserve()
 	c.vertex.x = _vertex.size();
 	c.index.x = _indices.size();
 	c.type = 0;
-	cp_cmdt(&c, cur_st);
+	cp_cmdt(&c, st);
 	p->curVertOffset = c.vertex.x;
 	fill_non_zero(p);
 	c.vertex.y = _vertex.size() - c.vertex.x;
@@ -1933,14 +2080,14 @@ void rvg_t::fill_preserve()
 	cmdlist.push_back({ .vg = c });
 }
 
-void rvg_t::clip_preserve()
+void rvg_cx::clip_preserve()
 {
-	o_finish_path(cur_path);
-	if (!cur_path || !cur_path->pathPtr || !cur_st)
+	o_finish_path(path);
+	if (!path || !path->pathPtr || !st)
 		return;
-	cur_path->t = cur_st;
-	auto p = cur_path;
-	auto t = cur_st;
+	path->t = st;
+	auto p = path;
+	auto t = st;
 	vgcmd_t c = {};
 	c.type = 2;
 	{
@@ -1963,7 +2110,7 @@ void rvg_t::clip_preserve()
 	v.pos = { -1,3 };
 	_vertex.push_back(v);
 }
-void rvg_t::clip0(uint8_t ref)
+void rvg_cx::clip0(uint8_t ref)
 {
 	vgcmd_t c = {};
 	c.type = 2;
@@ -1971,7 +2118,7 @@ void rvg_t::clip0(uint8_t ref)
 	c.full_screen_quad = _vertex.size();
 	Vertex v = {};
 	v.pos = { -1,-1 };
-	v.color = cur_st->color;
+	v.color = st->color;
 	_vertex.push_back(v);
 	v.pos = { 3,-1 };
 	_vertex.push_back(v);
@@ -1980,16 +2127,16 @@ void rvg_t::clip0(uint8_t ref)
 	cmdlist.push_back({ .vg = c });
 }
 
-void rvg_t::clip()
+void rvg_cx::clip()
 {
 	clip_preserve();
-	ovg_clear_path(cur_path);
+	ovg_clear_path(path);
 }
-void rvg_t::clip(const glm::ivec4* rc)
+void rvg_cx::clip(const glm::ivec4* rc)
 {
 	if (rc)
 	{
-		auto ct = _cst.size() ? _cst.top() : cur_st;
+		auto ct = _cst.size() ? _cst.top() : st;
 		curClip = *rc;
 		if (ct)
 		{
@@ -2005,7 +2152,7 @@ void rvg_t::clip(const glm::ivec4* rc)
 }
 
 
-vg_state_save_t* rvg_t::new_ss(vg_state_save_t* src)
+vg_state_save_t* rvg_cx::new_ss(vg_state_save_t* src)
 {
 	vg_state_save_t* dst = new_state();
 	if (!dst)return dst;
@@ -2025,7 +2172,7 @@ vg_state_save_t* rvg_t::new_ss(vg_state_save_t* src)
 		*dst = {};
 	return dst;
 }
-vg_state_save_t* rvg_t::new_state()
+vg_state_save_t* rvg_cx::new_state()
 {
 	auto t = (vg_state_save_t*)ac->allocate(sizeof(vg_state_save_t));
 	*t = {};
@@ -2047,7 +2194,7 @@ vg_state_save_t* rvg_t::new_state()
 	t->pushConsts = pc;
 	return t;
 }
-void rvg_t::free_state(vg_state_save_t* p)
+void rvg_cx::free_state(vg_state_save_t* p)
 {
 	if (p) {
 		if (p->dashes && p->dashCount > 0)
@@ -2055,43 +2202,50 @@ void rvg_t::free_state(vg_state_save_t* p)
 		ac->free_mem(p, 1);
 	}
 }
-void rvg_t::swap_state(vg_state_save_t* p, vg_state_save_t* p1)
+void rvg_cx::swap_state(vg_state_save_t* p, vg_state_save_t* p1)
 {
 	std::swap(*p, *p1);
 }
-void rvg_t::save()
+void rvg_cx::save()
 {
-	auto ss = new_ss(cur_st);
+	auto ss = new_ss(st);
 	_cst.push(ss);
 }
-void rvg_t::restore()
+void rvg_cx::restore()
 {
+	if (_cst.empty())return;
 	auto c = _cst.top();
-	swap_state(cur_st, c);
+	swap_state(st, c);
 	free_state(c);
 	_cst.pop();
 }
-void rvg_t::fill()
+
+void rvg_cx::fill()
 {
 	fill_preserve();
-	ovg_clear_path(cur_path);
+	ovg_clear_path(path);
 }
 
-void rvg_t::paint()
+void rvg_cx::paint()
 {
-	auto ph = cur_path;
+	auto ph = path;
 	o_finish_path(ph);
-	if (!cur_path || !cur_path->pathPtr || !cur_st)return;
-	if (ph->pathPtr) {
+	if (path && ph->pathPtr && st) {
 		fill();
 		return;
 	}
 	vgcmd_t c = {};
 	c.type = 3;
 	c.full_screen_quad = _vertex.size();
+
 	Vertex v = {};
+	if (st) {
+		if (st->pattern)
+			gCount++;
+		cp_cmdt(&c, st);
+	}
 	v.pos = { -1,-1 };
-	v.color = cur_st->color;
+	v.color = st ? st->color : -1;
 	_vertex.push_back(v);
 	v.pos = { 3,-1 };
 	_vertex.push_back(v);
@@ -2133,7 +2287,7 @@ static float path_signed_area(const glm::vec2* pts, int n) {
 
 #ifdef VG_FILL_NZ_GLUTESS2
 
-void rvg_t::fill_non_zero_tess2(ovg_path_t* ctx)
+void rvg_cx::fill_non_zero_tess2(ovg_path_t* ctx)
 {
 	Vertex v{};
 	v.color = ctx->color;
@@ -2220,7 +2374,7 @@ void rvg_t::fill_non_zero_tess2(ovg_path_t* ctx)
 }
 #endif
 
-inline float ecp_zcross(rvg_t::ear_clip_point* p0, rvg_t::ear_clip_point* p1, rvg_t::ear_clip_point* p2) {
+inline float ecp_zcross(rvg_cx::ear_clip_point* p0, rvg_cx::ear_clip_point* p1, rvg_cx::ear_clip_point* p2) {
 	return vec2_zcross(vec2_sub(p1->pos, p0->pos), vec2_sub(p2->pos, p0->pos));
 }
 
@@ -2237,7 +2391,7 @@ bool ptInTriangle(const glm::vec2& p, const glm::vec2& p0, const glm::vec2& p1, 
 	return (s >= 0) && (t >= 0) && (s + t <= D);
 }
 
-void rvg_t::fill_non_zero(ovg_path_t* p)
+void rvg_cx::fill_non_zero(ovg_path_t* p)
 {
 	auto t = p->t;
 	uint32_t color = t->color;
@@ -2330,12 +2484,12 @@ void rvg_t::fill_non_zero(ovg_path_t* p)
 
 
 
-void rvg_t::_add_triangle_indices(ovg_path_t* ctx, uint32_t i0, uint32_t i1, uint32_t i2) {
+void rvg_cx::_add_triangle_indices(ovg_path_t* ctx, uint32_t i0, uint32_t i1, uint32_t i2) {
 	_indices.push_back(i0);
 	_indices.push_back(i1);
 	_indices.push_back(i2);
 }
-void rvg_t::_add_tri_indices_for_rect(uint32_t i) {
+void rvg_cx::_add_tri_indices_for_rect(uint32_t i) {
 	_indices.resize(_indices.size() + 6);
 	uint32_t* inds = _indices.data() + _indices.size() - 6;
 	inds[0] = i;
@@ -2345,13 +2499,13 @@ void rvg_t::_add_tri_indices_for_rect(uint32_t i) {
 	inds[4] = i + 2;
 	inds[5] = i + 3;
 }
-void rvg_t::_add_vertexf(ovg_path_t* ctx, float x, float y) {
+void rvg_cx::_add_vertexf(ovg_path_t* ctx, float x, float y) {
 	Vertex v = {};
 	v.pos = { x,y };
 	v.color = ctx->color;
 	_vertex.push_back(v);
 }
-void rvg_t::cp_cmdt(vgcmd_t* c, vg_state_save_t* t)
+void rvg_cx::cp_cmdt(vgcmd_t* c, vg_state_save_t* t)
 {
 	c->state = (vg_state_save_t*)mac.allocate(sizeof(vg_state_save_t) * 1);
 	if (!c->state)return;
@@ -2363,9 +2517,14 @@ void rvg_t::cp_cmdt(vgcmd_t* c, vg_state_save_t* t)
 		else
 			c->state->dashCount = 0;
 	}
-
+	if (t->pattern) {
+		auto pat = (pat_act*)mac.allocate(sizeof(pat_act));
+		memcpy(pat, t->pattern, sizeof(pat_act));
+		pat->data = &pat->g;
+		c->state->pattern = pat;
+	}
 }
-bool rvg_t::_build_vb_step(ovg_path_t* ctx, stroke_context_t* str, bool isCurve) {
+bool rvg_cx::_build_vb_step(ovg_path_t* ctx, stroke_context_t* str, bool isCurve) {
 	Vertex v = {};
 	v.color = ctx->color; v.uv = { };
 	glm::vec2   p0 = ctx->points[str->cp];
@@ -2594,7 +2753,7 @@ bool rvg_t::_build_vb_step(ovg_path_t* ctx, stroke_context_t* str, bool isCurve)
 	return (det < 0);
 }
 
-void rvg_t::_draw_stoke_cap(ovg_path_t* ctx, stroke_context_t* str, glm::vec2 p0, glm::vec2 n, bool isStart) {
+void rvg_cx::_draw_stoke_cap(ovg_path_t* ctx, stroke_context_t* str, glm::vec2 p0, glm::vec2 n, bool isStart) {
 	Vertex v = {}; v.color = ctx->color; v.uv = { };
 
 	uint32_t firstIdx = (uint32_t)(_vertex.size() - ctx->curVertOffset);
@@ -2670,7 +2829,7 @@ void rvg_t::_draw_stoke_cap(ovg_path_t* ctx, stroke_context_t* str, glm::vec2 p0
 		}
 	}
 }
-float rvg_t::_draw_dashed_segment(ovg_path_t* ctx, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
+float rvg_cx::_draw_dashed_segment(ovg_path_t* ctx, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
 	// vec2 pL = ctx->points[str->iL];
 	glm::vec2 p = ctx->points[str->cp];
 	glm::vec2 pR = ctx->points[str->iR];
@@ -2695,7 +2854,7 @@ float rvg_t::_draw_dashed_segment(ovg_path_t* ctx, stroke_context_t* str, dash_c
 	dc->curDashOffset = fmodf(dc->curDashOffset, dc->totDashLength);
 	return segmentLength;
 }
-void rvg_t::_draw_segment(ovg_path_t* ctx, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
+void rvg_cx::_draw_segment(ovg_path_t* ctx, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
 	str->iR = str->cp + 1;
 	if (ctx->t->dashCount > 0)
 		_draw_dashed_segment(ctx, str, dc, isCurve);
@@ -2704,117 +2863,178 @@ void rvg_t::_draw_segment(ovg_path_t* ctx, stroke_context_t* str, dash_context_t
 	str->iL = str->cp++;
 }
 
-// todo 渲染操作，rvg_t可以多次执行fill或stroke/clip
+void rvg_cx::image_update(vg_image_t* img, vg_image_desc_t* desc)
+{
+	if (!img)img = desc->img;
+	auto& dst = _images[img]; dst = *desc;
+	img->width = desc->width;
+	img->height = desc->height;
+	if (desc->is_copy) {
+		dst.px_size = dst.height * dst.stride;
+		dst.pixels = ac->new_mem(dst.px_size);
+		memcpy((void*)dst.pixels, desc->pixels, dst.px_size);
+	}
+}
+
+void rvg_cx::image_destroy(vg_image_t* img)
+{
+	_images[img].is_destroy = true;
+}
+
+
+// todo 渲染操作，rvg_cx可以多次执行fill或stroke/clip
 rvg_t* ovg_new_rvg(mem_resource_t* ac0)
 {
 	auto ac = (usp_ac_cx*)ac0;
 	if (!ac) {
 		return 0;
 	}
-	auto p = ac->new_obj<rvg_t>();
+	auto p = ac->new_obj<rvg_cx>();
 	p->ac = ac;
 	return p;
 }
-void ovg_destroy_rvg(rvg_t* p) {
+void ovg_destroy_rvg(rvg_t* p0) {
+	auto p = (rvg_cx*)p0;
 	if (p && p->ac) {
 		p->ac->free_obj(p);
 	}
 }
-void ovg_clear(rvg_t* v)
+void ovg_clear(rvg_t* v0)
 {
+	auto v = (rvg_cx*)v0;
 	if (v)v->clear_all();
 }
-void ovg_set_path(rvg_t* v, ovg_path_t* path, vg_state_save_t* st)
+void ovg_set_path(rvg_t* v0, ovg_path_t* path, vg_state_save_t* st)
 {
+	auto v = (rvg_cx*)v0;
 	if (!v)return;
 	v->set_path(path, st);
 }
-void ovg_reset_clip(rvg_t* v, uint8_t ref)
+void ovg_reset_clip(rvg_t* v0, uint8_t ref)
 {
+	auto v = (rvg_cx*)v0;
 	if (v)v->clip0(ref);
 }
-void ovg_clip(rvg_t* v)
+void ovg_clip(rvg_t* v0)
 {
+	auto v = (rvg_cx*)v0;
 	if (v)v->clip();
 }
-void ovg_clip_preserve(rvg_t* v)
+void ovg_clip_preserve(rvg_t* v0)
 {
+	auto v = (rvg_cx*)v0;
 	if (v)v->clip_preserve();
 }
-void ovg_clip_rect(rvg_t* v, int x, int y, int width, int height)
+void ovg_clip_rect(rvg_t* v0, int x, int y, int width, int height)
 {
+	auto v = (rvg_cx*)v0;
 	glm::ivec4 c[1] = { {x,y,width,height} };
 	if (v)v->clip(c);
 }
-void ovg_set_clip_rect(rvg_t* v, void* rc) {
+void ovg_set_clip_rect(rvg_t* v0, void* rc) {
+	auto v = (rvg_cx*)v0;
 	if (v && rc) {
 		if (v)v->clip((glm::ivec4*)rc);
 	}
 }
-void ovg_get_clip_rect(rvg_t* v, void* rc) {
+void ovg_get_clip_rect(rvg_t* v0, void* rc) {
+	auto v = (rvg_cx*)v0;
 	if (v && rc) {
 		*((glm::ivec4*)rc) = v->curClip;
 	}
 }
-void ovg_stroke(rvg_t* v)
+void ovg_stroke(rvg_t* v0)
 {
+	auto v = (rvg_cx*)v0;
 	if (!v)return;
 	v->stroke_preserve();
-	ovg_clear_path(v->cur_path);
+	ovg_clear_path(v->path);
 }
-void ovg_stroke_preserve(rvg_t* v) {
+void ovg_stroke_preserve(rvg_t* v0) {
+	auto v = (rvg_cx*)v0;
 	if (!v)return;
 	v->stroke_preserve();
 }
-void ovg_fill(rvg_t* v)
+void ovg_fill(rvg_t* v0)
 {
+	auto v = (rvg_cx*)v0;
 	if (!v)return;
 	v->fill_preserve();
-	ovg_clear_path(v->cur_path);
+	ovg_clear_path(v->path);
 }
-void ovg_fill_preserve(rvg_t* v)
+void ovg_fill_preserve(rvg_t* v0)
 {
+	auto v = (rvg_cx*)v0;
 	if (!v)return;
 	v->fill_preserve();
 }
-void ovg_paint(rvg_t* v)
+void ovg_paint(rvg_t* v0)
 {
+	auto v = (rvg_cx*)v0;
 	if (v)v->paint();
 }
 
 // 添加文本，风格，渲染区可选
-void  ovg_add_text(rvg_t* dc, text_st_t* p, text_style_t* ts, text_box_rt* box)
+void  ovg_add_text(rvg_t* v0, text_st_t* p, text_style_t* ts, text_box_rt* box)
 {
-	if (dc)dc->gps.add_text(p, ts, box);
+	auto dc = (rvg_cx*)v0;
+	if (dc) {
+		auto cb = (ovg_canvas_cx*)dc->ac->ptr;
+		if (cb)
+			cb->add_text(v0, p, ts, box);
+	}
 }
 // 普通图片，支持九宫格、混合颜色
-void  ovg_add_image(rvg_t* dc, ovg_image_r* r)
+void  ovg_add_image(rvg_t* v0, ovg_image_r* r)
 {
-	if (dc)dc->gps.add_image(r);
+	auto dc = (rvg_cx*)v0;
+	if (dc) {
+		dc->gps.set_viewport({ 0,0,dc->width,dc->height });
+		dc->gps.add_image(r);
+	}
 }
 // 原始三角形，输入0则不修改
-void  ovg_set_geom_state(rvg_t* dc, gem_info_t* info, const glm::mat4* matrix)
+void  ovg_set_geom_state(rvg_t* v0, gem_info_t* info, const glm::mat4* matrix)
 {
+	auto dc = (rvg_cx*)v0;
 	if (dc)dc->gps.set_state(info, matrix);
 }
-// 添加几何数据到缓冲区，xy顶点坐标，color顶点颜色，uv顶点纹理坐标，indices索引数据，color_type=0表示float4，1表示uint32_t
-void  ovg_add_geometry(rvg_t* dc, vg_surface_t* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
+size_t ovg_set_instance_mat(rvg_t* v0, const glm::mat4* matrix, size_t count)
 {
+	auto dc = (rvg_cx*)v0;
+	return (dc) ? dc->gps.set_instance_mat(matrix, count) : 0;
+}
+// 添加几何数据到缓冲区，xy顶点坐标，color顶点颜色，uv顶点纹理坐标，indices索引数据，color_type=0表示float4，1表示uint32_t
+void  ovg_add_geometry(rvg_t* v0, vg_image_t* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
+{
+	auto dc = (rvg_cx*)v0;
 	if (dc)dc->gps.add_geometry(texture, xy, xy_stride, color, color_stride, uv, uv_stride, num_vertices, indices, num_indices, size_indices, color_type);
 }
 // 添加3D几何数据到缓冲区，xyz顶点坐标，color顶点颜色（双面则要双倍），uv顶点纹理坐标，indices索引数据
-void  ovg_add_geometry3d(rvg_t* dc, vg_surface_t* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
+void  ovg_add_geometry3d(rvg_t* v0, vg_image_t* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
 {
+	auto dc = (rvg_cx*)v0;
 	if (dc)dc->gps.add_geometry3d(texture, xyz, xyz_stride, color, color_stride, uv, uv_stride, num_vertices, indices, num_indices, size_indices, color_type);
 }
 
+void ovg_image_update(rvg_t* p, vg_image_t* img, vg_image_desc_t* desc) {
+	if (!p || !desc)return;
+	auto dc = (rvg_cx*)p;
+	dc->image_update(img, desc);
+}
+//标记图片不再使用（后端延迟释放 GPU 纹理）
+void ovg_image_destroy(rvg_t* p, vg_image_t* img) {
+	if (!p || !img)return;
+	auto dc = (rvg_cx*)p;
+	dc->image_destroy(img);
+}
 #endif // 1
 
 // todo init cb
 void init_ovg_cb(ovg_canvas_cb* cb) {
 	if (!cb)return;
 	cb->new_path = ovg_new_path;		// 可自定义分配
-	cb->path_destroy = ovg_path_destroy;
+	cb->destroy_path = ovg_destroy_path;
 	cb->clear_path = ovg_clear_path;
 	cb->close_path = ovg_close_path;
 	cb->new_sub_path = ovg_new_sub_path;
@@ -2865,6 +3085,7 @@ void init_ovg_cb(ovg_canvas_cb* cb) {
 	cb->set_matrix = ovg_set_matrix;
 	cb->get_matrix = ovg_get_matrix;
 	cb->identity_matrix = ovg_identity_matrix;
+	cb->matrix_init = ovg_matrix_init;
 
 	cb->new_pattern_linear = ovg_new_pattern_linear;
 	cb->new_pattern_radial = ovg_new_pattern_radial;
@@ -2876,7 +3097,9 @@ void init_ovg_cb(ovg_canvas_cb* cb) {
 	cb->pattern_set_filter = ovg_pattern_set_filter;
 	cb->pattern_destroy = ovg_pattern_destroy;
 
-	// 渲染操作，rvg_t可以多次执行fill或stroke/clip
+	cb->image_update = ovg_image_update;
+	cb->image_destroy = ovg_image_destroy;
+	// 渲染操作，rvg_cx可以多次执行fill或stroke/clip
 	cb->new_rvg = ovg_new_rvg;
 	cb->destroy_rvg = ovg_destroy_rvg;
 	cb->set_path = ovg_set_path;
@@ -2895,6 +3118,7 @@ void init_ovg_cb(ovg_canvas_cb* cb) {
 	cb->add_text = ovg_add_text;
 	cb->add_image = ovg_add_image;
 	cb->set_geom_state = (void (*)(rvg_t*, gem_info_t*, const void*)) ovg_set_geom_state;
+	cb->set_instance_mat = (size_t(*)(rvg_t*, const void*, size_t)) ovg_set_instance_mat;
 	cb->add_geometry = ovg_add_geometry;
 	cb->add_geometry3d = ovg_add_geometry3d;
 
@@ -2907,21 +3131,43 @@ geom_primitive::geom_primitive()
 {}
 
 geom_primitive::~geom_primitive()
-{}
+{
+	clear();
+}
 
 void geom_primitive::clear()
 {
 	vd1.clear();
 	vd2.clear();
 	ids.clear();
+	instance_mat.clear();
+	build_pipes.clear();
 	mat = glm::mat4(1.0f);
 	curState = {};
+	inst_idx = 0;
+	inst_count = 0;
 }
 
 void geom_primitive::set_state(gem_info_t* info, const glm::mat4* matrix)
 {
-	if (info) { curState = *info; }
+	if (info) {
+		curState = *info;
+		build_pipes.push_back(curState);
+	}
 	if (matrix) { mat = *matrix; }
+}
+
+size_t geom_primitive::set_instance_mat(const glm::mat4* matrix, size_t count)
+{
+	auto ps = instance_mat.size();
+	if (matrix && count > 0)
+	{
+		instance_mat.resize(ps + count);
+		memcpy(instance_mat.data() + ps, matrix, count * sizeof(glm::mat4));
+		inst_idx = ps;
+	}
+	inst_count = count;
+	return ps;
 }
 
 bool geom_primitive::add_geometry(void* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
@@ -2931,6 +3177,9 @@ bool geom_primitive::add_geometry(void* texture, const float* xy, int xy_stride,
 	c.state = curState;
 	c.texture = texture;
 	c.mat = mat;
+	c.instance_count = inst_count;
+	if (inst_count > 0)
+		c.instance_ssbo_pos = inst_idx;
 	float scale_x = 1.0, scale_y = 1.0;
 	float u_scale = 1.0, v_scale = 1.0;
 	size_indices = indices ? size_indices : 0;
@@ -3051,6 +3300,9 @@ bool geom_primitive::add_geometry3d(void* texture, const float* xyz, int xyz_str
 	c.state = curState;
 	c.texture = texture;
 	c.mat = mat;
+	c.instance_count = inst_count;
+	if (inst_count > 0)
+		c.instance_ssbo_pos = inst_idx;
 	float scale_x = 1.0, scale_y = 1.0, scale_z = 1.0;
 	float u_scale = 1.0, v_scale = 1.0;
 	size_indices = indices ? size_indices : 0;
@@ -3162,17 +3414,54 @@ bool geom_primitive::add_geometry3d(void* texture, const float* xyz, int xyz_str
 	gt->push_back({ .g = c });
 	return true;
 }
-void geom_primitive::add_text(text_st_t* p, text_style_t* ts, text_box_rt* box)
+#if 0
+void build_text()
 {
-	if (!p || !p->text || !*p->text || !ts || !ts->family || ts->fontsize < 1)return;
-
+	auto& git = vt.f;
+	if (git._image) {
+		auto& tp = _vt[git._image];
+		if (tex != tp)
+		{
+			submit_data(tex);
+			tex = tp;
+		}
+		auto ps = git._dwpos + git._apos;
+		ps += pos0;
+		auto tstyle = tbp[git.tb_idx].style;
+		color = tstyle.color;
+		auto img = git._image;
+		glm::ivec2 tex_size = { img->width,  img->height };
+		if (!git.color || tstyle.mcolor_effect)
+		{
+			if (tstyle.color_shadow)
+			{
+				auto ps1 = ps;
+				ps1 += tstyle.shadow_pos;	// 生成阴影数据
+				gen3data(tex_size, ps1, git._rect, {}, tstyle.color_shadow, &opt, &idx);
+			}
+			if (tstyle.stroke && tstyle.color_stroke)
+			{
+				int pxx[4] = { -tstyle.stroke, 0, tstyle.stroke, 0 };
+				int pyy[4] = { 0, -tstyle.stroke, 0, tstyle.stroke };
+				for (int e = 0; e < 4; e++)
+				{
+					auto ps1 = ps;
+					ps1.x += pxx[e];
+					ps1.y += pyy[e];	// 生成描边数据
+					gen3data(tex_size, ps1, git._rect, {}, tstyle.color_stroke, &opt, &idx);
+				}
+			}
+		}
+		gen3data(tex_size, ps, git._rect, {}, git.color ? git.color : color, &opt, &idx);
+	}
 }
+#endif 
 
 glm::mat4 ovg_ortho(float width, float height, float znear, float zfar, bool is_top)
 {
 	return is_top ? glm::ortho(0.0f, width, height, 0.0f, znear, zfar) : glm::ortho(0.0f, width, 0.0f, height, znear, zfar);
 }
-void draw_mesh2d_x(rvg_t* ctx, geom_primitive* gp, const glm::vec2& render_scale)
+void draw_mesh2d_x(rvg_cx* ctx, geom_primitive* gp, const glm::vec2& render_scale)
 {
 	mesh2d_x* dc = gp;
 	glm::vec2 clip_off = {};
@@ -3192,13 +3481,13 @@ void draw_mesh2d_x(rvg_t* ctx, geom_primitive* gp, const glm::vec2& render_scale
 	auto vbs = av->vtxs.size();
 	auto ibs = av->idxs.size();
 	std::vector<int> idxs;
-	struct { void* texture; uint32_t blendMode; } states = {};
+	struct { void* texture; int blendMode; } states = {};
 	glm::ivec4 oldclip = {};
 	ovg_get_clip_rect(ctx, (int*)&oldclip);
 	size_t cclip = 0;
 	gem_info_t info = {};
-	info.blendMode = (uint8_t)blendMode_e::normal;
-	info.topology = 3;
+	info.blendMode = (int8_t)blendMode_e::normal;
+	info.topology = 0;
 	//info.doubleSided = false;
 	//info.depthTestEnable = false;
 	//info.depthWriteEnable = false;
@@ -3231,7 +3520,7 @@ void draw_mesh2d_x(rvg_t* ctx, geom_primitive* gp, const glm::vec2& render_scale
 		int size_indices = 4;
 		auto indices = ibs ? idv + pcmd.idxOffset : nullptr;
 		auto num_indices = pcmd.elemCount;
-		uint32_t blend = pcmd.blend_mode;
+		int8_t blend = pcmd.blend_mode;
 		if (states.blendMode != blend) {
 			states.blendMode = blend;
 			info.blendMode = states.blendMode;
@@ -3248,7 +3537,7 @@ void draw_mesh2d_x(rvg_t* ctx, geom_primitive* gp, const glm::vec2& render_scale
 void geom_primitive::add_image(ovg_image_r* r)
 {
 	if (!r || !r->img || (r->dst.z * r->dst.w <= 0) || (r->rc.z < 1 || r->rc.w < 1))return;
-	add_image0(r->img, r->texsize, {}, r->dst, r->rc, r->sliced, r->color);
+	add_image0(r->img, { r->img->width,r->img->height }, {}, r->dst, r->rc, r->sliced, r->color);
 	draw_mesh2d_x(dc, this, { 1.0,1.0 });
 }
 #if 1
@@ -3305,9 +3594,10 @@ inline bool is_rect_intersect(glm::vec4 r1, glm::vec4 r2)
 	}
 	return is_rect_intersect0(r1.x, r1.y, r1.z, r1.w, r2.x, r2.y, r2.z, r2.w);
 }
-bool mesh2d_x::nohas_clip(glm::ivec4 a)
+bool mesh2d_x::nohas_clip(const glm::ivec4& a)
 {
 	auto clip = _clip_rect;
+	if (clip.z == 0 || clip.w == 0 || viewport.z == 0 || viewport.w == 0)return false;
 	if (clip.z > viewport.z || clip.z < 0)clip.z = viewport.z;
 	if (clip.w > viewport.w || clip.w < 0)clip.w = viewport.w;
 	if (clip.z < 0 || clip.w < 0)
@@ -3605,25 +3895,37 @@ void mesh2d_x::add_image_angle(void* img, const glm::ivec2& texsize, const glm::
 
 #endif // 1
 
-ovg_draw_data_t get_draw_list(rvg_t* p)
+ovg_draw_data_t get_draw_list(rvg_t* p0)
 {
-	ovg_draw_data_t r = {};
+	rvg_cx* p = (rvg_cx*)p0;
+	ovg_draw_data_t ret = {};
 	if (p)
 	{
-		r.d = p->cmdlist.data(); r.count = p->cmdlist.size();
-		r.vg_vertex = (ovgVertex*)p->_vertex.data();
-		r.v_count = p->_vertex.size();
-		r.vg_indices = p->_indices.data();
-		r.i_count = p->_indices.size();
-		r.uboCount = p->gCount;
-		r.vertex1 = (geomVertex1*)p->gps.vd1.data();
-		r.v1_count = p->gps.vd1.size();
-		r.vertex2 = (geomVertex2*)p->gps.vd2.data();
-		r.v2_count = p->gps.vd2.size();
-		r.geom_indices = p->gps.ids.data();
-		r.g_count = p->gps.ids.size();
+		ret.d = p->cmdlist.data(); ret.count = p->cmdlist.size();
+		ret.vg_vertex = (ovgVertex*)p->_vertex.data();
+		ret.v_count = p->_vertex.size();
+		ret.vg_indices = p->_indices.data();
+		ret.i_count = p->_indices.size();
+		ret.uboCount = p->gCount;
+		ret.vertex1 = (geomVertex1*)p->gps.vd1.data();
+		ret.v1_count = p->gps.vd1.size();
+		ret.vertex2 = (geomVertex2*)p->gps.vd2.data();
+		ret.v2_count = p->gps.vd2.size();
+		ret.geom_indices = p->gps.ids.data();
+		ret.ig_count = p->gps.ids.size();
+		ret.instance_count = p->gps.instance_mat.size();
+		ret.instance_data = p->gps.instance_mat.data();
+		p->_images_up.clear();
+		for (auto& [k, v] : p->_images) {
+			v.img = k;
+			p->_images_up.push_back(&v);
+		}
+		ret.image_desc = p->_images_up.data();
+		ret.image_desc_count = p->_images_up.size();
+		ret.pipeinfo = p->gps.build_pipes.data();
+		ret.pipeinfo_count = p->gps.build_pipes.size();
 	}
-	return r;
+	return ret;
 }
 
 // cmd ctx
@@ -3671,7 +3973,7 @@ void vctx_set_line_width(rvg_t* ctx, float width);
 void vctx_set_miter_limit(rvg_t* ctx, float limit);
 void vctx_set_line_cap(rvg_t* ctx, int cap);
 void vctx_set_line_join(rvg_t* ctx, int join);
-void vctx_set_source_surface(rvg_t* ctx, vg_surface_t* surf, float x, float y);
+void vctx_set_source_surface(rvg_t* ctx, vg_image_t* surf, float x, float y);
 void vctx_set_source(rvg_t* ctx, vg_pattern_t* pat);
 void vctx_set_operator(rvg_t* ctx, int op);
 void vctx_set_fill_rule(rvg_t* ctx, int fr);
@@ -3684,6 +3986,7 @@ void vctx_transform(rvg_t* ctx, const void* matrix);
 void vctx_set_matrix(rvg_t* ctx, const void* matrix);
 void vctx_get_matrix(rvg_t* ctx, void* matrix);
 void vctx_identity_matrix(rvg_t* ctx);
+void vctx_matrix_init(void* mat, float xx, float yx, float xy, float yy, float x0, float y0);
 
 // 图案：渐变/图片 
 vg_pattern_t* vctx_new_pattern_linear(rvg_t* ctx, float x0, float y0, float x1, float y1);
@@ -3716,9 +4019,9 @@ void  vctx_add_image(rvg_t* dc, ovg_image_r* r);
 // 原始三角形，输入0则不修改
 void  vctx_set_geom_state(rvg_t* dc, gem_info_t* info, const void* matrix4x4);
 // 添加几何数据到缓冲区，xy顶点坐标，color顶点颜色，uv顶点纹理坐标，indices索引数据，color_type=0表示float4，1表示uint32_t
-void  vctx_add_geometry(rvg_t* dc, vg_surface_t* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
+void  vctx_add_geometry(rvg_t* dc, vg_image_t* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
 // 添加3D几何数据到缓冲区，xyz顶点坐标，color顶点颜色（双面则要双倍），uv顶点纹理坐标，indices索引数据
-void  vctx_add_geometry3d(rvg_t* dc, vg_surface_t* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
+void  vctx_add_geometry3d(rvg_t* dc, vg_image_t* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type);
 
 void vctx_start_recording(rvg_t* ctx);
 ovg_recording_t* vctx_stop_recording(rvg_t* ctx);
@@ -3727,16 +4030,18 @@ void vctx_replay_command(rvg_t* ctx, ovg_recording_t* rec, uint32_t cmdIndex);
 uint32_t vctx_recording_get_count(ovg_recording_t* rec);
 void* vctx_recording_get_data(ovg_recording_t* rec);
 void  vctx_recording_destroy(ovg_recording_t* rec);
+// familys多个字体时用小写逗号分隔，style逗号分隔字体的风格(可空) 比如(char*)u8"Consolas,新宋体,Segoe UI Emoji
+
 
 // TODO 命令模式实现
 #define PRI2CTX(ac) 
 rvg_t* vctx_new_rvg(mem_resource_t* ac) {
-	auto r = ovg_new_rvg(ac);
+	auto r = (rvg_cx*)ovg_new_rvg(ac);
 	if (r)
 	{
-		r->cur_path = ovg_new_path(ac);
-		r->cur_st = r->new_state();
-		assert(r->cur_path && r->cur_st);
+		r->path = ovg_new_path(ac);
+		r->st = r->new_state();
+		assert(r->path && r->st);
 	}
 	return r;
 }
@@ -3747,70 +4052,70 @@ void vctx_clear(rvg_t* v) {
 	ovg_clear(v);
 }
 ovg_path_t* vctx_get_path(rvg_t* ctx) {
-	return ctx->cur_path;
+	return ctx->path;
 }
 void  vctx_new_path(rvg_t* ctx) {
 	if (ctx)
-		ovg_clear_path(ctx->cur_path);
+		ovg_clear_path(ctx->path);
 }
 void vctx_clear_path(rvg_t* ctx) {
 	vctx_new_path(ctx);
 }
 void vctx_close_path(rvg_t* ctx) {
-	if (ctx)ovg_close_path(ctx->cur_path);
+	if (ctx)ovg_close_path(ctx->path);
 }
 void vctx_new_sub_path(rvg_t* ctx) {
-	if (ctx)ovg_new_sub_path(ctx->cur_path);
+	if (ctx)ovg_new_sub_path(ctx->path);
 }
 void vctx_path_extents(rvg_t* ctx, float* x1, float* y1, float* x2, float* y2) {
-	if (ctx)ovg_path_extents(ctx->cur_path, x1, y1, x2, y2);
+	if (ctx)ovg_path_extents(ctx->path, x1, y1, x2, y2);
 }
 void vctx_get_current_point(rvg_t* ctx, float* x, float* y) {
-	if (ctx)ovg_get_current_point(ctx->cur_path, x, y);
+	if (ctx)ovg_get_current_point(ctx->path, x, y);
 }
 size_t vctx_get_segment_count(rvg_t* ctx) {
-	return ctx ? ovg_get_segment_count(ctx->cur_path) : 0;
+	return ctx ? ovg_get_segment_count(ctx->path) : 0;
 }
 void vctx_set_segment_color(rvg_t* ctx, size_t idx, uint32_t color) {
-	if (ctx)ovg_set_segment_color(ctx->cur_path, idx, color);
+	if (ctx)ovg_set_segment_color(ctx->path, idx, color);
 }
 // 添加数据到当前路径，参考path_type_e
 void vctx_add_path(rvg_t* ctx, float* data, size_t count) {
-	if (ctx)ovg_add_path(ctx->cur_path, data, count);
+	if (ctx)ovg_add_path(ctx->path, data, count);
 }
 void vctx_move_to(rvg_t* ctx, float x, float y) {
-	if (ctx)ovg_move_to(ctx->cur_path, x, y);
+	if (ctx)ovg_move_to(ctx->path, x, y);
 }
 void vctx_rel_move_to(rvg_t* ctx, float x, float y) {
 	if (!ctx) return;
 	float cx, cy;
-	ovg_get_current_point(ctx->cur_path, &cx, &cy);
-	ovg_move_to(ctx->cur_path, cx + x, cy + y);
+	ovg_get_current_point(ctx->path, &cx, &cy);
+	ovg_move_to(ctx->path, cx + x, cy + y);
 }
 
 void vctx_line_to(rvg_t* ctx, float x, float y) {
-	if (ctx) ovg_line_to(ctx->cur_path, x, y);
+	if (ctx) ovg_line_to(ctx->path, x, y);
 }
 
 void vctx_rel_line_to(rvg_t* ctx, float dx, float dy) {
 	if (!ctx) return;
 	float cx, cy;
-	ovg_get_current_point(ctx->cur_path, &cx, &cy);
-	ovg_line_to(ctx->cur_path, cx + dx, cy + dy);
+	ovg_get_current_point(ctx->path, &cx, &cy);
+	ovg_line_to(ctx->path, cx + dx, cy + dy);
 }
 
 void vctx_arc(rvg_t* ctx, float xc, float yc, float radius, float a1, float a2) {
-	if (ctx) ovg_arc(ctx->cur_path, xc, yc, radius, a1, a2);
+	if (ctx) ovg_arc(ctx->path, xc, yc, radius, a1, a2);
 }
 
 void vctx_arc_negative(rvg_t* ctx, float xc, float yc, float radius, float a1, float a2) {
-	if (ctx) ovg_arc_negative(ctx->cur_path, xc, yc, radius, a1, a2);
+	if (ctx) ovg_arc_negative(ctx->path, xc, yc, radius, a1, a2);
 }
 
 void vctx_curve_to(rvg_t* ctx, float x1, float y1,
 	float x2, float y2,
 	float x3, float y3) {
-	if (ctx) ovg_curve_to(ctx->cur_path, x1, y1, x2, y2, x3, y3);
+	if (ctx) ovg_curve_to(ctx->path, x1, y1, x2, y2, x3, y3);
 }
 
 void vctx_rel_curve_to(rvg_t* ctx, float x1, float y1,
@@ -3818,49 +4123,49 @@ void vctx_rel_curve_to(rvg_t* ctx, float x1, float y1,
 	float x3, float y3) {
 	if (!ctx) return;
 	float cx, cy;
-	ovg_get_current_point(ctx->cur_path, &cx, &cy);
-	ovg_curve_to(ctx->cur_path,
+	ovg_get_current_point(ctx->path, &cx, &cy);
+	ovg_curve_to(ctx->path,
 		cx + x1, cy + y1,
 		cx + x2, cy + y2,
 		cx + x3, cy + y3);
 }
 
 void vctx_quadratic_to(rvg_t* ctx, float x1, float y1, float x2, float y2) {
-	if (ctx) ovg_quadratic_to(ctx->cur_path, x1, y1, x2, y2);
+	if (ctx) ovg_quadratic_to(ctx->path, x1, y1, x2, y2);
 }
 
 void vctx_rel_quadratic_to(rvg_t* ctx, float x1, float y1, float x2, float y2) {
 	if (!ctx) return;
 	float cx, cy;
-	ovg_get_current_point(ctx->cur_path, &cx, &cy);
-	ovg_quadratic_to(ctx->cur_path,
+	ovg_get_current_point(ctx->path, &cx, &cy);
+	ovg_quadratic_to(ctx->path,
 		cx + x1, cy + y1,
 		cx + x2, cy + y2);
 }
 
 void vctx_rectangle(rvg_t* ctx, float x, float y, float w, float h) {
-	if (ctx) ovg_rectangle(ctx->cur_path, x, y, w, h);
+	if (ctx) ovg_rectangle(ctx->path, x, y, w, h);
 }
 
 void vctx_rounded_rectangle(rvg_t* ctx, float x, float y,
 	float w, float h, float radius) {
-	if (ctx) ovg_rounded_rectangle(ctx->cur_path, x, y, w, h, radius);
+	if (ctx) ovg_rounded_rectangle(ctx->path, x, y, w, h, radius);
 }
 
 void vctx_rounded_rectangle2(rvg_t* ctx, float x, float y,
 	float w, float h, float rx, float ry) {
-	if (ctx) ovg_rounded_rectangle2(ctx->cur_path, x, y, w, h, rx, ry);
+	if (ctx) ovg_rounded_rectangle2(ctx->path, x, y, w, h, rx, ry);
 }
 
 void vctx_ellipse(rvg_t* ctx, float radiusX, float radiusY,
 	float x, float y, float rotationAngle) {
-	if (ctx) ovg_ellipse(ctx->cur_path, radiusX, radiusY, x, y, rotationAngle);
+	if (ctx) ovg_ellipse(ctx->path, radiusX, radiusY, x, y, rotationAngle);
 }
 
 void vctx_elliptic_arc_to(rvg_t* ctx, float x, float y,
 	bool large_arc_flag, bool sweep_flag,
 	float rx, float ry, float phi) {
-	if (ctx) ovg_elliptic_arc_to(ctx->cur_path, x, y,
+	if (ctx) ovg_elliptic_arc_to(ctx->path, x, y,
 		large_arc_flag, sweep_flag,
 		rx, ry, phi);
 }
@@ -3870,68 +4175,69 @@ void vctx_rel_elliptic_arc_to(rvg_t* ctx, float x, float y,
 	float rx, float ry, float phi) {
 	if (!ctx) return;
 	float cx, cy;
-	ovg_get_current_point(ctx->cur_path, &cx, &cy);
-	ovg_elliptic_arc_to(ctx->cur_path,
+	ovg_get_current_point(ctx->path, &cx, &cy);
+	ovg_elliptic_arc_to(ctx->path,
 		cx + x, cy + y,
 		large_arc_flag, sweep_flag,
 		rx, ry, phi);
 }
 
 void vctx_circle(rvg_t* ctx, float x, float y, float radius) {
-	if (ctx) ovg_circle(ctx->cur_path, x, y, radius);
+	if (ctx) ovg_circle(ctx->path, x, y, radius);
 }
 // 配置 
 void vctx_set_opacity(rvg_t* ctx, float opacity) {
-	if (ctx) ovg_set_opacity(ctx->cur_st, opacity);
+	if (ctx) ovg_set_opacity(ctx->st, opacity);
 }
 
 void vctx_set_source_color(rvg_t* ctx, uint32_t c) {
-	if (ctx) ovg_set_source_color(ctx->cur_st, c);
+	if (ctx) ovg_set_source_color(ctx->st, c);
 }
 
 void vctx_set_source_rgba(rvg_t* ctx, float r, float g, float b, float a) {
-	if (ctx) ovg_set_source_rgba(ctx->cur_st, r, g, b, a);
+	if (ctx) ovg_set_source_rgba(ctx->st, r, g, b, a);
 }
 
 void vctx_set_source_rgb(rvg_t* ctx, float r, float g, float b) {
-	if (ctx) ovg_set_source_rgba(ctx->cur_st, r, g, b, 1.0f);
+	if (ctx) ovg_set_source_rgba(ctx->st, r, g, b, 1.0f);
 }
 
 void vctx_set_line_width(rvg_t* ctx, float width) {
-	if (ctx) ovg_set_line_width(ctx->cur_st, width);
+	if (ctx) ovg_set_line_width(ctx->st, width);
 }
 
 void vctx_set_miter_limit(rvg_t* ctx, float limit) {
-	if (ctx) ovg_set_miter_limit(ctx->cur_st, limit);
+	if (ctx) ovg_set_miter_limit(ctx->st, limit);
 }
 
 void vctx_set_line_cap(rvg_t* ctx, int cap) {
-	if (ctx) ovg_set_line_cap(ctx->cur_st, cap);
+	if (ctx) ovg_set_line_cap(ctx->st, cap);
 }
 
 void vctx_set_line_join(rvg_t* ctx, int join) {
-	if (ctx) ovg_set_line_join(ctx->cur_st, join);
+	if (ctx) ovg_set_line_join(ctx->st, join);
 }
 
-void vctx_set_source_surface(rvg_t* ctx, vg_surface_t* surf, float x, float y) {
-	if (ctx) ovg_set_source_surface(ctx->cur_st, surf, x, y);
+void vctx_set_source_surface(rvg_t* ctx, vg_image_t* surf, float x, float y) {
+	if (ctx) ovg_set_source_surface(ctx->st, surf, x, y);
 }
 
 void vctx_set_source(rvg_t* ctx, vg_pattern_t* pat) {
-	if (ctx) ovg_set_source(ctx->cur_st, pat);
+	if (ctx) ovg_set_source(ctx->st, pat);
 }
 
 void vctx_set_operator(rvg_t* ctx, int op) {
-	if (ctx) ovg_set_operator(ctx->cur_st, op);
+	if (ctx) ovg_set_operator(ctx->st, op);
 }
 
 void vctx_set_fill_rule(rvg_t* ctx, int fr) {
-	if (ctx) ovg_set_fill_rule(ctx->cur_st, fr);
+	if (ctx) ovg_set_fill_rule(ctx->st, fr);
 }
 
-void vctx_set_dash(rvg_t* ctx, const float* dashes, uint32_t num_dashes, float offset) {
+void vctx_set_dash(rvg_t* v0, const float* dashes, uint32_t num_dashes, float offset) {
+	auto ctx = (rvg_cx*)v0;
 	if (!ctx || !dashes)return;
-	auto t = ctx->cur_st;
+	auto t = ctx->st;
 	if (!dashes || !num_dashes) {
 		t->dashCount = 0;
 	}
@@ -3969,44 +4275,45 @@ void vctx_set_dash8(rvg_t* ctx, uint64_t dashes0, uint32_t num_dashes, float off
 }
 
 void vctx_translate(rvg_t* ctx, float dx, float dy) {
-	if (ctx) ovg_translate(ctx->cur_st, dx, dy);
+	if (ctx) ovg_translate(ctx->st, dx, dy);
 }
 
 void vctx_scale(rvg_t* ctx, float sx, float sy) {
-	if (ctx) ovg_scale(ctx->cur_st, sx, sy);
+	if (ctx) ovg_scale(ctx->st, sx, sy);
 }
 
 void vctx_rotate(rvg_t* ctx, float radians) {
-	if (ctx) ovg_rotate(ctx->cur_st, radians);
+	if (ctx) ovg_rotate(ctx->st, radians);
 }
 
 void vctx_transform(rvg_t* ctx, const void* matrix) {
-	if (ctx) ovg_transform(ctx->cur_st, matrix);
+	if (ctx) ovg_transform(ctx->st, matrix);
 }
 
 void vctx_set_matrix(rvg_t* ctx, const void* matrix) {
-	if (ctx) ovg_set_matrix(ctx->cur_st, matrix);
+	if (ctx) ovg_set_matrix(ctx->st, matrix);
 }
 
 void vctx_get_matrix(rvg_t* ctx, void* matrix) {
-	if (ctx) ovg_get_matrix(ctx->cur_st, matrix);
+	if (ctx) ovg_get_matrix(ctx->st, matrix);
 }
 
 void vctx_identity_matrix(rvg_t* ctx) {
-	if (ctx) ovg_identity_matrix(ctx->cur_st);
+	if (ctx) ovg_identity_matrix(ctx->st);
 }
-
+void vctx_matrix_init(void* mat, float xx, float yx, float xy, float yy, float x0, float y0) {
+	if (mat) { ovg_matrix_init(mat, xx, yx, xy, yy, x0, y0); }
+}
 typedef glm::mat3x2 ovg_matrix_t;
-struct pat_act0 :public  vg_pattern_t {
-	vg_gradient_t g = {};
-};
 // 图案：渐变/图片 
-vg_pattern_t* vctx_new_pattern_linear(rvg_t* ctx, float x0, float y0, float x1, float y1) {
+vg_pattern_t* vctx_new_pattern_linear(rvg_t* v0, float x0, float y0, float x1, float y1) {
+	auto ctx = (rvg_cx*)v0;
 	if (!ctx)return 0;
-	auto pat = (pat_act*)ctx->mac.allocate(sizeof(pat_act0));
+	auto pat = (pat_act*)ctx->mac.allocate(sizeof(pat_act));
 	if (!pat) {
 		return 0;
 	}
+	*pat = {};
 	pat->type = vg_pattern_type_t::VG_PATTERN_TYPE_LINEAR;
 	pat->extend = vg_extend_t::VG_EXTEND_NONE;
 	pat->data = &pat->g;
@@ -4015,12 +4322,14 @@ vg_pattern_t* vctx_new_pattern_linear(rvg_t* ctx, float x0, float y0, float x1, 
 	pat->references = 1;
 	return pat;
 }
-vg_pattern_t* vctx_new_pattern_radial(rvg_t* ctx, float cx0, float cy0, float radius0, float cx1, float cy1, float radius1, bool is_ellipse) {
+vg_pattern_t* vctx_new_pattern_radial(rvg_t* v0, float cx0, float cy0, float radius0, float cx1, float cy1, float radius1, bool is_ellipse) {
+	auto ctx = (rvg_cx*)v0;
 	if (!ctx)return 0;
-	auto pat = (pat_act*)ctx->mac.allocate(sizeof(pat_act0));
+	auto pat = (pat_act*)ctx->mac.allocate(sizeof(pat_act));
 	if (!pat) {
 		return 0;
 	}
+	*pat = {};
 	pat->type = vg_pattern_type_t::VG_PATTERN_TYPE_RADIAL;
 	pat->extend = vg_extend_t::VG_EXTEND_NONE;
 	pat->data = &pat->g;
@@ -4029,12 +4338,14 @@ vg_pattern_t* vctx_new_pattern_radial(rvg_t* ctx, float cx0, float cy0, float ra
 	pat->references = 1;
 	return pat;
 }
-vg_pattern_t* vctx_new_pattern_sweep(rvg_t* ctx, float cx, float cy, float start_angle, float end_angle) {
+vg_pattern_t* vctx_new_pattern_sweep(rvg_t* v0, float cx, float cy, float start_angle, float end_angle) {
+	auto ctx = (rvg_cx*)v0;
 	if (!ctx)return 0;
-	auto pat = (pat_act*)ctx->mac.allocate(sizeof(pat_act0));
+	auto pat = (pat_act*)ctx->mac.allocate(sizeof(pat_act));
 	if (!pat) {
 		return 0;
 	}
+	*pat = {};
 	pat->type = vg_pattern_type_t::VG_PATTERN_TYPE_SWEEP;
 	pat->extend = vg_extend_t::VG_EXTEND_NONE;
 	pat->data = &pat->g;
@@ -4061,10 +4372,12 @@ void vctx_pattern_set_filter(vg_pattern_t* pat, int filter) {
 	if (pat) ovg_pattern_set_filter(pat, filter);
 }
 
-void vctx_save(rvg_t* v) {
+void vctx_save(rvg_t* v0) {
+	auto v = (rvg_cx*)v0;
 	if (v)v->save();
 }
-void vctx_restore(rvg_t* v) {
+void vctx_restore(rvg_t* v0) {
+	auto v = (rvg_cx*)v0;
 	if (v)v->restore();
 }
 void vctx_stroke(rvg_t* v) {
@@ -4113,8 +4426,14 @@ void vctx_get_clip_rect(rvg_t* v, void* rc) {
 /* ================= 高层绘制命令 ================= */
 
 // 添加文本，风格，渲染区可选
-void vctx_add_text(rvg_t* dc, text_st_t* p, text_style_t* ts, text_box_rt* box) {
-	if (dc) ovg_add_text(dc, p, ts, box);
+void vctx_add_text(rvg_t* v0, text_st_t* p, text_style_t* ts, text_box_rt* box) {
+
+	auto dc = (rvg_cx*)v0;
+	if (dc) {
+		auto cb = (ovg_ctx_cx*)dc->ac->ptr;
+		if (cb)
+			cb->add_text(v0, p, ts, box);
+	}
 }
 
 // 普通图片，支持九宫格、混合颜色
@@ -4129,7 +4448,7 @@ void vctx_set_geom_state(rvg_t* dc, gem_info_t* info, const void* matrix4x4) {
 
 // 添加几何数据到缓冲区
 void vctx_add_geometry(rvg_t* dc,
-	vg_surface_t* texture,
+	vg_image_t* texture,
 	const float* xy, int xy_stride,
 	const void* color, int color_stride,
 	const float* uv, int uv_stride,
@@ -4150,7 +4469,7 @@ void vctx_add_geometry(rvg_t* dc,
 
 // 添加3D几何数据到缓冲区
 void vctx_add_geometry3d(rvg_t* dc,
-	vg_surface_t* texture,
+	vg_image_t* texture,
 	const float* xyz, int xyz_stride,
 	const void* color, int color_stride,
 	const float* uv, int uv_stride,
@@ -4191,6 +4510,9 @@ void* vctx_recording_get_data(ovg_recording_t* rec) {
 void  vctx_recording_destroy(ovg_recording_t* rec) {
 
 }
+
+
+
 void init_ovg_ctx_cb(ovg_ctx_cb* cb)
 {
 	if (!cb)return;
@@ -4245,6 +4567,7 @@ void init_ovg_ctx_cb(ovg_ctx_cb* cb)
 	cb->set_matrix = vctx_set_matrix;
 	cb->get_matrix = vctx_get_matrix;
 	cb->identity_matrix = vctx_identity_matrix;
+	cb->matrix_init = vctx_matrix_init;
 	cb->new_pattern_linear = vctx_new_pattern_linear;
 	cb->new_pattern_radial = vctx_new_pattern_radial;
 	cb->new_pattern_sweep = vctx_new_pattern_sweep;
@@ -4253,6 +4576,10 @@ void init_ovg_ctx_cb(ovg_ctx_cb* cb)
 	cb->pattern_set_matrix = vctx_pattern_set_matrix;
 	cb->pattern_set_extend = vctx_pattern_set_extend;
 	cb->pattern_set_filter = vctx_pattern_set_filter;
+
+	cb->image_update = ovg_image_update;
+	cb->image_destroy = ovg_image_destroy;
+
 	cb->save = vctx_save;
 	cb->restore = vctx_restore;
 	cb->stroke = vctx_stroke;
@@ -4269,6 +4596,7 @@ void init_ovg_ctx_cb(ovg_ctx_cb* cb)
 	cb->add_text = vctx_add_text;
 	cb->add_image = vctx_add_image;
 	cb->set_geom_state = vctx_set_geom_state;
+	cb->set_instance_mat = (size_t(*)(rvg_t*, const void*, size_t)) ovg_set_instance_mat;
 	cb->add_geometry = vctx_add_geometry;
 	cb->add_geometry3d = vctx_add_geometry3d;
 	cb->start_recording = vctx_start_recording;
@@ -4328,4 +4656,1433 @@ void draw_grid_fill(rvg_t* vg, glm::vec2 size, glm::ivec2 cols, int width)
 		}
 	}
 	vctx_fill(vg);
+}
+
+
+// flex.c
+
+
+#ifndef NO_FLEX_IMP
+
+
+class flex_item :public flex_data
+{
+public:
+	// size[0] == width, size[1] == height
+	typedef void (*flex_self_sizing)(flex_item* item, float* size);
+	void* managed_ptr = NULL;	// 用户数据指针
+	flex_self_sizing self_sizing = NULL; // 运行时计算大小
+	float frame[4] = {};	// 输出坐标、大小
+	flex_item* parent = 0;	// 父级
+	size_t line_count = 0;
+	std::pmr::vector<flex_item*> children;	// 子级  
+	std::pmr::vector<char> temp_layout;
+public:
+	flex_item();
+	~flex_item();
+
+	void init();
+	void setdata(flex_data* d);
+	void update_should_order_children();	// 子元素属性改变时执行
+
+	void item_add(flex_item* child);
+	void item_insert(uint32_t index, flex_item* child);
+	flex_item* item_delete(uint32_t index);
+	flex_item* detach(flex_item* child);
+	// 清空子元素
+	void clear();
+	// 执行布局计算
+	void layout();
+private:
+	void layout_items(uint32_t child_begin, uint32_t child_end, uint32_t children_count, struct flex_layout* layout, uint32_t last_count);
+	void layout_item(float width, float height);
+};
+
+flex_item::flex_item()
+{}
+
+flex_item::~flex_item()
+{}
+
+
+
+void flex_item::update_should_order_children()
+{
+	if (order != 0 && parent != NULL) {
+		parent->should_order_children = true;
+	}
+}
+
+void flex_item::init()
+{
+	children.clear();
+	temp_layout.clear();
+	parent = NULL;
+	should_order_children = true;
+	return;
+}
+
+void flex_item::setdata(flex_data* d)
+{
+	*((flex_data*)this) = *d;
+}
+
+void flex_item::item_add(flex_item* child)
+{
+	flex_item* item = this;
+	children.push_back(child);
+	child->parent = item;
+	should_order_children = true;
+	child->update_should_order_children();
+}
+
+
+void flex_item::item_insert(uint32_t index, flex_item* child)
+{
+	flex_item* item = this;
+	children.insert(children.begin() + index, child);
+	child->parent = item;
+	child->update_should_order_children();
+}
+
+
+flex_item* flex_item::item_delete(uint32_t index)
+{
+	flex_item* child = children.data()[index];
+	children.erase(children.begin() + index);
+	if (child)
+		child->parent = 0;
+	return child;
+}
+
+flex_item* flex_item::detach(flex_item* c)
+{
+	size_t i = 0;
+	flex_item* child = 0;
+	auto p = children.data();
+	for (i = 0; i < children.size(); i++)
+	{
+		if (p[i] == c)
+		{
+			child = c;
+			break;
+		}
+	}
+	children.erase(children.begin() + i);
+	if (child)
+		child->parent = 0;
+	return child;
+}
+
+void flex_item::clear()
+{
+	children.clear();
+}
+
+
+flex_item* flex_item_root(flex_item* item)
+{
+	while (item->parent != NULL) {
+		item = item->parent;
+	}
+	return item;
+}
+//
+//#define FRAME_GETTER(name, index) \
+//     float flex_item_get_frame_##name(flex_item *item) { \
+//        return item->frame[index]; \
+//    }
+//
+//FRAME_GETTER(x, 0)
+//FRAME_GETTER(y, 1)
+//FRAME_GETTER(width, 2)
+//FRAME_GETTER(height, 3)
+//
+//#undef FRAME_GETTER
+
+struct flex_layout {
+	// Set during init.
+	bool wrap;
+	bool reverse;               // whether main axis is reversed
+	bool reverse2;              // whether cross axis is reversed (wrap only)
+	bool vertical;
+	float size_dim;             // main axis parent size
+	float align_dim;            // cross axis parent size
+	uint32_t frame_pos_i;   // main axis position
+	uint32_t frame_pos2_i;  // cross axis position
+	uint32_t frame_size_i;  // main axis size
+	uint32_t frame_size2_i; // cross axis size
+	uint32_t* ordered_indices;
+	size_t ordered_count;
+	// Set for each line layout.
+	float line_dim;             // the cross axis size
+	float flex_dim;             // the flexible part of the main axis size
+	float extra_flex_dim;       // sizes of flexible items
+	float flex_grows;
+	float flex_shrinks;
+	float pos2;                 // cross axis position
+	float baseline;
+	// Calculated layout lines - only tracked when needed:
+	//   - if the root's align_content property isn't set to FLEX_ALIGN_START
+	//   - or if any child item doesn't have a cross-axis size set
+	bool need_lines;
+	struct flex_layout_line {
+		uint32_t child_begin;
+		uint32_t child_end;
+		float size;
+	};
+	flex_layout_line* lines;
+	size_t lines_idx;
+	//uint32_t lines_count;
+	float lines_sizes;
+	//uint32_t lines_cap;
+	size_t lines_idx0;
+};
+
+flex_align child_align(flex_item* child, flex_item* parent)
+{
+	auto align = child->align_self;
+	if (align == flex_align::ALIGN_AUTO && parent) {
+		align = parent->align_items;
+	}
+	return align;
+}
+
+void layout_init(flex_item* item, float width, float height, struct flex_layout* layout)
+{
+	assert(item->padding_left >= 0);
+	assert(item->padding_right >= 0);
+	assert(item->padding_top >= 0);
+	assert(item->padding_bottom >= 0);
+	width -= item->padding_left + item->padding_right;
+	height -= item->padding_top + item->padding_bottom;
+	assert(width >= 0);
+	assert(height >= 0);
+
+	layout->reverse = false;
+	layout->vertical = true;
+	switch (item->direction) {
+	case flex_direction::ROW_REVERSE:
+		layout->reverse = true;
+	case flex_direction::ROW:
+		layout->vertical = false;
+		layout->size_dim = width;
+		layout->align_dim = height;
+		layout->frame_pos_i = 0;
+		layout->frame_pos2_i = 1;
+		layout->frame_size_i = 2;
+		layout->frame_size2_i = 3;
+		break;
+
+	case flex_direction::COLUMN_REVERSE:
+		layout->reverse = true;
+	case flex_direction::COLUMN:
+		layout->size_dim = height;
+		layout->align_dim = width;
+		layout->frame_pos_i = 1;
+		layout->frame_pos2_i = 0;
+		layout->frame_size_i = 3;
+		layout->frame_size2_i = 2;
+		break;
+
+	default:
+		assert(false && "incorrect direction");
+	}
+
+	//layout->ordered_indices.clear();
+	if (item->should_order_children && item->children.size() > 0) {
+		item->temp_layout.resize(item->children.size() * (sizeof(flex_layout::flex_layout_line) + sizeof(uint32_t)));
+		layout->ordered_indices = (uint32_t*)item->temp_layout.data();
+		auto indices = layout->ordered_indices;
+		assert(indices != NULL);
+		// Creating a list of item indices sorted using the children's `order'
+		// attribute values. We are using a simple insertion sort as we need
+		// stability (insertion order must be preserved) and cross-platform
+		// support. We should eventually switch to merge sort (or something
+		// else) if the number of items becomes significant enough.
+		auto icv = item->children.data();
+		for (uint32_t i = 0; i < item->children.size(); i++) {
+			indices[i] = i;
+			for (uint32_t j = i; j > 0; j--) {
+				uint32_t prev = indices[j - 1];
+				uint32_t curr = indices[j];
+				if (icv[prev]->order <= icv[curr]->order) {
+					break;
+				}
+				indices[j - 1] = curr;
+				indices[j] = prev;
+			}
+		}
+	}
+
+	layout->flex_dim = 0;
+	layout->flex_grows = 0;
+	layout->flex_shrinks = 0;
+
+	layout->reverse2 = false;
+	layout->wrap = item->wrap != flex_wrap::NO_WRAP;
+	if (layout->wrap) {
+		if (item->wrap == flex_wrap::WRAP_REVERSE) {
+			layout->reverse2 = true;
+			layout->pos2 = layout->align_dim;
+		}
+	}
+	else {
+		layout->pos2 = layout->vertical
+			? item->padding_left : item->padding_top;
+	}
+
+	layout->need_lines = layout->wrap && item->align_content != flex_align::ALIGN_START;
+	layout->lines = (flex_layout::flex_layout_line*)(item->temp_layout.data() + sizeof(uint32_t) * item->children.size());
+	layout->lines_idx = 0;
+	layout->lines_idx0 = 1;
+	layout->lines_sizes = 0;
+	auto align_items = child_align(item, item->parent);
+	if (align_items == flex_align::ALIGN_BASELINE)
+	{
+		layout->baseline = 0;
+		for (auto& it : item->children) {
+			layout->baseline = std::max(layout->baseline, it->baseline);
+		}
+	}
+}
+
+void layout_cleanup(struct flex_layout* layout)
+{
+	if (layout)
+	{
+		layout->ordered_indices = 0;
+		layout->lines = 0;
+	}
+}
+
+#define LAYOUT_RESET() \
+    do { \
+        layout->line_dim = layout->wrap ? 0 : layout->align_dim; \
+        layout->flex_dim = layout->size_dim; \
+        layout->extra_flex_dim = 0; \
+        layout->flex_grows = 0; \
+        layout->flex_shrinks = 0; \
+    } \
+    while (0)
+
+#define LAYOUT_CHILD_AT(item, i) (item->children[(layout->ordered_count ? layout->ordered_indices[i] : i)])
+//#define LAYOUT_CHILD_AT(item, i) ((*item->children)[(layout->ordered_count ? layout->ordered_indices[i] : i)])
+//#define LAYOUT_CHILD_AT(item, i) ((*item->children)[(layout->ordered_indices.size() ? layout->ordered_indices[i] : i)])
+//#define LAYOUT_CHILD_AT(item, i) (item->children.ary[(layout->ordered_indices != NULL ? layout->ordered_indices[i] : i)])  
+
+#define _LAYOUT_FRAME(child, name) child->frame[layout->frame_##name##_i]
+
+#define CHILD_POS(child) _LAYOUT_FRAME(child, pos)
+#define CHILD_POS2(child) _LAYOUT_FRAME(child, pos2)
+#define CHILD_SIZE(child) _LAYOUT_FRAME(child, size)
+#define CHILD_SIZE2(child) _LAYOUT_FRAME(child, size2)
+
+#define CHILD_MARGIN(child, if_vertical, if_horizontal) \
+    (layout->vertical \
+     ? child->margin_##if_vertical \
+     : child->margin_##if_horizontal)
+
+
+bool layout_align(flex_align align, float flex_dim, uint32_t children_count, float* pos_p, float* spacing_p, bool stretch_allowed)
+{
+	assert(flex_dim > 0);
+
+	float pos = 0;
+	float spacing = 0;
+	switch (align) {
+	case flex_align::ALIGN_START:
+		break;
+
+	case flex_align::ALIGN_END:
+		pos = flex_dim;
+		break;
+
+	case flex_align::ALIGN_CENTER:
+		pos = flex_dim / 2;
+		break;
+
+	case flex_align::ALIGN_SPACE_BETWEEN:
+		if (children_count > 0) {
+			spacing = flex_dim / (children_count - 1);
+		}
+		break;
+
+	case flex_align::ALIGN_SPACE_AROUND:
+		if (children_count > 0) {
+			spacing = flex_dim / children_count;
+			pos = spacing / 2;
+		}
+		break;
+
+	case flex_align::ALIGN_SPACE_EVENLY:
+		if (children_count > 0) {
+			spacing = flex_dim / (children_count + 1);
+			pos = spacing;
+		}
+		break;
+
+	case flex_align::ALIGN_AUTO:
+	case flex_align::ALIGN_STRETCH:
+		if (stretch_allowed) {
+			spacing = flex_dim / children_count;
+			break;
+		}
+		// fall through
+		break;
+	default:
+		return false;
+	}
+
+	*pos_p = pos;
+	*spacing_p = spacing;
+	return true;
+}
+
+void flex_item::layout_items(uint32_t child_begin, uint32_t child_end, uint32_t children_count, struct flex_layout* layout, uint32_t last_count)
+{
+	flex_item* item = this;
+	assert(children_count <= (child_end - child_begin));
+	if (children_count <= 0) {
+		return;
+	}
+	if (last_count > 0 && last_count > children_count)
+	{
+		//children_count = last_count;
+	}
+	if (layout->flex_dim > 0 && layout->extra_flex_dim > 0) {
+		// If the container has a positive flexible space, let's add to it
+		// the sizes of all flexible children->
+		layout->flex_dim += layout->extra_flex_dim;
+	}
+
+	// Determine the main axis initial position and optional spacing.
+	float pos = 0;
+	float spacing = 0;
+	if (layout->flex_grows == 0 && layout->flex_dim > 0) {
+		if (!layout_align(item->justify_content, layout->flex_dim,
+			children_count, &pos, &spacing, false))
+		{
+			assert(0 && "incorrect justify_content");
+		}
+		if (layout->reverse) {
+			pos = layout->size_dim - pos;
+		}
+	}
+
+	if (layout->reverse) {
+		pos -= layout->vertical ? item->padding_bottom : item->padding_right;
+	}
+	else {
+		pos += layout->vertical ? item->padding_top : item->padding_left;
+	}
+	if (layout->wrap && layout->reverse2) {
+		layout->pos2 -= layout->line_dim;
+	}
+
+	for (uint32_t i = child_begin; i < child_end; i++) {
+		flex_item* child = LAYOUT_CHILD_AT(item, i);
+		if (child->position == flex_position::POS_ABSOLUTE) {
+			// Already positioned.
+			continue;
+		}
+
+		// Grow or shrink the main axis item size if needed.
+		float flex_size = 0;
+		if (layout->flex_dim > 0) {
+			if (child->grow != 0) {
+				CHILD_SIZE(child) = 0; // Ignore previous size when growing.
+				flex_size = (layout->flex_dim / layout->flex_grows)
+					* child->grow;
+			}
+		}
+		else if (layout->flex_dim < 0) {
+			if (child->shrink != 0) {
+				flex_size = (layout->flex_dim / layout->flex_shrinks)
+					* child->shrink;
+			}
+		}
+		CHILD_SIZE(child) += flex_size;
+
+		// Set the cross axis position (and stretch the cross axis size if
+		// needed).
+		float align_size = CHILD_SIZE2(child);
+		float align_pos = layout->pos2 + 0;
+		switch (child_align(child, item)) {
+		case flex_align::ALIGN_END:
+			align_pos += layout->line_dim - align_size
+				- CHILD_MARGIN(child, right, bottom);
+			break;
+
+		case flex_align::ALIGN_CENTER:
+			align_pos += (layout->line_dim / 2) - (align_size / 2)
+				+ (CHILD_MARGIN(child, left, top)
+					- CHILD_MARGIN(child, right, bottom));
+			break;
+
+		case flex_align::ALIGN_STRETCH:
+			if (align_size == 0) {
+				CHILD_SIZE2(child) = layout->line_dim
+					- (CHILD_MARGIN(child, left, top)
+						+ CHILD_MARGIN(child, right, bottom));
+			}
+			// fall through
+			align_pos += CHILD_MARGIN(child, left, top);
+			break;
+		case flex_align::ALIGN_START:
+			align_pos += CHILD_MARGIN(child, left, top);
+			break;
+		case flex_align::ALIGN_BASELINE:
+			align_pos += CHILD_MARGIN(child, left, top);
+			if (child->baseline > 0) {
+				align_pos += layout->baseline - child->baseline;
+			}
+			break;
+		default:
+			assert(false && "incorrect align_self");
+		}
+		CHILD_POS2(child) = align_pos;
+
+		// Set the main axis position.
+		if (layout->reverse) {
+			pos -= CHILD_MARGIN(child, bottom, right);
+			pos -= CHILD_SIZE(child);
+			CHILD_POS(child) = pos;
+			pos -= spacing;
+			pos -= CHILD_MARGIN(child, top, left);
+		}
+		else {
+			pos += CHILD_MARGIN(child, top, left);
+			CHILD_POS(child) = pos;
+			pos += CHILD_SIZE(child);
+			pos += spacing;
+			pos += CHILD_MARGIN(child, bottom, right);
+		}
+
+		// Now that the item has a frame, we can layout its children.
+		child->layout_item(child->frame[2], child->frame[3]);
+	}
+
+	if (layout->wrap && !layout->reverse2) {
+		layout->pos2 += layout->line_dim;
+	}
+
+	if (layout->need_lines) {
+		flex_layout::flex_layout_line line[1] = {};
+		line->child_begin = child_begin;
+		line->child_end = child_end;
+		line->size = layout->line_dim;
+		layout->lines[layout->lines_idx] = (line[0]);
+		layout->lines_idx++;
+		//layout->lines.push_back(line[0]);
+		layout->lines_sizes += line->size;
+	}
+}
+
+void flex_item::layout_item(float width, float height)
+{
+	flex_item* item = this;
+	if (item->children.size() == 0) {
+		return;
+	}
+
+	struct flex_layout layout_s = { 0 }, * layout = &layout_s;
+	layout_init(item, width, height, &layout_s);
+
+	LAYOUT_RESET();
+	uint32_t last_count = 0;
+	uint32_t last_layout_child = 0;
+	uint32_t relative_children_count = 0;
+	for (uint32_t i = 0; i < item->children.size(); i++) {
+		flex_item* child = LAYOUT_CHILD_AT(item, i);
+
+		// Items with an absolute position have their frames determined
+		// directly and are skipped during layout.
+		if (child->position == flex_position::POS_ABSOLUTE) {
+#define ABSOLUTE_SIZE(val, pos1, pos2, dim) \
+            (!isnan(val) \
+             ? val \
+             : (!isnan(pos1) && !isnan(pos2) \
+                 ? dim - pos2 - pos1 \
+                 : 0))
+
+#define ABSOLUTE_POS(pos1, pos2, size, dim) \
+            (!isnan(pos1) \
+             ? pos1 \
+             : (!isnan(pos2) \
+                 ? dim - size - pos2 \
+                 : 0))
+
+			float child_width = ABSOLUTE_SIZE(child->width, child->left,
+				child->right, width);
+
+			float child_height = ABSOLUTE_SIZE(child->height, child->top,
+				child->bottom, height);
+
+			float child_x = ABSOLUTE_POS(child->left, child->right,
+				child_width, width);
+
+			float child_y = ABSOLUTE_POS(child->top, child->bottom,
+				child_height, height);
+
+			child->frame[0] = child_x;
+			child->frame[1] = child_y;
+			child->frame[2] = child_width;
+			child->frame[3] = child_height;
+
+			// Now that the item has a frame, we can layout its children.
+			child->layout_item(child->frame[2], child->frame[3]);
+
+#undef ABSOLUTE_POS
+#undef ABSOLUTE_SIZE
+			continue;
+		}
+
+		// Initialize frame.
+		child->frame[0] = 0;
+		child->frame[1] = 0;
+		child->frame[2] = child->width;
+		child->frame[3] = child->height;
+
+		// Main axis size defaults to 0.
+		if (isnan(CHILD_SIZE(child))) {
+			CHILD_SIZE(child) = 0;
+		}
+
+		// Cross axis size defaults to the parent's size (or line size in wrap
+		// mode, which is calculated later on).
+		if (isnan(CHILD_SIZE2(child))) {
+			if (layout->wrap) {
+				layout->need_lines = true;
+			}
+			else {
+				CHILD_SIZE2(child) = (layout->vertical ? width : height)
+					- CHILD_MARGIN(child, left, top)
+					- CHILD_MARGIN(child, right, bottom);
+			}
+		}
+
+		// Call the self_sizing callback if provided. Only non-NAN values
+		// are taken into account. If the item's cross-axis align property
+		// is set to stretch, ignore the value returned by the callback.
+		if (child->self_sizing != NULL) {
+			float size[2] = { child->frame[2], child->frame[3] };
+
+			child->self_sizing(child, size);
+
+			for (uint32_t j = 0; j < 2; j++) {
+				uint32_t size_off = j + 2;
+				if (size_off == layout->frame_size2_i
+					&& child_align(child, item) == flex_align::ALIGN_STRETCH) {
+					continue;
+				}
+				float val = size[j];
+				if (!isnan(val)) {
+					child->frame[size_off] = val;
+				}
+			}
+		}
+
+		// Honor the `basis' property which overrides the main-axis size.
+		if (!(isnan(child->basis) || child->basis < 0)) {
+			assert(child->basis >= 0);
+			CHILD_SIZE(child) = child->basis;
+		}
+
+		float child_size = CHILD_SIZE(child);
+		if (layout->wrap) {
+			if (layout->flex_dim < child_size) {
+				// Not enough space for this child on this line, layout the
+				// remaining items and move it to a new line.
+				item->layout_items(last_layout_child, i, relative_children_count, layout, last_count);
+
+				LAYOUT_RESET();
+				last_layout_child = i;
+				if (last_count < relative_children_count)
+					last_count = relative_children_count;
+				relative_children_count = 0;
+				layout->lines_idx0++;
+			}
+
+			float child_size2 = CHILD_SIZE2(child);
+			if (!isnan(child_size2) && child_size2 > layout->line_dim) {
+				layout->line_dim = child_size2;
+			}
+		}
+
+		assert(child->grow >= 0);
+		assert(child->shrink >= 0);
+
+		layout->flex_grows += child->grow;
+		layout->flex_shrinks += child->shrink;
+
+		layout->flex_dim -= child_size
+			+ (CHILD_MARGIN(child, top, left)
+				+ CHILD_MARGIN(child, bottom, right));
+
+		relative_children_count++;
+
+		if (child_size > 0 && child->grow > 0) {
+			layout->extra_flex_dim += child_size;
+		}
+	}
+
+	// Layout remaining items in wrap mode, or everything otherwise.
+	item->layout_items(last_layout_child, item->children.size(), relative_children_count, layout, last_count);
+
+	// In wrap mode we may need to tweak the position of each line according to
+	// the align_content property as well as the cross-axis size of items that
+	// haven't been set yet.
+	if (layout->need_lines && layout->lines_idx > 0) {
+		float pos = 0;
+		float spacing = 0;
+		float flex_dim = layout->align_dim - layout->lines_sizes;
+		if (flex_dim > 0) {
+			if (!layout_align(item->align_content, flex_dim, layout->lines_idx, &pos, &spacing, true))
+			{
+				assert(0 && "incorrect align_content");
+			}
+		}
+
+		float old_pos = 0;
+		if (layout->reverse2) {
+			pos = layout->align_dim - pos;
+			old_pos = layout->align_dim;
+		}
+
+		for (uint32_t i = 0; i < layout->lines_idx; i++) {
+			auto line = &layout->lines[i];
+
+			if (layout->reverse2) {
+				pos -= line->size;
+				pos -= spacing;
+				old_pos -= line->size;
+			}
+
+			// Re-position the children of this line, honoring any child
+			// alignment previously set within the line.
+			for (uint32_t j = line->child_begin; j < line->child_end;
+				j++) {
+				flex_item* child = LAYOUT_CHILD_AT(item, j);
+				if (child->position == flex_position::POS_ABSOLUTE) {
+					// Should not be re-positioned.
+					continue;
+				}
+				if (isnan(CHILD_SIZE2(child))) {
+					// If the child's cross axis size hasn't been set it, it
+					// defaults to the line size.
+					CHILD_SIZE2(child) = line->size
+						+ (item->align_content == flex_align::ALIGN_STRETCH
+							? spacing : 0);
+				}
+				CHILD_POS2(child) = pos + (CHILD_POS2(child) - old_pos);
+			}
+
+			if (!layout->reverse2) {
+				pos += line->size;
+				pos += spacing;
+				old_pos += line->size;
+			}
+		}
+	}
+	line_count = layout->lines_idx > 0 ? layout->lines_idx : layout->lines_idx0;
+	layout_cleanup(layout);
+}
+
+#undef CHILD_MARGIN
+#undef CHILD_POS
+#undef CHILD_POS2
+#undef CHILD_SIZE
+#undef CHILD_SIZE2
+#undef _LAYOUT_FRAME
+#undef LAYOUT_CHILD_AT
+#undef LAYOUT_RESET
+
+
+void flex_item::layout()
+{
+	assert(parent == NULL);
+	assert(!isnan(width));
+	assert(!isnan(height));
+	assert(self_sizing == NULL);
+	layout_item(width, height);
+}
+struct flex_run {
+	std::pmr::vector<flex_item> items;
+	std::stack<node_dt*> q;
+	usp_ac_cx* ac = 0;
+	bool meac = false;
+};
+flex_run* new_flex_run(mem_resource_t* a) {
+	usp_ac_cx* ac = (usp_ac_cx*)a;
+	if (!ac) {
+		ac = new usp_ac_cx();
+	}
+	if (ac)return 0;
+	auto p = ac->new_obj<flex_run>();
+	if (p) {
+		p->ac = ac; p->meac = !a;
+	}
+	return p;
+}
+void free_flex_run(flex_run* p) {
+	if (p && p->ac) { p->ac->free_obj(p); }
+}
+mem_resource_t* flex_run_ac(flex_run* p) {
+	return (mem_resource_t*)(p ? p->ac : nullptr);
+}
+// 输入样式数据，根节点指针，所有节点数量 
+glm::vec4 flex_run_layout(flex_run* ctx, flex_data* fd, size_t count, node_dt* p, size_t node_count) {
+	glm::vec4 rect = {};
+	if (!fd || count == 0 || !p || !node_count || !p->child || !p->child_count || !ctx)
+		return rect;
+	auto& items = ctx->items;
+	items.resize(node_count);
+	auto fitem = items.data();
+	if (!fitem) return rect;
+	for (size_t i = 0; i < node_count; i++) {
+		fitem[i].init();
+	}
+	size_t idx = 0;
+	auto q = ctx->q;  // 队列存储待处理坐标 
+	while (q.size()) {
+		q.pop();
+	}
+	q.push(p);
+	p->tidx = idx;
+	while (q.size()) {
+		auto it = q.top(); q.pop();
+		if (it && it->tidx < node_count)
+		{
+			auto& k = fitem[it->tidx];
+			auto pidx = it->tidx;
+			idx++;
+			if (it->index < count)
+			{
+				k.setdata(fd + it->index);
+			}
+			else {
+				k.setdata(fd);
+			}
+			k.position = it->position ? flex_position::POS_ABSOLUTE : flex_position::POS_RELATIVE;
+			k.managed_ptr = it;
+			k.baseline = it->baseline;
+			k.width = it->size.x; k.height = it->size.y;
+			k.left = it->offset.x; k.top = it->offset.y;
+			k.right = it->offset.z; k.bottom = it->offset.w;
+			for (size_t i = 0; i < it->child_count; i++) {
+				it->child[i].parent = pidx;
+				it->child[i].tidx = idx;
+				q.push(it->child + i);
+				k.item_add(fitem + idx);
+				idx++;
+			}
+		}
+	}
+	fitem->layout();
+	for (size_t i = 0; i < node_count; i++)
+	{
+		auto& it = fitem[i];
+		auto pt = (node_dt*)it.managed_ptr;
+		pt->frame = glm::vec4(it.frame[0], it.frame[1], it.frame[2], it.frame[3]);
+		rect.x = std::min(rect.x, it.frame[0]);
+		rect.y = std::min(rect.y, it.frame[1]);
+		rect.z = std::max(rect.z, it.frame[2] + it.frame[0]);
+		rect.w = std::max(rect.w, it.frame[3] + it.frame[1]);
+
+	}
+	p->line_count = fitem->line_count;
+	return rect;
+}
+#endif // !NO_FLEX_IMP 
+
+struct font_familys_cx :public font_familys_t {
+	std::pmr::vector<font_family_t*> v;
+	usp_ac_cx* ac = 0;
+};
+void vg_split(std::string str, const std::string& pattern, std::vector<std::string>& result)
+{
+	std::string::size_type pos;
+	str += pattern;//扩展字符串以方便操作
+	int size = str.size();
+	result.clear();
+	int ct = 0;
+	for (int i = 0; i < size; i++)
+	{
+		pos = str.find(pattern, i);
+		if (pos < size)
+		{
+			std::string s = str.substr(i, pos - i);
+			result.push_back(s);
+			i = pos + pattern.size() - 1;
+			ct++;
+		}
+	}
+}
+font_cache_cx* new_font_cache()
+{
+	auto p = new font_cache_cx();
+	if (p)
+	{
+		auto ac = new usp_ac_cx();
+		if (!ac)
+		{
+			delete p; p = 0;
+		}
+		else
+		{
+			p->set_alloc_ptr(ac);
+		}
+	}
+	return p;
+}
+void free_font_cache(font_cache_cx* p)
+{
+	if (p) {
+		p->references--;
+		if (p->references > 0) return;
+		if (p->ac)delete p->ac;
+		delete p;
+	}
+}
+font_familys_t* new_font_family(font_cache_cx* ctx, const char* familys, const char* styles) {
+	if (!ctx || !familys || !*familys)return nullptr;
+	font_familys_cx* p = 0;
+	auto ac = (usp_ac_cx*)ctx->ac;
+	do {
+		std::vector<std::string> v, st;
+		vg_split(familys, ",", v);
+		if (styles && *styles)
+			vg_split(styles, ",", st);
+		if (v.empty() || !ctx || !ac)
+		{
+			break;
+		}
+		const char* style = st.size() ? st[0].c_str() : nullptr;
+		size_t ix = 1;
+		p = (font_familys_cx*)ac->new_obj<font_familys_cx>();
+		if (!p) {
+			return 0;
+		}
+		p->count = 0;
+		for (auto& it : v)
+		{
+			auto font = ctx->get_font(it.c_str(), style, 0, 0);
+			if (ix < st.size())
+			{
+				style = st.size() ? st[ix].c_str() : nullptr;
+			}
+			ix++;
+			if (font)
+			{
+				auto ff = (font_family_t*)font;
+				p->v.push_back(ff);
+			}
+		}
+		p->familys = p->v.data();
+		p->count = p->v.size();
+		p->ac = ac;
+	} while (0);
+	return p;
+}
+void delete_font_family(font_familys_t* p) {
+	auto p1 = (font_familys_cx*)p;
+	if (p && p1->ac) {
+		p1->ac->free_obj(p1);
+	}
+}
+
+void submit_vector_cmd(ovg_canvas_cb* cb, rvg_t* rvg, const glyph_draw_cmd& cmd)
+{
+	ovg_path_t* path = cb->new_path(cb->ac);
+	vg_state_save_t* st = cb->new_state(cb->ac);
+
+	// 一次性灌入 upem 空间路径
+	cb->add_path(path, cmd.entry->path_data, cmd.entry->path_size);
+
+	// upem → 像素
+	float scale = (float)cmd.fontsize / (float)cmd.entry->em_units;
+
+	cb->translate(st, cmd.pos.x, cmd.pos.y);
+	cb->scale(st, scale, scale);
+	cb->set_source_color(st, cmd.color);
+	cb->set_path(rvg, path, st);
+	cb->fill(rvg);
+
+	cb->destroy_path(path);
+	cb->state_destroy(st);
+}
+void submit_vector_cmd_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const glyph_draw_cmd& cmd)
+{
+	cb->save(rvg);
+	cb->new_path(rvg);
+
+	cb->add_path(rvg, cmd.entry->path_data, cmd.entry->path_size);
+
+	float scale = (float)cmd.fontsize / (float)cmd.entry->em_units;
+	cb->translate(rvg, cmd.pos.x, cmd.pos.y);
+	cb->scale(rvg, scale, scale);
+	cb->set_source_color(rvg, cmd.color);
+	cb->fill(rvg);
+
+	cb->restore(rvg);
+}
+// 公共代码，两套都能用
+void submit_raster_glyphs(
+	const text_draw_list& list,
+	ovg_canvas_cb* cb, rvg_t* rvg)
+{
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::RASTER) continue;
+
+		float x0 = cmd.pos.x;
+		float y0 = cmd.pos.y;
+		float w = cmd.size.x;
+		float h = cmd.size.y;
+
+		float verts[8] = {
+			x0,     y0,
+			x0 + w, y0,
+			x0 + w, y0 + h,
+			x0,     y0 + h,
+		};
+		float uvs[8] = {
+			cmd.uv_rect.x, cmd.uv_rect.y,
+			cmd.uv_rect.z, cmd.uv_rect.y,
+			cmd.uv_rect.z, cmd.uv_rect.w,
+			cmd.uv_rect.x, cmd.uv_rect.w,
+		};
+		uint16_t idx[6] = { 0, 1, 2, 0, 2, 3 };
+		uint32_t color = cmd.color;
+
+		cb->add_geometry(rvg, cmd.entry->atlas_img,
+			verts, sizeof(float) * 2,
+			&color, 0,          // color_stride=0 表示所有顶点同色
+			uvs, sizeof(float) * 2,
+			4, idx, 6, 2, 1);   // color_type=1 (uint32_t)
+	}
+}
+void submit_vector_glyphs_object_mode(
+	const text_draw_list& list,
+	ovg_canvas_cb* cb, rvg_t* rvg,
+	float origin_x, float origin_y)
+{
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
+
+		// 创建 path 和 state
+		ovg_path_t* path = cb->new_path(cb->ac);
+		vg_state_save_t* st = cb->new_state(cb->ac);
+
+		// 回放路径命令
+		cb->add_path(path, cmd.entry->path_data, cmd.entry->path_size);
+
+		// 设置状态
+		cb->set_source_color(st, cmd.color);
+		float scale = (float)cmd.fontsize / (float)cmd.entry->em_units;
+		cb->translate(st, cmd.pos.x, cmd.pos.y);
+		cb->scale(st, scale, scale);
+
+		// 绑定并提交
+		cb->set_path(rvg, path, st);
+		cb->fill(rvg);
+
+		// 清理
+		cb->destroy_path(path);
+		cb->state_destroy(st);
+	}
+}
+void submit_vector_glyphs_ctx_mode(
+	const text_draw_list& list,
+	ovg_ctx_cb* cb, rvg_t* rvg)
+{
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
+
+		cb->save(rvg);
+		cb->new_path(rvg);
+
+		// 回放路径命令到 ctx 内部路径
+		cb->add_path(rvg, cmd.entry->path_data, cmd.entry->path_size);
+
+		// 设置状态
+		cb->set_source_color(rvg, cmd.color);
+		float scale = (float)cmd.fontsize / (float)cmd.entry->em_units;
+		cb->translate(rvg, cmd.pos.x, cmd.pos.y);
+		cb->scale(rvg, scale, scale);
+
+		// 提交
+		cb->fill(rvg);
+
+		cb->restore(rvg);
+	}
+}
+// ovg_text.cpp 
+void submit_vector_glyphs_stroked(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw_list& list, float stroke_width)
+{
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
+		ovg_path_t* path = cb->new_path(cb->ac);
+		vg_state_save_t* st = cb->new_state(cb->ac);
+		cb->add_path(path, cmd.entry->path_data, cmd.entry->path_size);
+		cb->set_source_color(st, cmd.color);
+		float scale = (float)cmd.fontsize / (float)cmd.entry->em_units;
+		cb->translate(st, cmd.pos.x, cmd.pos.y);
+		cb->scale(st, scale, scale);
+		cb->set_line_width(st, (float)stroke_width / scale);
+		cb->set_path(rvg, path, st);
+		cb->stroke(rvg);  // ← stroke 而非 fill
+		cb->destroy_path(path);
+		cb->state_destroy(st);
+	}
+}
+void submit_draw_list(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw_list& list)
+{
+	gem_info_t info2d = {};
+	info2d.blendMode = (uint8_t)blendMode_e::normal_prem;
+	info2d.topology = 0;
+	info2d.flags = (uint8_t)depth_stencil_State::d_stenciltest_enable;
+	info2d.frontFace = 0;
+	info2d.cullMode = 0;
+	info2d.shader = ST_NONE;
+	auto mat = ovg_ortho(rvg->width, rvg->height, -1.0f, 1.0f, 0);
+	cb->set_geom_state(rvg, &info2d, &mat);
+
+	struct raster_batch {
+		std::vector<float>    verts;
+		std::vector<float>    uvs;
+		std::vector<uint32_t> colors;
+		std::vector<uint16_t> idx;
+	};
+	std::unordered_map<vg_image_t*, raster_batch> batches;
+
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::RASTER) continue;
+
+		auto& b = batches[cmd.entry->atlas_img];
+		uint16_t base = (uint16_t)(b.verts.size() / 2);
+
+		float x0 = cmd.pos.x + cmd.entry->offset.x;
+		float y0 = cmd.pos.y - cmd.entry->offset.y;
+		float w = cmd.size.x;
+		float h = cmd.size.y;
+
+		b.verts.push_back(x0);     b.verts.push_back(y0);
+		b.verts.push_back(x0 + w); b.verts.push_back(y0);
+		b.verts.push_back(x0 + w); b.verts.push_back(y0 + h);
+		b.verts.push_back(x0);     b.verts.push_back(y0 + h);
+
+		b.uvs.push_back(cmd.uv_rect.x); b.uvs.push_back(cmd.uv_rect.y);
+		b.uvs.push_back(cmd.uv_rect.z); b.uvs.push_back(cmd.uv_rect.y);
+		b.uvs.push_back(cmd.uv_rect.z); b.uvs.push_back(cmd.uv_rect.w);
+		b.uvs.push_back(cmd.uv_rect.x); b.uvs.push_back(cmd.uv_rect.w);
+		auto color = cmd.color;
+		if (list.has_color && cmd.entry->has_color)color = -1;
+		b.colors.push_back(color);
+		b.colors.push_back(color);
+		b.colors.push_back(color);
+		b.colors.push_back(color);
+
+		b.idx.push_back(base + 0);
+		b.idx.push_back(base + 1);
+		b.idx.push_back(base + 2);
+		b.idx.push_back(base + 0);
+		b.idx.push_back(base + 2);
+		b.idx.push_back(base + 3);
+	}
+
+	// 每组一次 add_geometry
+	for (auto& [atlas_img, b] : batches) {
+		if (b.verts.empty()) continue;
+		auto img = (ovg_image_data*)atlas_img;
+		vg_image_desc_t desc = {};
+		if (img->valid)
+		{
+			desc.width = img->width;
+			desc.height = img->height;
+			desc.format = VG_FORMAT_BGRA8;
+			desc.stride = desc.width * sizeof(int);
+			desc.pixels = img->data;
+			desc.x = 0, desc.y = 0, desc.w = img->width, desc.h = img->height;		// 更新矩形区域
+			desc.is_copy = false;
+			img->valid = false;
+			std::string fn = "temp/font_pack_ovg.png";
+			write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
+			cb->image_update(rvg, img, &desc);
+		}
+		cb->add_geometry(
+			rvg, img,
+			b.verts.data(), sizeof(float) * 2,
+			b.colors.data(), sizeof(uint32_t),
+			b.uvs.data(), sizeof(float) * 2,
+			(int)b.verts.size() / 2,
+			b.idx.data(), (int)b.idx.size(),
+			2, 1
+		);
+	}
+
+	// ── 2. 矢量 glyph：逐个提交（每个独立 path） ──
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
+		submit_vector_cmd(cb, rvg, cmd);
+	}
+}
+void submit_vector_glyphs_stroked_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list, float stroke_width)
+{
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
+		cb->save(rvg);
+		cb->add_path(rvg, cmd.entry->path_data, cmd.entry->path_size);
+		cb->set_source_color(rvg, cmd.color);
+		float scale = (float)cmd.fontsize / (float)cmd.entry->em_units;
+		cb->translate(rvg, cmd.pos.x, cmd.pos.y);
+		cb->scale(rvg, scale, scale);
+		cb->set_line_width(rvg, (float)stroke_width / scale);
+		cb->stroke(rvg);  // ← stroke 而非 fill	 
+		cb->restore(rvg);
+	}
+}
+void submit_draw_list_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list)
+{
+	gem_info_t info2d = {};
+	info2d.blendMode = (uint8_t)blendMode_e::normal_prem;
+	info2d.topology = 0;
+	info2d.flags = (uint8_t)depth_stencil_State::d_stenciltest_enable;
+	info2d.frontFace = 0;
+	info2d.cullMode = 0;
+	info2d.shader = ST_NONE;
+	auto mat = ovg_ortho(rvg->width, rvg->height, -1.0f, 1.0f, 0);
+	cb->set_geom_state(rvg, &info2d, &mat);
+
+	// 位图 batch（同上，只是调用 ctx 的 add_geometry）
+	struct raster_batch {
+		std::vector<float>    verts;
+		std::vector<float>    uvs;
+		std::vector<uint32_t> colors;
+		std::vector<uint16_t> idx;
+	};
+	std::unordered_map<vg_image_t*, raster_batch> batches;
+
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::RASTER) continue;
+
+		auto& b = batches[cmd.entry->atlas_img];
+		uint16_t base = (uint16_t)(b.verts.size() / 2);
+
+		float x0 = cmd.pos.x + cmd.entry->offset.x;
+		float y0 = cmd.pos.y - cmd.entry->offset.y;
+		float w = cmd.size.x, h = cmd.size.y;
+
+		b.verts.insert(b.verts.end(), { x0,y0, x0 + w,y0, x0 + w,y0 + h, x0,y0 + h });
+		b.uvs.insert(b.uvs.end(), {
+			cmd.uv_rect.x, cmd.uv_rect.y,
+			cmd.uv_rect.z, cmd.uv_rect.y,
+			cmd.uv_rect.z, cmd.uv_rect.w,
+			cmd.uv_rect.x, cmd.uv_rect.w,
+			});
+		auto color = cmd.color;
+		if (list.has_color && cmd.entry->has_color)color = -1; 
+		for (int i = 0; i < 4; i++) b.colors.push_back(color);
+		b.idx.push_back(base + 0); b.idx.push_back(base + 1); b.idx.push_back(base + 2);
+		b.idx.push_back(base + 0); b.idx.push_back(base + 2); b.idx.push_back(base + 3);
+	}
+
+	for (auto& [atlas_img, b] : batches) {
+		if (b.verts.empty()) continue;
+		auto img = (ovg_image_data*)atlas_img;
+		vg_image_desc_t desc = {};
+		if (img->valid)
+		{
+			desc.width = img->width;
+			desc.height = img->height;
+			desc.format = VG_FORMAT_BGRA8;
+			desc.stride = desc.width * sizeof(int);
+			desc.pixels = img->data;
+			desc.x = 0, desc.y = 0, desc.w = img->width, desc.h = img->height;		// 更新矩形区域
+			desc.is_copy = false;
+			img->valid = false;
+			//std::string fn = "temp/font_pack_ovg.png";
+			//write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
+			cb->image_update(rvg, img, &desc);
+		}
+		cb->add_geometry(
+			rvg, img,
+			b.verts.data(), sizeof(float) * 2,
+			b.colors.data(), sizeof(uint32_t),
+			b.uvs.data(), sizeof(float) * 2,
+			(int)b.verts.size() / 2,
+			b.idx.data(), (int)b.idx.size(),
+			2, 1
+		);
+	}
+
+	// 矢量逐个
+	for (const auto& cmd : list.cmds) {
+		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
+		submit_vector_cmd_ctx(cb, rvg, cmd);
+	}
+}
+
+void ovg_canvas_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box)
+{
+	if (!p || !p->text || !ts || !ts->family) return;
+
+	int fontsize = ts->fontsize > 0 ? (int)ts->fontsize : 16;
+
+	// ── 1. shape ──
+	vg_text_run_cx run;
+	run.set_font_families(ts->family, fontsize);
+	run.set_text(p->text, p->text_len);
+	run.shape();  // 内部按 fallback 切 run，lookup 缓存
+
+	if (run.glyph_count() == 0) return;
+
+	// ── 2. 布局计算 ──
+	const auto& extents = run.extents();
+
+	// 对齐偏移
+	float box_w = box && box->rc.z > 0 ? (float)box->rc.z : extents.width;
+	float box_h = box && box->rc.w > 0 ? (float)box->rc.w : extents.height;
+
+	float align_x = ts->align.x;  // 0=左, 0.5=中, 1=右
+	float align_y = ts->align.y;
+
+	float offset_x = p->pos.x + (box_w - extents.width) * align_x;
+	float offset_y = p->pos.y + (box_h - extents.height) * align_y;
+
+	// 基线位置 = offset_y + ascender
+	hb_font_extents_t fextents = {};
+	// 用主字体取 ascender
+	hb_font_t* primary = ts->family->familys[0]->font;
+	hb_font_set_scale(primary, fontsize, fontsize);
+	hb_font_get_extents_for_direction(primary, HB_DIRECTION_LTR, &fextents);
+	float baseline_y = offset_y;// +(float)fextents.ascender;
+
+	// ── 3. 裁剪 ──
+	if (box && box->rc.z > 0 && box->rc.w > 0) {
+		this->clip_rect(rvg, box->rc.x, box->rc.y, box->rc.z, box->rc.w);
+	}
+
+	// ── 4. 阴影 ──
+	if (ts->color_shadow & 0xFF000000) {
+		text_draw_list shadow_list;
+		run.populate_draw_list(shadow_list, offset_x + ts->shadow_pos.x, baseline_y + ts->shadow_pos.y, ts->color_shadow, vg_text_run_cx::RASTER_FIRST);
+		submit_draw_list(this, rvg, shadow_list);
+	}
+
+	// ── 5. 描边 ──
+	if (ts->stroke != 0) {
+		text_draw_list stroke_list;
+		float stroke = abs(ts->stroke);
+		if (ts->stroke > 0) {
+			stroke *= 2;
+			run.populate_draw_list(stroke_list, offset_x, baseline_y, ts->color_stroke, vg_text_run_cx::VECTOR_ONLY);
+			submit_vector_glyphs_stroked(this, rvg, stroke_list, stroke);
+		}
+		else {
+			int pxx[4] = { -stroke, 0, stroke, 0 };
+			int pyy[4] = { 0, -stroke, 0, stroke };
+			for (int e = 0; e < 4; e++)
+			{
+				glm::vec2 ps1 = { offset_x, baseline_y };
+				ps1.x += pxx[e];
+				ps1.y += pyy[e];
+				run.populate_draw_list(stroke_list, ps1.x, ps1.y, ts->color_stroke, vg_text_run_cx::RASTER_FIRST);
+			}
+			submit_draw_list(this, rvg, stroke_list);
+		}
+	}
+
+	// ── 6. 主文本 ──
+	text_draw_list main_list;
+	main_list.has_color = true;
+	run.populate_draw_list(main_list, offset_x, baseline_y, ts->color, vg_text_run_cx::RASTER_FIRST);
+	submit_draw_list(this, rvg, main_list);
+
+	// ── 7. 恢复裁剪 ──
+	if (box && box->rc.z > 0 && box->rc.w > 0) {
+		this->reset_clip(rvg, 1);
+	}
+}
+
+void ovg_ctx_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box)
+{
+	if (!p || !p->text || !ts || !ts->family) return;
+
+	int fontsize = ts->fontsize > 0 ? (int)ts->fontsize : 16;
+
+	// ── 1. shape ──
+	vg_text_run_cx run;
+	run.set_font_families(ts->family, fontsize);
+	run.set_text(p->text, p->text_len);
+	run.shape();  // 内部按 fallback 切 run，lookup 缓存
+
+	if (run.glyph_count() == 0) return;
+
+	// ── 2. 布局计算 ──
+	const auto& extents = run.extents();
+
+	// 对齐偏移
+	float box_w = box && box->rc.z > 0 ? (float)box->rc.z : extents.width;
+	float box_h = box && box->rc.w > 0 ? (float)box->rc.w : extents.height;
+
+	float align_x = ts->align.x;  // 0=左, 0.5=中, 1=右
+	float align_y = ts->align.y;
+
+	float offset_x = p->pos.x + (box_w - extents.width) * align_x;
+	float offset_y = p->pos.y + (box_h - extents.height) * align_y;
+
+	// 基线位置 = offset_y + ascender
+	hb_font_extents_t fextents = {};
+	// 用主字体取 ascender
+	hb_font_t* primary = ts->family->familys[0]->font;
+	hb_font_set_scale(primary, fontsize, fontsize);
+	hb_font_get_extents_for_direction(primary, HB_DIRECTION_LTR, &fextents);
+	float baseline_y = offset_y;// +(float)fextents.ascender;
+
+	// ── 3. 裁剪 ──
+	if (box && box->rc.z > 0 && box->rc.w > 0) {
+		this->clip_rect(rvg, box->rc.x, box->rc.y, box->rc.z, box->rc.w);
+	}
+
+	// ── 4. 阴影 ──
+	if (ts->color_shadow & 0xFF000000) {
+		text_draw_list shadow_list;
+		run.populate_draw_list(shadow_list, offset_x + ts->shadow_pos.x, baseline_y + ts->shadow_pos.y, ts->color_shadow, vg_text_run_cx::RASTER_FIRST);
+		submit_draw_list_ctx(this, rvg, shadow_list);
+	}
+
+	// ── 5. 描边 ──
+	if (ts->stroke != 0) {
+		text_draw_list stroke_list;
+		float stroke = abs(ts->stroke);
+		if (ts->stroke > 0) {
+			stroke *= 2;
+			run.populate_draw_list(stroke_list, offset_x, baseline_y, ts->color_stroke, vg_text_run_cx::VECTOR_ONLY);
+			submit_vector_glyphs_stroked_ctx(this, rvg, stroke_list, stroke);
+		}
+		else {
+			int pxx[4] = { -stroke, 0, stroke, 0 };
+			int pyy[4] = { 0, -stroke, 0, stroke };
+			for (int e = 0; e < 4; e++)
+			{
+				glm::vec2 ps1 = { offset_x, baseline_y };
+				ps1.x += pxx[e];
+				ps1.y += pyy[e];
+				run.populate_draw_list(stroke_list, ps1.x, ps1.y, ts->color_stroke, vg_text_run_cx::RASTER_FIRST);
+			}
+			submit_draw_list_ctx(this, rvg, stroke_list);
+		}
+	}
+
+	// ── 6. 主文本 ──
+	text_draw_list main_list;
+	main_list.has_color = true;
+	run.populate_draw_list(main_list, offset_x, baseline_y, ts->color, vg_text_run_cx::RASTER_FIRST);
+	submit_draw_list_ctx(this, rvg, main_list);
+
+	// ── 7. 恢复裁剪 ──
+	if (box && box->rc.z > 0 && box->rc.w > 0) {
+		this->reset_clip(rvg, 1);
+	}
 }

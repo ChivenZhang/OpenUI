@@ -1,20 +1,20 @@
 slangc -lang slang avg.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -o spv_c/a_vg.vert.glsl
 slangc -lang slang avg.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -o spv_c/a_vg.frag.glsl 
 
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -o spv_c/a_base3d.vert.glsl  
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -o spv_c/a_base3d.frag.glsl 
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -o spv_c/a_base3d.vert.glsl  
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -o spv_c/a_base3d.frag.glsl 
 
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D COLOR_MASK=1 -o spv_c/a_base3d_mask.vert.glsl  
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D COLOR_MASK=1 -o spv_c/a_base3d_mask.frag.glsl 
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D COLOR_MASK=1 -o spv_c/a_base3d_mask.vert.glsl  
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D COLOR_MASK=1 -o spv_c/a_base3d_mask.frag.glsl 
 
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D DOUBLESIDEDCOLOR -o spv_c/a_base3d_dsc.vert.glsl  
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D DOUBLESIDEDCOLOR -o spv_c/a_base3d_dsc.frag.glsl 
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D DOUBLESIDEDCOLOR -o spv_c/a_base3d_dsc.vert.glsl  
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D DOUBLESIDEDCOLOR -o spv_c/a_base3d_dsc.frag.glsl 
 
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D ID_INSTANCING=1 -o spv_c/a_base3d_inst.vert.glsl  
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D ID_INSTANCING=1 -o spv_c/a_base3d_inst.frag.glsl 
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D ID_INSTANCING=1 -o spv_c/a_base3d_inst.vert.glsl  
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D ID_INSTANCING=1 -o spv_c/a_base3d_inst.frag.glsl 
 
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D DOUBLESIDEDCOLOR -D ID_INSTANCING=1 -o spv_c/a_base3d_dsc_inst.vert.glsl  
-slangc base3d.slang -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D DOUBLESIDEDCOLOR -D ID_INSTANCING=1 -o spv_c/a_base3d_dsc_inst.frag.glsl 
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry main -D DOUBLESIDEDCOLOR -D ID_INSTANCING=1 -o spv_c/a_base3d_dsc_inst.vert.glsl  
+slangc -lang slang base3d.slang.h -target glsl -profile glsl_450 -force-glsl-scalar-layout -entry fragMain -D DOUBLESIDEDCOLOR -D ID_INSTANCING=1 -o spv_c/a_base3d_dsc_inst.frag.glsl 
 
 glslangValidator spv_c/a_vg.vert.glsl -V --vn vg_vert -o spv_c/a_vg.vert.h
 glslangValidator spv_c/a_vg.frag.glsl -V --vn vg_frag -o spv_c/a_vg.frag.h
