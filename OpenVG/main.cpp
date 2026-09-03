@@ -696,7 +696,7 @@ int main()
 	// 渲染 
 
 
-	bool testvg = true;
+	bool testvg = 0;
 	while (running) {
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev)) {
@@ -720,15 +720,16 @@ int main()
 			//draw_test3d(&fbo, cb, vg);
 			text_style_t style4 = {};
 			style4.family = familys;
-			style4.fontsize = 100;
+			style4.fontsize = 20;
 			style4.color = 0xFFf2120F;
 			style4.color_stroke = 0xFF0000f0;
-			style4.stroke = 2;
-			style4.color_shadow = 0x86000000;
+			style4.stroke = 0;
+			style4.min_subpixel = 32;//小于这个数的字号就会启用
+			//style4.color_shadow = 0x86000000;
 			style4.shadow_pos = { 5.0f, 5.0f };
 
 			text_st_t text4 = {};
-			text4.text = (char*)u8"➗🍕☂️abg描边+阴影";
+			text4.text = (char*)u8"➗🍕☂️abg启用亚像素";
 			text4.text_len = -1;
 
 			text4.pos = { 10.0f, 200.0f };
@@ -741,7 +742,9 @@ int main()
 
 			cb->add_text(vg, &text4, &style4, nullptr);
 
-			style4.stroke = -2;
+			text4.text = (char*)u8"➗🍕☂️abg启用灰度";
+			style4.min_subpixel = 0;
+			//style4.stroke = -2;
 			text4.pos = { 10.0f, 120 + 200.0f };
 
 			cb->move_to(vg, 0, text4.pos.y + 0.5);
