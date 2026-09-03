@@ -2169,7 +2169,7 @@ void draw_geom(vg_fbo_t* fbo, SDL_GPURenderPass* pass, geom_cmd_t* c, const glm:
 			binding.sampler = tex->sampler;
 		}
 		SDL_BindGPUFragmentSamplers(pass, 1, &binding, 1);
-		SDL_PushGPUFragmentUniformData(fbo->cmd, 0, &c->mask_time, sizeof(float));
+		SDL_PushGPUFragmentUniformData(fbo->cmd, 0, &c->mask_time, sizeof(float) * 2);
 	}
 	struct PushConsts
 	{

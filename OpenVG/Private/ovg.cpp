@@ -3169,7 +3169,9 @@ size_t geom_primitive::set_instance_mat(const glm::mat4* matrix, size_t count)
 	inst_count = count;
 	return ps;
 }
-
+float get_has_multiply(const gem_info_t& state) {
+	return ((blendMode_e)state.blendMode == blendMode_e::additive_prem || (blendMode_e)state.blendMode == blendMode_e::normal_prem) ? 1.0f : 0.0f;
+}
 bool geom_primitive::add_geometry(void* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
 {
 	if (!xy || num_vertices < 1)return false;
@@ -3177,6 +3179,7 @@ bool geom_primitive::add_geometry(void* texture, const float* xy, int xy_stride,
 	c.state = curState;
 	c.texture = texture;
 	c.mat = mat;
+	c.multiply = get_has_multiply(c.state);
 	c.instance_count = inst_count;
 	if (inst_count > 0)
 		c.instance_ssbo_pos = inst_idx;
@@ -3300,6 +3303,7 @@ bool geom_primitive::add_geometry3d(void* texture, const float* xyz, int xyz_str
 	c.state = curState;
 	c.texture = texture;
 	c.mat = mat;
+	c.multiply = get_has_multiply(c.state);
 	c.instance_count = inst_count;
 	if (inst_count > 0)
 		c.instance_ssbo_pos = inst_idx;
@@ -5881,7 +5885,7 @@ void submit_draw_list_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list
 			cmd.uv_rect.x, cmd.uv_rect.w,
 			});
 		auto color = cmd.color;
-		if (list.has_color && cmd.entry->has_color)color = -1; 
+		if (list.has_color && cmd.entry->has_color)color = -1;
 		for (int i = 0; i < 4; i++) b.colors.push_back(color);
 		b.idx.push_back(base + 0); b.idx.push_back(base + 1); b.idx.push_back(base + 2);
 		b.idx.push_back(base + 0); b.idx.push_back(base + 2); b.idx.push_back(base + 3);

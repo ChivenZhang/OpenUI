@@ -360,6 +360,7 @@ struct geom_cmd_t {
 	void* texture_mask = nullptr;
 	glm::mat4 mat = glm::mat4(1.0f);	// 矩阵
 	float mask_time = 1.0;				// 遮罩时间
+	float multiply = 0.0;				// 预乘1.0
 	uint32_t elemCount = 0;				// 元素计数，索引数量或顶点数量
 	uint32_t firstIndex = 0;			// -1则非索引渲染
 	int32_t  vertexOffset = 0;

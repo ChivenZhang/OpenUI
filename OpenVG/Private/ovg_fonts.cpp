@@ -1309,7 +1309,7 @@ bool gfont_copy_image(ovg_image_data* dst, int rx, int ry, uint32_t color, hb_ra
 		if (type)
 			subpixel_lcd(dst, rx, ry, img, { orc.z,orc.w }, pixelLayout, true);
 		else
-			rgba_copy2gray(dst, rx, ry, ext.width, ext.height, color, hb_raster_image_get_buffer(img_src), ext.stride, true);
+			rgba_copy2gray_mul(dst, rx, ry, ext.width, ext.height, hb_raster_image_get_buffer(img_src), ext.stride, true);
 	}
 	else if (fmt == HB_RASTER_FORMAT_BGRA32)
 	{
