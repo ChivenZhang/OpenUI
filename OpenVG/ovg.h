@@ -496,6 +496,7 @@ struct text_style_t
 	uint32_t color = 0xffc2c2c2;		// 文本颜色
 	uint32_t color_stroke = 0xff000000;	// 描边颜色
 	uint32_t color_shadow = 0;			// 阴影颜色	0xcc121212;
+	int min_subpixel = 0;
 };
 // 文本区域
 struct text_box_rt {

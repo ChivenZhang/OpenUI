@@ -29,7 +29,7 @@ enum class SubpixelLayout {
 	VRGB,        // 垂直 R-G-B
 	VBGR,        // 垂直 B-G-R
 };
-#define MINSUBPIXEL 36 
+
 struct vg_font;
 struct FontStyle;
 class usp_ac_cx;
@@ -129,6 +129,7 @@ public:
 	std::vector<FontStyle*> _temp;
 	// key=[uint16字体id，uint16字号，uint32字形id]
 	std::unordered_map<uint64_t, glyph_atlas_entry> glyph_cache;
+	std::unordered_map<uint64_t, glyph_atlas_entry> _sub_glyph_cache;
 	// 位图缓存
 	image_cache_cx image_cache;
 	path_builder temp_path;
@@ -138,6 +139,7 @@ public:
 	vg_alloc_cx* ac = 0;
 	uint32_t next_font_id = 1;
 	int max_raster_size = 256;
+	int min_subpixel = 0;
 	int references = 1;
 public:
 	font_cache_cx();
@@ -227,7 +229,7 @@ private:
 	vg_text_extents_t     _extents{};
 	std::vector<vg_glyph_info_t> _glyphs;
 	uint32_t              _glyph_count = 0;
-
+	int min_subpixel = 32;
 	// 缓存引用
 	font_cache_cx* _cache = nullptr;
 
@@ -243,7 +245,7 @@ private:
 public:
 	vg_text_run_cx();
 	~vg_text_run_cx();
-
+	void set_min_subpixel(int sp);
 	// 设置文本（UTF-8），触发重新 shape
 	void set_text(const void* str8, size_t len = -1);
 

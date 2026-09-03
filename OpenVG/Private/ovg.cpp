@@ -5901,8 +5901,8 @@ void submit_draw_list_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list
 			desc.x = 0, desc.y = 0, desc.w = img->width, desc.h = img->height;		// 更新矩形区域
 			desc.is_copy = false;
 			img->valid = false;
-			//std::string fn = "temp/font_pack_ovg.png";
-			//write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
+			std::string fn = "temp/font_pack_ovg.png";
+			write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
 			cb->image_update(rvg, img, &desc);
 		}
 		cb->add_geometry(
@@ -5931,6 +5931,7 @@ void ovg_canvas_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_bo
 
 	// ── 1. shape ──
 	vg_text_run_cx run;
+	run.set_min_subpixel(ts->min_subpixel);
 	run.set_font_families(ts->family, fontsize);
 	run.set_text(p->text, p->text_len);
 	run.shape();  // 内部按 fallback 切 run，lookup 缓存
@@ -6013,6 +6014,7 @@ void ovg_ctx_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_r
 
 	// ── 1. shape ──
 	vg_text_run_cx run;
+	run.set_min_subpixel(ts->min_subpixel);
 	run.set_font_families(ts->family, fontsize);
 	run.set_text(p->text, p->text_len);
 	run.shape();  // 内部按 fallback 切 run，lookup 缓存

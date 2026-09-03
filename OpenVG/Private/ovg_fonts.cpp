@@ -736,8 +736,14 @@ glyph_atlas_entry* font_cache_cx::get_cache_lookup_glyph(hb_font_t* font, uint32
 	}
 
 	gk.s.k.y = (uint16_t)use_raster ? fontsize : 0;// 大号字符统一绑定0字号
-	auto it = glyph_cache.find(gk.v);
-	if (it != glyph_cache.end())
+	glm::ivec2 fsc = { 1,1 };
+	if (fontsize <= min_subpixel && !font_ptr->font.pnt)
+	{
+		fsc.x = 3;
+	}
+	auto gca = fsc.x > 1 ? &_sub_glyph_cache : &glyph_cache;
+	auto it = gca->find(gk.v);
+	if (it != gca->end())
 		return &it->second;
 	assert(ret);
 	// ═══════════════════════════════════════════
@@ -747,16 +753,16 @@ glyph_atlas_entry* font_cache_cx::get_cache_lookup_glyph(hb_font_t* font, uint32
 
 		// ── 缓存未命中：光栅化 ──
 		glm::ivec4 rc = {};
-		glm::vec2 fsc = { 1,1 };
 		hb_raster_image_t* img = build_glyph_image_hb(&font_ptr->font, glyph_id, fontsize, &rc, fsc);
 		// 装箱进 image_cache_cx
 		glm::ivec2 pos = {};
-		ovg_image_data* img_data = image_cache.push_cache_size({ rc.z,rc.w }, &pos);
+		int ow = rc.z / fsc.x;
+		ovg_image_data* img_data = image_cache.push_cache_size({ ow,rc.w }, &pos);
 		gfont_copy_image(img_data, pos.x, pos.y, -1, (hb_raster_image_t*)img, rc, false, fsc.x > 1, SubpixelLayout::RGB);
 
 		glyph_atlas_entry entry{};
 		entry.atlas_img = img_data;  // ovg_image_data 继承自 vg_image_t
-		entry.uv_rect = glm::ivec4(pos.x, pos.y, px_w, px_h);
+		entry.uv_rect = glm::ivec4(pos.x, pos.y, ow, rc.w);
 		entry.offset = glm::ivec2(rc.x, rc.y);
 		entry.advance = 0;
 		entry.path_data = ret->path_data;
@@ -764,7 +770,7 @@ glyph_atlas_entry* font_cache_cx::get_cache_lookup_glyph(hb_font_t* font, uint32
 		entry.em_units = em;
 
 		entry.has_color = font_ptr->font.pnt ? true : false;
-		auto [it2, ok] = glyph_cache.emplace(gk.v, entry);
+		auto [it2, ok] = gca->emplace(gk.v, entry);
 		ret = &it2->second;
 	}
 
@@ -855,7 +861,8 @@ bool write_png_bgra(const char* path, const uint8_t* bgra, int w, int h) {
 			dst[x * 4 + 0] = src[x * 4 + 2]; // R
 			dst[x * 4 + 1] = src[x * 4 + 1]; // G
 			dst[x * 4 + 2] = src[x * 4 + 0]; // B
-			dst[x * 4 + 3] = src[x * 4 + 3]; // A
+			auto a = src[x * 4 + 3];
+			dst[x * 4 + 3] = a; // A
 		}
 	}
 	return stbi_write_png(path, w, h, 4, rgb.data(), w * 4) != 0;
@@ -913,20 +920,26 @@ hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size
 {
 	hb_raster_image_t* img = nullptr;
 	hb_glyph_extents_t gext = {};
+	hb_glyph_extents_t gext0 = {};
 	hb_font_extents_t extents[2] = {};
 	auto rdr = hp->rdr;
 	auto font = hp->font;
 	auto pnt = hp->pnt;
-	hb_font_set_scale(font, font_size * scale.x, font_size * scale.y);
+	hb_font_set_scale(font, font_size, font_size);
+	hb_font_get_glyph_extents(font, gid, &gext0);
 	hb_raster_draw_reset(rdr);
 	hb_bool_t bhe = hb_font_get_h_extents(hp->font, &extents[0]);
 	hb_bool_t bve = hb_font_get_v_extents(hp->font, &extents[1]);
 	float x, y;
 	hb_raster_draw_get_scale_factor(rdr, &x, &y);
-	int pad = 4;
+	int pad = std::max(2.0, font_size / 4.0);
 	do {
+		hb_font_set_scale(font, font_size * scale.x, font_size * scale.y);
 		bool bext = hb_font_get_glyph_extents(font, gid, &gext);
-		gext.height -= pad;      // height 为负，向下也扩大
+		gext.x_bearing -= pad;
+		gext.y_bearing += pad;       // 顶部扩大
+		gext.width += 2 * pad;
+		gext.height -= 2 * pad;      // height 为负，向下也扩大
 		if (pnt)
 		{
 			hb_raster_paint_set_foreground(pnt, HB_COLOR(255, 255, 255, 255));
@@ -964,100 +977,122 @@ hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size
 	}
 	return img;
 }
-// 按颜色复制
-void rgba_copy2gray(ovg_image_data* dst, int x, int y, int w, int h, uint32_t c, const uint8_t* dt, int stride, bool fy)
+#if 1
+// 像素写入函数类型
+// src_ptr: 指向当前源像素的指针（字节）
+// 返回: 要写入 dst 的 uint32_t 像素值
+// 如果返回 false，表示跳过（不写入）
+using PixelWriter = bool (*)(const uint8_t* src_ptr, uint32_t& out);
+
+static void rgba_blit(
+	ovg_image_data* dst,
+	int dst_x, int dst_y,
+	int src_x, int src_y,
+	int src_w, int src_h,
+	const uint8_t* src_data,
+	int src_stride,        // 字节
+	int src_bpp,           // 每像素字节数
+	bool flip_y,
+	PixelWriter write_pixel
+)
 {
-	if (stride < 1)stride = w;
-	if (!dst || !dt || w <= 0 || h <= 0 || stride < w) return;
-	// 计算实际绘制区域（处理边界裁剪）
-	int dst_x = std::max(0, x);
-	int dst_y = std::max(0, y);
-	int src_x = dst_x - x;
-	int src_y = dst_y - y;
-	int copy_w = std::min(w - src_x, dst->width - dst_x);
-	int copy_h = std::min(h - src_y, dst->height - dst_y);
-	c = (c & 0x00FFFFFF);
+	if (!dst || !src_data || src_w <= 0 || src_h <= 0 || src_stride < src_w * src_bpp)
+		return;
+
+	// 裁剪到 dst 边界
+	int d_x = std::max(0, dst_x);
+	int d_y = std::max(0, dst_y);
+	int s_x = src_x;
+	int s_y = src_y;
+
+	int copy_w = std::min(src_w - s_x, dst->width - d_x);
+	int copy_h = std::min(src_h - s_y, dst->height - d_y);
+
+	if (copy_w <= 0 || copy_h <= 0)
+		return;
+
 	for (int iy = 0; iy < copy_h; ++iy) {
-		const uint8_t* src_row = fy ? dt + (h - 1 - (src_y + iy)) * stride : dt + (src_y + iy) * stride + src_x;
-		uint32_t* dst_row = dst->data + ((dst_y + iy) * dst->width + dst_x);
+		int src_row_y = flip_y ? (src_h - 1 - (s_y + iy)) : (s_y + iy);
+		const uint8_t* src_row = src_data + src_row_y * src_stride + s_x * src_bpp;
+		uint32_t* dst_row = dst->data + (d_y + iy) * dst->width + d_x;
+
 		for (int ix = 0; ix < copy_w; ++ix) {
-			uint8_t gray = src_row[ix];
-			if (gray > 0)
-			{
-				uint32_t cc = c | (gray << 24);
-				dst_row[ix] = cc;
-			}
-		}
-	}
-}
-// 预乘白色复制
-void rgba_copy2gray_mul(ovg_image_data* dst, int x, int y, int w, int h, const uint8_t* dt, int stride, bool fy)
-{
-	if (stride < 1)stride = w;
-	if (!dst || !dt || w <= 0 || h <= 0 || stride < w) return;
-	// 计算实际绘制区域（处理边界裁剪）
-	int dst_x = std::max(0, x);
-	int dst_y = std::max(0, y);
-	int src_x = dst_x - x;
-	int src_y = dst_y - y;
-	int copy_w = std::min(w - src_x, dst->width - dst_x);
-	int copy_h = std::min(h - src_y, dst->height - dst_y);
-	for (int iy = 0; iy < copy_h; ++iy) {
-		const uint8_t* src_row = fy ? dt + (h - 1 - (src_y + iy)) * stride : dt + (src_y + iy) * stride + src_x;
-		uint32_t* dst_row = dst->data + ((dst_y + iy) * dst->width + dst_x);
-		for (int ix = 0; ix < copy_w; ++ix) {
-			uint8_t gray = src_row[ix];
-			if (gray > 0)
-			{
-				auto cc = (uint32_t)(gray << 24) | (gray << 16) | (gray << 8) | gray;
-				dst_row[ix] = cc;
+			uint32_t pixel;
+			if (write_pixel(src_row + ix * src_bpp, pixel)) {
+				dst_row[ix] = pixel;
 			}
 		}
 	}
 }
 
-void rgba_copy_bgra(ovg_image_data* dst, int x, int y, int w, int h, const uint32_t* dt, int stride, bool fy)
+// --- 灰度 → 指定颜色（gray 作 alpha）---
+static bool write_gray_to_color(const uint8_t* src, uint32_t& out)
 {
-	if (!dst || !dt || w <= 0 || h <= 0) return;
-	if (stride < 1)
-		stride = w * sizeof(int);
-	int dst_x = std::max(0, x), dst_y = std::max(0, y);
-	int src_x = dst_x - x;
-	int src_y = dst_y - y;
-	int src_w = w - (dst_x - x), src_h = h - (dst_y - y);
-	int copy_w = std::min(src_w, dst->width - dst_x);
-	int copy_h = std::min(src_h, dst->height - dst_y);
-	auto t = (uint8_t*)dt;
-	for (int iy = 0; iy < copy_h; ++iy) {
-		const uint8_t* src_row = fy ? t + (h - 1 - (src_y + iy)) * stride : t + (src_y + iy) * stride + src_x;
-		auto dstp = dst->data + ((dst_y + iy) * dst->width + dst_x);
-		memcpy(dstp, src_row, copy_w * sizeof(uint32_t));
-	}
+	uint32_t color = -1;
+	uint8_t gray = src[0];
+	if (gray == 0) return false;
+	out = (color & 0x00FFFFFF) | (uint32_t(gray) << 24);
+	return true;
 }
 
-void rgba_copy_bgra2rgba(ovg_image_data* dst, int x, int y, int w, int h, const uint32_t* dt, int stride, bool fy)
+// --- 灰度 → 预乘白色 ---
+static bool write_gray_mul(const uint8_t* src, uint32_t& out)
 {
-	if (!dst || !dt || w <= 0 || h <= 0) return;
-	if (stride < 1)
-		stride = w * sizeof(int);
-	int dst_x = std::max(0, x), dst_y = std::max(0, y);
-	int src_x = dst_x - x;
-	int src_y = dst_y - y;
-	int src_w = w - (dst_x - x), src_h = h - (dst_y - y);
-	int copy_w = std::min(src_w, dst->width - dst_x);
-	int copy_h = std::min(src_h, dst->height - dst_y);
-	auto t = (uint8_t*)dt;
-	for (int iy = 0; iy < copy_h; ++iy) {
-		const uint8_t* src_row = fy ? t + (h - 1 - (src_y + iy)) * stride : t + (src_y + iy) * stride + src_x;
-		auto dstp = dst->data + ((dst_y + iy) * dst->width + dst_x);
-		memcpy(dstp, src_row, copy_w * sizeof(uint32_t));
-		for (size_t i = 0; i < copy_w; i++)
-		{
-			auto it = (uint8_t*)&dstp[i];
-			std::swap(it[0], it[2]);
-		}
-	}
+	uint8_t gray = src[0];
+	if (gray == 0) return false;
+	out = (uint32_t(gray) << 24) | (uint32_t(gray) << 16) | (uint32_t(gray) << 8) | gray;
+	return true;
 }
+
+// --- BGRA → 直接拷贝 ---
+static bool write_bgra_raw(const uint8_t* src, uint32_t& out)
+{
+	out = *(const uint32_t*)src;
+	return true;
+}
+
+// --- BGRA → RGBA（swap R/B）---
+static bool write_bgra_to_rgba(const uint8_t* src, uint32_t& out)
+{
+	uint32_t pixel = *(const uint32_t*)src;
+	uint8_t b = pixel & 0xFF;
+	uint8_t g = (pixel >> 8) & 0xFF;
+	uint8_t r = (pixel >> 16) & 0xFF;
+	uint8_t a = (pixel >> 24) & 0xFF;
+	out = (uint32_t(a) << 24) | (uint32_t(r) << 16) | (uint32_t(g) << 8) | b;
+	return true;
+}
+
+void rgba_copy2gray(ovg_image_data* dst, int x, int y, int w, int h,
+	uint32_t c, const uint8_t* dt, int stride, bool fy)
+{
+	if (stride < 1) stride = w;
+
+	rgba_blit(dst, x, y, 0, 0, w, h, dt, stride, 1, fy, write_gray_to_color);
+}
+
+void rgba_copy2gray_mul(ovg_image_data* dst, int x, int y, int w, int h,
+	const uint8_t* dt, int stride, bool fy)
+{
+	if (stride < 1) stride = w;
+	rgba_blit(dst, x, y, 0, 0, w, h, dt, stride, 1, fy, write_gray_mul);
+}
+
+void rgba_copy_bgra(ovg_image_data* dst, int x, int y, int w, int h,
+	const uint32_t* dt, int stride, bool fy)
+{
+	if (stride < 1) stride = w * 4;
+	rgba_blit(dst, x, y, 0, 0, w, h, (const uint8_t*)dt, stride, 4, fy, write_bgra_raw);
+}
+
+void rgba_copy_bgra2rgba(ovg_image_data* dst, int x, int y, int w, int h,
+	const uint32_t* dt, int stride, bool fy)
+{
+	if (stride < 1) stride = w * 4;
+	rgba_blit(dst, x, y, 0, 0, w, h, (const uint8_t*)dt, stride, 4, fy, write_bgra_to_rgba);
+}
+#endif // 1
+
 
 struct A8Buf {
 	int      w, h;
@@ -1425,8 +1460,7 @@ public:
 		img->height = height;
 		img->valid = 1;
 		img->multiply = true;
-		this->width = width;
-		this->height = height;
+		img->stride = width * sizeof(uint32_t);
 		img->data = ptr.data();
 		_rpns.resize(width);
 		memset(_rpns.data(), 0, _rpns.size() * sizeof(stbrp_node));
@@ -1623,94 +1657,7 @@ stb_packer* image_cache_cx::get_last_packer(bool isnew)
 	}
 	return *_packer.rbegin();
 }
-struct vg_text_run_cx0 {
-	vg_text_extents_t extents;
-	const char* text;
-	uint32_t text_len;
-	uint32_t glyph_count;
-	hb_buffer_t* hbBuf;
-	vg_glyph_info_t* glyphs;
-	vg_font* font;
-	std::vector<glyph_atlas_entry*> v;
-};
-void gen_text(const font_familys_t* ffs, const void* str8, size_t len, int fontsize) {
-	if (!ffs || !str8 || !len || ffs->count == 0) return;
-	static std::vector<uint32_t> utf32;
-	utf32.clear();
-	if (len == -1)len = strlen((char*)str8);
-	vg_utf8_to_utf32(str8, len, &utf32);
-	hb_font_t* primary = ffs->familys[0]->font; // 主字体（可按 script 选）
-	if (!primary)return;
-	auto th = (font_cache_cx*)hb_font_get_user_data(primary, (hb_user_data_key_t*)&g_font_cache_key);
-	if (!th)return;
-	std::vector<vg_text_run_cx0> runs;
-	size_t run_start = 0;
-	while (run_start < utf32.size()) {
-		uint32_t cp = utf32[run_start];
-		const font_family_t* ff = resolve_family(ffs, cp);
-		if (!ff) ff = ffs->familys[0];
-		float sc = 1.0;
-		/* 扩展 run */
-		size_t run_end = run_start + 1;
-		while (run_end < utf32.size() && resolve_family(ffs, utf32[run_end]) == ff)
-			run_end++;
-		int scale = fontsize > 0 ? fontsize : ff->upem;
 
-		hb_font_set_scale(ff->font, scale, scale);
-		vg_text_run_cx0 textRun[1] = {};
-		/* shape run */
-		hb_buffer_t* buf = hb_buffer_create();
-		textRun->hbBuf = buf;
-		textRun->font = (vg_font*)ff;
-		hb_buffer_add_utf32(buf, utf32.data() + run_start, run_end - run_start, 0, -1);
-		hb_buffer_guess_segment_properties(buf);
-
-		/* ✅ UI：可选关闭 kerning */
-		hb_feature_t features[] = {
-			{HB_TAG('k','e','r','n'), 0, 0, ~0u}
-		};
-		hb_shape(ff->font, buf, features, 1);
-		bool hascolor = ff->font;
-		glm::ivec2 fsc = { 1,1 };
-		if (scale <= MINSUBPIXEL && !((vg_font*)ff)->pnt)
-		{
-			fsc.x = 3;
-		}
-		unsigned int glyph_count;
-		hb_glyph_info_t* info = hb_buffer_get_glyph_infos(buf, &glyph_count);
-		hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(buf, nullptr);
-
-		hb_font_extents_t fextents = {};
-		hb_font_get_extents_for_direction(ff->font, HB_DIRECTION_LTR, &fextents);
-		textRun->glyphs = (vg_glyph_info_t*)pos;
-		textRun->glyph_count = glyph_count;
-		unsigned int string_width_in_pixels = 0;
-		for (uint32_t i = 0; i < textRun->glyph_count; ++i)
-		{
-			string_width_in_pixels += textRun->glyphs[i].x_advance;
-		}
-		textRun->extents.height = fextents.ascender - fextents.descender + fextents.line_gap;
-		textRun->extents.x_advance = (float)string_width_in_pixels;
-		if (textRun->glyph_count > 0) {
-			textRun->extents.y_advance = (float)(textRun->glyphs[textRun->glyph_count - 1].y_advance);
-			textRun->extents.x_bearing = -(float)(textRun->glyphs[0].x_offset);
-			textRun->extents.y_bearing = -(float)(textRun->glyphs[0].y_offset);
-		}
-		textRun->extents.width = textRun->extents.x_advance;
-		float x = 0.0f;
-		for (unsigned i = 0; i < glyph_count; i++) {
-
-			glm::ivec4 rc = {};
-			auto entry = th->get_cache_lookup_glyph(ff->font, info[i].codepoint, scale);
-			x += ceil(pos[i].x_advance);
-			textRun->v.push_back(entry);
-			//y += textRun->extents.height; 
-		}
-		runs.push_back(textRun[0]);
-		run_start = run_end;
-	}
-	return;
-}
 void text_draw_list::clear() { cmds.clear(); }
 void text_draw_list::push_raster(glyph_atlas_entry* e, float x, float y, float w, float h, const glm::vec4& uv, uint32_t c) {
 	cmds.push_back({ glyph_draw_cmd::RASTER, e, {x,y}, {w,h}, uv, c ,fontsize });
@@ -1725,6 +1672,11 @@ vg_text_run_cx::~vg_text_run_cx() {
 	for (auto& r : _runs) {
 		if (r.buf) hb_buffer_destroy(r.buf);
 	}
+}
+
+void vg_text_run_cx::set_min_subpixel(int sp)
+{
+	min_subpixel = sp;
 }
 
 void vg_text_run_cx::free_buffer() {
@@ -1800,6 +1752,9 @@ void vg_text_run_cx::shape() {
 void vg_text_run_cx::shape_run(size_t run_start, size_t run_end, hb_font_t* font, int fontsize)
 {
 	if (!font || run_start >= run_end) return;
+	if (_cache) {
+		_cache->min_subpixel = min_subpixel;
+	}
 	hb_font_set_scale(font, fontsize, fontsize);
 	hb_buffer_t* buf = hb_buffer_create();
 	hb_buffer_add_utf32(buf, _utf32.data() + run_start, run_end - run_start, 0, -1);
