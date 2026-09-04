@@ -659,7 +659,7 @@ int main()
 	font_cache_cx* font_ctx = new_font_cache();
 	font_familys_t* familys = new_font_family(font_ctx, (char*)u8"新宋体,Segoe UI Emoji,Consolas,Times New Roman", 0);
 
-	auto cb = new_ctx_cb(font_ctx);
+	auto cb = new_ctx_cb();
 	auto vg = cb->new_rvg(cb->ac);
 	if (!vg_sdl3_init(g, surfsize.x, surfsize.y, true)) {
 		SDL_Log("Init failed: %s", SDL_GetError());
@@ -670,7 +670,7 @@ int main()
 	auto format = SDL_GetGPUSwapchainTextureFormat(g->device, g->window);
 	ovg_ctx_t* ctx = new_ovgctx_sdl3(dev, format ? format : SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM, SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT, SDL_GPU_SAMPLECOUNT_4);
 	assert(ctx);
-	ovg_canvas_cb* can = new_canvas_cb(font_ctx);
+	ovg_canvas_cb* can = new_canvas_cb();
 
 	vg_fbo_t fbo = new_vgfbo_sdl3(ctx, surfsize.x, surfsize.y, g->window);
 	bool running = true;

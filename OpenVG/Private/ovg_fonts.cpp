@@ -65,6 +65,18 @@
 #include <stb_image_write.h>
 #include <stb_rect_pack.h>
 
+
+struct DWGlyphBitmap {
+	int width = 0;
+	int height = 0;
+	int stride = 0;            // bytes per row
+	std::vector<uint8_t> data; // RGBA8888
+
+	float left = 0;          // x offset (y-down)
+	float top = 0;          // y offset (y-down)
+};
+
+
 struct vg_font :public font_family_t {
 	hb_buffer_t* hb_buffer;
 	hb_language_t hb_language;
@@ -84,9 +96,17 @@ struct FontStyle {
 	int index;
 	bool slnt_applied = false;       // 是否已设置变量 slnt
 };
+struct raster_image_t {
+	int      x_origin, y_origin;
+	unsigned int width, height;
+	unsigned int stride;
+	hb_raster_format_t fmt;
+	uint8_t* data;
+	std::vector<uint8_t>* buf;
+};
 void hb_res_init(vg_font* hp, hb_font_t* font);
 void free_hb_res(vg_font* hp);
-bool gfont_copy_image(ovg_image_data* dst, int rx, int ry, uint32_t color, hb_raster_image_t* img_src, const glm::ivec4& ow, bool origin, bool type, SubpixelLayout pixelLayout);
+bool gfont_copy_image(ovg_image_data* dst, int rx, int ry, uint32_t color, raster_image_t* img_src, const glm::ivec4& ow, bool origin, bool type, SubpixelLayout pixelLayout);
 namespace ovg {
 	uint64_t align_up(uint64_t val, uint64_t alignment)
 	{
@@ -466,6 +486,7 @@ size_t font_cache_cx::mk_font(std::map<std::string, std::vector<FontStyle*>>* pt
 		if (!it->font.font)
 		{
 			it->font.font = load_font(it->file.c_str(), it->index);
+
 		}
 		if (it->font.font)
 		{
@@ -753,12 +774,21 @@ glyph_atlas_entry* font_cache_cx::get_cache_lookup_glyph(hb_font_t* font, uint32
 
 		// ── 缓存未命中：光栅化 ──
 		glm::ivec4 rc = {};
-		hb_raster_image_t* img = build_glyph_image_hb(&font_ptr->font, glyph_id, fontsize, &rc, fsc);
-		// 装箱进 image_cache_cx
 		glm::ivec2 pos = {};
+		// 装箱进 image_cache_cx
+		auto hp = &font_ptr->font;
+		raster_image_t img_ds = {};
+
+		{
+			hb_raster_image_t* img = build_glyph_image_hb(&font_ptr->font, glyph_id, fontsize, &rc, fsc);
+			hb_raster_image_get_extents(img, (hb_raster_extents_t*)&img_ds);
+			img_ds.fmt = hb_raster_image_get_format(img);
+			img_ds.data = (uint8_t*)hb_raster_image_get_buffer(img);
+		}
 		int ow = rc.z / fsc.x;
 		ovg_image_data* img_data = image_cache.push_cache_size({ ow,rc.w }, &pos);
-		gfont_copy_image(img_data, pos.x, pos.y, -1, (hb_raster_image_t*)img, rc, false, fsc.x > 1, SubpixelLayout::RGB);
+
+		gfont_copy_image(img_data, pos.x, pos.y, -1, &img_ds, rc, false, fsc.x > 1, SubpixelLayout::RGB);
 
 		glyph_atlas_entry entry{};
 		entry.atlas_img = img_data;  // ovg_image_data 继承自 vg_image_t
@@ -862,13 +892,11 @@ bool write_png_bgra(const char* path, const uint8_t* bgra, int w, int h) {
 			dst[x * 4 + 1] = src[x * 4 + 1]; // G
 			dst[x * 4 + 2] = src[x * 4 + 0]; // B
 			auto a = src[x * 4 + 3];
-			dst[x * 4 + 3] = a; // A
+			dst[x * 4 + 3] = 0xff; // A
 		}
 	}
 	return stbi_write_png(path, w, h, 4, rgb.data(), w * 4) != 0;
 }
-
-
 void hb_res_init(vg_font* hp, hb_font_t* font) {
 	if (!hp)return;
 	if (font)
@@ -893,6 +921,7 @@ void hb_res_init(vg_font* hp, hb_font_t* font) {
 	hp->coverage = hb_set_create();
 	hb_face_collect_unicodes(hb_font_get_face(hp->font), hp->coverage);
 	hp->upem = hb_face_get_upem(face);
+
 }
 void free_hb_res(vg_font* hp) {
 	if (hp->hb_buffer)
@@ -932,20 +961,31 @@ hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size
 	hb_bool_t bve = hb_font_get_v_extents(hp->font, &extents[1]);
 	float x, y;
 	hb_raster_draw_get_scale_factor(rdr, &x, &y);
+	uint32_t ww = font_size;
 	int pad = std::max(2.0, font_size / 4.0);
+
+	hb_raster_extents_t rex = {};
+	auto ext = &rex;
+	float sx = 1.0, sy = 1.0;
+	float gx = 0.0, gy = 0.0;
+	float pmin_x = 1e30f, pmin_y = 1e30f;
+	float pmax_x = -1e30f, pmax_y = -1e30f;
+	float margin = 1;
 	do {
 		hb_font_set_scale(font, font_size * scale.x, font_size * scale.y);
 		bool bext = hb_font_get_glyph_extents(font, gid, &gext);
-		gext.x_bearing -= pad;
-		gext.y_bearing += pad;       // 顶部扩大
-		gext.width += 2 * pad;
-		gext.height -= 2 * pad;      // height 为负，向下也扩大
+		ext->x_origin = gext.x_bearing;
+		ext->y_origin = -(gext.y_bearing + margin);
+		ext->width = gext.x_bearing + gext.width;
+		ext->height = abs(gext.height) + margin * 2;
+		ext->stride = 0;
 		if (pnt)
 		{
+			hb_raster_paint_set_extents(pnt, ext);
 			hb_raster_paint_set_foreground(pnt, HB_COLOR(255, 255, 255, 255));
-			if (bext && hb_raster_paint_set_glyph_extents(pnt, &gext))
+			if (bext)//&& hb_raster_paint_set_glyph_extents(pnt, &gext))
 			{
-				hb_raster_paint_set_transform(pnt, 1.f, 0.f, 0.f, 1.f, 0.f, 0.f);
+				hb_raster_paint_set_transform(pnt, 1.f, 0.f, 0.f, -1.f, 0.f, 0.f);
 				hb_raster_paint_glyph(pnt, font, gid);	// 光栅化颜色字形
 				img = hb_raster_paint_render(pnt);
 			}
@@ -956,21 +996,22 @@ hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size
 			}
 		}
 		{
-			hb_raster_draw_set_glyph_extents(rdr, &gext);
-			hb_raster_draw_set_transform(rdr, 1.f, 0.f, 0.f, 1.f, 0.0f, 0.0f);
+			//hb_raster_draw_set_glyph_extents(rdr, &gext);
+			hb_raster_draw_set_extents(rdr, ext);
+			hb_raster_draw_set_transform(rdr, 1.f, 0.f, 0.f, -1.f, 0.0f, 0.0f);
 			hb_raster_draw_glyph(rdr, font, gid);	// 单色
 			img = hb_raster_draw_render(rdr);
 			if (img) { hb_raster_draw_recycle_image(rdr, img); }
 		}
 	} while (0);
-	hb_raster_extents_t ext = {};
 	if (img) {
+		hb_raster_extents_t ext = {};
 		hb_raster_image_get_extents(img, &ext);
 		if (!ext.width || !ext.height) { img = 0; return img; }
 		if (ot)
 		{
-			ot->x = ext.x_origin;
-			ot->y = (ext.height + ext.y_origin);
+			ot->x = gext0.x_bearing;
+			ot->y = gext0.y_bearing;
 			ot->z = ext.width;
 			ot->w = ext.height;
 		}
@@ -1200,7 +1241,8 @@ void a8_to_lcd(const A8Buf& filtered, int height, uint8_t* rgba_out, int out_w, 
 			int c2 = a[px * 3 + 2]; // 右通道
 
 			uint8_t r, g, b;
-			uint8_t gray = gamma((c0 + c1 + c2) / 3);
+			uint8_t gray0 = gamma((c0 + c1 + c2) / 3);
+			uint8_t gray = gamma(gray0);
 			if (horizontal) {
 				/* 水平排列：三个采样点 → R/G/B，BGR 时翻转。
 				 * 各通道独立乘颜色 → 产生 LCD 彩色边缘。 */
@@ -1228,7 +1270,7 @@ void a8_to_lcd(const A8Buf& filtered, int height, uint8_t* rgba_out, int out_w, 
 				dc[0] = b;
 				dc[1] = g;
 				dc[2] = r;
-				dc[3] = gray;
+				dc[3] = gray0;
 				*(uint32_t*)(out + px * 4) = cc;
 			}
 		}
@@ -1259,15 +1301,14 @@ void rgba_copy2gray(A8Glyph* dst, const glm::ivec2& pos, const glm::ivec4& src, 
 	}
 }
 
-void subpixel_lcd(ovg_image_data* dst, int px, int py, hb_raster_image_t* img_src, const glm::ivec2& size, SubpixelLayout pixelLayout, bool flipY)
+void subpixel_lcd(ovg_image_data* dst, int px, int py, raster_image_t* img_src, const glm::ivec2& size, SubpixelLayout pixelLayout, bool flipY)
 {
-	hb_raster_extents_t ext = {};
-	hb_raster_image_get_extents(img_src, &ext);
+	auto& ext = *img_src;
 	glm::ivec2 ws = { ovg::align_up(ext.width,2), ovg::align_up(ext.height,2) };
 
 	A8Buf src(ws.x, ws.y);
 	A8Buf filtered(ws.x, ws.y);
-	auto coverage = hb_raster_image_get_buffer(img_src);
+	auto coverage = img_src->data;
 #if 1
 	const uint8_t* src_row = coverage + (flipY ? (ext.height - 1) * ext.stride : 0);
 	int row_step = flipY ? -ext.stride : ext.stride;
@@ -1291,33 +1332,32 @@ void subpixel_lcd(ovg_image_data* dst, int px, int py, hb_raster_image_t* img_sr
 	a8_to_lcd(filtered, ext.height, (uint8_t*)(dst->data + px + py * dst->width), size.x, dst->stride, pixelLayout, c);
 }
 
-bool gfont_copy_image(ovg_image_data* dst, int rx, int ry, uint32_t color, hb_raster_image_t* img_src, const glm::ivec4& orc, bool origin, bool type, SubpixelLayout pixelLayout)
+bool gfont_copy_image(ovg_image_data* dst, int rx, int ry, uint32_t color, raster_image_t* img_src, const glm::ivec4& orc, bool origin, bool type, SubpixelLayout pixelLayout)
 {
 	auto img = img_src;
 	bool has_color = false;
-	hb_raster_extents_t ext = {};
-	hb_raster_image_get_extents(img_src, &ext);
-	hb_raster_format_t fmt = hb_raster_image_get_format(img_src);
 	dst->multiply = 1;
+	bool fy = false;
+	auto& ext = *img_src;
 	if (origin)
 	{
 		rx += orc.x;
 		ry += orc.y;
 	}
-	if (fmt == HB_RASTER_FORMAT_A8)
+	if (img_src->fmt == HB_RASTER_FORMAT_A8)
 	{
 		if (type)
-			subpixel_lcd(dst, rx, ry, img, { orc.z,orc.w }, pixelLayout, true);
+			subpixel_lcd(dst, rx, ry, img, { orc.z,orc.w }, pixelLayout, fy);
 		else
-			rgba_copy2gray_mul(dst, rx, ry, ext.width, ext.height, hb_raster_image_get_buffer(img_src), ext.stride, true);
+			rgba_copy2gray_mul(dst, rx, ry, ext.width, ext.height, img_src->data, ext.stride, fy);
 	}
-	else if (fmt == HB_RASTER_FORMAT_BGRA32)
+	else if (img_src->fmt == HB_RASTER_FORMAT_BGRA32)
 	{
 		has_color = true;
 		if (dst->format == 1)
-			rgba_copy_bgra(dst, rx, ry, ext.width, ext.height, (uint32_t*)hb_raster_image_get_buffer(img_src), ext.stride, true);
+			rgba_copy_bgra(dst, rx, ry, ext.width, ext.height, (uint32_t*)img_src->data, ext.stride, fy);
 		else
-			rgba_copy_bgra2rgba(dst, rx, ry, ext.width, ext.height, (uint32_t*)hb_raster_image_get_buffer(img_src), ext.stride, true);
+			rgba_copy_bgra2rgba(dst, rx, ry, ext.width, ext.height, (uint32_t*)img_src->data, ext.stride, fy);
 	}
 	return has_color;
 }

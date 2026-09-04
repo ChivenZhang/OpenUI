@@ -785,12 +785,11 @@ void free_font_cache(font_cache_cx* p);
 font_familys_t* new_font_family(font_cache_cx* p, const char* familys, const char* style = nullptr);
 void delete_font_family(font_familys_t* p);
 
-void gen_text(const font_familys_t* ffs, const void* str8, size_t len, int fontsize);
 
 // 对象模式接口，如果没字体ctx则无法渲染文本
-ovg_canvas_cb* new_canvas_cb(font_cache_cx* fctx);
+ovg_canvas_cb* new_canvas_cb();
 void free_canvas_cb(ovg_canvas_cb*);
 // 状态机模式接口，两个模式接口创建的对象不能混用
-ovg_ctx_cb* new_ctx_cb(font_cache_cx* fctx);
+ovg_ctx_cb* new_ctx_cb();
 void free_ctx_cb(ovg_ctx_cb*);
 ovg_draw_data_t get_draw_list(rvg_t* p);

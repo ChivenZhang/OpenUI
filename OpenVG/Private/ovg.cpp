@@ -191,8 +191,6 @@ public:
 class ovg_canvas_cx :public ovg_canvas_cb
 {
 public:
-	font_cache_cx* font_ctx = 0;
-public:
 	ovg_canvas_cx();
 	~ovg_canvas_cx();
 
@@ -211,8 +209,6 @@ ovg_canvas_cx::ovg_canvas_cx()
 
 ovg_canvas_cx::~ovg_canvas_cx()
 {
-	free_font_cache(font_ctx);
-	font_ctx = 0;
 	if (ac) {
 		auto ac1 = (usp_ac_cx*)ac;
 		if (ac1)
@@ -221,13 +217,9 @@ ovg_canvas_cx::~ovg_canvas_cx()
 	ac = 0;
 }
 
-ovg_canvas_cb* new_canvas_cb(font_cache_cx* fctx)
+ovg_canvas_cb* new_canvas_cb()
 {
 	auto p = new ovg_canvas_cx();
-	if (p) {
-		if (fctx)fctx->references++;
-		p->font_ctx = fctx;
-	}
 	return p;
 }
 void free_canvas_cb(ovg_canvas_cb* p) {
@@ -237,12 +229,9 @@ void free_canvas_cb(ovg_canvas_cb* p) {
 	}
 }
 
-class font_cache_cx;
 
 class ovg_ctx_cx :public ovg_ctx_cb
 {
-public:
-	font_cache_cx* font_ctx = 0;
 public:
 	ovg_ctx_cx();
 	~ovg_ctx_cx();
@@ -265,18 +254,15 @@ ovg_ctx_cx::~ovg_ctx_cx()
 	auto ac1 = (usp_ac_cx*)ac;
 	if (ac1)
 		delete ac1;
-	free_font_cache(font_ctx);
-	font_ctx = 0;
 	ac = 0;
 }
-ovg_ctx_cb* new_ctx_cb(font_cache_cx* fctx)
+ovg_ctx_cb* new_ctx_cb()
 {
 	auto p = new ovg_ctx_cx();
-	if (p)
-	{
-		if (fctx)fctx->references++;
-		p->font_ctx = fctx;
-	}
+	//if (p)
+	//{
+	//	if (fctx)fctx->references++;
+	//}
 	return p;
 }
 void free_ctx_cb(ovg_ctx_cb* p) {
@@ -3418,48 +3404,6 @@ bool geom_primitive::add_geometry3d(void* texture, const float* xyz, int xyz_str
 	gt->push_back({ .g = c });
 	return true;
 }
-#if 0
-void build_text()
-{
-	auto& git = vt.f;
-	if (git._image) {
-		auto& tp = _vt[git._image];
-		if (tex != tp)
-		{
-			submit_data(tex);
-			tex = tp;
-		}
-		auto ps = git._dwpos + git._apos;
-		ps += pos0;
-		auto tstyle = tbp[git.tb_idx].style;
-		color = tstyle.color;
-		auto img = git._image;
-		glm::ivec2 tex_size = { img->width,  img->height };
-		if (!git.color || tstyle.mcolor_effect)
-		{
-			if (tstyle.color_shadow)
-			{
-				auto ps1 = ps;
-				ps1 += tstyle.shadow_pos;	// 生成阴影数据
-				gen3data(tex_size, ps1, git._rect, {}, tstyle.color_shadow, &opt, &idx);
-			}
-			if (tstyle.stroke && tstyle.color_stroke)
-			{
-				int pxx[4] = { -tstyle.stroke, 0, tstyle.stroke, 0 };
-				int pyy[4] = { 0, -tstyle.stroke, 0, tstyle.stroke };
-				for (int e = 0; e < 4; e++)
-				{
-					auto ps1 = ps;
-					ps1.x += pxx[e];
-					ps1.y += pyy[e];	// 生成描边数据
-					gen3data(tex_size, ps1, git._rect, {}, tstyle.color_stroke, &opt, &idx);
-				}
-			}
-		}
-		gen3data(tex_size, ps, git._rect, {}, git.color ? git.color : color, &opt, &idx);
-	}
-}
-#endif 
 
 glm::mat4 ovg_ortho(float width, float height, float znear, float zfar, bool is_top)
 {
@@ -5976,7 +5920,7 @@ void ovg_canvas_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_bo
 	}
 
 	// ── 5. 描边 ──
-	if (ts->stroke != 0) {
+	if (ts->stroke != 0 && ts->color_stroke & 0xFF000000) {
 		text_draw_list stroke_list;
 		float stroke = abs(ts->stroke);
 		if (ts->stroke > 0) {
