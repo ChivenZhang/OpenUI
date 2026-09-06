@@ -657,7 +657,7 @@ int main()
 
 	ovg_sdl3_ctx g[1] = {};
 	font_cache_cx* font_ctx = new_font_cache();
-	font_familys_t* familys = new_font_family(font_ctx, (char*)u8"新宋体,Segoe UI Emoji,Consolas,Times New Roman", 0);
+	font_familys_t* familys = new_font_family(font_ctx, (char*)u8"微软雅黑,Segoe UI Emoji,Consolas,Times New Roman,Calibri", 0);
 
 	auto cb = new_ctx_cb();
 	auto vg = cb->new_rvg(cb->ac);
@@ -720,16 +720,16 @@ int main()
 			//draw_test3d(&fbo, cb, vg);
 			text_style_t style4 = {};
 			style4.family = familys;
-			style4.fontsize = 18;
+			style4.fontsize = 26;
 			style4.color = 0xff0080f0;
 			style4.color_stroke = 0xFF0000f0;
-			style4.min_subpixel = 32;
+			//style4.min_subpixel = 32;
 			//style4.stroke = 1;
 			//style4.color_shadow = 0x86000000;
 			style4.shadow_pos = { 5.0f, 5.0f };
 
 			text_st_t text4 = {};
-			text4.text = (char*)u8"➗🍕☂️abg亚像素-灰度";
+			text4.text = (char*)u8"➗🍕☂️abg亚像素-灰度مرحباً بكم";
 			text4.text_len = -1;
 
 			text4.pos = { 10.0f, 200.0f };

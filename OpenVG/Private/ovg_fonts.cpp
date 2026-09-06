@@ -2,7 +2,7 @@
 /*
 字体处理管理
 
-
+处理顺序：bidi -> 断行 -> 选择字体 -> shape -> 渲染
 2026/8/19 创建
 
 */
@@ -13,6 +13,7 @@
 #include <stack>
 #include <unordered_map>
 #include <SDL3/SDL.h>
+#include <algorithm>
 #include <vector>
 
 #include <locale.h>
@@ -47,8 +48,13 @@
 #include <string.h>
 
 /* ICU */
+#include <unicode/utypes.h>
+#include <unicode/ucsdet.h>
+#include <unicode/unistr.h>
 #include <unicode/ubrk.h>
 #include <unicode/ubidi.h>
+#include <unicode/uscript.h>
+#include <unicode/brkiter.h>
 #include <unicode/ustring.h>
 #include <unicode/utext.h>
 
@@ -64,6 +70,297 @@
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_image_write.h>
 #include <stb_rect_pack.h>
+
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <windows.h>
+#include <shlwapi.h>
+#include <Shlobj.h>
+#else
+#include <unistd.h>  
+#include <sys/mman.h>
+#include <sys/types.h>  
+#include <sys/stat.h> 
+#include <fcntl.h>
+#endif
+struct icu_lib_t;
+icu_lib_t* get_icu(int v);
+
+#ifdef max
+#undef max
+#undef min
+#endif
+
+
+
+
+// icu
+#if 1
+
+struct icu_lib_t
+{
+	void (*_ubidi_setPara)(UBiDi* pBiDi, const UChar* text, int32_t length, UBiDiLevel paraLevel, UBiDiLevel* embeddingLevels, UErrorCode* pErrorCode);
+	int32_t(*_ubidi_countRuns) (UBiDi* pBiDi, UErrorCode* pErrorCode);
+	UBiDi* (*_ubidi_open)(void);
+	void (*_ubidi_close)(UBiDi* pBiDi);
+	UBiDiDirection(*_ubidi_getVisualRun)(UBiDi* pBiDi, int32_t runIndex, int32_t* pLogicalStart, int32_t* pLength);
+	int32_t(*_ubidi_getVisualIndex)(UBiDi* pBiDi, int32_t logicalIndex, UErrorCode* pErrorCode);
+	int32_t(*_ubidi_getLogicalIndex)(UBiDi* pBiDi, int32_t visualIndex, UErrorCode* pErrorCode);
+	int32_t(*_ubidi_getLength)(const UBiDi* pBiDi);
+	void (*_ubidi_getVisualMap)(UBiDi* pBiDi, int32_t* indexMap, UErrorCode* pErrorCode);
+	void (*_ubidi_setClassCallback)(UBiDi* pBiDi, UBiDiClassCallback* newFn,
+		const void* newContext, UBiDiClassCallback** oldFn,
+		const void** oldContext, UErrorCode* pErrorCode);
+	void (*_ubidi_getClassCallback)(UBiDi* pBiDi, UBiDiClassCallback** fn, const void** context);
+
+
+	int32_t(*_ucnv_convert)(const char* toConverterName, const char* fromConverterName, char* target, int32_t targetCapacity, const char* source, int32_t sourceLength, UErrorCode* pErrorCode);
+	UScriptCode(*_uscript_getScript)(UChar32 codepoint, UErrorCode* err);
+	UBool(*_uscript_hasScript)(UChar32 c, UScriptCode sc);
+	const char* (*_uscript_getName)(UScriptCode scriptCode);
+	const char* (*_uscript_getShortName)(UScriptCode scriptCode);
+
+	UCharsetDetector* (*_ucsdet_open)(UErrorCode* status);
+	void (*_ucsdet_close)(UCharsetDetector* ucsd);
+	void (*_ucsdet_setText)(UCharsetDetector* ucsd, const char* textIn, int32_t len, UErrorCode* status);
+	void (*_ucsdet_setDeclaredEncoding)(UCharsetDetector* ucsd, const char* encoding, int32_t length, UErrorCode* status);
+	const UCharsetMatch* (*_ucsdet_detect)(UCharsetDetector* ucsd, UErrorCode* status);
+	const char* (*_ucsdet_getName)(const UCharsetMatch* ucsm, UErrorCode* status);
+
+	UBreakIterator* (*_ubrk_open)(UBreakIteratorType type, const char* locale, const UChar* text, int32_t textLength, UErrorCode* status);
+	UBreakIterator* (*_ubrk_openRules)(const UChar* rules, int32_t rulesLength, const UChar* text, int32_t textLength, UParseError* parseErr, UErrorCode* status);
+	UBreakIterator* (*_ubrk_openBinaryRules)(const uint8_t* binaryRules, int32_t rulesLength, const UChar* text, int32_t textLength, UErrorCode* status);
+	UBreakIterator* (*_ubrk_safeClone)(const UBreakIterator* bi, void* stackBuffer, int32_t* pBufferSize, UErrorCode* status);
+	UBreakIterator* (*_ubrk_clone)(const UBreakIterator* bi, UErrorCode* status);
+	void (*_ubrk_close)(UBreakIterator* bi);
+	void (*_ubrk_setText)(UBreakIterator* bi, const UChar* text, int32_t textLength, UErrorCode* status);
+	void (*_ubrk_setUText)(UBreakIterator* bi, UText* text, UErrorCode* status);
+	int32_t(*_ubrk_current)(const UBreakIterator* bi);
+	int32_t(*_ubrk_next)(UBreakIterator* bi);
+	int32_t(*_ubrk_previous)(UBreakIterator* bi);
+	int32_t(*_ubrk_first)(UBreakIterator* bi);
+	int32_t(*_ubrk_last)(UBreakIterator* bi);
+	int32_t(*_ubrk_preceding)(UBreakIterator* bi, int32_t offset);
+	int32_t(*_ubrk_following)(UBreakIterator* bi, int32_t offset);
+	const char* (*_ubrk_getAvailable)(int32_t index);
+	int32_t(*_ubrk_countAvailable)(void);
+	UBool(*_ubrk_isBoundary)(UBreakIterator* bi, int32_t offset);
+	int32_t(*_ubrk_getRuleStatus)(UBreakIterator* bi);
+	int32_t(*_ubrk_getRuleStatusVec)(UBreakIterator* bi, int32_t* fillInVec, int32_t capacity, UErrorCode* status);
+	const char* (*_ubrk_getLocaleByType)(const UBreakIterator* bi, ULocDataLocaleType type, UErrorCode* status);
+	void (*_ubrk_refreshUText)(UBreakIterator* bi, UText* text, UErrorCode* status);
+	int32_t(*_ubrk_getBinaryRules)(UBreakIterator* bi, uint8_t* binaryRules, int32_t rulesCapacity, UErrorCode* status);
+
+	void* _handle;
+};
+
+static std::vector<std::string> icu_funstr = { "ubidi_setPara","ubidi_countRuns","ubidi_open","ubidi_close","ubidi_getVisualRun",
+"ubidi_getVisualIndex",
+"ubidi_getLogicalIndex",
+"ubidi_getLength",
+"ubidi_getVisualMap",
+"ubidi_setClassCallback","ubidi_getClassCallback"
+,"ucnv_convert" , "uscript_getScript","uscript_hasScript","uscript_getName","uscript_getShortName",
+"ucsdet_open",
+"ucsdet_close",
+"ucsdet_setText",
+"ucsdet_setDeclaredEncoding",
+"ucsdet_detect",
+"ucsdet_getName",
+"ubrk_open",
+"ubrk_openRules",
+"ubrk_openBinaryRules",
+"ubrk_safeClone",
+"ubrk_clone",
+"ubrk_close",
+"ubrk_setText",
+"ubrk_setUText",
+"ubrk_current",
+"ubrk_next",
+"ubrk_previous",
+"ubrk_first",
+"ubrk_last",
+"ubrk_preceding",
+"ubrk_following",
+"ubrk_getAvailable",
+"ubrk_countAvailable",
+"ubrk_isBoundary",
+"ubrk_getRuleStatus",
+"ubrk_getRuleStatusVec",
+"ubrk_getLocaleByType",
+"ubrk_refreshUText",
+"ubrk_getBinaryRules",
+};
+
+#ifdef _WIN32
+const char* exts = ".dll";
+#else
+const char* exts = ".so";
+#endif // _WIN32
+
+static icu_lib_t* icub = 0;
+
+#ifdef _WIN32
+#define _DL_OPEN(d) LoadLibraryExA(d,0,LOAD_WITH_ALTERED_SEARCH_PATH)
+const char* sysdirstr = nullptr;
+const char* sys64 = nullptr;
+#else
+#define _DL_OPEN(d) dlopen(d,RTLD_NOW)
+const char* sysdirstr = "/usr/local/lib/";
+const char* sys64 = "/system/lib64/";
+#endif
+void* loadso(const char* name)
+{
+	std::string dlln = name;
+	dlln += exts;
+	void* so = _DL_OPEN(dlln.c_str());
+	if (!so)
+	{
+		std::string dlln1 = sysdirstr;
+		dlln1 += dlln;
+		so = _DL_OPEN(dlln1.c_str());
+	}
+	if (!so)
+	{
+		std::string dlln2 = sys64;
+		dlln2 += dlln;
+		so = _DL_OPEN(dlln2.c_str());
+	}
+	return so;
+}
+void destroy_so(void* so)
+{
+	if (so)
+	{
+#ifdef _WIN32
+		FreeLibrary((HMODULE)so);
+#else
+		dlclose(so);
+#endif
+	}
+}
+void* _dlsym(void* so, const char* funcname)
+{
+#if defined(_WIN32)
+#define __dlsym GetProcAddress
+#define LIBPTR HMODULE
+#else
+#define __dlsym dlsym
+#define LIBPTR void*
+#endif
+	void* func = (void*)__dlsym((LIBPTR)so, funcname);
+	//if (!func)
+	//	func = (void*)__dlsym((LIBPTR)so, funcname);
+	return func;
+#undef __dlsym
+#undef LIBPTR
+}
+void dlsyms(void* so, const std::vector<std::string>& funs, void** outbuf)
+{
+	auto n = funs.size();
+	for (size_t i = 0; i < n; i++)
+	{
+		auto fcn = funs[i];
+		if (fcn.size())
+		{
+			auto it = _dlsym(so, fcn.c_str());
+			if (it)
+			{
+				outbuf[i] = it;
+			}
+		}
+	}
+}
+
+
+icu_lib_t* get_icu(int v)
+{
+#define mxv 1000
+	if (!icub)
+	{
+		do {
+			std::string dlln = "libicuuc";
+			std::string dlln0 = "icudt";
+			int v1 = v;
+			auto so = loadso("icu");
+			if (!so) {
+				so = loadso("libicu");
+				if (!so)
+					break;
+			}
+			std::string n;
+			void* uc = 0;
+
+#if 1 
+			int nc = 0;
+			do
+			{
+				for (int i = v1; i > 0; i--)
+				{
+					auto n1 = std::to_string(i);
+					auto k = "ubidi_close_" + n1;
+					auto fb = _dlsym(so, k.c_str());
+					if (fb)
+					{
+						n = n1;
+						uc = fb;
+						break;
+					}
+				}
+				if (n.empty() && nc == 0) { v1 = mxv; nc++; continue; }
+
+			} while (0);
+#endif
+			if (n.size())
+			{
+				for (auto& it : icu_funstr)
+				{
+					it += "_" + n;
+				}
+			}
+			icu_lib_t tb = {};
+			dlsyms(so, icu_funstr, (void**)&tb);
+			if (tb._ubidi_close)
+			{
+				icub = new icu_lib_t();
+				*icub = tb;
+				icub->_handle = so;
+			}
+			else {
+				destroy_so(so);
+			}
+		} while (0);
+	}
+	return icub;
+}
+
+void un_icu()
+{
+	if (icub)
+	{
+
+		if (icub->_handle)
+		{
+			destroy_so(icub->_handle);
+		}
+		delete icub;
+		icub = 0;
+	}
+}
+
+void init_icu()
+{
+	if (!icub)
+		get_icu(U_ICU_VERSION_MAJOR_NUM);
+}
+
+#endif // 1
+
+
+
+
+
+
 
 
 struct DWGlyphBitmap {
@@ -118,13 +415,14 @@ namespace ovg {
 		return val & ~(alignment - (uint64_t)1);
 	}
 
-	static int utf8_to_utf16(const char* utf8, UChar* out16, int cap16, UErrorCode* st)
+	int utf8_to_utf16(const char* utf8, int32_t slen, UChar* out16, int cap16)
 	{
+		UErrorCode st = U_ZERO_ERROR;
 		int32_t len = 0;
-		u_strFromUTF8(out16, cap16, &len, utf8, -1, st);
-		return len;
+		u_strFromUTF8(out16, cap16, &len, utf8, slen, &st);
+		return st ? 0 : len;
 	}
-	static void utf16_slice_to_utf8(const UChar* u16, int32_t start, int32_t len, char* out, int cap)
+	void utf16_slice_to_utf8(const UChar* u16, int32_t start, int32_t len, char* out, int cap)
 	{
 		UErrorCode st = U_ZERO_ERROR;
 		u_strToUTF8(out, cap, NULL, u16 + start, len, &st);
@@ -517,19 +815,22 @@ shape_line(hb_font_t* hb_font,
 {
 	UErrorCode st = U_ZERO_ERROR;
 
+	auto icu = get_icu(U_ICU_VERSION_MAJOR_NUM);
+	if (!icu)return;
+
 	/* 1) ICU Bidi：设置段落方向 */
-	UBiDi* bidi = ubidi_open();
-	ubidi_setPara(bidi, line_u16, line_len, base_dir, NULL, &st);
+	UBiDi* bidi = icu->_ubidi_open();
+	icu->_ubidi_setPara(bidi, line_u16, line_len, base_dir, NULL, &st);
 	if (U_FAILURE(st)) {
-		fprintf(stderr, "ubidi_setPara failed: %s\n", u_errorName(st));
-		ubidi_close(bidi);
+		//fprintf(stderr, "ubidi_setPara failed: %s\n", icu->_u_errorName(st));
+		icu->_ubidi_close(bidi);
 		return;
 	}
 
 	/* 2) 获取视觉顺序的 run 列表 */
-	int32_t run_count = ubidi_countRuns(bidi, &st);
+	int32_t run_count = icu->_ubidi_countRuns(bidi, &st);
 	if (U_FAILURE(st)) {
-		ubidi_close(bidi);
+		icu->_ubidi_close(bidi);
 		return;
 	}
 
@@ -539,8 +840,7 @@ shape_line(hb_font_t* hb_font,
 
 	for (int32_t r = 0; r < run_count; r++) {
 		int32_t run_start, run_len;
-		UBiDiDirection run_dir = ubidi_getVisualRun(bidi, r, &run_start, &run_len);
-		run_start = ubidi_getVisualRun(bidi, r, &run_start, &run_len); /* 返回逻辑起点 */
+		UBiDiDirection run_dir = icu->_ubidi_getVisualRun(bidi, r, &run_start, &run_len);
 
 		if (run_dir == UBIDI_LTR) {
 			for (int32_t i = 0; i < run_len; i++)
@@ -585,16 +885,16 @@ shape_line(hb_font_t* hb_font,
 	printf("\n");
 
 	hb_buffer_destroy(buf);
-	ubidi_close(bidi);
+	icu->_ubidi_close(bidi);
 }
-UBiDiDirection get_dir(UChar32 c)
-{
-	UBiDiDirection dir = (UBiDiDirection)UBIDI_DEFAULT_LTR;
-	if (u_charDirection(c) == U_RIGHT_TO_LEFT || u_charDirection(c) == U_ARABIC_NUMBER) {
-		dir = UBIDI_RTL;
-	}
-	return dir;
-}
+//UBiDiDirection get_dir(UChar32 c)
+//{ 
+//	UBiDiDirection dir = (UBiDiDirection)UBIDI_DEFAULT_LTR;
+//	if (icu->_u_charDirection(c) == U_RIGHT_TO_LEFT || icu->_u_charDirection(c) == U_ARABIC_NUMBER) {
+//		dir = UBIDI_RTL;
+//	}
+//	return dir;
+//}
 hb_font_t* find_face_for_codepoint(hb_font_t* font, uint32_t cp, uint32_t variation_selector)
 {
 	hb_codepoint_t glyph{};
@@ -778,14 +1078,21 @@ glyph_atlas_entry* font_cache_cx::get_cache_lookup_glyph(hb_font_t* font, uint32
 		// 装箱进 image_cache_cx
 		auto hp = &font_ptr->font;
 		raster_image_t img_ds = {};
-
 		{
 			hb_raster_image_t* img = build_glyph_image_hb(&font_ptr->font, glyph_id, fontsize, &rc, fsc);
-			hb_raster_image_get_extents(img, (hb_raster_extents_t*)&img_ds);
-			img_ds.fmt = hb_raster_image_get_format(img);
-			img_ds.data = (uint8_t*)hb_raster_image_get_buffer(img);
+			if (img) {
+				hb_raster_image_get_extents(img, (hb_raster_extents_t*)&img_ds);
+				img_ds.fmt = hb_raster_image_get_format(img);
+				img_ds.data = (uint8_t*)hb_raster_image_get_buffer(img);
+			}
+			else {
+				return ret;
+			}
 		}
 		int ow = rc.z / fsc.x;
+
+		if (ow > fontsize)//|| rc.w > fontsize)
+			ow++;
 		ovg_image_data* img_data = image_cache.push_cache_size({ ow,rc.w }, &pos);
 
 		gfont_copy_image(img_data, pos.x, pos.y, -1, &img_ds, rc, false, fsc.x > 1, SubpixelLayout::RGB);
@@ -859,7 +1166,7 @@ const font_family_t* resolve_family(const font_familys_t* ffs, uint32_t cp)
 	return ffs->familys[0]; // fallback
 }
 
-static uint32_t utf8_next(const uint8_t*& p, const uint8_t* end) {
+static uint32_t utf8_next(uint8_t*& p, const uint8_t* end) {
 	if (p >= end) return 0;
 	uint8_t c = *p++;
 	uint32_t r = 0;
@@ -872,14 +1179,61 @@ static uint32_t utf8_next(const uint8_t*& p, const uint8_t* end) {
 		r = ((c & 0x07) << 18) | ((p[0] & 0x3F) << 12) | ((p[1] & 0x3F) << 6) | (p[2] & 0x3F), p += 3;
 	return r ? r : 0xFFFD;
 }
+// 从 *p 读取一个 UTF-32 codepoint，并推进指针
+// 返回 0xFFFFFFFF 表示遇到非法序列或越界
+inline uint32_t utf16_next(uint16_t*& p, const uint16_t* end) {
+	if (p >= end) return 0xFFFFFFFF;
 
+	uint16_t lead = *p++;
+
+	// 不在 surrogate 范围内，直接返回（BMP 字符）
+	if (lead < 0xD800 || lead > 0xDBFF)
+		return lead;
+
+	// lead 是高代理，需要 trail
+	if (p >= end)
+		return 0xFFFD;   // 孤立高代理，返回替换字符
+
+	uint16_t trail = *p;
+	if (trail < 0xDC00 || trail > 0xDFFF) {
+		// 高代理后面不是低代理，非法序列
+		// 不推进 p，让 trail 留给下次调用（或者也可以选择推进）
+		return 0xFFFD;
+	}
+
+	// 合法的 surrogate pair
+	p++;
+	return 0x10000 + (((lead - 0xD800) << 10) | (trail - 0xDC00));
+}
 void vg_utf8_to_utf32(const void* str8, size_t len, std::vector<uint32_t>* ot)
 {
-	const uint8_t* p = (const uint8_t*)str8;
+	if (!str8 || !ot || len == 0) return;
+	uint8_t* p = (uint8_t*)str8;
 	const uint8_t* end = p + len;
 	ot->reserve(len + ot->size());
 	while (p < end)
 		ot->push_back(utf8_next(p, end));
+}
+
+void vg_utf8_to_utf16(const void* str8, size_t len, std::vector<uint16_t>* ot)
+{
+	if (!str8 || !ot || len == 0) return;
+	uint8_t* p = (uint8_t*)str8;
+	const uint8_t* end = p + len;
+	ot->resize(ot->size() + len);  // 保守够用 
+	int n = ovg::utf8_to_utf16((const char*)str8, len, (UChar*)ot->data(), ot->size());
+	if (n > 0)
+	{
+		ot->resize(n);
+	}
+}
+
+uint8_t* vg_utf8_to_utf16(const void* str8, size_t len, uint16_t* ot, size_t* ot_len)
+{
+	if (!str8 || !ot || len == 0) return 0;
+	size_t count = ovg::utf8_to_utf16((const char*)str8, len, (UChar*)ot, len);
+	if (ot_len)*ot_len = count;
+	return 0;
 }
 
 bool write_png_bgra(const char* path, const uint8_t* bgra, int w, int h) {
@@ -892,7 +1246,7 @@ bool write_png_bgra(const char* path, const uint8_t* bgra, int w, int h) {
 			dst[x * 4 + 1] = src[x * 4 + 1]; // G
 			dst[x * 4 + 2] = src[x * 4 + 0]; // B
 			auto a = src[x * 4 + 3];
-			dst[x * 4 + 3] = 0xff; // A
+			dst[x * 4 + 3] = a;// 0xff; // A
 		}
 	}
 	return stbi_write_png(path, w, h, 4, rgb.data(), w * 4) != 0;
@@ -970,14 +1324,14 @@ hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size
 	float gx = 0.0, gy = 0.0;
 	float pmin_x = 1e30f, pmin_y = 1e30f;
 	float pmax_x = -1e30f, pmax_y = -1e30f;
-	float margin = 1;
+	float margin = 2;
 	do {
 		hb_font_set_scale(font, font_size * scale.x, font_size * scale.y);
 		bool bext = hb_font_get_glyph_extents(font, gid, &gext);
 		ext->x_origin = gext.x_bearing;
 		ext->y_origin = -(gext.y_bearing + margin);
-		ext->width = gext.x_bearing + gext.width;
-		ext->height = abs(gext.height) + margin * 2;
+		ext->width = ovg::align_up(abs(gext.x_bearing) + gext.width + margin * 2, 2);
+		ext->height = ovg::align_up(abs(gext.height) + abs(gext.y_bearing), 2);
 		ext->stride = 0;
 		if (pnt)
 		{
@@ -1013,7 +1367,7 @@ hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size
 			ot->x = gext0.x_bearing;
 			ot->y = gext0.y_bearing;
 			ot->z = ext.width;
-			ot->w = ext.height;
+			ot->w = ovg::align_up(abs(gext0.height) + margin * 2, 4);
 		}
 	}
 	return img;
@@ -1610,7 +1964,7 @@ glm::ivec2 image_cache_cx::fill_color(int w, int h, uint32_t color)
 
 ovg_image_data* image_cache_cx::push_cache_size(const glm::ivec2& ss, glm::ivec2* pos, int linegap)
 {
-	int width = ovg::align_up(ss.x + linegap, 2), height = ovg::align_up(ss.y + linegap, 2);
+	int width = ovg::align_up(ss.x + linegap, 10), height = ovg::align_up(ss.y + linegap, 2);
 	glm::ivec4 rc4 = { 0, 0, ss.x,ss.y };
 	auto pt = get_last_packer(false);
 	if (!pt)return 0;
@@ -1705,24 +2059,37 @@ void text_draw_list::push_raster(glyph_atlas_entry* e, float x, float y, float w
 void text_draw_list::push_vector(glyph_atlas_entry* e, float x, float y, uint32_t c) {
 	cmds.push_back({ glyph_draw_cmd::VECTOR, e, {x,y}, {}, {}, c ,fontsize });
 }
-vg_text_run_cx::vg_text_run_cx() {}
+vg_text_run_cx::vg_text_run_cx() {
+	_buf = hb_buffer_create();
+}
 
 vg_text_run_cx::~vg_text_run_cx() {
 	free_buffer();
-	for (auto& r : _runs) {
-		if (r.buf) hb_buffer_destroy(r.buf);
-	}
+
 }
 
 void vg_text_run_cx::set_min_subpixel(int sp)
 {
-	min_subpixel = sp;
+	_min_subpixel = sp;
 }
 
 void vg_text_run_cx::free_buffer() {
 	if (_buf) {
 		hb_buffer_destroy(_buf);
 		_buf = nullptr;
+	}
+	auto icu = get_icu(U_ICU_VERSION_MAJOR_NUM);
+	if (icu)
+	{
+		if (_bidi) {
+			icu->_ubidi_close(_bidi);
+			_bidi = nullptr;
+		}
+		if (_line_brk)
+		{
+			icu->_ubrk_close(_line_brk);
+			_line_brk = nullptr;
+		}
 	}
 }
 
@@ -1748,10 +2115,25 @@ void vg_text_run_cx::set_font_families(const font_familys_t* ffs, int fontsize) 
 }
 
 void vg_text_run_cx::set_text(const void* str8, size_t len) {
-	_utf32.clear();
+	_utf16.clear();
 	if (!str8 || len == 0) return;
 	if (len == (size_t)-1) len = strlen((const char*)str8);
-	vg_utf8_to_utf32(str8, len, &_utf32);
+	vg_utf8_to_utf16(str8, len, &_utf16);
+}
+
+void vg_text_run_cx::set_layout_mode(const text_box_rt& box, float max_width, bool enable_bidi, uint8_t para_dir, const char* locale)
+{
+	_layout._box = box;
+	if (locale && *locale)
+	{
+		_layout._locale = locale;
+	}
+	else {
+		_layout._locale.clear();
+	}
+	_layout.enable_bidi = enable_bidi;
+	_layout.max_width = max_width;
+	_layout.para_dir = para_dir;
 }
 
 
@@ -1759,45 +2141,309 @@ void vg_text_run_cx::clear_glyphs() {
 	_glyphs.clear();
 	_glyph_count = 0;
 	_extents = {};
-	for (auto& r : _runs) {
-		if (r.buf) { hb_buffer_destroy(r.buf); r.buf = nullptr; }
-	}
+
 	_runs.clear();
 }
 
-void vg_text_run_cx::shape() {
+void vg_text_run_cx::shape_old() {
 	clear_glyphs();
-	if (!_primary_font || _utf32.empty()) return;
+	if (!_primary_font || _utf16.empty()) return;
+
+	uint16_t* p = _utf16.data();
+	uint16_t* end = p + _utf16.size();
+	size_t len = _utf16.size();
 
 	// ── 单字体简单路径（无 fallback）──
 	if (!_ffs || _ffs->count == 0) {
-		shape_run(0, _utf32.size(), _primary_font, _fontsize);
+		shape_run(0, _utf16.size(), _primary_font, _fontsize);
 		return;
 	}
 	// ── 多字体 fallback：按 script/coverage 切 run ──
-	size_t run_start = 0;
-	while (run_start < _utf32.size()) {
-		uint32_t cp = _utf32[run_start];
+
+	while (p < end) {
+		// 解码当前字符
+		const uint16_t* run_start_ptr = p;
+		uint32_t cp = utf16_next(p, end);
+
 		const font_family_t* ff = resolve_family(_ffs, cp);
 		if (!ff) ff = _ffs->familys[0];
-		size_t run_end = run_start + 1;
-		while (run_end < _utf32.size() && resolve_family(_ffs, _utf32[run_end]) == ff)
-			run_end++;
+
+		// 找同字体连续区间
+		uint16_t* run_end_ptr = p;
+		while (run_end_ptr < end) {
+			uint16_t* look = run_end_ptr;
+			uint32_t next_cp = utf16_next(look, end);
+			const font_family_t* next_ff = resolve_family(_ffs, next_cp);
+			if (!next_ff) next_ff = _ffs->familys[0];
+			if (next_ff != ff) break;
+			run_end_ptr = look;
+		}
+
+		// 转回索引给 shape_run
+		size_t u16_start = run_start_ptr - _utf16.data();
+		size_t u16_end = run_end_ptr - _utf16.data();
+
 		int scale = _fontsize > 0 ? _fontsize : ff->upem;
-		shape_run(run_start, run_end, ff->font, scale);
-		run_start = run_end;
+		shape_run(u16_start, u16_end, ff->font, scale);
+
+		p = run_end_ptr;
+	}
+
+}
+// 找到 y == 1 的连续段起点/终点执行置反
+void reverse1(std::vector<glm::ivec2>& v)
+{
+	size_t i = 0;
+	const size_t n = v.size();
+	while (i < n)
+	{
+		if (v[i].y != 1)
+		{
+			++i;
+			continue;
+		}
+		size_t start = i;
+		while (i < n && v[i].y == 1)
+			++i;
+		size_t end = i;
+		std::reverse(v.begin() + start, v.begin() + end);
 	}
 }
+void vg_text_run_cx::shape() {
+	clear_glyphs();
+	if (!_primary_font || _utf16.empty()) return;
 
+	uint16_t* p = _utf16.data();
+	uint16_t* end = p + _utf16.size();
+	size_t len = _utf16.size();
+	auto icu = get_icu(U_ICU_VERSION_MAJOR_NUM);
+	UErrorCode err = U_ZERO_ERROR;
+	visual_runs.clear();
+	std::vector<int> visualMap;
+	if (_layout.enable_bidi)
+	{
+		UErrorCode st = {};
+		if (!icu)return;
+		if (!_bidi)
+		{
+			_bidi = icu->_ubidi_open();
+		}
+		icu->_ubidi_setPara(_bidi, (UChar*)p, len, _layout.para_dir ? UBIDI_DEFAULT_RTL : UBIDI_DEFAULT_LTR, NULL, &st);
+		if (U_FAILURE(st)) {
+			fprintf(stderr, "ubidi_setPara failed: %s\n", u_errorName(st));
+			icu->_ubidi_close(_bidi);
+			_bidi = nullptr;
+			return;
+		}
+		int32_t run_count = icu->_ubidi_countRuns(_bidi, &st);
+		if (U_FAILURE(st)) {
+			icu->_ubidi_close(_bidi);
+			_bidi = nullptr;
+			return;
+		}
+		visual_runs.reserve(len);
+		for (int32_t r = 0; r < run_count; r++) {
+			int32_t run_start, run_len;
+			UBiDiDirection run_dir = icu->_ubidi_getVisualRun(_bidi, r, &run_start, &run_len);
+			visual_runs.push_back(glm::uvec3(run_start, run_len, run_dir));
+		}
+		int length = icu->_ubidi_getLength(_bidi);
+		visualMap.resize(length);
+		icu->_ubidi_getVisualMap(_bidi, visualMap.data(), &err);
+	}
+	else {
+		visual_runs.push_back(glm::uvec3(0, len, (UBiDiDirection)_layout.para_dir));
+	}
+
+	std::vector<int32_t> breaks;
+	if (_layout.max_width > 0)
+	{
+		if (!_line_brk) {
+			_line_brk = icu->_ubrk_open(
+				(UBreakIteratorType)_layout._box.word_wrap,
+				_layout._locale.size() ? _layout._locale.c_str() : nullptr,
+				(UChar*)p, len, &err);
+		}
+		else {
+			// 复用：换文本
+			err = U_ZERO_ERROR;
+			icu->_ubrk_setText(_line_brk, (UChar*)p, len, &err);
+		}
+
+		if (U_FAILURE(err)) {
+			//fprintf(stderr, "ubrk_open/setText failed: %s\n", u_errorName(err));
+			if (_line_brk) { icu->_ubrk_close(_line_brk); _line_brk = nullptr; }
+		}
+		else {
+			// 收集断点（UTF-16 索引）
+			breaks.push_back(0);
+			int32_t pos = icu->_ubrk_first(_line_brk);
+			while (pos != UBRK_DONE) {
+				if (pos > 0 && pos < (int32_t)len)
+					breaks.push_back(pos);
+				pos = icu->_ubrk_next(_line_brk);
+			}
+			breaks.push_back((int32_t)len);
+		}
+	}
+
+	// ─── 交叉 visual runs × 断点 → segments ───
+	// 每个 segment: [u16_start, u16_len, direction]
+	std::vector<glm::uvec3> segments;
+
+	if (breaks.empty()) {
+		// 无断行：直接用 visual runs
+		segments = visual_runs;
+	}
+	else {
+		// 有断行：每个 visual run 按断点切
+		for (const auto& run : visual_runs) {
+			int32_t run_start = (int32_t)run.x;
+			int32_t run_end = run_start + (int32_t)run.y;
+			UBiDiDirection dir = (UBiDiDirection)run.z;
+			// 找和这个 run 重叠的断点区间
+			for (size_t k = 0; k < breaks.size() - 1; ++k) {
+				int32_t b0 = breaks[k];
+				int32_t b1 = breaks[k + 1];
+				int32_t seg_start = std::max(b0, run_start);
+				int32_t seg_end = std::min(b1, run_end);
+				if (seg_start < seg_end) {
+					segments.push_back(glm::uvec3(
+						(uint32_t)seg_start,
+						(uint32_t)(seg_end - seg_start),
+						(uint32_t)dir));
+				}
+			}
+		}
+	}
+
+	struct subseg_t {
+		int32_t        start;
+		int32_t        len;
+		UBiDiDirection dir;
+		hb_font_t* font;
+		int            fontsize;
+	};
+	std::vector<subseg_t> subsegs;
+	uint16_t* base = _utf16.data();
+
+	_indexs.clear();
+	_indexs.reserve(512);
+	int cidx = 0;
+	for (const auto& seg : segments) {
+		uint16_t* p = base + seg.x;
+		uint16_t* end = p + seg.y;
+
+		while (p < end) {
+			const uint16_t* sub_start = p;
+
+			// 解码第一个 codepoint → 决定字体
+			uint16_t* look = p;
+			uint32_t cp = utf16_next(look, end);
+			const font_family_t* ff = resolve_family(_ffs, cp);
+			if (!ff) ff = _ffs->familys[0];
+			hb_font_t* font = ff->font;
+			int scale = _fontsize > 0 ? _fontsize : ff->upem;
+
+			// 找同字体连续区间
+			uint16_t* sub_end = look;
+			while (sub_end < end) {
+				uint16_t* nlook = sub_end;
+				uint32_t ncp = utf16_next(nlook, end);
+				const font_family_t* nff = resolve_family(_ffs, ncp);
+				if (!nff) nff = _ffs->familys[0];
+				if (nff->font != font) break;
+				sub_end = nlook;
+			}
+
+			subsegs.push_back({ (int32_t)(sub_start - base), (int32_t)(sub_end - sub_start), (UBiDiDirection)seg.z, font, scale });
+
+			_indexs.push_back({ cidx++ ,seg.z });
+			p = sub_end;
+		}
+	}
+	reverse1(_indexs);
+	// ═══════════════════════════════════════════════════════════
+	//  Step 5: Pass 1 — shape 每个 subsegment
+	// ═══════════════════════════════════════════════════════════
+	_shaped.clear();
+	_shaped.reserve(subsegs.size());
+	_glyphs.clear();
+	std::vector<int> vmsize;
+	int tdir = 0;
+	vmsize.push_back(0);
+	for (const auto& it : _indexs)
+	{
+		auto& ss = subsegs[it.x];
+		shaped_segment_t out;
+		shape_segment(ss.start, ss.len, ss.dir, ss.font, ss.fontsize, out);
+		if (tdir == out.dir) {
+			vmsize.back() += out.width_px;
+		}
+		else {
+			vmsize.push_back(out.width_px);
+			tdir = out.dir;
+		}
+		for (const auto& g : out.glyphs) {
+			_glyphs.push_back(g);
+		}
+		_shaped.push_back(std::move(out));
+	}
+	// todo 计算_extents
+	_glyph_count = (uint32_t)_glyphs.size();
+
+}
+void vg_text_run_cx::shape_segment(int u16_start, int u16_len, int  dir0, hb_font_t* font, int fontsize, shaped_segment_t& out)
+{
+	out.dir = dir0;
+	out.glyphs.clear();
+	out.width_px = 0.0f;
+	if (!font || u16_len <= 0) return;
+	UBiDiDirection dir = (UBiDiDirection)dir0;
+	if (_cache) _cache->min_subpixel = _min_subpixel;
+	hb_font_set_scale(font, fontsize, fontsize);
+
+	auto buf = _buf;
+	hb_buffer_reset(buf);
+
+	hb_buffer_set_direction(buf, dir == UBIDI_RTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+	hb_buffer_add_utf16(buf, _utf16.data() + u16_start, u16_len, 0, -1);
+	hb_buffer_guess_segment_properties(buf);
+	hb_feature_t features[] = { {HB_TAG('k','e','r','n'), 0, 0, ~0u} };
+	hb_shape(font, buf, features, 1);
+
+	unsigned int count = 0;
+	hb_glyph_info_t* info = hb_buffer_get_glyph_infos(buf, &count);
+	hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(buf, nullptr);
+
+	out.glyphs.reserve(count);
+	const float scale = 1.0f;
+	float x = 0.0f;
+	hb_position_t ix, iy;
+	for (unsigned int i = 0; i < count; ++i) {
+		vg_glyph_info_t g;
+		g.glyph_id = info[i].codepoint;
+		g.x_offset = (float)pos[i].x_offset * scale;
+		g.y_offset = (float)-pos[i].y_offset * scale;
+		g.x_advance = (float)pos[i].x_advance * scale;
+		g.y_advance = (float)pos[i].y_advance * scale;
+		hb_font_get_glyph_advance_for_direction(font, g.glyph_id, dir ? HB_DIRECTION_RTL : HB_DIRECTION_LTR, &ix, &iy);
+		g.cache_entry = _cache ? _cache->get_cache_lookup_glyph(font, info[i].codepoint, fontsize) : nullptr;
+		out.glyphs.push_back(g);
+		x += g.x_advance;
+	}
+	out.width_px = x;
+}
 void vg_text_run_cx::shape_run(size_t run_start, size_t run_end, hb_font_t* font, int fontsize)
 {
 	if (!font || run_start >= run_end) return;
 	if (_cache) {
-		_cache->min_subpixel = min_subpixel;
+		_cache->min_subpixel = _min_subpixel;
 	}
+	auto buf = _buf;
 	hb_font_set_scale(font, fontsize, fontsize);
-	hb_buffer_t* buf = hb_buffer_create();
-	hb_buffer_add_utf32(buf, _utf32.data() + run_start, run_end - run_start, 0, -1);
+	hb_buffer_reset(buf);
+	hb_buffer_add_utf16(buf, _utf16.data() + run_start, run_end - run_start, 0, -1);
 	hb_buffer_guess_segment_properties(buf);
 	// 关闭 kerning（UI 场景常见需求）
 	hb_feature_t features[] = { {HB_TAG('k','e','r','n'), 0, 0, ~0u} };
@@ -1806,7 +2452,7 @@ void vg_text_run_cx::shape_run(size_t run_start, size_t run_end, hb_font_t* font
 	hb_glyph_info_t* info = hb_buffer_get_glyph_infos(buf, &glyph_count);
 	hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(buf, nullptr);
 	// 记录 run
-	_runs.push_back({ buf, font, fontsize, (uint32_t)run_start, (uint32_t)run_end });
+	_runs.push_back({ font, fontsize, (uint32_t)run_start, (uint32_t)run_end });
 	// 字体度量
 	hb_font_extents_t fextents = {};
 	hb_font_get_extents_for_direction(font, HB_DIRECTION_LTR, &fextents);
@@ -1876,3 +2522,8 @@ void vg_text_run_cx::populate_draw_list(text_draw_list& list, float origin_x, fl
 	}
 	list.extents = _extents;
 }
+
+#if 1  
+
+
+#endif // 1

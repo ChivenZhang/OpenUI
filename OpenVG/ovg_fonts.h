@@ -17,7 +17,9 @@ extern "C" {
 	typedef struct hb_buffer_t hb_buffer_t;
 	typedef struct hb_draw_funcs_t hb_draw_funcs_t;
 
-	typedef struct _FcConfig    FcConfig;
+	typedef struct _FcConfig FcConfig;
+	typedef struct UBreakIterator UBreakIterator;
+	typedef struct UBiDi UBiDi;
 
 #ifdef __cplusplus 
 }
@@ -111,10 +113,6 @@ struct path_builder {
 class font_cache_cx
 {
 public:
-	struct user_data_key_t {
-		/*< private >*/
-		char unused;
-	};
 	union glyph_key {
 		struct {
 			glm::u16vec2 k;
@@ -218,37 +216,64 @@ class vg_text_run_cx
 {
 public:
 	enum render_mode { RASTER_FIRST, VECTOR_ONLY };
+	struct text_segment_t {
+		int u16_start;
+		int u16_len;
+		int direction;
+		int line_idx;
+	};
+
+	struct shaped_segment_t {
+		int width_px;								// 像素宽度 
+		int dir;
+		std::vector<vg_glyph_info_t> glyphs;  // 相对 x=0 的局部坐标
+	};
 private:
 	const font_familys_t* _ffs = nullptr;
 	hb_font_t* _primary_font = nullptr;
 	int                   _fontsize = 16;
-	std::vector<uint32_t> _utf32;
+	std::vector<uint16_t> _utf16;
 
 	// 当前 shaping 结果
 	hb_buffer_t* _buf = nullptr;
 	vg_text_extents_t     _extents{};
 	std::vector<vg_glyph_info_t> _glyphs;
 	uint32_t              _glyph_count = 0;
-	int min_subpixel = 32;
+	int _min_subpixel = 32;
 	// 缓存引用
 	font_cache_cx* _cache = nullptr;
 
 	// 多 run 支持（不同 font fallback）
 	struct text_run {
-		hb_buffer_t* buf = nullptr;
 		hb_font_t* font = nullptr;
 		int          fontsize = 0;
 		uint32_t     start_cp = 0;
 		uint32_t     end_cp = 0;
 	};
 	std::vector<text_run> _runs;
+	std::vector<glm::uvec3> visual_runs;
+
+	UBiDi* _bidi = 0;
+	UBreakIterator* _line_brk = 0;
+	struct layout_options {
+		std::string _locale;				// 中文传"zh_CN"，英文传 "en 
+		text_box_rt _box = {};
+		uint8_t para_dir = 0;				// 段落方向，0=UBIDI_DEFAULT_LTR, 1=UBIDI_DEFAULT_RTL
+		float max_width = 0.0f;
+		bool enable_bidi = true;
+	};
+	layout_options _layout;
+	// 布局用
+	std::vector<shaped_segment_t> _shaped;
+	std::vector<glm::ivec2> _indexs;
 public:
 	vg_text_run_cx();
 	~vg_text_run_cx();
 	void set_min_subpixel(int sp);
 	// 设置文本（UTF-8），触发重新 shape
 	void set_text(const void* str8, size_t len = -1);
-
+	// max_width>0 时启用换行，enable_bidi 启用双向文本，para_dir=0/1=LTR/RTL
+	void set_layout_mode(const text_box_rt& box, float max_width, bool enable_bidi, uint8_t para_dir = 0, const char* locale = nullptr);
 	// 设置字体参数
 	void set_font(hb_font_t* font, int fontsize);
 
@@ -257,6 +282,7 @@ public:
 
 	// 执行 shape + 缓存 lookup（内部调 set_text/set_font 后自动调）
 	void shape();
+	void shape_old();
 
 	// 清除所有缓存引用（字体变了时调用，不释放 atlas 数据）
 	void clear_glyphs();
@@ -264,13 +290,108 @@ public:
 	void populate_draw_list(text_draw_list& list, float origin_x, float origin_y, uint32_t color, render_mode m);
 	// 访问结果
 	const vg_text_extents_t& extents() const { return _extents; }
-	const std::vector<vg_glyph_info_t>& glyphs() const { return _glyphs; }
+	//const std::vector<vg_glyph_info_t>& glyphs() const { return _glyphs; }
 	uint32_t glyph_count() const { return _glyph_count; }
 
 private:
 	void free_buffer();
 	void shape_run(size_t run_start, size_t run_end, hb_font_t* font, int fontsize);
-
+	void shape_segment(int u16_start, int u16_len, int dir, hb_font_t* font, int fontsize, shaped_segment_t& out);
 };
 
 bool write_png_bgra(const char* path, const uint8_t* bgra, int w, int h);
+struct glyph_item_t {
+	vg_glyph_info_t* g;
+	float x, y;
+};
+#if 0
+
+struct vg_glyph_info_t {
+	uint32_t  glyph_id;
+	float     x_offset;
+	float     y_offset;
+	float     x_advance;
+	float     y_advance;
+	// 指向缓存条目（位图或矢量）
+	glyph_atlas_entry* cache_entry;
+};
+struct shaped_segment_t {
+	int width_px;								// 像素宽度 
+	int dir;
+	std::vector<vg_glyph_info_t> glyphs;  // 相对 x=0 的局部坐标
+};
+enum class flex_align :uint8_t {
+	ALIGN_AUTO = 0,
+	ALIGN_STRETCH,
+	ALIGN_CENTER,
+	ALIGN_START,
+	ALIGN_END,
+	ALIGN_SPACE_BETWEEN,
+	ALIGN_SPACE_AROUND,
+	ALIGN_SPACE_EVENLY,
+	ALIGN_BASELINE
+};
+
+enum class flex_position :uint8_t {
+	POS_RELATIVE = 0,
+	POS_ABSOLUTE
+};
+// row行，reverse反向，column列
+enum flex_direction :uint8_t {
+	ROW = 0,
+	ROW_REVERSE,
+	COLUMN,
+	COLUMN_REVERSE
+};
+
+enum class flex_wrap :uint8_t {
+	NO_WRAP = 0,
+	WRAP,
+	WRAP_REVERSE
+};
+struct flex_data {
+	float width = 0, height = 0;	// 大小NAN
+	float left = 0, right = 0, top = 0, bottom = 0;	// 偏移
+	float padding_left = 0;		// 本元素内边距
+	float padding_right = 0;
+	float padding_top = 0;
+	float padding_bottom = 0;
+	float margin_left = 0;		// 本元素外边距
+	float margin_right = 0;
+	float margin_top = 0;
+	float margin_bottom = 0;
+	float grow = 0;		// 子元素:自身放大比例，默认为0不放大
+	float shrink = 0;	// 子元素:空间不足时自身缩小比例，默认为1自动缩小，0不缩小
+	int	  order = 0;	// 子元素:自身排列顺序。数值越小，越靠前
+	float basis = -1;	// 子元素:定义最小空间NAN
+	float baseline = 0.0; // 基线位置
+	flex_align justify_content = flex_align::ALIGN_START;	// 父元素:主轴上的元素的排列方式 start\end\center\space-between\space-around\space-evenly
+	flex_align align_content = flex_align::ALIGN_STRETCH;	// 父元素:适用多行的flex容器 start\end\center\space-between\space-around\space-evenly\stretch 
+	flex_align align_items = flex_align::ALIGN_STRETCH;		// 父元素:副轴上的元素的排列方式 start\end\center\stretch\baseline
+	flex_align align_self = flex_align::ALIGN_AUTO;			// 子元素:覆盖父容器align-items的设置
+	flex_position position = flex_position::POS_RELATIVE;	// 子元素:
+	flex_direction direction = flex_direction::ROW;			// 父元素:
+	flex_wrap wrap = flex_wrap::NO_WRAP;					// 父元素:是否换行，超出宽度自动换行
+	bool should_order_children = false;
+};
+
+struct node_dt
+{
+	glm::vec2 size = {};	// in 原大小
+	glm::vec4 offset = {};	// in 偏移位置
+	glm::vec4 frame = {};	// out 输出位置大小
+	size_t index = 0;		// in 样式序号
+	float baseline = 0.0;	// in 基线位置
+	int position = 0;		// in 位置,0=relative，1=absolute
+	node_dt* child = 0;		// in 子元素指针
+	size_t child_count = 0;
+	size_t tidx = 0;		// out 自动计算节点索引
+	size_t parent = 0;		// out 自动计算父节点索引
+	size_t line_count = 0;	// out 行数量
+};
+// 输入样式数据，根节点指针，所有节点数量 ，
+glm::vec4 flex_run_layout(flex_run* ctx, flex_data* fd, size_t count, node_dt* p, size_t node_count);//已经实现
+
+void layout_text_run(flex_run* ctx, std::vector<shaped_segment_t>* segments, float origin_x, float origin_y, std::vector<glyph_item_t>& out_glyphs);
+补全函数layout_text_run
+#endif
