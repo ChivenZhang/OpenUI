@@ -504,7 +504,7 @@ struct text_box_rt {
 	glm::ivec4 rc = {};		// 设置文本渲染区域，偏移/大小
 	glm::vec2 text_align = { 0.0,0.0 };// 文本对齐
 	int8_t auto_break = 0;	// 是否自动换行
-	int8_t word_wrap = 0;	// 0字符换行，1单词换行，2换行点，3句子断开，4标题大小写断点
+	int8_t word_wrap = 2;	// 0字符换行，1单词换行，2换行点，3句子断开，4标题大小写断点
 	int8_t ellipsis = 0;	// 省略号
 };
 

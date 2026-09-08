@@ -44,9 +44,11 @@
 #define VG_FILL_NZ_GLUTESS2
 #endif
 
+#if (__has_include("ovg_fonts.h"))
+#include "ovg_fonts.h"
 #include <harfbuzz/hb.h> 
 #include <fontconfig/fontconfig.h>
-#include "ovg_fonts.h"
+#endif
 
 void init_ovg_cb(ovg_canvas_cb* cb);
 void init_ovg_ctx_cb(ovg_ctx_cb* cb);
@@ -188,13 +190,20 @@ public:
 
 #endif // !MEMAC_PMR
 
+struct text_draw_list;
+
 class ovg_canvas_cx :public ovg_canvas_cb
 {
+public:
+#ifdef OVG_FONT_H
+	vg_text_run_cx text_run;
+#endif
 public:
 	ovg_canvas_cx();
 	~ovg_canvas_cx();
 
-	void add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box);
+	void submit_vector_glyphs_stroked(rvg_t* rvg, const text_draw_list* list, float stroke_width);
+	void submit_draw_list(rvg_t* rvg, const text_draw_list* list);
 private:
 
 };
@@ -233,13 +242,35 @@ void free_canvas_cb(ovg_canvas_cb* p) {
 class ovg_ctx_cx :public ovg_ctx_cb
 {
 public:
+#ifdef OVG_FONT_H
+	vg_text_run_cx text_run;
+#endif
+public:
 	ovg_ctx_cx();
 	~ovg_ctx_cx();
 
-	void add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box);
+	void submit_vector_glyphs_stroked(rvg_t* rvg, const text_draw_list* list, float stroke_width);
+	void submit_draw_list(rvg_t* rvg, const text_draw_list* list);
 private:
 
 };
+
+template<typename T>
+concept submit_fn = requires(T & obj) {
+	{ obj.submit_vector_glyphs_stroked(static_cast<rvg_t*>(nullptr), static_cast<const text_draw_list*>(nullptr), static_cast<float>(0.0f)) } -> std::same_as<void>;
+	{ obj.submit_draw_list(static_cast<rvg_t*>(nullptr), static_cast<const text_draw_list*>(nullptr)) } -> std::same_as<void>;
+};
+
+void submit_vector_glyphs_stroked(submit_fn auto& cb, rvg_t* rvg, const text_draw_list* list, float stroke_width);
+void submit_draw_list(submit_fn auto& cb, rvg_t* rvg, const text_draw_list* list);
+void submit_vector_glyphs_stroked(submit_fn auto& cb, rvg_t* rvg, const text_draw_list* list, float stroke_width) {
+	cb.submit_vector_glyphs_stroked(rvg, list, stroke_width);
+}
+void submit_draw_list(submit_fn auto& cb, rvg_t* rvg, const text_draw_list* list) {
+	cb.submit_draw_list(rvg, list);
+}
+
+void vg_add_text(ovg_canvas_cb* ocb, ovg_ctx_cb* ctx, rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box);
 
 ovg_ctx_cx::ovg_ctx_cx()
 {
@@ -2967,7 +2998,7 @@ void  ovg_add_text(rvg_t* v0, text_st_t* p, text_style_t* ts, text_box_rt* box)
 	if (dc) {
 		auto cb = (ovg_canvas_cx*)dc->ac->ptr;
 		if (cb)
-			cb->add_text(v0, p, ts, box);
+			vg_add_text(cb, 0, v0, p, ts, box);
 	}
 }
 // 普通图片，支持九宫格、混合颜色
@@ -4380,7 +4411,7 @@ void vctx_add_text(rvg_t* v0, text_st_t* p, text_style_t* ts, text_box_rt* box) 
 	if (dc) {
 		auto cb = (ovg_ctx_cx*)dc->ac->ptr;
 		if (cb)
-			cb->add_text(v0, p, ts, box);
+			vg_add_text(0, cb, v0, p, ts, box);
 	}
 }
 
@@ -5469,6 +5500,7 @@ void vg_split(std::string str, const std::string& pattern, std::vector<std::stri
 }
 font_cache_cx* new_font_cache()
 {
+#ifdef OVG_FONT_H
 	auto p = new font_cache_cx();
 	if (p)
 	{
@@ -5483,19 +5515,24 @@ font_cache_cx* new_font_cache()
 		}
 	}
 	return p;
+#endif
+	return 0;
 }
 void free_font_cache(font_cache_cx* p)
 {
+#ifdef OVG_FONT_H
 	if (p) {
 		p->references--;
 		if (p->references > 0) return;
 		if (p->ac)delete p->ac;
 		delete p;
 	}
+#endif
 }
 font_familys_t* new_font_family(font_cache_cx* ctx, const char* familys, const char* styles) {
 	if (!ctx || !familys || !*familys)return nullptr;
 	font_familys_cx* p = 0;
+#ifdef OVG_FONT_H
 	auto ac = (usp_ac_cx*)ctx->ac;
 	do {
 		std::vector<std::string> v, st;
@@ -5531,6 +5568,7 @@ font_familys_t* new_font_family(font_cache_cx* ctx, const char* familys, const c
 		p->count = p->v.size();
 		p->ac = ac;
 	} while (0);
+#endif
 	return p;
 }
 void delete_font_family(font_familys_t* p) {
@@ -5540,6 +5578,7 @@ void delete_font_family(font_familys_t* p) {
 	}
 }
 
+#ifdef OVG_FONT_H
 void submit_vector_cmd(ovg_canvas_cb* cb, rvg_t* rvg, const glyph_draw_cmd& cmd)
 {
 	ovg_path_t* path = cb->new_path(cb->ac);
@@ -5575,6 +5614,7 @@ void submit_vector_cmd_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const glyph_draw_cmd& cmd
 
 	cb->restore(rvg);
 }
+#if 0
 // 公共代码，两套都能用
 void submit_raster_glyphs(
 	const text_draw_list& list,
@@ -5665,10 +5705,12 @@ void submit_vector_glyphs_ctx_mode(
 		cb->restore(rvg);
 	}
 }
+#endif
 // ovg_text.cpp 
-void submit_vector_glyphs_stroked(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw_list& list, float stroke_width)
+void ovg_canvas_cx::submit_vector_glyphs_stroked(rvg_t* rvg, const text_draw_list* list, float stroke_width)
 {
-	for (const auto& cmd : list.cmds) {
+	auto cb = this;
+	for (const auto& cmd : list->cmds) {
 		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
 		ovg_path_t* path = cb->new_path(cb->ac);
 		vg_state_save_t* st = cb->new_state(cb->ac);
@@ -5684,8 +5726,9 @@ void submit_vector_glyphs_stroked(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw
 		cb->state_destroy(st);
 	}
 }
-void submit_draw_list(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw_list& list)
+void ovg_canvas_cx::submit_draw_list(rvg_t* rvg, const text_draw_list* list)
 {
+	auto cb = this;
 	gem_info_t info2d = {};
 	info2d.blendMode = (uint8_t)blendMode_e::normal_prem;
 	info2d.topology = 0;
@@ -5704,7 +5747,7 @@ void submit_draw_list(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw_list& list)
 	};
 	std::unordered_map<vg_image_t*, raster_batch> batches;
 
-	for (const auto& cmd : list.cmds) {
+	for (const auto& cmd : list->cmds) {
 		if (cmd.type != glyph_draw_cmd::RASTER) continue;
 
 		auto& b = batches[cmd.entry->atlas_img];
@@ -5725,7 +5768,7 @@ void submit_draw_list(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw_list& list)
 		b.uvs.push_back(cmd.uv_rect.z); b.uvs.push_back(cmd.uv_rect.w);
 		b.uvs.push_back(cmd.uv_rect.x); b.uvs.push_back(cmd.uv_rect.w);
 		auto color = cmd.color;
-		if (list.has_color && cmd.entry->has_color)color = -1;
+		if (list->has_color && cmd.entry->has_color)color = -1;
 		b.colors.push_back(color);
 		b.colors.push_back(color);
 		b.colors.push_back(color);
@@ -5770,14 +5813,15 @@ void submit_draw_list(ovg_canvas_cb* cb, rvg_t* rvg, const text_draw_list& list)
 	}
 
 	// ── 2. 矢量 glyph：逐个提交（每个独立 path） ──
-	for (const auto& cmd : list.cmds) {
+	for (const auto& cmd : list->cmds) {
 		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
 		submit_vector_cmd(cb, rvg, cmd);
 	}
 }
-void submit_vector_glyphs_stroked_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list, float stroke_width)
+void ovg_ctx_cx::submit_vector_glyphs_stroked(rvg_t* rvg, const text_draw_list* list, float stroke_width)
 {
-	for (const auto& cmd : list.cmds) {
+	auto cb = this;
+	for (const auto& cmd : list->cmds) {
 		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
 		cb->save(rvg);
 		cb->add_path(rvg, cmd.entry->path_data, cmd.entry->path_size);
@@ -5790,8 +5834,9 @@ void submit_vector_glyphs_stroked_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_dra
 		cb->restore(rvg);
 	}
 }
-void submit_draw_list_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list)
+void ovg_ctx_cx::submit_draw_list(rvg_t* rvg, const text_draw_list* list)
 {
+	auto cb = this;
 	gem_info_t info2d = {};
 	info2d.blendMode = (uint8_t)blendMode_e::normal_prem;
 	info2d.topology = 0;
@@ -5811,7 +5856,7 @@ void submit_draw_list_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list
 	};
 	std::unordered_map<vg_image_t*, raster_batch> batches;
 
-	for (const auto& cmd : list.cmds) {
+	for (const auto& cmd : list->cmds) {
 		if (cmd.type != glyph_draw_cmd::RASTER) continue;
 
 		auto& b = batches[cmd.entry->atlas_img];
@@ -5829,7 +5874,7 @@ void submit_draw_list_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list
 			cmd.uv_rect.x, cmd.uv_rect.w,
 			});
 		auto color = cmd.color;
-		if (list.has_color && cmd.entry->has_color)color = -1;
+		if (list->has_color && cmd.entry->has_color)color = -1;
 		for (int i = 0; i < 4; i++) b.colors.push_back(color);
 		b.idx.push_back(base + 0); b.idx.push_back(base + 1); b.idx.push_back(base + 2);
 		b.idx.push_back(base + 0); b.idx.push_back(base + 2); b.idx.push_back(base + 3);
@@ -5865,29 +5910,100 @@ void submit_draw_list_ctx(ovg_ctx_cb* cb, rvg_t* rvg, const text_draw_list& list
 	}
 
 	// 矢量逐个
-	for (const auto& cmd : list.cmds) {
+	for (const auto& cmd : list->cmds) {
 		if (cmd.type != glyph_draw_cmd::VECTOR) continue;
 		submit_vector_cmd_ctx(cb, rvg, cmd);
 	}
 }
-
-void ovg_canvas_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box)
+#if 0
+void layout_text_run(flex_run* ctx, std::vector<vg_text_run_cx::shaped_segment_t>* segments, float origin_x, float origin_y, std::vector<glyph_item_t>& out_glyphs)
 {
-	if (!p || !p->text || !ts || !ts->family) return;
+	if (!segments || segments->empty())
+		return;
 
+	const size_t seg_count = segments->size();
+
+	// 1. 构造 flex 输入节点
+	std::vector<node_dt> nodes(seg_count);
+
+	for (size_t i = 0; i < seg_count; ++i) {
+		const vg_text_run_cx::shaped_segment_t& seg = (*segments)[i];
+		node_dt& nd = nodes[i];
+
+		nd.index = i;
+		nd.child = nullptr;
+		nd.child_count = 0;
+
+		// 文本段尺寸
+		nd.size.x = static_cast<float>(seg.width_px);
+		nd.size.y = seg.glyphs.empty() ? 0.0f
+			: seg.glyphs[0].cache_entry->metrics.ascent
+			+ seg.glyphs[0].cache_entry->metrics.descent;
+
+		nd.baseline = static_cast<float>(seg.glyphs[0].cache_entry->metrics.ascent);
+		nd.position = static_cast<int>(flex_position::POS_RELATIVE);
+		nd.frame = glm::vec4(0.0f);
+	}
+
+	// 2. 构造根节点（文本容器）
+	node_dt root{};
+	root.index = seg_count; // 根节点放在最后
+	root.child = nodes.data();
+	root.child_count = seg_count;
+	root.size = glm::vec2(
+		ctx->fd.width,   // 容器宽度（NAN 也可，flex_run_layout 应支持）
+		ctx->fd.height
+	);
+	root.baseline = 0.0f;
+	root.position = static_cast<int>(flex_position::POS_RELATIVE);
+
+	// 3. 执行 flex 排版
+	// 注意：这里假设你已经把 flex_data 填好（direction / wrap / align 等）
+	flex_run_layout(ctx, &ctx->fd, seg_count + 1, &root, 1);
+
+	// 4. 展开 glyph
+	out_glyphs.reserve(out_glyphs.size() + 1024);
+
+	for (size_t i = 0; i < seg_count; ++i) {
+		const shaped_segment_t& seg = (*segments)[i];
+		const node_dt& nd = nodes[i];
+
+		// segment 排版后的位置
+		float seg_x = nd.frame.x;
+		float seg_y = nd.frame.y;
+
+		// 基线对齐：flex 以 top 为原点，文本需要 baseline
+		seg_y += nd.baseline;
+
+		for (const vg_glyph_info_t& g : seg.glyphs) {
+			glyph_item_t gi{};
+			gi.g = const_cast<vg_glyph_info_t*>(&g);
+			gi.x = origin_x + seg_x + g.x_offset;
+			gi.y = origin_y + seg_y + g.y_offset;
+
+			out_glyphs.push_back(gi);
+
+			seg_x += g.x_advance;
+			seg_y += g.y_advance;
+		}
+	}
+}
+#endif
+
+
+
+void vg_add_text_run(ovg_canvas_cb* ocb, ovg_ctx_cb* ctx, rvg_t* rvg, vg_text_run_cx* run)
+{
+	if (!run || (!ocb && !ctx)) return;
+
+	auto ctxp = (ovg_ctx_cx*)ctx;
+	auto ocbp = (ovg_canvas_cx*)ocb;
+	if (run->glyph_count() == 0) return;
+	auto ts = &run->_st;
+	auto box = &run->_box;
 	int fontsize = ts->fontsize > 0 ? (int)ts->fontsize : 16;
-
-	// ── 1. shape ──
-	vg_text_run_cx run;
-	run.set_min_subpixel(ts->min_subpixel);
-	run.set_font_families(ts->family, fontsize);
-	run.set_text(p->text, p->text_len);
-	run.shape();  // 内部按 fallback 切 run，lookup 缓存
-
-	if (run.glyph_count() == 0) return;
-
 	// ── 2. 布局计算 ──
-	const auto& extents = run.extents();
+	const auto& extents = run->extents();
 
 	// 对齐偏移
 	float box_w = box && box->rc.z > 0 ? (float)box->rc.z : extents.width;
@@ -5896,8 +6012,8 @@ void ovg_canvas_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_bo
 	float align_x = ts->align.x;  // 0=左, 0.5=中, 1=右
 	float align_y = ts->align.y;
 
-	float offset_x = p->pos.x + (box_w - extents.width) * align_x;
-	float offset_y = p->pos.y + (box_h - extents.height) * align_y;
+	float offset_x = run->_tt.pos.x + (box_w - extents.width) * align_x;
+	float offset_y = run->_tt.pos.y + (box_h - extents.height) * align_y;
 
 	// 基线位置 = offset_y + ascender
 	hb_font_extents_t fextents = {};
@@ -5905,28 +6021,34 @@ void ovg_canvas_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_bo
 	hb_font_t* primary = ts->family->familys[0]->font;
 	hb_font_set_scale(primary, fontsize, fontsize);
 	hb_font_get_extents_for_direction(primary, HB_DIRECTION_LTR, &fextents);
-	float baseline_y = offset_y;// +(float)fextents.ascender;
-
+	float baseline_y = offset_y;
 	// ── 3. 裁剪 ──
 	if (box && box->rc.z > 0 && box->rc.w > 0) {
-		this->clip_rect(rvg, box->rc.x, box->rc.y, box->rc.z, box->rc.w);
+		ovg_clip_rect(rvg, box->rc.x, box->rc.y, box->rc.z, box->rc.w);
 	}
-
+	text_draw_list& main_list = run->drawable;
+	main_list.has_color = false;
 	// ── 4. 阴影 ──
 	if (ts->color_shadow & 0xFF000000) {
-		text_draw_list shadow_list;
-		run.populate_draw_list(shadow_list, offset_x + ts->shadow_pos.x, baseline_y + ts->shadow_pos.y, ts->color_shadow, vg_text_run_cx::RASTER_FIRST);
-		submit_draw_list(this, rvg, shadow_list);
+		main_list.clear();
+		run->populate_draw_list(main_list, offset_x + ts->shadow_pos.x, baseline_y + ts->shadow_pos.y, ts->color_shadow, vg_text_run_cx::RASTER_FIRST);
+		if (ctxp)
+			submit_draw_list(*ctxp, rvg, &main_list);
+		else if (ocbp)
+			submit_draw_list(*ocbp, rvg, &main_list);
 	}
 
 	// ── 5. 描边 ──
 	if (ts->stroke != 0 && ts->color_stroke & 0xFF000000) {
-		text_draw_list stroke_list;
+		main_list.clear();
 		float stroke = abs(ts->stroke);
 		if (ts->stroke > 0) {
 			stroke *= 2;
-			run.populate_draw_list(stroke_list, offset_x, baseline_y, ts->color_stroke, vg_text_run_cx::VECTOR_ONLY);
-			submit_vector_glyphs_stroked(this, rvg, stroke_list, stroke);
+			run->populate_draw_list(main_list, offset_x, baseline_y, ts->color_stroke, vg_text_run_cx::VECTOR_ONLY);
+			if (ctxp)
+				submit_vector_glyphs_stroked(*ctxp, rvg, &main_list, stroke);
+			else if (ocbp)
+				submit_vector_glyphs_stroked(*ocbp, rvg, &main_list, stroke);
 		}
 		else {
 			int pxx[4] = { -stroke, 0, stroke, 0 };
@@ -5936,103 +6058,61 @@ void ovg_canvas_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_bo
 				glm::vec2 ps1 = { offset_x, baseline_y };
 				ps1.x += pxx[e];
 				ps1.y += pyy[e];
-				run.populate_draw_list(stroke_list, ps1.x, ps1.y, ts->color_stroke, vg_text_run_cx::RASTER_FIRST);
+				run->populate_draw_list(main_list, ps1.x, ps1.y, ts->color_stroke, vg_text_run_cx::RASTER_FIRST);
 			}
-			submit_draw_list(this, rvg, stroke_list);
+			if (ctxp)
+				submit_draw_list(*ctxp, rvg, &main_list);
+			else if (ocbp)
+				submit_draw_list(*ocbp, rvg, &main_list);
 		}
 	}
 
 	// ── 6. 主文本 ──
-	text_draw_list main_list;
+	main_list.clear();
 	main_list.has_color = true;
-	run.populate_draw_list(main_list, offset_x, baseline_y, ts->color, vg_text_run_cx::RASTER_FIRST);
-	submit_draw_list(this, rvg, main_list);
+	run->populate_draw_list(main_list, offset_x, baseline_y, ts->color, vg_text_run_cx::RASTER_FIRST);
+	if (ctxp)
+		submit_draw_list(*ctxp, rvg, &main_list);
+	else if (ocbp)
+		submit_draw_list(*ocbp, rvg, &main_list);
 
 	// ── 7. 恢复裁剪 ──
 	if (box && box->rc.z > 0 && box->rc.w > 0) {
-		this->reset_clip(rvg, 1);
+		ovg_reset_clip(rvg, 1);
 	}
 }
 
-void ovg_ctx_cx::add_text(rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box)
+void vg_add_text(ovg_canvas_cb* ocb, ovg_ctx_cb* ctx, rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box)
 {
-	if (!p || !p->text || !ts || !ts->family) return;
+	if (!p || !p->text || !ts || !ts->family || (!ocb && !ctx)) return;
 
+	auto ctxp = (ovg_ctx_cx*)ctx;
+	auto ocbp = (ovg_canvas_cx*)ocb;
 	int fontsize = ts->fontsize > 0 ? (int)ts->fontsize : 16;
 
 	// ── 1. shape ──
-	vg_text_run_cx run;
-	run.set_min_subpixel(ts->min_subpixel);
-	run.set_font_families(ts->family, fontsize);
-	run.set_text(p->text, p->text_len);
-	run.shape();  // 内部按 fallback 切 run，lookup 缓存
-
-	if (run.glyph_count() == 0) return;
-
-	// ── 2. 布局计算 ──
-	const auto& extents = run.extents();
-
-	// 对齐偏移
-	float box_w = box && box->rc.z > 0 ? (float)box->rc.z : extents.width;
-	float box_h = box && box->rc.w > 0 ? (float)box->rc.w : extents.height;
-
-	float align_x = ts->align.x;  // 0=左, 0.5=中, 1=右
-	float align_y = ts->align.y;
-
-	float offset_x = p->pos.x + (box_w - extents.width) * align_x;
-	float offset_y = p->pos.y + (box_h - extents.height) * align_y;
-
-	// 基线位置 = offset_y + ascender
-	hb_font_extents_t fextents = {};
-	// 用主字体取 ascender
-	hb_font_t* primary = ts->family->familys[0]->font;
-	hb_font_set_scale(primary, fontsize, fontsize);
-	hb_font_get_extents_for_direction(primary, HB_DIRECTION_LTR, &fextents);
-	float baseline_y = offset_y;// +(float)fextents.ascender;
-
-	// ── 3. 裁剪 ──
-	if (box && box->rc.z > 0 && box->rc.w > 0) {
-		this->clip_rect(rvg, box->rc.x, box->rc.y, box->rc.z, box->rc.w);
-	}
-
-	// ── 4. 阴影 ──
-	if (ts->color_shadow & 0xFF000000) {
-		text_draw_list shadow_list;
-		run.populate_draw_list(shadow_list, offset_x + ts->shadow_pos.x, baseline_y + ts->shadow_pos.y, ts->color_shadow, vg_text_run_cx::RASTER_FIRST);
-		submit_draw_list_ctx(this, rvg, shadow_list);
-	}
-
-	// ── 5. 描边 ──
-	if (ts->stroke != 0) {
-		text_draw_list stroke_list;
-		float stroke = abs(ts->stroke);
-		if (ts->stroke > 0) {
-			stroke *= 2;
-			run.populate_draw_list(stroke_list, offset_x, baseline_y, ts->color_stroke, vg_text_run_cx::VECTOR_ONLY);
-			submit_vector_glyphs_stroked_ctx(this, rvg, stroke_list, stroke);
-		}
-		else {
-			int pxx[4] = { -stroke, 0, stroke, 0 };
-			int pyy[4] = { 0, -stroke, 0, stroke };
-			for (int e = 0; e < 4; e++)
-			{
-				glm::vec2 ps1 = { offset_x, baseline_y };
-				ps1.x += pxx[e];
-				ps1.y += pyy[e];
-				run.populate_draw_list(stroke_list, ps1.x, ps1.y, ts->color_stroke, vg_text_run_cx::RASTER_FIRST);
-			}
-			submit_draw_list_ctx(this, rvg, stroke_list);
-		}
-	}
-
-	// ── 6. 主文本 ──
-	text_draw_list main_list;
-	main_list.has_color = true;
-	run.populate_draw_list(main_list, offset_x, baseline_y, ts->color, vg_text_run_cx::RASTER_FIRST);
-	submit_draw_list_ctx(this, rvg, main_list);
-
-	// ── 7. 恢复裁剪 ──
-	if (box && box->rc.z > 0 && box->rc.w > 0) {
-		this->reset_clip(rvg, 1);
-	}
+	vg_text_run_cx* run = ctxp ? &ctxp->text_run : 0;
+	if (ocbp)run = &ocbp->text_run;
+	if (!run)
+		return;
+	auto ptr = new_text_run(run, p, ts, box);
+	if (ptr && run->glyph_count() == 0) return;
+	vg_add_text_run(ocb, ctx, rvg, run);
 }
+#else
+
+void ovg_canvas_cx::submit_vector_glyphs_stroked(rvg_t* rvg, const text_draw_list* list, float stroke_width)
+{}
+void ovg_canvas_cx::submit_draw_list(rvg_t* rvg, const text_draw_list* list)
+{}
+
+void ovg_ctx_cx::submit_vector_glyphs_stroked(rvg_t* rvg, const text_draw_list* list, float stroke_width)
+{}
+void ovg_ctx_cx::submit_draw_list(rvg_t* rvg, const text_draw_list* list)
+{}
+void vg_add_text(ovg_canvas_cb* ocb, ovg_ctx_cb* ctx, rvg_t* rvg, text_st_t* p, text_style_t* ts, text_box_rt* box)
+{
+	if (!p || !p->text || !ts || !ts->family || (!ocb && !ctx)) return;
+
+}
+#endif

@@ -1047,6 +1047,7 @@ glyph_atlas_entry* font_cache_cx::get_cache_lookup_glyph(hb_font_t* font, uint32
 			entry.path_data = path_copy;
 			entry.path_size = temp_path.data.size();
 			entry.em_units = em;
+			entry.font = font;
 			auto [it2, ok] = glyph_cache.emplace(gk.v, entry);
 			ret = &it2->second;
 		}
@@ -1105,7 +1106,7 @@ glyph_atlas_entry* font_cache_cx::get_cache_lookup_glyph(hb_font_t* font, uint32
 		entry.path_data = ret->path_data;
 		entry.path_size = ret->path_size;
 		entry.em_units = em;
-
+		entry.font = font;
 		entry.has_color = font_ptr->font.pnt ? true : false;
 		auto [it2, ok] = gca->emplace(gk.v, entry);
 		ret = &it2->second;
@@ -1216,6 +1217,19 @@ void vg_utf8_to_utf32(const void* str8, size_t len, std::vector<uint32_t>* ot)
 }
 
 void vg_utf8_to_utf16(const void* str8, size_t len, std::vector<uint16_t>* ot)
+{
+	if (!str8 || !ot || len == 0) return;
+	uint8_t* p = (uint8_t*)str8;
+	const uint8_t* end = p + len;
+	ot->resize(ot->size() + len);  // 保守够用 
+	int n = ovg::utf8_to_utf16((const char*)str8, len, (UChar*)ot->data(), ot->size());
+	if (n > 0)
+	{
+		ot->resize(n);
+	}
+}
+
+void vg_utf8_to_utf16(const void* str8, size_t len, std::u16string* ot)
 {
 	if (!str8 || !ot || len == 0) return;
 	uint8_t* p = (uint8_t*)str8;
@@ -1365,7 +1379,7 @@ hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size
 		if (ot)
 		{
 			ot->x = gext0.x_bearing;
-			ot->y = gext0.y_bearing;
+			ot->y = gext0.y_bearing + margin;
 			ot->z = ext.width;
 			ot->w = ovg::align_up(abs(gext0.height) + margin * 2, 4);
 		}
@@ -2068,10 +2082,25 @@ vg_text_run_cx::~vg_text_run_cx() {
 
 }
 
-void vg_text_run_cx::set_min_subpixel(int sp)
+void vg_text_run_cx::clear()
 {
-	_min_subpixel = sp;
+	_ffs = nullptr;
+	_fontsize = 16;
+	_utf16.clear();
+	_extents = {};
+	_glyphs.clear();
+	_glyph_count = 0;
+	_cache = nullptr;
+	visual_runs.clear();
+	//_buf = 0;			// 可复用对象不用清除
+	//_bidi = 0;
+	//_line_brk = 0;
+	_layout = {};
+	_shaped.clear();
+	_indexs.clear();
+	drawable.clear();
 }
+
 
 void vg_text_run_cx::free_buffer() {
 	if (_buf) {
@@ -2093,24 +2122,18 @@ void vg_text_run_cx::free_buffer() {
 	}
 }
 
-void vg_text_run_cx::set_font(hb_font_t* font, int fontsize) {
-	_primary_font = font;
-	_fontsize = fontsize;
-
-	// 从 font user_data 取 cache 指针
-	if (font) {
-		_cache = (font_cache_cx*)hb_font_get_user_data(font, &g_font_cache_key);
-	}
-	else {
-		_cache = nullptr;
-	}
-}
 
 void vg_text_run_cx::set_font_families(const font_familys_t* ffs, int fontsize) {
 	_ffs = ffs;
 	_fontsize = fontsize;
 	if (ffs && ffs->count > 0 && ffs->familys[0]) {
-		set_font(ffs->familys[0]->font, _fontsize);
+		auto font = ffs->familys[0]->font;
+		if (font) {
+			_cache = (font_cache_cx*)hb_font_get_user_data(font, &g_font_cache_key);
+		}
+		else {
+			_cache = nullptr;
+		}
 	}
 }
 
@@ -2121,9 +2144,10 @@ void vg_text_run_cx::set_text(const void* str8, size_t len) {
 	vg_utf8_to_utf16(str8, len, &_utf16);
 }
 
-void vg_text_run_cx::set_layout_mode(const text_box_rt& box, float max_width, bool enable_bidi, uint8_t para_dir, const char* locale)
+void vg_text_run_cx::set_layout_mode(const text_box_rt* box, float max_width, bool enable_bidi, uint8_t para_dir, const char* locale)
 {
-	_layout._box = box;
+	if (box)
+		_box = *box;
 	if (locale && *locale)
 	{
 		_layout._locale = locale;
@@ -2142,54 +2166,8 @@ void vg_text_run_cx::clear_glyphs() {
 	_glyph_count = 0;
 	_extents = {};
 
-	_runs.clear();
 }
 
-void vg_text_run_cx::shape_old() {
-	clear_glyphs();
-	if (!_primary_font || _utf16.empty()) return;
-
-	uint16_t* p = _utf16.data();
-	uint16_t* end = p + _utf16.size();
-	size_t len = _utf16.size();
-
-	// ── 单字体简单路径（无 fallback）──
-	if (!_ffs || _ffs->count == 0) {
-		shape_run(0, _utf16.size(), _primary_font, _fontsize);
-		return;
-	}
-	// ── 多字体 fallback：按 script/coverage 切 run ──
-
-	while (p < end) {
-		// 解码当前字符
-		const uint16_t* run_start_ptr = p;
-		uint32_t cp = utf16_next(p, end);
-
-		const font_family_t* ff = resolve_family(_ffs, cp);
-		if (!ff) ff = _ffs->familys[0];
-
-		// 找同字体连续区间
-		uint16_t* run_end_ptr = p;
-		while (run_end_ptr < end) {
-			uint16_t* look = run_end_ptr;
-			uint32_t next_cp = utf16_next(look, end);
-			const font_family_t* next_ff = resolve_family(_ffs, next_cp);
-			if (!next_ff) next_ff = _ffs->familys[0];
-			if (next_ff != ff) break;
-			run_end_ptr = look;
-		}
-
-		// 转回索引给 shape_run
-		size_t u16_start = run_start_ptr - _utf16.data();
-		size_t u16_end = run_end_ptr - _utf16.data();
-
-		int scale = _fontsize > 0 ? _fontsize : ff->upem;
-		shape_run(u16_start, u16_end, ff->font, scale);
-
-		p = run_end_ptr;
-	}
-
-}
 // 找到 y == 1 的连续段起点/终点执行置反
 void reverse1(std::vector<glm::ivec2>& v)
 {
@@ -2209,11 +2187,22 @@ void reverse1(std::vector<glm::ivec2>& v)
 		std::reverse(v.begin() + start, v.begin() + end);
 	}
 }
+bool find_br(const char16_t* p, int n)
+{
+	if (!p || !p[0] || n < 1)return false;
+	for (int i = 0; i < n; i++) {
+		if (p[i] == '\n')
+		{
+			return true;
+		}
+	}
+	return false;
+}
 void vg_text_run_cx::shape() {
 	clear_glyphs();
-	if (!_primary_font || _utf16.empty()) return;
+	if (!_ffs || _ffs->count < 1 || _utf16.empty()) return;
 
-	uint16_t* p = _utf16.data();
+	uint16_t* p = (uint16_t*)_utf16.data();
 	uint16_t* end = p + _utf16.size();
 	size_t len = _utf16.size();
 	auto icu = get_icu(U_ICU_VERSION_MAJOR_NUM);
@@ -2255,12 +2244,16 @@ void vg_text_run_cx::shape() {
 		visual_runs.push_back(glm::uvec3(0, len, (UBiDiDirection)_layout.para_dir));
 	}
 
-	std::vector<int32_t> breaks;
-	if (_layout.max_width > 0)
+	std::vector<int> breaks;
+	if (_box.word_wrap >= 0)
 	{
+		if (_line_brk && current_word_wrap != _box.word_wrap) {
+			icu->_ubrk_close(_line_brk); _line_brk = nullptr;
+		}
 		if (!_line_brk) {
+			current_word_wrap = _box.word_wrap;
 			_line_brk = icu->_ubrk_open(
-				(UBreakIteratorType)_layout._box.word_wrap,
+				(UBreakIteratorType)_box.word_wrap,
 				_layout._locale.size() ? _layout._locale.c_str() : nullptr,
 				(UChar*)p, len, &err);
 		}
@@ -2276,11 +2269,16 @@ void vg_text_run_cx::shape() {
 		}
 		else {
 			// 收集断点（UTF-16 索引）
-			breaks.push_back(0);
+			breaks.push_back({});
 			int32_t pos = icu->_ubrk_first(_line_brk);
 			while (pos != UBRK_DONE) {
 				if (pos > 0 && pos < (int32_t)len)
+				{
+					auto rs = icu->_ubrk_getRuleStatus(_line_brk);
+					bool br = rs >= UBRK_LINE_HARD;
+
 					breaks.push_back(pos);
+				}
 				pos = icu->_ubrk_next(_line_brk);
 			}
 			breaks.push_back((int32_t)len);
@@ -2303,8 +2301,8 @@ void vg_text_run_cx::shape() {
 			UBiDiDirection dir = (UBiDiDirection)run.z;
 			// 找和这个 run 重叠的断点区间
 			for (size_t k = 0; k < breaks.size() - 1; ++k) {
-				int32_t b0 = breaks[k];
-				int32_t b1 = breaks[k + 1];
+				auto b0 = breaks[k];
+				auto b1 = breaks[k + 1];
 				int32_t seg_start = std::max(b0, run_start);
 				int32_t seg_end = std::min(b1, run_end);
 				if (seg_start < seg_end) {
@@ -2323,9 +2321,10 @@ void vg_text_run_cx::shape() {
 		UBiDiDirection dir;
 		hb_font_t* font;
 		int            fontsize;
+		char16_t* str;
 	};
 	std::vector<subseg_t> subsegs;
-	uint16_t* base = _utf16.data();
+	uint16_t* base = (uint16_t*)_utf16.data();
 
 	_indexs.clear();
 	_indexs.reserve(512);
@@ -2355,8 +2354,9 @@ void vg_text_run_cx::shape() {
 				if (nff->font != font) break;
 				sub_end = nlook;
 			}
-
-			subsegs.push_back({ (int32_t)(sub_start - base), (int32_t)(sub_end - sub_start), (UBiDiDirection)seg.z, font, scale });
+			auto first = (sub_start - base);
+			char16_t* str = _utf16.data() + first;
+			subsegs.push_back({ (int32_t)first, (int32_t)(sub_end - sub_start), (UBiDiDirection)seg.z, font, scale,str });
 
 			_indexs.push_back({ cidx++ ,seg.z });
 			p = sub_end;
@@ -2384,6 +2384,11 @@ void vg_text_run_cx::shape() {
 			vmsize.push_back(out.width_px);
 			tdir = out.dir;
 		}
+		char16_t* ch = (char16_t*)base + ss.start;
+		auto yb = find_br(ch, ss.len);
+		if (yb)
+			yb = yb;
+		out.new_line = yb;
 		for (const auto& g : out.glyphs) {
 			_glyphs.push_back(g);
 		}
@@ -2400,14 +2405,14 @@ void vg_text_run_cx::shape_segment(int u16_start, int u16_len, int  dir0, hb_fon
 	out.width_px = 0.0f;
 	if (!font || u16_len <= 0) return;
 	UBiDiDirection dir = (UBiDiDirection)dir0;
-	if (_cache) _cache->min_subpixel = _min_subpixel;
+	if (_cache) _cache->min_subpixel = _st.min_subpixel;
 	hb_font_set_scale(font, fontsize, fontsize);
 
 	auto buf = _buf;
 	hb_buffer_reset(buf);
 
 	hb_buffer_set_direction(buf, dir == UBIDI_RTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
-	hb_buffer_add_utf16(buf, _utf16.data() + u16_start, u16_len, 0, -1);
+	hb_buffer_add_utf16(buf, (uint16_t*)_utf16.data() + u16_start, u16_len, 0, -1);
 	hb_buffer_guess_segment_properties(buf);
 	hb_feature_t features[] = { {HB_TAG('k','e','r','n'), 0, 0, ~0u} };
 	hb_shape(font, buf, features, 1);
@@ -2434,96 +2439,376 @@ void vg_text_run_cx::shape_segment(int u16_start, int u16_len, int  dir0, hb_fon
 	}
 	out.width_px = x;
 }
-void vg_text_run_cx::shape_run(size_t run_start, size_t run_end, hb_font_t* font, int fontsize)
-{
-	if (!font || run_start >= run_end) return;
-	if (_cache) {
-		_cache->min_subpixel = _min_subpixel;
-	}
-	auto buf = _buf;
-	hb_font_set_scale(font, fontsize, fontsize);
-	hb_buffer_reset(buf);
-	hb_buffer_add_utf16(buf, _utf16.data() + run_start, run_end - run_start, 0, -1);
-	hb_buffer_guess_segment_properties(buf);
-	// 关闭 kerning（UI 场景常见需求）
-	hb_feature_t features[] = { {HB_TAG('k','e','r','n'), 0, 0, ~0u} };
-	hb_shape(font, buf, features, 1);
-	unsigned int glyph_count = 0;
-	hb_glyph_info_t* info = hb_buffer_get_glyph_infos(buf, &glyph_count);
-	hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(buf, nullptr);
-	// 记录 run
-	_runs.push_back({ font, fontsize, (uint32_t)run_start, (uint32_t)run_end });
-	// 字体度量
-	hb_font_extents_t fextents = {};
-	hb_font_get_extents_for_direction(font, HB_DIRECTION_LTR, &fextents);
-	// 填充 glyph 列表
-	float x = 0;
-	for (unsigned int i = 0; i < glyph_count; ++i) {
-		vg_glyph_info_t g;
-		g.glyph_id = info[i].codepoint;
-		g.x_offset = (float)pos[i].x_offset;
-		g.y_offset = (float)pos[i].y_offset;
-		g.x_advance = (float)pos[i].x_advance;
-		g.y_advance = (float)pos[i].y_advance;
-		// 查缓存
-		if (_cache) {
-			g.cache_entry = _cache->get_cache_lookup_glyph(font, info[i].codepoint, fontsize);
-		}
-		else {
-			g.cache_entry = nullptr;
-		}
-		_glyphs.push_back(g);
-		// 累加 extents
-		_extents.x_advance += g.x_advance;
-		_extents.y_advance += g.y_advance;
-	}
-	_glyph_count = (uint32_t)_glyphs.size();
-	// 行高
-	_extents.height = (float)(fextents.ascender - fextents.descender + fextents.line_gap);
-	// bearing（第一个 glyph）
-	if (!_glyphs.empty()) {
-		_extents.x_bearing = -_glyphs[0].x_offset;
-		_extents.y_bearing = -_glyphs[0].y_offset;
-	}
-	// width = x_advance 总和
-	_extents.width = _extents.x_advance;
-}
 
 void vg_text_run_cx::populate_draw_list(text_draw_list& list, float origin_x, float origin_y, uint32_t color, render_mode mode)
 {
 	float pen_x = origin_x;
 	float pen_y = origin_y;
 	list.fontsize = _fontsize;
-	for (const auto& g : _glyphs) {
-		if (!g.cache_entry) { pen_x += g.x_advance; continue; }
+	for (auto& seg : _shaped) {
+		for (const auto& g : seg.glyphs) {
+			if (!g.cache_entry || !g.glyph_id) { pen_x += g.x_advance; continue; }
 
-		auto* e = g.cache_entry;
-		float x = pen_x + g.x_offset;
-		float y = pen_y + g.y_offset;
-		if (mode == VECTOR_ONLY || !e->atlas_img) {
-			if (e->path_data) {
-				list.push_vector(e, x, y, color);
+			auto* e = g.cache_entry;
+			float x = pen_x + g.x_offset;
+			float y = pen_y + g.y_offset;
+			if (mode == VECTOR_ONLY || !e->atlas_img) {
+				if (e->path_data) {
+					list.push_vector(e, x, y, color);
+				}
 			}
+			else if (e->atlas_img) {
+				float w = (float)e->uv_rect.z;
+				float h = (float)e->uv_rect.w;
+				float atlas_w = (float)e->atlas_img->width;
+				float atlas_h = (float)e->atlas_img->height;
+				glm::vec4 uv(
+					(float)e->uv_rect.x / atlas_w,
+					(float)e->uv_rect.y / atlas_h,
+					(float)(e->uv_rect.x + e->uv_rect.z) / atlas_w,
+					(float)(e->uv_rect.y + e->uv_rect.w) / atlas_h
+				);
+				list.push_raster(e, x, y, w, h, uv, color);
+			}
+			pen_x += g.x_advance;
 		}
-		else if (e->atlas_img) {
-			float w = (float)e->uv_rect.z;
-			float h = (float)e->uv_rect.w;
-			float atlas_w = (float)e->atlas_img->width;
-			float atlas_h = (float)e->atlas_img->height;
-			glm::vec4 uv(
-				(float)e->uv_rect.x / atlas_w,
-				(float)e->uv_rect.y / atlas_h,
-				(float)(e->uv_rect.x + e->uv_rect.z) / atlas_w,
-				(float)(e->uv_rect.y + e->uv_rect.w) / atlas_h
-			);
-			list.push_raster(e, x, y, w, h, uv, color);
+		if (seg.new_line)
+		{
+			pen_y += _st.lineheight; pen_x = origin_x;
 		}
-		pen_x += g.x_advance;
 	}
 	list.extents = _extents;
 }
 
-#if 1  
+vg_text_run_cx* new_text_run(vg_text_run_cx* ptr, text_st_t* p, text_style_t* ts, text_box_rt* box)
+{
+	if (!p || !p->text || !ts || !ts->family) return 0;
+
+	int fontsize = ts->fontsize > 0 ? (int)ts->fontsize : 16;
+	// ── 1. shape ──
+	vg_text_run_cx* run = ptr ? ptr : new vg_text_run_cx();
+	if (!run)
+		return 0;
+	run->clear();
+	run->_st = *ts;
+	if (box)
+		run->_box = *box;
+	run->_tt = *p;
+	run->set_font_families(ts->family, fontsize);
+	int lh = run->_st.lineheight;
+	if (!lh)
+	{
+		hb_font_extents_t extents;
+		for (int i = 0; i < ts->family->count; i++) {
+			auto font = ts->family->familys[i]->font;
+			hb_font_set_scale(font, fontsize, fontsize);
+			hb_font_get_extents_for_direction(font, HB_DIRECTION_LTR, &extents);
+			lh = std::max(lh, extents.ascender - extents.descender + extents.line_gap);
+			break;
+		}
+		run->_st.lineheight = lh;
+	}
+	run->set_text(p->text, p->text_len);
+	run->shape();  // 内部按 fallback 切 run，lookup 缓存
+
+	return run;
+}
+void free_text_run(vg_text_run_cx* ptr)
+{
+	if (ptr)
+	{
+		delete ptr;
+	}
+}
+
+#if 1
+
+text_run_dst_cx::text_run_dst_cx()
+{
+	_buf = hb_buffer_create();
+}
+
+text_run_dst_cx::~text_run_dst_cx()
+{
+	if (_buf) {
+		hb_buffer_destroy(_buf);
+		_buf = nullptr;
+	}
+	auto icu = get_icu(U_ICU_VERSION_MAJOR_NUM);
+	if (icu)
+	{
+		if (_bidi) {
+			icu->_ubidi_close(_bidi);
+			_bidi = nullptr;
+		}
+		if (_line_brk)
+		{
+			icu->_ubrk_close(_line_brk);
+			_line_brk = nullptr;
+		}
+	}
+}
+void text_run_dst_cx::set_layout_mode(const text_style_t* ts, const text_box_rt* box, bool enable_bidi, uint8_t para_dir, const char* locale)
+{
+	if (ts)_st = *ts;
+	if (box)_box = *box;
+	_layout.enable_bidi = enable_bidi;
+	if (locale && *locale)
+	{
+		_layout._locale = locale;
+	}
+	else {
+		_layout._locale.clear();
+	}
+	_layout.para_dir = para_dir;
+
+	if (_st.family && _st.family->count > 0 && _st.family->familys[0]) {
+		auto font = _st.family->familys[0]->font;
+		if (font) {
+			_cache = (font_cache_cx*)hb_font_get_user_data(font, &g_font_cache_key);
+		}
+		else {
+			_cache = nullptr;
+		}
+	}
+}
+void text_run_dst_cx::text_shape_segment(int u16_start, int u16_len, int  dir0, hb_font_t* font, int fontsize, shaped_segment_t& out)
+{
+	out.dir = dir0;
+	out.glyphs.clear();
+	out.width_px = 0.0f;
+	if (!font || u16_len <= 0) return;
+	UBiDiDirection dir = (UBiDiDirection)dir0;
+	if (_cache) _cache->min_subpixel = _st.min_subpixel;
+	hb_font_set_scale(font, fontsize, fontsize);
+
+	auto buf = _buf;
+	hb_buffer_reset(buf);
+
+	hb_buffer_set_direction(buf, dir == UBIDI_RTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+	hb_buffer_add_utf16(buf, (uint16_t*)_utf16.data() + u16_start, u16_len, 0, -1);
+	hb_buffer_guess_segment_properties(buf);
+	hb_feature_t features[] = { {HB_TAG('k','e','r','n'), 0, 0, ~0u} };
+	hb_shape(font, buf, features, 1);
+
+	unsigned int count = 0;
+	hb_glyph_info_t* info = hb_buffer_get_glyph_infos(buf, &count);
+	hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(buf, nullptr);
+
+	out.glyphs.reserve(count);
+	const float scale = 1.0f;
+	float x = 0.0f;
+	hb_position_t ix, iy;
+	for (unsigned int i = 0; i < count; ++i) {
+		vg_glyph_info_t g;
+		g.glyph_id = info[i].codepoint;
+		g.x_offset = (float)pos[i].x_offset * scale;
+		g.y_offset = (float)-pos[i].y_offset * scale;
+		g.x_advance = (float)pos[i].x_advance * scale;
+		g.y_advance = (float)pos[i].y_advance * scale;
+		hb_font_get_glyph_advance_for_direction(font, g.glyph_id, dir ? HB_DIRECTION_RTL : HB_DIRECTION_LTR, &ix, &iy);
+		g.cache_entry = _cache ? _cache->get_cache_lookup_glyph(font, info[i].codepoint, fontsize) : nullptr;
+		out.glyphs.push_back(g);
+		x += g.x_advance;
+	}
+	out.width_px = x;
+}
+
+void text_run_dst_cx::text_shape(text_st_t* pt)
+{
+	_utf16.clear();
+	if (!pt->text || pt->text_len == 0) return;
+	if (pt->text_len == (size_t)-1) pt->text_len = strlen((const char*)pt->text);
+	vg_utf8_to_utf16(pt->text, pt->text_len, &_utf16);
+	auto ts = &_st;
+	if (!ts->family || ts->family->count < 1 || _utf16.empty()) return;
+
+	uint16_t* p = (uint16_t*)_utf16.data();
+	uint16_t* end = p + _utf16.size();
+	size_t len = _utf16.size();
+	auto icu = get_icu(U_ICU_VERSION_MAJOR_NUM);
+	UErrorCode err = U_ZERO_ERROR;
+	visual_runs.clear();
+	std::vector<int> visualMap;
+	if (_layout.enable_bidi)
+	{
+		UErrorCode st = {};
+		if (!icu)return;
+		if (!_bidi)
+		{
+			_bidi = icu->_ubidi_open();
+		}
+		icu->_ubidi_setPara(_bidi, (UChar*)p, len, _layout.para_dir ? UBIDI_DEFAULT_RTL : UBIDI_DEFAULT_LTR, NULL, &st);
+		if (U_FAILURE(st)) {
+			fprintf(stderr, "ubidi_setPara failed: %s\n", u_errorName(st));
+			icu->_ubidi_close(_bidi);
+			_bidi = nullptr;
+			return;
+		}
+		int32_t run_count = icu->_ubidi_countRuns(_bidi, &st);
+		if (U_FAILURE(st)) {
+			icu->_ubidi_close(_bidi);
+			_bidi = nullptr;
+			return;
+		}
+		visual_runs.reserve(len);
+		for (int32_t r = 0; r < run_count; r++) {
+			int32_t run_start, run_len;
+			UBiDiDirection run_dir = icu->_ubidi_getVisualRun(_bidi, r, &run_start, &run_len);
+			visual_runs.push_back(glm::uvec3(run_start, run_len, run_dir));
+		}
+		int length = icu->_ubidi_getLength(_bidi);
+		visualMap.resize(length);
+		icu->_ubidi_getVisualMap(_bidi, visualMap.data(), &err);
+	}
+	else {
+		visual_runs.push_back(glm::uvec3(0, len, (UBiDiDirection)_layout.para_dir));
+	}
+
+	std::vector<int> breaks;
+	if (_layout.max_width > 0)
+	{
+		if (_line_brk && current_word_wrap != _box.word_wrap) {
+			icu->_ubrk_close(_line_brk); _line_brk = nullptr;
+		}
+		if (!_line_brk) {
+			current_word_wrap = _box.word_wrap;
+			_line_brk = icu->_ubrk_open(
+				(UBreakIteratorType)_box.word_wrap,
+				_layout._locale.size() ? _layout._locale.c_str() : nullptr,
+				(UChar*)p, len, &err);
+		}
+		else {
+			// 复用：换文本
+			err = U_ZERO_ERROR;
+			icu->_ubrk_setText(_line_brk, (UChar*)p, len, &err);
+		}
+
+		if (U_FAILURE(err)) {
+			//fprintf(stderr, "ubrk_open/setText failed: %s\n", u_errorName(err));
+			if (_line_brk) { icu->_ubrk_close(_line_brk); _line_brk = nullptr; }
+		}
+		else {
+			// 收集断点（UTF-16 索引）
+			breaks.push_back({});
+			int32_t pos = icu->_ubrk_first(_line_brk);
+			while (pos != UBRK_DONE) {
+				if (pos > 0 && pos < (int32_t)len)
+				{
+					auto rs = icu->_ubrk_getRuleStatus(_line_brk);
+					bool br = rs >= UBRK_LINE_HARD;
+					breaks.push_back(pos);
+				}
+				pos = icu->_ubrk_next(_line_brk);
+			}
+			breaks.push_back((int32_t)len);
+		}
+	}
+
+	std::vector<glm::uvec3> segments;
+	if (breaks.empty()) {
+		// 无断行：直接用 visual runs
+		segments = visual_runs;
+	}
+	else {
+		// 有断行：每个 visual run 按断点切
+		for (const auto& run : visual_runs) {
+			int32_t run_start = (int32_t)run.x;
+			int32_t run_end = run_start + (int32_t)run.y;
+			UBiDiDirection dir = (UBiDiDirection)run.z;
+			// 找和这个 run 重叠的断点区间
+			for (size_t k = 0; k < breaks.size() - 1; ++k) {
+				auto b0 = breaks[k];
+				auto b1 = breaks[k + 1];
+				int32_t seg_start = std::max(b0, run_start);
+				int32_t seg_end = std::min(b1, run_end);
+				if (seg_start < seg_end) {
+					segments.push_back(glm::uvec3(
+						(uint32_t)seg_start,
+						(uint32_t)(seg_end - seg_start),
+						(uint32_t)dir));
+				}
+			}
+		}
+	}
+
+	struct subseg_t {
+		int32_t        start;
+		int32_t        len;
+		UBiDiDirection dir;
+		hb_font_t* font;
+		int            fontsize;
+	};
+	std::vector<subseg_t> subsegs;
+	uint16_t* base = (uint16_t*)_utf16.data();
+
+	_indexs.clear();
+	_indexs.reserve(512);
+	int cidx = 0;
+	for (const auto& seg : segments) {
+		uint16_t* p = base + seg.x;
+		uint16_t* end = p + seg.y;
+
+		while (p < end) {
+			const uint16_t* sub_start = p;
+
+			// 解码第一个 codepoint → 决定字体
+			uint16_t* look = p;
+			uint32_t cp = utf16_next(look, end);
+			const font_family_t* ff = resolve_family(ts->family, cp);
+			if (!ff) ff = ts->family->familys[0];
+			hb_font_t* font = ff->font;
+			int scale = ts->fontsize > 0 ? ts->fontsize : ff->upem;
+
+			// 找同字体连续区间
+			uint16_t* sub_end = look;
+			while (sub_end < end) {
+				uint16_t* nlook = sub_end;
+				uint32_t ncp = utf16_next(nlook, end);
+				const font_family_t* nff = resolve_family(ts->family, ncp);
+				if (!nff) nff = ts->family->familys[0];
+				if (nff->font != font) break;
+				sub_end = nlook;
+			}
+
+			subsegs.push_back({ (int32_t)(sub_start - base), (int32_t)(sub_end - sub_start), (UBiDiDirection)seg.z, font, scale });
+
+			_indexs.push_back({ cidx++ ,seg.z });
+			p = sub_end;
+		}
+	}
+	reverse1(_indexs);
+	// ═══════════════════════════════════════════════════════════
+	//  Step 5: Pass 1 — shape 每个 subsegment
+	// ═══════════════════════════════════════════════════════════
+	_shaped.clear();
+	_shaped.reserve(subsegs.size());
+	_glyphs.clear();
+	std::vector<int> vmsize;
+	int tdir = 0;
+	vmsize.push_back(0);
+	for (const auto& it : _indexs)
+	{
+		auto& ss = subsegs[it.x];
+		shaped_segment_t out;
+		text_shape_segment(ss.start, ss.len, ss.dir, ss.font, ss.fontsize, out);
+		if (tdir == out.dir) {
+			vmsize.back() += out.width_px;
+		}
+		else {
+			vmsize.push_back(out.width_px);
+			tdir = out.dir;
+		}
+		char16_t* ch = (char16_t*)base + ss.start;
+		auto yb = find_br(ch, ss.len);
+		out.new_line = yb;
+		for (const auto& g : out.glyphs) {
+			_glyphs.push_back(g);
+		}
+		_shaped.push_back(std::move(out));
+	}
 
 
+}
 #endif // 1
+
