@@ -651,7 +651,7 @@ void draw_test3d(vg_fbo_t* fbo, ovg_ctx_cb* cb, rvg_t* vg) {
 
 int main()
 {
-	LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
+	//LoadLibraryA(R"(E:\Program Files\RenderDoc_1.37_64\renderdoc.dll)");
 	cout << "Hello ovg." << endl;
 	glm::ivec2 surfsize = { 1024,800 };
 
@@ -694,9 +694,8 @@ int main()
 	//run.shape();
 
 	// 渲染 
-
-
 	bool testvg = 0;
+	SDL_ShowWindow(g->window);
 	while (running) {
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev)) {
@@ -762,7 +761,7 @@ int main()
 			//	printf("draw build ms: %d\n", ms);
 			ovg_draw_data_t dlist[] = { get_draw_list(vg), get_draw_list(canvg) };
 			rtc.begin();
-			ovg_draw_data(ctx, &fbo, dlist, sizeof(dlist) / sizeof(ovg_draw_data_t));// 提交渲染 
+			ovg_render_frame(ctx, &fbo, dlist, sizeof(dlist) / sizeof(ovg_draw_data_t));// 提交渲染 
 			ms = rtc.end();
 			//if (ms > 0)
 			//	printf("submit draw ms: %d\n", ms);

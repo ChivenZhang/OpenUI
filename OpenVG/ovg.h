@@ -655,7 +655,7 @@ struct ovg_canvas_cb {
 
 };
 
-// 命令模式，没有destroy函数的对象都不需要手动释放
+// 快捷对象命令模式，没有destroy函数的对象都不需要手动释放，rvg_t可创建多个做缓存
 struct ovg_ctx_cb {
 	mem_resource_t* ac;	// 内存分配器，由new_ctx_cb自己创建 	
 	// 渲染操作，rvg_t可以多次执行fill或stroke/clip

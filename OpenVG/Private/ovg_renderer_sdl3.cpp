@@ -5,8 +5,8 @@
 
 
 
-
-2026/8/31 后端支持普通三角形渲染
+2026/9/9	支持矢量图/位图/文本混合渲染
+2026/8/31	后端支持普通三角形渲染
 
 
 shader规则：
@@ -2195,20 +2195,28 @@ SDL_GPUCommandBuffer* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo) {
 	if (!cmd)return 0;
 	uint32_t sw = 0, sh = 0;
 	SDL_GPUTexture* swapchain = NULL;
-	if (fbo->window) {
-		bool aq = SDL_AcquireGPUSwapchainTexture(cmd, fbo->window, &swapchain, &sw, &sh);
-		fbo->display_size = { sw,sh };
-		if (!aq || !sw || !sh) {
-			SDL_CancelGPUCommandBuffer(cmd);
-			return 0;
-		}
-		if (fbo->width != sw || fbo->height != sh)
+	for (;;) {
+		if (fbo->window)
 		{
-			SDL_WaitForGPUSwapchain(ctx->device->gpuDevice, fbo->window);
-			free_vgfbo_sdl3(fbo);
-			*fbo = new_vgfbo_sdl3(ctx, sw, sh, fbo->window);
+			bool aq = SDL_AcquireGPUSwapchainTexture(cmd, fbo->window, &swapchain, &sw, &sh);
 			fbo->display_size = { sw,sh };
+			if (!aq || !sw || !sh) {
+				SDL_CancelGPUCommandBuffer(cmd);
+				return 0;
+			}
+			if (fbo->width != sw || fbo->height != sh)
+			{
+				SDL_WaitForGPUSwapchain(ctx->device->gpuDevice, fbo->window);
+				auto newfbo = new_vgfbo_sdl3(ctx, sw, sh, fbo->window);
+				free_vgfbo_sdl3(fbo);
+				*fbo = newfbo;
+				fbo->display_size = { sw,sh };
+			}
+			else {
+				break;
+			}
 		}
+		else { break; }
 	}
 
 	fbo->swapchain = swapchain;
@@ -2601,7 +2609,7 @@ int build_devres(ovg_ctx_t* ctx, SDL_GPUCommandBuffer* cmd, ovg_draw_data_t* kd)
 	upload_result_t hr = upload_pixels_batched(ctx->device->gpuDevice, cmd, uploads.data(), uploads.size());
 	return errornum;
 }
-void ovg_draw_data(ovg_ctx_t* ctx, vg_fbo_t* fbo, ovg_draw_data_t* data, size_t count)
+void ovg_render_frame(ovg_ctx_t* ctx, vg_fbo_t* fbo, ovg_draw_data_t* data, size_t count)
 {
 	if (!ctx || !fbo || !(fbo->window || fbo->colorTex) || !data || !count)return;
 	if (!fbo->cmd)return;
@@ -2674,9 +2682,10 @@ bool vg_sdl3_init(ovg_sdl3_ctx* g, int width, int height, bool is_vulkan) {
 
 	g->window = SDL_CreateWindow("SDL3 GPU Vector Graphics",
 		width, height,
-		SDL_WINDOW_RESIZABLE |
+		SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN |
 		SDL_WINDOW_HIGH_PIXEL_DENSITY);
 	if (!g->window) return false;
+
 	SDL_PropertiesID props = SDL_CreateProperties();
 	if (is_vulkan)
 	{
@@ -2737,7 +2746,6 @@ bool vg_sdl3_init(ovg_sdl3_ctx* g, int width, int height, bool is_vulkan) {
 		return false;
 	}
 	SDL_ClaimWindowForGPUDevice(g->device, g->window);
-
 	return true;
 }
 
