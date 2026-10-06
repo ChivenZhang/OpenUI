@@ -8,7 +8,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(OPENUI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "OpenUI Source Path")
 set(OPENUI_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External CACHE STRING "OpenUI External Path")
-option(OPENUI_ENABLE_SAMPLE "Enable Sample Compile" OFF)
+option(OPENUI_ENABLE_EXAMPLE "Enable Example Compile" OFF)
 
 if (MSVC)
     add_compile_options(/utf-8)
@@ -28,7 +28,7 @@ add_subdirectory(OpenUI)
 add_subdirectory(External/OpenRT)
 add_subdirectory(Vector/SDLGPU)
 
-if (OPENUI_ENABLE_SAMPLE)
+if (OPENUI_ENABLE_EXAMPLE)
 
     find_program(SLANGC_EXECUTABLE slangc)
     find_program(GLSLANG_VALIDATOR glslangValidator)
@@ -99,5 +99,5 @@ if (OPENUI_ENABLE_SAMPLE)
             DEPENDS ${SHADER_OUTPUTS}
     )
 
-    add_subdirectory(Sample)
+    add_subdirectory(Example)
 endif ()
