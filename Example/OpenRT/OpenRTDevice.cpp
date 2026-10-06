@@ -13,7 +13,9 @@
 #include "OpenRTRender.h"
 #include "OpenRTPainter.h"
 #include "../SDL3InputEnum.h"
-#define NANOVG_GL_IMPLEMENTATION
+#define NANOVG_GL3_IMPLEMENTATION
+#include <GL/glew.h>
+#include <nanovg.h>
 #include <nanovg_rt.h>
 #include "demo.h"
 #include "perf.h"
@@ -276,7 +278,6 @@ bool OpenRTDevice::update()
 	glViewport(0, 0, width, height);
 	glClearColor(0.3f, 0.3f, 0.32f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-	glEnable(GL_BLEND);
 
 	nvgBeginFrame(vg, width, height, width * 1.0f / height);
 	renderDemo(vg, 0, 0, width, height, ::clock() * 0.001f, false, &data);
