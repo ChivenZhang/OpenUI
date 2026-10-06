@@ -1,7 +1,7 @@
 #include "SDL3InputEnum.h"
 #include <SDL3/SDL.h>
 
-UIInputEnum SDL3InputEnum::GetMouseEnum(int key)
+inline UIInputEnum SDL3InputEnum::GetMouseEnum(int key)
 {
 	switch (key)
 	{
@@ -38,7 +38,7 @@ UIInputEnum SDL3InputEnum::GetMouseEnum(int key)
 	}
 }
 
-UIInputEnum SDL3InputEnum::GetKeyboardEnum(int key)
+inline UIInputEnum SDL3InputEnum::GetKeyboardEnum(int key)
 {
 	switch (key)
 	{
@@ -167,7 +167,7 @@ UIInputEnum SDL3InputEnum::GetKeyboardEnum(int key)
 	}
 }
 
-UIInputEnum SDL3InputEnum::GetGamepadEnum(int key)
+inline UIInputEnum SDL3InputEnum::GetGamepadEnum(int key)
 {
 	switch (key)
 	{
@@ -199,7 +199,7 @@ UIInputEnum SDL3InputEnum::GetGamepadEnum(int key)
 	}
 }
 
-UIInputEnums SDL3InputEnum::GetModifierEnum(int key)
+inline UIInputEnums SDL3InputEnum::GetModifierEnum(int key)
 {
 	UIInputEnums result = 0;
 	if (key & SDL_KMOD_LALT) result |= UIInputEnum::KEY_MOD_ALT;
