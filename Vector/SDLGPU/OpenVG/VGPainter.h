@@ -18,7 +18,6 @@ class OPENVG_API VGPainter
 public:
 	VGPainter();
 	~VGPainter();
-
 	void clip(VGElementRaw element);
 	void fill(VGElementRaw element);
 	void stroke(VGElementRaw element);

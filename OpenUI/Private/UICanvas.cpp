@@ -300,21 +300,21 @@ bool UICanvas::layoutWidget(UIRect client)
 		switch (widget->getFixedPosX().Type)
 		{
 		default:
-		case UI_CSS_LEFT_AUTO: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, UINAN);
+		case UI_CSS_LEFT_AUTO: YGNodeStyleSetPosition(node, YGEdgeLeft, UINAN);
 			break;
-		case UI_CSS_LEFT_LENGTH: YGNodeStyleSetPosition(node, YGEdge::YGEdgeLeft, widget->getFixedPosX().Value);
+		case UI_CSS_LEFT_LENGTH: YGNodeStyleSetPosition(node, YGEdgeLeft, widget->getFixedPosX().Value);
 			break;
-		case UI_CSS_LEFT_PERCENTAGE: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeLeft, widget->getFixedPosX().Value);
+		case UI_CSS_LEFT_PERCENTAGE: YGNodeStyleSetPositionPercent(node, YGEdgeLeft, widget->getFixedPosX().Value);
 			break;
 		}
 		switch (widget->getFixedPosY().Type)
 		{
 		default:
-		case UI_CSS_TOP_AUTO: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, UINAN);
+		case UI_CSS_TOP_AUTO: YGNodeStyleSetPosition(node, YGEdgeTop, UINAN);
 			break;
-		case UI_CSS_TOP_LENGTH: YGNodeStyleSetPosition(node, YGEdge::YGEdgeTop, widget->getFixedPosY().Value);
+		case UI_CSS_TOP_LENGTH: YGNodeStyleSetPosition(node, YGEdgeTop, widget->getFixedPosY().Value);
 			break;
-		case UI_CSS_TOP_PERCENTAGE: YGNodeStyleSetPositionPercent(node, YGEdge::YGEdgeTop, widget->getFixedPosY().Value);
+		case UI_CSS_TOP_PERCENTAGE: YGNodeStyleSetPositionPercent(node, YGEdgeTop, widget->getFixedPosY().Value);
 			break;
 		}
 		switch (widget->getFixedWidth().Type)
@@ -544,9 +544,9 @@ bool UICanvas::layoutWidget(UIRect client)
 		default:
 		case UI_CSS_JUSTIFY_CONTENT_FLEX_START: YGNodeStyleSetJustifyContent(node, YGJustifyFlexStart);
 			break;
-		case UI_CSS_JUSTIFY_CONTENT_CENTER: YGNodeStyleSetJustifyContent(node, YGJustifyCenter);
-			break;
 		case UI_CSS_JUSTIFY_CONTENT_FLEX_END: YGNodeStyleSetJustifyContent(node, YGJustifyFlexEnd);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_CENTER: YGNodeStyleSetJustifyContent(node, YGJustifyCenter);
 			break;
 		case UI_CSS_JUSTIFY_CONTENT_SPACE_BETWEEN: YGNodeStyleSetJustifyContent(node, YGJustifySpaceBetween);
 			break;
@@ -559,11 +559,11 @@ bool UICanvas::layoutWidget(UIRect client)
 		{
 		default: YGNodeStyleSetFlexBasis(node, UINAN);
 			break;
+		case UI_CSS_FLEX_BASIS_AUTO: YGNodeStyleSetFlexBasisAuto(node);
+			break;
 		case UI_CSS_FLEX_BASIS_LENGTH: YGNodeStyleSetFlexBasis(node, widget->getFlexBasis().Value);
 			break;
 		case UI_CSS_FLEX_BASIS_PERCENTAGE: YGNodeStyleSetFlexBasisPercent(node, widget->getFlexBasis().Value);
-			break;
-		case UI_CSS_FLEX_BASIS_CONTENT: YGNodeStyleSetFlexBasisAuto(node);
 			break;
 		}
 		switch (widget->getAlignSelf().Value)
@@ -573,9 +573,9 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_ALIGN_SELF_FLEX_START: YGNodeStyleSetAlignSelf(node, YGAlignFlexStart);
 			break;
-		case UI_CSS_ALIGN_SELF_CENTER: YGNodeStyleSetAlignSelf(node, YGAlignCenter);
-			break;
 		case UI_CSS_ALIGN_SELF_FLEX_END: YGNodeStyleSetAlignSelf(node, YGAlignFlexEnd);
+			break;
+		case UI_CSS_ALIGN_SELF_CENTER: YGNodeStyleSetAlignSelf(node, YGAlignCenter);
 			break;
 		case UI_CSS_ALIGN_SELF_STRETCH: YGNodeStyleSetAlignSelf(node, YGAlignStretch);
 			break;

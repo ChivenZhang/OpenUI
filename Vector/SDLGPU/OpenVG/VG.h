@@ -658,19 +658,19 @@ struct VGPrimitive
 	};
 	struct linear_t
 	{
-		VGFloat4  NumStops;	// [Count, ?, Spread, ?]
-		VGFloat2  GradStartPos;
-		VGFloat2  GradEndPos;
-		VGFloat4  StopPoints[MAX_STOP_COUNT / 4];
-		VGColor   StopColors[MAX_STOP_COUNT];
+		VGFloat4 NumStops;	// [Count, ?, Spread, ?]
+		VGFloat2 GradStartPos;
+		VGFloat2 GradEndPos;
+		VGFloat4 StopPoints[MAX_STOP_COUNT / 4];
+		VGColor  StopColors[MAX_STOP_COUNT];
 	};
 	struct radial_t
 	{
-		VGFloat4  NumStops;	// [Count, ?, Spread, ?]
-		VGFloat2  CenterPos;
-		VGFloat2  Radius;
-		VGFloat4  StopPoints[MAX_STOP_COUNT / 4];
-		VGColor   StopColors[MAX_STOP_COUNT];
+		VGFloat4 NumStops;	// [Count, ?, Spread, ?]
+		VGFloat2 CenterPos;
+		VGFloat2 Radius;
+		VGFloat4 StopPoints[MAX_STOP_COUNT / 4];
+		VGColor  StopColors[MAX_STOP_COUNT];
 	};
 	struct matrix_t
 	{

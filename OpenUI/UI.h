@@ -44,7 +44,7 @@
 #	endif
 #else
 #	if defined(_WIN32)
-#		define OPENUI_API 
+#		define OPENUI_API
 #		define OPENUI_C_API extern "C" 
 #	else
 #		define OPENUI_API 

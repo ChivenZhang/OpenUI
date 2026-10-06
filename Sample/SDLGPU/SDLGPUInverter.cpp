@@ -198,14 +198,15 @@ UIString SDLGPUInverter::getName() const
 
 void SDLGPUInverter::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style)
 {
+    if (client.W <= 0.0f || client.H <= 0.0f) return;
     if (srcImg == nullptr || dstImg == nullptr) return;
     auto device = UICast<SDLGPUDevice>(getCanvas()->getDevice())->getDevice();
     auto srcTexture = (SDL_GPUTexture*)srcImg->Handle;
     auto dstTexture = (SDL_GPUTexture*)dstImg->Handle;
 
-    auto cmdBuf = SDL_AcquireGPUCommandBuffer(device);
+    auto cmd = SDL_AcquireGPUCommandBuffer(device);
 
-    if (cmdBuf)
+    if (cmd)
     {
         SDL_GPUColorTargetInfo colorTarget = {};
         colorTarget.texture = dstTexture;
@@ -213,11 +214,22 @@ void SDLGPUInverter::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UII
         colorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
         colorTarget.store_op = SDL_GPU_STOREOP_STORE;
         auto pass = SDL_BeginGPURenderPass(
-            cmdBuf,
+            cmd,
             &colorTarget,
             1,
             nullptr
         );
+
+        SDL_GPUViewport viewport
+        {
+            .x = client.X,
+            .y = client.Y,
+            .w = client.W,
+            .h = client.H,
+            .min_depth = 0.0f,
+            .max_depth = 1.0f,
+        };
+        SDL_SetGPUViewport(pass, &viewport);
 
         SDL_BindGPUGraphicsPipeline(pass, m_Pipeline);
 
@@ -232,5 +244,5 @@ void SDLGPUInverter::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UII
         SDL_EndGPURenderPass(pass);
     }
 
-    SDL_SubmitGPUCommandBuffer(cmdBuf);
+    SDL_SubmitGPUCommandBuffer(cmd);
 }

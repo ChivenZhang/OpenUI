@@ -16,7 +16,7 @@
 #include "OpenUI/UIInput.h"
 #include <stb_image.h>
 #ifdef OPENUI_ENABLE_SDLGPU
-#include "SDLGPU/SDLGPUDevice.h"
+#include "SDLGPUDevice.h"
 #endif
 
 void sample(UICanvasRaw context, SDL_Window* window);
@@ -32,14 +32,17 @@ int main()
 		canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
 			<style>
 				div {
-					height: 30px;
+					width: 100%;
+					height: 100%;
 				}
 				button {
-					width: auto;
+					width: 100px;
+					height: 100px;
 				}
 			</style>
+
 			<div>
-				<button style='filter:invert()'>My Button</button>
+				<button>Button</button>
 			</div>
 	    )"));
 		

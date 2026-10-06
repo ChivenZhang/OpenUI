@@ -193,38 +193,52 @@ SDLGPUMerger::~SDLGPUMerger()
 
 void SDLGPUMerger::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style)
 {
+    if (client.W <= 0.0f || client.H <= 0.0f) return;
     if (srcImg == nullptr || dstImg == nullptr) return;
     auto device = UICast<SDLGPUDevice>(getCanvas()->getDevice())->getDevice();
     auto srcTexture = (SDL_GPUTexture*)srcImg->Handle;
     auto dstTexture = (SDL_GPUTexture*)dstImg->Handle;
 
-    auto cmdBuf = SDL_AcquireGPUCommandBuffer(device);
-    UIAssert(cmdBuf);
+    auto cmd = SDL_AcquireGPUCommandBuffer(device);
 
-    SDL_GPUColorTargetInfo colorTarget = {};
-    colorTarget.texture = dstTexture;
-    colorTarget.clear_color = SDL_FColor{0, 0, 0, 1};
-    colorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTarget.store_op = SDL_GPU_STOREOP_STORE;
+    if (cmd)
+    {
+        SDL_GPUColorTargetInfo colorTarget = {};
+        colorTarget.texture = dstTexture;
+        colorTarget.clear_color = SDL_FColor{0, 0, 0, 1};
+        colorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
+        colorTarget.store_op = SDL_GPU_STOREOP_STORE;
 
-    auto pass = SDL_BeginGPURenderPass(
-        cmdBuf,
-        &colorTarget,
-        1,
-        nullptr
-    );
+        auto pass = SDL_BeginGPURenderPass(
+            cmd,
+            &colorTarget,
+            1,
+            nullptr
+            );
 
-    SDL_BindGPUGraphicsPipeline(pass, m_Pipeline);
+        SDL_GPUViewport viewport
+        {
+            .x = client.X,
+            .y = client.Y,
+            .w = client.W,
+            .h = client.H,
+            .min_depth = 0.0f,
+            .max_depth = 1.0f,
+        };
+        SDL_SetGPUViewport(pass, &viewport);
 
-    SDL_GPUBufferBinding bindBuffer{.buffer = m_Buffer, .offset = 0,};
-    SDL_BindGPUVertexBuffers(pass, 0, &bindBuffer, 1);
+        SDL_BindGPUGraphicsPipeline(pass, m_Pipeline);
 
-    SDL_GPUTextureSamplerBinding bindSampler = {.texture = srcTexture, .sampler = m_Sampler};
-    SDL_BindGPUFragmentSamplers(pass, 0, &bindSampler, 1);
+        SDL_GPUBufferBinding bindBuffer{.buffer = m_Buffer, .offset = 0,};
+        SDL_BindGPUVertexBuffers(pass, 0, &bindBuffer, 1);
 
-    SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
+        SDL_GPUTextureSamplerBinding bindSampler = {.texture = srcTexture, .sampler = m_Sampler};
+        SDL_BindGPUFragmentSamplers(pass, 0, &bindSampler, 1);
 
-    SDL_EndGPURenderPass(pass);
+        SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
 
-    SDL_SubmitGPUCommandBuffer(cmdBuf);
+        SDL_EndGPURenderPass(pass);
+    }
+
+    SDL_SubmitGPUCommandBuffer(cmd);
 }

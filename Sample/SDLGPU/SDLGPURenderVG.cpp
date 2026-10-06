@@ -272,6 +272,41 @@ void SDLGPURenderVG::setTarget(VGImageRaw value)
 
 void SDLGPURenderVG::render(VGRect client, VGListView<const VGPrimitive> data)
 {
+	auto device = PRIVATE()->Device;
+	auto dstTexture = (SDL_GPUTexture*)PRIVATE()->Target->Handle;
+
+	auto cmd = SDL_AcquireGPUCommandBuffer(device);
+
+	if (cmd)
+	{
+		SDL_GPUColorTargetInfo colorTarget = {};
+		colorTarget.texture = dstTexture;
+		colorTarget.clear_color = SDL_FColor{0, 0, 0, 1};
+		colorTarget.load_op = SDL_GPU_LOADOP_CLEAR;
+		colorTarget.store_op = SDL_GPU_STOREOP_STORE;
+
+		auto pass = SDL_BeginGPURenderPass(
+			cmd,
+			&colorTarget,
+			1,
+			nullptr
+			);
+
+		SDL_GPUViewport viewport
+		{
+			.x = client.X,
+			.y = client.Y,
+			.w = client.W,
+			.h = client.H,
+			.min_depth = 0.0f,
+			.max_depth = 1.0f,
+		};
+		SDL_SetGPUViewport(pass, &viewport);
+		SDL_EndGPURenderPass(pass);
+	}
+
+	SDL_SubmitGPUCommandBuffer(cmd);
+
 	// PRIVATE()->PointList.clear(); PRIVATE()->StyleList.clear();
 	// PRIVATE()->LinearList.clear(); PRIVATE()->RadialList.clear();
 	// PRIVATE()->MatrixList.clear(); PRIVATE()->TextureList.clear();

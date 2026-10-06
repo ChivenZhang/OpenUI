@@ -16,12 +16,17 @@ else ()
     add_compile_options(-finput-charset=UTF-8)
 endif ()
 
+if(CMAKE_HOST_WIN32)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 include_directories(${OPENUI_SOURCE_DIR})
+include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
 include_directories(${OPENUI_SOURCE_DIR}/Vector/SDLGPU)
 add_subdirectory(OpenVG)
-add_subdirectory(Vector/SDLGPU)
 add_subdirectory(OpenUI)
-
+add_subdirectory(External/OpenRT)
+add_subdirectory(Vector/SDLGPU)
 
 if (OPENUI_ENABLE_SAMPLE)
 
@@ -36,6 +41,7 @@ if (OPENUI_ENABLE_SAMPLE)
 
     set(SHADER_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Shader)
     set(SPV_OUT_DIR    ${CMAKE_CURRENT_BINARY_DIR}/Shader)
+    include_directories(${SPV_OUT_DIR})
 
     file(MAKE_DIRECTORY ${SPV_OUT_DIR})
 
@@ -94,8 +100,4 @@ if (OPENUI_ENABLE_SAMPLE)
     )
 
     add_subdirectory(Sample)
-
-    add_dependencies(Sample Shader)
-
-    target_include_directories(Sample PUBLIC ${SPV_OUT_DIR})
 endif ()

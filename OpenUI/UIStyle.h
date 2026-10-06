@@ -231,7 +231,7 @@ struct UIPropDirection
 
 struct UIPropDisplay
 {
-    ui_css_display_type_t Value = UI_CSS_DISPLAY_INLINE;
+    ui_css_display_type_t Value = UI_CSS_DISPLAY_FLEX;
 };
 
 struct UIPropDominantBaseline
@@ -247,7 +247,7 @@ struct UIPropFlex
 struct UIPropFlexBasis
 {
     float Value = UINAN;
-    ui_css_flex_basis_type_t Type = UI_CSS_FLEX_BASIS_CONTENT;
+    ui_css_flex_basis_type_t Type = UI_CSS_FLEX_BASIS_AUTO;
 };
 
 struct UIPropFlexDirection
@@ -1346,13 +1346,13 @@ inline bool UITypeC(UIPropClear const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropColor& dst)
 {
-    return std::sscanf(src.c_str(), "rgba(%u,%u,%u,%u)", &dst.Value.R, &dst.Value.G, &dst.Value.B, &dst.Value.A);
+    return std::sscanf(src.c_str(), "rgba(%hhu,%hhu,%hhu,%hhu)", &dst.Value.R, &dst.Value.G, &dst.Value.B, &dst.Value.A);
 }
 template <>
 inline bool UITypeC(UIPropColor const& src, UIString& dst)
 {
     char buffer[256] = {};
-    auto result = std::snprintf(buffer, sizeof(buffer), "rgba(%u,%u,%u,%u)", src.Value.R, src.Value.G, src.Value.B, src.Value.A);
+    auto result = std::snprintf(buffer, sizeof(buffer), "rgba(%hhu,%hhu,%hhu,%hhu)", src.Value.R, src.Value.G, src.Value.B, src.Value.A);
     if (result <= 0) return false;
     dst = {buffer, (size_t) result};
     return true;
@@ -1463,7 +1463,7 @@ inline bool UITypeC(UIString const& src, UIPropFlexBasis& dst)
     auto s = UITrim(src);
     if (s == "content")
     {
-        dst.Type = UI_CSS_FLEX_BASIS_CONTENT;
+        dst.Type = UI_CSS_FLEX_BASIS_AUTO;
     }
     else if (s.ends_with('%'))
     {
@@ -1484,7 +1484,7 @@ inline bool UITypeC(UIPropFlexBasis const& src, UIString& dst)
     switch (src.Type)
     {
     default: return false;
-    case UI_CSS_FLEX_BASIS_CONTENT: dst = "content";
+    case UI_CSS_FLEX_BASIS_AUTO: dst = "content";
         return true;
     case UI_CSS_FLEX_BASIS_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;

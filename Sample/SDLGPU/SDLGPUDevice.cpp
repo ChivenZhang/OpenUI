@@ -20,6 +20,8 @@
 #include <screen.vert.h>
 #include <screen.frag.h>
 
+#include "SDLNanoVGPainter.h"
+
 static const UIPointUV vertices[]
 {
 	{-1.0f, -1.0f, 0.0f, 1.0f}, // 左下
@@ -68,7 +70,7 @@ SDLGPUDevice::SDLGPUDevice()
     UIConfig config{.DisplayScale = scale};
     auto canvas = UINew<UICanvas>(this, config);
 	auto render = UINew<SDLGPUMerger>(canvas.get(), w, h);
-	auto painter = UINew<SDLGPUPainter>(canvas.get(), w, h);
+	auto painter = UINew<SDLNanoVGPainter>(canvas.get(), w, h, device);
     canvas->setRender(render);
     canvas->setPainter(painter);
 	canvas->setRender(UINew<SDLGPUInverter>(canvas.get(), w, h));
@@ -422,7 +424,7 @@ bool SDLGPUDevice::update()
 	// Output frame to screen
 
 	int32_t width = 0, height = 0;
-	SDL_GetWindowSize(window, &width, &height);
+	SDL_GetWindowSizeInPixels(window, &width, &height);
 
 	auto source = render->newImage(width, height);
 	canvas->setTarget(source);

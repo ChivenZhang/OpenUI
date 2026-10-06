@@ -8,7 +8,7 @@
   }, {
     "name" : "sdl3",
     "version>=" : "3.4.4",
-    "features": ["vulkan"]
+    "features" : [ "vulkan" ]
   }, {
     "name" : "stb",
     "version>=" : "2024-07-29#1"
@@ -34,5 +34,8 @@
   }, {
     "name" : "glm",
     "version>=" : "1.0.3"
+  }, {
+    "name" : "glew",
+    "version>=" : "2.3.1"
   } ]
 }
