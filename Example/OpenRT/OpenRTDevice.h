@@ -30,6 +30,7 @@ public:
 
 protected:
 	SDL_Window* m_Window;
+	SDL_GLContext m_Context;
 	UICanvasRef m_Canvas;
 };
 

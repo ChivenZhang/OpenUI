@@ -12,7 +12,7 @@
 #include "OpenRTDevice.h"
 #include "OpenRTRender.h"
 #include "OpenRTPainter.h"
-#include "../SDL3InputEnum.cpp"
+#include "../SDL3InputEnum.h"
 
 static const UIPointUV vertices[]
 {
@@ -23,45 +23,23 @@ static const UIPointUV vertices[]
 
 OpenRTDevice::OpenRTDevice()
 {
-    auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", 1000, 600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
-    if (window == nullptr)
-    {
-        UI_ERROR("Window could not be created! SDL_Error: %s", SDL_GetError());
-        SDL_Quit();
-        UI_FATAL("Window could not be created! ");
-    }
-    int w, h;
-    SDL_GetWindowSize(window, &w, &h);
-    auto scale = SDL_GetWindowDisplayScale(window);
+	// Initialize OpenGL Context
 
-	// Initialize OPENRT Context
+	auto W = 1000, H = 600;
+    auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", W, H, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
+	auto context = SDL_GL_CreateContext(window);
+	SDL_GL_MakeCurrent(window, context);
+	SDL_GL_SetSwapInterval(1);
+	m_Window = window;
+	m_Context = context;
 
-	auto device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, "vulkan");
-	if (device == nullptr)
-	{
-		SDL_DestroyWindow(window);
-		UI_ERROR("GPU could not be created! SDL_Error: %s", SDL_GetError());
-		SDL_Quit();
-		UI_FATAL("OPENRT could not be initialized!");
-	}
-    m_Window = window;
+	// Initialize OpenUI context
 
-	UI_INFO("Use GPU backend: %s", SDL_GetGPUDeviceDriver(device));
-
-	if (SDL_ClaimWindowForGPUDevice(device, window) == false)
-	{
-		SDL_DestroyWindow(window);
-		UI_ERROR("SDL_ClaimWindowForGPUDevice failed! SDL_Error: %s", SDL_GetError());
-		SDL_Quit();
-		UI_FATAL("SDL_ClaimWindowForGPUDevice failed!");
-	}
-
-    // Initialize OpenUI context
-
-    UIConfig config{.DisplayScale = scale};
-    auto canvas = UINew<UICanvas>(this, config);
-	auto render = UINew<OpenRTRender>(canvas.get(), w, h);
-	auto painter = UINew<OpenRTPainter>(canvas.get(), w, h);
+	auto scale = SDL_GetWindowDisplayScale(window);
+	UIConfig config{.DisplayScale = scale};
+	auto canvas = UINew<UICanvas>(this, config);
+	auto render = UINew<OpenRTRender>(canvas.get(), W, H);
+	auto painter = UINew<OpenRTPainter>(canvas.get(), W, H);
     canvas->setRender(render);
     canvas->setPainter(painter);
     m_Canvas = canvas;
@@ -72,6 +50,8 @@ OpenRTDevice::OpenRTDevice()
 OpenRTDevice::~OpenRTDevice()
 {
     m_Canvas = nullptr;
+
+	SDL_GL_DestroyContext(m_Context); m_Context = nullptr;
     SDL_DestroyWindow(m_Window); m_Window = nullptr;
 }
 
@@ -281,6 +261,8 @@ bool OpenRTDevice::update()
 	canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)width, (float)height});
 
 	// Copy frame to screen
+
+	SDL_GL_SwapWindow(m_Window);
 
 	render->delImage(source);
 	return true;

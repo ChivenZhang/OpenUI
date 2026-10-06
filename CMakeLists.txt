@@ -22,11 +22,11 @@ endif()
 
 include_directories(${OPENUI_SOURCE_DIR})
 include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
-include_directories(${OPENUI_SOURCE_DIR}/Vector/SDLGPU)
+include_directories(${OPENUI_SOURCE_DIR}/NanoVG)
 add_subdirectory(OpenVG)
 add_subdirectory(OpenUI)
 add_subdirectory(External/OpenRT)
-add_subdirectory(Vector/SDLGPU)
+add_subdirectory(Vector)
 
 if (OPENUI_ENABLE_EXAMPLE)
 
