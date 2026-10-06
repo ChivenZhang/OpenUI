@@ -13,25 +13,24 @@
 #include "OpenRTRender.h"
 #include "OpenRTPainter.h"
 #include "../SDL3InputEnum.h"
-
-static const UIPointUV vertices[]
-{
-	{-1.0f, -1.0f, 0.0f, 1.0f}, // 左下
-	{3.0f, -1.0f, 2.0f, 1.0f}, // 右下（超出右边界）
-	{-1.0f, 3.0f, 0.0f, -1.0f}, // 左上（超出上边界）
-};
+#define NANOVG_GL_IMPLEMENTATION
+#include <nanovg_rt.h>
+#include "demo.h"
+#include "perf.h"
 
 OpenRTDevice::OpenRTDevice()
 {
-	// Initialize OpenGL Context
+	// Initialize Window Context
 
 	auto W = 1000, H = 600;
-    auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", W, H, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
+    auto window = SDL_CreateWindow("https://github.com/ChivenZhang/OpenUI.git", W, H,  SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
 	auto context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
 	SDL_GL_SetSwapInterval(1);
 	m_Window = window;
 	m_Context = context;
+
+	// Initialize OpenGL Context
 
 	// Initialize OpenUI context
 
@@ -261,6 +260,31 @@ bool OpenRTDevice::update()
 	canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)width, (float)height});
 
 	// Copy frame to screen
+
+	auto t0 = SDL_GetTicks() * 0.001f;
+
+	SDL_GL_MakeCurrent(m_Window, m_Context);
+	static auto vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+	static DemoData data;
+	static PerfGraph fps;
+	static auto loaded = []()
+	{
+		loadDemoData(vg, &data);
+		return true;
+	}();
+
+	glViewport(0, 0, width, height);
+	glClearColor(0.3f, 0.3f, 0.32f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+	glEnable(GL_BLEND);
+
+	nvgBeginFrame(vg, width, height, width * 1.0f / height);
+	renderDemo(vg, 0, 0, width, height, ::clock() * 0.001f, false, &data);
+	renderGraph(vg, 5,5, &fps);
+	nvgEndFrame(vg);
+
+	auto t1 = SDL_GetTicks() * 0.001f;
+	updateGraph(&fps, t1 - t0);
 
 	SDL_GL_SwapWindow(m_Window);
 

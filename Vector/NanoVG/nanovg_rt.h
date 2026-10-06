@@ -18,8 +18,6 @@
 #pragma once
 #include <GL/glew.h>
 #include "nanovg.h"
-#define NANOVG_GL_IMPLEMENTATION
-#define NANOVG_GL_USE_UNIFORMBUFFER 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -307,10 +305,9 @@ static int glnvg__deleteTexture(GLNVGcontext* gl, int id)
 
 static void glnvg__dumpShaderError(GLuint shader, const char* name, const char* type)
 {
-	GLchar str[512+1];
+	GLchar str[1024];
 	GLsizei len = 0;
-	glGetShaderInfoLog(shader, 512, &len, str);
-	if (len > 512) len = 512;
+	glGetShaderInfoLog(shader, sizeof(str), &len, str);
 	str[len] = '\0';
 	printf("Shader %s/%s error:\n%s\n", name, type, str);
 }
@@ -433,25 +430,25 @@ static int glnvg__renderCreate(void* uptr)
 		"}\n";
 
 	static const char* fillFragShader =
-		"	layout(std140) uniform frag {\n"
-		"		mat3 scissorMat;\n"
-		"		mat3 paintMat;\n"
-		"		vec4 innerCol;\n"
-		"		vec4 outerCol;\n"
-		"		vec2 scissorExt;\n"
-		"		vec2 scissorScale;\n"
-		"		vec2 extent;\n"
-		"		float radius;\n"
-		"		float feather;\n"
-		"		float strokeMult;\n"
-		"		float strokeThr;\n"
-		"		int texType;\n"
-		"		int type;\n"
-		"	};\n"
-		"	uniform sampler2D tex;\n"
-		"	in vec2 ftcoord;\n"
-		"	in vec2 fpos;\n"
-		"	out vec4 outColor;\n"
+		"layout(std140) uniform frag {\n"
+		"	mat3 scissorMat;\n"
+		"	mat3 paintMat;\n"
+		"	vec4 innerCol;\n"
+		"	vec4 outerCol;\n"
+		"	vec2 scissorExt;\n"
+		"	vec2 scissorScale;\n"
+		"	vec2 extent;\n"
+		"	float radius;\n"
+		"	float feather;\n"
+		"	float strokeMult;\n"
+		"	float strokeThr;\n"
+		"	int texType;\n"
+		"	int type;\n"
+		"};\n"
+		"uniform sampler2D tex;\n"
+		"in vec2 ftcoord;\n"
+		"in vec2 fpos;\n"
+		"out vec4 outColor;\n"
 		"\n"
 		"float sdroundrect(vec2 pt, vec2 ext, float rad) {\n"
 		"	vec2 ext2 = ext - vec2(rad,rad);\n"
@@ -562,11 +559,9 @@ static int glnvg__renderCreateTexture(void* uptr, int type, int w, int h, int im
 	glnvg__bindTexture(gl, tex->tex);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-#ifndef NANOVG_GLES2
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, tex->width);
 	glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-#endif
 
 	if (type == NVG_TEXTURE_RGBA)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -604,11 +599,9 @@ static int glnvg__renderCreateTexture(void* uptr, int type, int w, int h, int im
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-#ifndef NANOVG_GLES2
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-#endif
 
 	// The new way to build mipmaps on GLES and GL3
 #if !defined(NANOVG_GL2)
@@ -650,11 +643,9 @@ static int glnvg__renderUpdateTexture(void* uptr, int image, int x, int y, int w
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x,y, w,h, GL_RED, GL_UNSIGNED_BYTE, data);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-#ifndef NANOVG_GLES2
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-#endif
 
 	glnvg__bindTexture(gl, 0);
 

@@ -4,7 +4,7 @@ if (OPENUI_ENABLE_OPENRT)
     add_definitions(-DOPENUI_ENABLE_OPENRT)
     add_definitions(-DOPENGL_IMPLEMENTATION)
 
-    file(GLOB_RECURSE OPENRT_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+    file(GLOB_RECURSE OPENRT_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.c ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
     add_executable(UI-OpenRT ${OPENRT_EXAMPLE_SRC})
     add_dependencies(UI-OpenRT OpenUI OpenRT NanoVG Shader)
 
