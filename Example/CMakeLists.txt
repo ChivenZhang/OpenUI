@@ -2,6 +2,7 @@
 
 	if(OPENUI_ENABLE_OPENRT)
 		add_definitions(-DOPENUI_ENABLE_OPENRT)
+		add_definitions(-DOPENGL_IMPLEMENTATION)
 
 		file(GLOB_RECURSE OPENRT_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/OpenRT/*.cpp)
 		add_executable (UI-OpenRT ${OPENRT_EXAMPLE_SRC})
