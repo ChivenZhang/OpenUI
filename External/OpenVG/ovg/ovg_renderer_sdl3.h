@@ -36,18 +36,6 @@ struct vg_fbo_t {
 	bool hasStencil;// 是否有模板附件
 };
 
-
-// 几何信息结构体
-struct gem_info_t0 {
-	uint32_t topology : 5;   // VK_PRIMITIVE_TOPOLOGY_*
-	uint32_t polygon : 2;   // VK_POLYGON_MODE_*
-	uint32_t frontFace : 1;   // 0=CW, 1=CCW
-	uint32_t shader : 3;   // shader 索引
-	uint32_t blendMode : 4;   // blendMode_e
-	uint32_t flags : 8;   // depth_stencil_State 标志
-	float    lineWidth;
-};
-
 // 管道状态（SDL3 GPU 版本）
 struct pipelinestate_p {
 	SDL_GPUGraphicsPipeline* pipeline;
@@ -64,12 +52,13 @@ ovg_ctx_t* new_ovgctx_sdl3(ovg_device_t* dev, SDL_GPUTextureFormat colorFormat, 
 void       free_ovgctx_sdl3(ovg_ctx_t* ctx);
 
 // FBO，创建与ovg_ctx兼容格式纹理，绑定窗口可选
-vg_fbo_t    new_vgfbo_sdl3(ovg_ctx_t* ctx, int width, int height, SDL_Window* window = nullptr);
-void        free_vgfbo_sdl3(vg_fbo_t* fbo);
+vg_fbo_t new_vgfbo_sdl3(ovg_ctx_t* ctx, int width, int height, SDL_Window* window = nullptr);
+void free_vgfbo_sdl3(vg_fbo_t* fbo);
+void reset_vgfbo_sdl3(vg_fbo_t* fbo, int width, int height);
 
 SDL_GPUCommandBuffer* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo);
 // 绘制一帧，提交命令到GPU
 void ovg_render_frame(ovg_ctx_t* ctx, vg_fbo_t* fbo, ovg_draw_data_t* data, size_t count);
-sdl3gpu_texture* new_texture_def(ovg_ctx_t* ctx, int w, int h, vg_format_t format);
+sdl3gpu_texture* new_texture_def(ovg_ctx_t* ctx, int w, int h, uint32_t format);
 
 void ovg_wait_idle(ovg_ctx_t* ctx);

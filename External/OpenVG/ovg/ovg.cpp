@@ -1,6 +1,6 @@
 ﻿/*
 矢量渲染
-2026/9/9 文本渲染处理完善	
+2026/9/9 文本渲染处理完善
 2026/8/31 支持普通三角形渲染
 2026/8/13 版本1.0
 2026/8/8 创建文件
@@ -1694,6 +1694,7 @@ vg_state_save_t* ovg_new_state(mem_resource_t* ac0) {
 		p->curOperator = vg_operator_t::VG_OPERATOR_OVER;
 		p->curFillRule = VG_FILL_RULE_NON_ZERO;
 		p->pushConsts = pc;
+		p->references = 1;
 	}
 	return p;
 }
@@ -1939,7 +1940,7 @@ void rvg_cx::stroke_preserve()
 	if (p->t->pattern)
 		gCount++;
 	auto ctx = p;
-	vgcmd_t c = {};
+	vgcmd_t c = { .full_screen_quad = -1 };
 	c.vertex.x = _vertex.size();
 	c.index.x = _indices.size();
 	c.type = 1;
@@ -2085,7 +2086,7 @@ void rvg_cx::fill_preserve()
 	auto t = p->t;
 	uint32_t color = t->color;
 	p->color = color;
-	vgcmd_t c = {};
+	vgcmd_t c = { .full_screen_quad = -1 };
 	c.vertex.x = _vertex.size();
 	c.index.x = _indices.size();
 	c.type = 0;
@@ -2105,7 +2106,7 @@ void rvg_cx::clip_preserve()
 	path->t = st;
 	auto p = path;
 	auto t = st;
-	vgcmd_t c = {};
+	vgcmd_t c = { .full_screen_quad = -1 };
 	c.type = 2;
 	{
 		c.vertex.x = _vertex.size();
@@ -2129,7 +2130,7 @@ void rvg_cx::clip_preserve()
 }
 void rvg_cx::clip0(uint8_t ref)
 {
-	vgcmd_t c = {};
+	vgcmd_t c = { .full_screen_quad = -1 };
 	c.type = 2;
 	c.ref = ref;
 	c.full_screen_quad = _vertex.size();
@@ -2161,7 +2162,7 @@ void rvg_cx::clip(const glm::ivec4* rc)
 			auto nps = ct->pushConsts.mat * ps;
 			curClip.x = nps.x; curClip.y = nps.y;
 		}
-		vgcmd_t c = {};
+		vgcmd_t c = { .full_screen_quad = -1 };
 		c.type = 2;
 		c.bounds = curClip;
 		cmdlist.push_back({ .vg = c });
@@ -2251,7 +2252,7 @@ void rvg_cx::paint()
 		fill();
 		return;
 	}
-	vgcmd_t c = {};
+	vgcmd_t c = { };
 	c.type = 3;
 	c.full_screen_quad = _vertex.size();
 
@@ -2882,12 +2883,13 @@ void rvg_cx::_draw_segment(ovg_path_t* ctx, stroke_context_t* str, dash_context_
 
 void rvg_cx::image_update(vg_image_t* img, vg_image_desc_t* desc)
 {
+	if (!desc || !desc->width || !desc->height)return;
 	if (!img)img = desc->img;
 	auto& dst = _images[img]; dst = *desc;
 	img->width = desc->width;
 	img->height = desc->height;
-	if (desc->is_copy) {
-		dst.px_size = dst.height * dst.stride;
+	dst.px_size = dst.height * dst.stride;
+	if (desc->is_copy && (dst.px_size > 0)) {
 		dst.pixels = ac->new_mem(dst.px_size);
 		memcpy((void*)dst.pixels, desc->pixels, dst.px_size);
 	}
@@ -2895,7 +2897,8 @@ void rvg_cx::image_update(vg_image_t* img, vg_image_desc_t* desc)
 
 void rvg_cx::image_destroy(vg_image_t* img)
 {
-	_images[img].is_destroy = true;
+	if (img)
+		_images[img].is_destroy = true;
 }
 
 
@@ -3192,7 +3195,7 @@ float get_has_multiply(const gem_info_t& state) {
 bool geom_primitive::add_geometry(void* texture, const float* xy, int xy_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
 {
 	if (!xy || num_vertices < 1)return false;
-	geom_cmd_t c = {};
+	geom_cmd_t c = { .stype = 1 };
 	c.state = curState;
 	c.texture = texture;
 	c.mat = mat;
@@ -3316,7 +3319,7 @@ bool geom_primitive::add_geometry(void* texture, const float* xy, int xy_stride,
 bool geom_primitive::add_geometry3d(void* texture, const float* xyz, int xyz_stride, const void* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices, int color_type)
 {
 	if (!xyz || num_vertices < 1)return false;
-	geom_cmd_t c = {};
+	geom_cmd_t c = { .stype = 1 };
 	c.state = curState;
 	c.texture = texture;
 	c.mat = mat;
@@ -5798,7 +5801,7 @@ void ovg_canvas_cx::submit_draw_list(rvg_t* rvg, const text_draw_list* list)
 			desc.is_copy = false;
 			img->valid = false;
 			std::string fn = "temp/font_pack_ovg.png";
-			write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
+			//write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
 			cb->image_update(rvg, img, &desc);
 		}
 		cb->add_geometry(
@@ -5895,7 +5898,7 @@ void ovg_ctx_cx::submit_draw_list(rvg_t* rvg, const text_draw_list* list)
 			desc.is_copy = false;
 			img->valid = false;
 			std::string fn = "temp/font_pack_ovg.png";
-			write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
+			//write_png_bgra(fn.c_str(), (uint8_t*)img->data, img->width, img->height);
 			cb->image_update(rvg, img, &desc);
 		}
 		cb->add_geometry(

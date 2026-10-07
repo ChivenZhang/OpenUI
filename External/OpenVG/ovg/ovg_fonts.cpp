@@ -1313,6 +1313,31 @@ void free_hb_res(vg_font* hp) {
 	hp->pnt = 0;
 }
 
+
+glm::vec3 get_font_extents(hb_font_t* font, int height, bool vert)
+{
+	glm::vec3 r = {};
+#ifdef HB_RASTER_H 
+	hb_font_extents_t extents[2] = {};
+	int h = abs(height);
+	if (h == 0)
+		h = hb_face_get_upem(hb_font_get_face(font));
+	hb_font_set_scale(font, h, h);
+	hb_bool_t bhe = hb_font_get_h_extents(font, &extents[0]);
+	hb_bool_t bve = hb_font_get_v_extents(font, &extents[1]);
+	if (bhe)
+	{
+		r = { extents->ascender , extents->descender , extents->line_gap };
+	}
+	if (bve && vert)
+	{
+		r = { extents[1].ascender , extents[1].descender , extents[1].line_gap };
+	}
+#endif
+	return r;
+}
+
+
 hb_raster_image_t* build_glyph_image_hb(vg_font* hp, uint32_t gid, int font_size, glm::ivec4* ot, const glm::vec2& scale)
 {
 	hb_raster_image_t* img = nullptr;

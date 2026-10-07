@@ -1,14 +1,27 @@
 ﻿// ovg.cpp: 定义应用程序的入口点。
 //
 
-#include "ovg_main.h" 
-#include "ovg_renderer_sdl3.h"
 #include <Windows.h>
 #include <cmath>
 #include <unordered_map>
+#include "ovg_main.h" 
+#include <ovg_c.h>
+#include "ovg_renderer_sdl3.h"
+
+#ifndef fseeki64
+#ifdef _WIN32
+#define fseeki64 _fseeki64
+#define ftelli64 _ftelli64
+#else			
+#define fseeki64 fseeko64
+#define ftelli64 ftello64
+#endif // _WIN32
+#endif
 
 using namespace std;
-
+#include "ovg_fonts.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 static inline uint32_t MAKE_RGBA(float r, float g, float b, float a) {
 	return (((uint8_t)(a * 255)) << 24) | (((uint8_t)(r * 255)) << 16) | (((uint8_t)(g * 255)) << 8) | ((uint8_t)(b * 255));
@@ -621,7 +634,7 @@ void draw_test3d(vg_fbo_t* fbo, ovg_ctx_cb* cb, rvg_t* vg) {
 	ins[0] = glm::mat4(1.0);
 	ins[1] = glm::translate(glm::vec3(200, 10, 0));
 	cb->set_instance_mat(vg, ins, 2);
-	static vg_image_t img[1] = {};
+	static vg_image_t img[1] = { {.valid = true} };
 	uint32_t pxcolord2[2] = { 0xffffffff,0xffffffff, };
 	uint32_t pxcolor2[16] = { 0xFFf55555,0xFF2c2c2c, 0xFF9678B4,0xFFf55555,0xFF2c2c2c,0xFFf55555, 0xFF9678B4,0xFFf55555,0xFF2c2c2c,0xFFf55555, 0xFF9678B4,0xFFf55555,0xFF2c2c2c,0xFFf55555, 0xFF9678B4,0xFFf55555, };
 
@@ -655,33 +668,43 @@ int main()
 	cout << "Hello ovg." << endl;
 	glm::ivec2 surfsize = { 1024,800 };
 
-	ovg_sdl3_ctx g[1] = {};
 	font_cache_cx* font_ctx = new_font_cache();
-	font_familys_t* familys = new_font_family(font_ctx, (char*)u8"微软雅黑,Segoe UI Emoji,Consolas,Times New Roman,Calibri", 0);
+	font_familys_t* familys = new_font_family(font_ctx, (char*)u8"微软雅黑,Segoe UI Emoji,Consolas,Times New Roman,Tahoma,Calibri,Noto Serif Devanagari", 0);
 
 	auto cb = new_ctx_cb();
 	auto vg = cb->new_rvg(cb->ac);
-	if (!vg_sdl3_init(g, surfsize.x, surfsize.y, true)) {
+
+	uint32_t f = SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS;
+#ifdef __ANDROID__
+	f |= SDL_INIT_HAPTIC;
+#endif
+	int kr = SDL_Init(f);
+#if 0
+	auto wg = new app_mgr();
+	if (!wg->init_gpu(true))return -1;
+	auto vp = new gui_viewport();
+	auto form1 = wg->create("SDL3 GPU Vector Graphics", surfsize.x, surfsize.y, 0);
+	form1->viewport = vp;
+#else
+	ovg_sdl3_ctx g = {};
+	auto wg = &g;
+#endif
+	if (!vg_sdl3_init(wg, surfsize.x, surfsize.y, true)) {
 		SDL_Log("Init failed: %s", SDL_GetError());
 		return 1;
 	}
-	auto dev = new_sdl3gpu_device(g->device);
+	auto dev = new_sdl3gpu_device(wg->device);
 	assert(dev);
-	auto format = SDL_GetGPUSwapchainTextureFormat(g->device, g->window);
+	auto format = SDL_GetGPUSwapchainTextureFormat(wg->device, wg->window);
 	ovg_ctx_t* ctx = new_ovgctx_sdl3(dev, format ? format : SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM, SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT, SDL_GPU_SAMPLECOUNT_4);
 	assert(ctx);
-	ovg_canvas_cb* can = new_canvas_cb();
 
-	vg_fbo_t fbo = new_vgfbo_sdl3(ctx, surfsize.x, surfsize.y, g->window);
+	vg_fbo_t fbo = new_vgfbo_sdl3(ctx, surfsize.x, surfsize.y, wg->window);
 	bool running = true;
 	runtime_cx rtc = {};
 	auto str1 = u8"agyh🍕☂️按钮";
 	auto str = u8"➗🍕☂️6bg太妹";
 	auto rst = glm::mat3x2(1.0);
-	auto canvg = can->new_rvg(can->ac);
-	auto path = can->new_path(can->ac);
-	auto st = can->new_state(can->ac);
-	can->set_path(canvg, path, st);
 
 	//vg_text_run_cx run;
 
@@ -694,18 +717,63 @@ int main()
 	//run.shape();
 
 	// 渲染 
-	bool testvg = 0;
-	SDL_ShowWindow(g->window);
+	int channels = 0;
+	ovg_image_data img[1] = {};
+	//img->data = (uint32_t*)stbi_load("./temp/nig.png", &img->width, &img->height, &channels, 4);
+	img->data = (uint32_t*)stbi_load("./temp/button.png", &img->width, &img->height, &channels, 4);
+	img->valid = true;
+	auto fp = fopen("E:\\1.txt", "r");
+	std::string buff;
+	if (fp) {
+		fseeki64(fp, 0L, SEEK_END);
+		auto size = ftelli64(fp);
+		fseeki64(fp, 0L, SEEK_SET);
+		buff.resize(size);
+		auto retval = fread(buff.data(), size, 1, fp);
+		assert(retval == 1);
+		fclose(fp);
+	}
+	text_run_dst_cx* run_dst = new text_run_dst_cx();
+	{
+		text_style_t style4 = {};
+		style4.family = familys;
+		style4.fontsize = 58;
+		style4.color = 0xff0080f0;
+		style4.color_stroke = 0xFF0000f0;
+		style4.min_subpixel = 0;
+		//style4.stroke = 1;
+		//style4.color_shadow = 0xa6000000;
+		style4.shadow_pos = { 2.0f, 2.0f };
+		auto ex = get_font_extents(familys->familys[0]->font, style4.fontsize, false);
+		auto font = familys->familys[0];
+		float sc = style4.fontsize / font->upem;
+		auto a = font->ascender * sc;
+		auto h = (font->ascender - font->descender + font->line_gap);
+		auto h0 = h * sc;
+		auto h1 = ceil(h * sc);
+		text_st_t text4 = {};
+		text4.text = (char*)u8"🍕➗☂️-abgyh彩色渐变字体";
+		//text4.text = (char*)buff.c_str();
+		text4.text_len = -1;
+
+		text4.pos = { 10.0f, 200.0f };
+		run_dst->set_layout_mode(&style4, nullptr, true);
+		run_dst->text_shape(&text4);
+	}
+	bool testvg = true;
+
+	SDL_Event e = {};
 	while (running) {
-		SDL_Event ev;
-		while (SDL_PollEvent(&ev)) {
-			if (ev.type == SDL_EVENT_QUIT) running = false;
+		if (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_EVENT_QUIT) {
+				break;
+			}
 		}
 		if (ovg_get_window_swapchain(ctx, &fbo))
 		{
 			rtc.begin();
 			cb->clear(vg);
-			cb->clear(canvg);
 			cb->set_fill_rule(vg, VG_FILL_RULE_NON_ZERO);
 			glm::vec2 sf = fbo.display_size;
 			draw_grid_fill(vg, sf, glm::ivec2(-1, 0xffdfdfdf), 20);
@@ -714,21 +782,21 @@ int main()
 				draw(cb, vg, fbo.display_size);// 录制图元
 
 			vg->width = fbo.display_size.x; vg->height = fbo.display_size.y;
-			canvg->width = fbo.display_size.x; canvg->height = fbo.display_size.y;
 
 			//draw_test3d(&fbo, cb, vg);
 			text_style_t style4 = {};
 			style4.family = familys;
-			style4.fontsize = 26;
+			style4.fontsize = 58;
 			style4.color = 0xff0080f0;
 			style4.color_stroke = 0xFF0000f0;
-			//style4.min_subpixel = 32;
+			style4.min_subpixel = 0;
 			//style4.stroke = 1;
-			//style4.color_shadow = 0x86000000;
-			style4.shadow_pos = { 5.0f, 5.0f };
+			//style4.color_shadow = 0xa6000000;
+			style4.shadow_pos = { 2.0f, 2.0f };
 
 			text_st_t text4 = {};
-			text4.text = (char*)u8"➗🍕☂️abg亚像素-灰度مرحباً بكم";
+			text4.text = (char*)u8"🍕➗☂️-abgyh彩色渐变字体";
+			//text4.text = (char*)buff.c_str();
 			text4.text_len = -1;
 
 			text4.pos = { 10.0f, 200.0f };
@@ -742,7 +810,9 @@ int main()
 			cb->add_text(vg, &text4, &style4, nullptr);
 
 			style4.min_subpixel = 0;
-			text4.text = (char*)u8"➗🍕☂️abg灰度-亚像素badfdf";
+			text4.text = (char*)u8"-+abg➗🍕☂️灰度+彩色渐变字体\n右起سأصبح غنياً";
+
+
 			//style4.stroke = -1;
 			text4.pos = { 10.0f, 120 + 200.0f };
 
@@ -751,15 +821,38 @@ int main()
 			cb->set_source_color(vg, 0xff00ff00);
 			cb->set_line_width(vg, 1);
 			cb->stroke(vg);
-			/*		cb->rectangle(vg, 0, text4.pos.y - 20,200,200);
-					cb->set_source_color(vg, 0xff000000);
-					cb->fill(vg);*/
+			cb->rectangle(vg, 0, text4.pos.y - 20, 200, 200);
+			cb->set_source_color(vg, 0xff000000);
+			cb->set_source_color(vg, -1);
+			cb->fill(vg);
 			cb->add_text(vg, &text4, &style4, nullptr);
-
+			text4.text = (char*)u8"./+*@#!@#$%^&*()_+[];'/.,";
+			text4.pos.y += 260;
+			cb->add_text(vg, &text4, &style4, nullptr);
+			ovg_image_r rimg = {};
+			rimg.img = img;
+			rimg.dst = { 108,108,img->width * 2.8,img->height * 1.5 };
+			rimg.rc = { 0,0,img->width,img->height };
+			rimg.sliced = { 4,4,4,4 };
+			rimg.color = -1;
+			cb->add_image(vg, &rimg);
+			if (img->valid)
+			{
+				vg_image_desc_t desc = {};
+				desc.width = img->width;
+				desc.height = img->height;
+				desc.format = VG_FORMAT_RGBA8;
+				desc.stride = desc.width * sizeof(int);
+				desc.pixels = img->data;
+				desc.x = 0, desc.y = 0, desc.w = img->width, desc.h = img->height;		// 更新矩形区域
+				desc.is_copy = true;
+				img->valid = false;
+				cb->image_update(vg, img, &desc);
+			}
 			int ms = rtc.end();
 			//if (ms > 0)
 			//	printf("draw build ms: %d\n", ms);
-			ovg_draw_data_t dlist[] = { get_draw_list(vg), get_draw_list(canvg) };
+			ovg_draw_data_t dlist[] = { get_draw_list(vg) };
 			rtc.begin();
 			ovg_render_frame(ctx, &fbo, dlist, sizeof(dlist) / sizeof(ovg_draw_data_t));// 提交渲染 
 			ms = rtc.end();
@@ -768,23 +861,20 @@ int main()
 		}
 		SDL_Delay(16);  /* ~60 FPS */
 	}
-
-	SDL_WaitForGPUIdle(g->device);
+	if (run_dst)delete run_dst;
+	SDL_WaitForGPUIdle(wg->device);
 	/* Cleanup */
 
 	free_vgfbo_sdl3(&fbo);
 	free_ovgctx_sdl3(ctx);
 	free_sdl3gpu_device(dev);
 
-	SDL_DestroyGPUDevice(g->device);
-	SDL_DestroyWindow(g->window);
-	SDL_Quit();
-
 	delete_font_family(familys);
 	free_font_cache(font_ctx);
 	// 删除vg对象
 	cb->destroy_rvg(vg);
 	if (cb)free_ctx_cb(cb);
-	if (can)free_canvas_cb(can);
+	SDL_Quit();
+
 	return 0;
 }

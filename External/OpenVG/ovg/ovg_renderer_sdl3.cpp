@@ -1642,7 +1642,13 @@ void free_vgfbo_sdl3(vg_fbo_t* fbo) {
 	if (fbo->colorTexMS) { destroy_texture((sdl3gpu_texture*)fbo->colorTexMS);   fbo->colorTexMS = nullptr; }
 	if (fbo->depthStencilTex) { destroy_texture((sdl3gpu_texture*)fbo->depthStencilTex); fbo->depthStencilTex = nullptr; }
 }
-
+void reset_vgfbo_sdl3(vg_fbo_t* fbo, int width, int height) {
+	if (fbo) {
+		free_vgfbo_sdl3(fbo);
+		*fbo = new_vgfbo_sdl3(fbo->ctx, width, height, fbo->window);
+		fbo->display_size = { width, height };
+	}
+}
 // ========================================================================
 // MSAA 解析
 // ========================================================================
@@ -2195,7 +2201,7 @@ SDL_GPUCommandBuffer* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo) {
 	if (!cmd)return 0;
 	uint32_t sw = 0, sh = 0;
 	SDL_GPUTexture* swapchain = NULL;
-	for (;;) {
+	do {
 		if (fbo->window)
 		{
 			bool aq = SDL_AcquireGPUSwapchainTexture(cmd, fbo->window, &swapchain, &sw, &sh);
@@ -2207,18 +2213,10 @@ SDL_GPUCommandBuffer* ovg_get_window_swapchain(ovg_ctx_t* ctx, vg_fbo_t* fbo) {
 			if (fbo->width != sw || fbo->height != sh)
 			{
 				SDL_WaitForGPUSwapchain(ctx->device->gpuDevice, fbo->window);
-				auto newfbo = new_vgfbo_sdl3(ctx, sw, sh, fbo->window);
-				free_vgfbo_sdl3(fbo);
-				*fbo = newfbo;
-				fbo->display_size = { sw,sh };
-			}
-			else {
-				break;
+				reset_vgfbo_sdl3(fbo, sw, sh);
 			}
 		}
-		else { break; }
-	}
-
+	} while (0);
 	fbo->swapchain = swapchain;
 	fbo->cmd = cmd;
 	return cmd;
@@ -2597,7 +2595,7 @@ int build_devres(ovg_ctx_t* ctx, SDL_GPUCommandBuffer* cmd, ovg_draw_data_t* kd)
 		d.width = it->width;
 		d.height = it->height;
 		d.stride = it->stride;     /* 每行字节数（0 = 按 bpp * width 自动算） */
-		d.format = it->format;     /* 像素格式 */
+		d.format = (vg_format_t)it->format;     /* 像素格式 */
 		d.dst_texture = tex;/* 目标 GPU 纹理 */
 		d.x = it->x, d.y = it->y;       /* 目标区域起点（纹理空间） */
 		d.w = it->w, d.h = it->h;       /* 目标区域尺寸（0 = 整张） */
@@ -2676,15 +2674,15 @@ void ovg_render_frame(ovg_ctx_t* ctx, vg_fbo_t* fbo, ovg_draw_data_t* data, size
 	deferred_free_advance(ctx);
 }
 
+sdl3gpu_texture* new_texture_def(ovg_ctx_t* ctx, int w, int h, uint32_t format)
+{
+	SDL_GPUTextureFormat f = vg_to_sdl_format((vg_format_t)format);
+	auto p = new_texture(ctx->device, f, w, h, 0);
+	return p;
+}
 
 bool vg_sdl3_init(ovg_sdl3_ctx* g, int width, int height, bool is_vulkan) {
 	SDL_Init(SDL_INIT_VIDEO);
-
-	g->window = SDL_CreateWindow("SDL3 GPU Vector Graphics",
-		width, height,
-		SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN |
-		SDL_WINDOW_HIGH_PIXEL_DENSITY);
-	if (!g->window) return false;
 
 	SDL_PropertiesID props = SDL_CreateProperties();
 	if (is_vulkan)
@@ -2745,13 +2743,13 @@ bool vg_sdl3_init(ovg_sdl3_ctx* g, int width, int height, bool is_vulkan) {
 		SDL_Log("GPU device create failed: %s", SDL_GetError());
 		return false;
 	}
+	g->window = SDL_CreateWindow("SDL3 GPU Vector Graphics",
+		width, height,
+		SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN |
+		SDL_WINDOW_HIGH_PIXEL_DENSITY);
+	if (!g->window) return false;
 	SDL_ClaimWindowForGPUDevice(g->device, g->window);
+	SDL_ShowWindow(g->window);
 	return true;
 }
 
-sdl3gpu_texture* new_texture_def(ovg_ctx_t* ctx, int w, int h, vg_format_t format)
-{
-	SDL_GPUTextureFormat f = vg_to_sdl_format(format);
-	auto p = new_texture(ctx->device, f, w, h, 0);
-	return p;
-}
