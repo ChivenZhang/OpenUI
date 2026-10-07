@@ -391,7 +391,7 @@ typedef unsigned int ui_css_flex_type_t;
 
 enum
 {
-    UI_CSS_FLEX_BASIS_CONTENT,
+    UI_CSS_FLEX_BASIS_AUTO,
     UI_CSS_FLEX_BASIS_LENGTH,
     UI_CSS_FLEX_BASIS_PERCENTAGE,
 };
