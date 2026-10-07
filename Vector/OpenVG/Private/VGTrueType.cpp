@@ -9,7 +9,7 @@
 *
 * =================================================*/
 #include "../VGTrueType.h"
-#include "raqm.h"
+#include <raqm.h>
 #include <unicode/ubidi.h>
 #include <unicode/uscript.h>
 #include <unicode/unistr.h>

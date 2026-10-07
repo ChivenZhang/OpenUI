@@ -30,7 +30,7 @@
     "features" : [ "freetype", "icu" ]
   }, {
     "name" : "libraqm",
-    "version>=" : "0.10.5"
+    "version>=" : "0.11.0"
   }, {
     "name" : "glm",
     "version>=" : "1.0.3"

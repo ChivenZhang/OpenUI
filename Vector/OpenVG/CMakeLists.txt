@@ -11,7 +11,7 @@ else()
 	target_link_directories(OpenVG PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 endif()
 
-target_link_libraries(OpenVG PRIVATE fribidi)
+target_link_libraries(OpenVG PRIVATE fribidi raqm)
 
 find_package(Freetype REQUIRED)
 target_link_libraries(OpenVG PRIVATE Freetype::Freetype) # since CMake 3.10
