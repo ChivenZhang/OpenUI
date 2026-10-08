@@ -9,7 +9,8 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "OPENUI_ENABLE_EXAMPLE": "ON",
-        "OPENUI_ENABLE_OPENRT": "ON"
+        "OPENUI_ENABLE_OPENRT": "ON",
+        "OVG_ENABLE_SAMPLE": "ON"
       }
     },
     {

@@ -1,0 +1,80 @@
+#version 450
+#extension GL_EXT_scalar_block_layout : require
+layout(row_major) uniform;
+layout(row_major) buffer;
+
+#line 21 0
+struct PushConsts_0
+{
+    mat4x4 mvp_0;
+    uint instance_pos_0;
+};
+
+
+#line 32
+layout(binding = 0, set = 1)
+layout(scalar) uniform block_PushConsts_0
+{
+    mat4x4 mvp_0;
+    uint instance_pos_0;
+}pc_0;
+
+#line 1
+layout(location = 0)
+out vec2 entryPointParam_main_uv_0;
+
+
+#line 1
+layout(location = 1)
+out vec4 entryPointParam_main_color_0;
+
+
+#line 1
+layout(location = 0)
+in vec3 input_pos_0;
+
+
+#line 1
+layout(location = 1)
+in vec2 input_uv_0;
+
+
+#line 1
+layout(location = 2)
+in vec4 input_color_0;
+
+
+#line 11
+struct VSOutput_0
+{
+    vec4 pos_0;
+    vec2 uv_0;
+    vec4 color_0;
+};
+
+
+#line 50
+void main()
+{
+    VSOutput_0 output_0;
+    output_0.pos_0 = (((vec4(input_pos_0, 1.0)) * (pc_0.mvp_0)));
+    output_0.uv_0 = input_uv_0;
+    output_0.color_0 = input_color_0;
+
+
+
+    VSOutput_0 _S1 = output_0;
+
+#line 59
+    gl_Position = output_0.pos_0;
+
+#line 59
+    entryPointParam_main_uv_0 = _S1.uv_0;
+
+#line 59
+    entryPointParam_main_color_0 = _S1.color_0;
+
+#line 59
+    return;
+}
+
