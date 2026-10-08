@@ -11,7 +11,7 @@
 * =================================================*/
 #include <OpenUI/UIPainter.h>
 #include <SDL3/SDL_gpu.h>
-#include <Vector/SDLGPU/NanoVG/nanovg.h>
+#include <nanovg.h>
 
 struct DemoData {
     int fontNormal, fontBold, fontIcons, fontEmoji;

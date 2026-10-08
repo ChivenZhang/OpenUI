@@ -9,8 +9,8 @@
 *
 * =================================================*/
 #include "SDLNanoVGPainter.h"
-#include <Vector/SDLGPU/NanoVG/nanovg_sdlgpu.h>
 #include "OpenUI/UICanvas.h"
+#include <nanovg_sdlgpu.h>
 #include <nanovg.vert.h>
 #include <nanovg.frag.h>
 

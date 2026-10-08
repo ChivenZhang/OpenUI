@@ -12,11 +12,11 @@
 #include "SDLGPUPainter.h"
 #include "SDLGPURenderVG.h"
 #include "SDLGPUDevice.h"
-#include <OpenVG/VGContext.h>
-#include <OpenVG/VGShape.h>
-#include <OpenVG/VGText.h>
-#include <OpenVG/VGPicture.h>
-#include <OpenVG/VGTrueType.h>
+#include <VGContext.h>
+#include <VGShape.h>
+#include <VGText.h>
+#include <VGPicture.h>
+#include <VGTrueType.h>
 
 class SDLGPUDevice;
 

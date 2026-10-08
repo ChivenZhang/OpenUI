@@ -9,7 +9,7 @@
 * Created by ChivenZhang@gmail.com.
 *
 * =================================================*/
-#include <OpenVG/VGRender.h>
+#include <VGRender.h>
 #include <SDL3/SDL_gpu.h>
 
 #include "OpenUI/UI.h"
@@ -47,7 +47,7 @@ protected:
 	VGMap<VGImage, context_t> m_GlyphTextureMap;
 };
 
-#include "OpenVG/VGPublic.h"
+#include "VGPublic.h"
 
 class SDLGPURenderVG : public VGRender
 {
