@@ -1,43 +1,106 @@
-//
-// Copyright (c) 2009-2013 Mikko Mononen memon@inside.org
-//
-// This software is provided 'as-is', without any express or implied
-// warranty.  In no event will the authors be held liable for any damages
-// arising from the use of this software.
-// Permission is granted to anyone to use this software for any purpose,
-// including commercial applications, and to alter it and redistribute it
-// freely, subject to the following restrictions:
-// 1. The origin of this software must not be misrepresented; you must not
-//    claim that you wrote the original software. If you use this software
-//    in a product, an acknowledgment in the product documentation would be
-//    appreciated but is not required.
-// 2. Altered source versions must be plainly marked as such, and must not be
-//    misrepresented as being the original software.
-// 3. This notice may not be removed or altered from any source distribution.
-//
 #pragma once
-#include <GL/glew.h>
+#include <OpenRT.h>
 #include "nanovg.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+constexpr auto fillVertShader =
+    "#version 150 core\n"
+    "	uniform vec2 viewSize;\n"
+    "	in vec2 vertex;\n"
+    "	in vec2 tcoord;\n"
+    "	out vec2 ftcoord;\n"
+    "	out vec2 fpos;\n"
+    "void main(void) {\n"
+    "	ftcoord = tcoord;\n"
+    "	fpos = vertex;\n"
+    "	gl_Position = vec4(2.0*vertex.x/viewSize.x - 1.0, 1.0 - 2.0*vertex.y/viewSize.y, 0, 1);\n"
+    "}\n";
 
-// Create flags
+constexpr auto fillFragShader =
+    "#version 150 core\n"
+    "#define EDGE_AA 1\n"
+    "layout(std140) uniform frag {\n"
+    "	mat3 scissorMat;\n"
+    "	mat3 paintMat;\n"
+    "	vec4 innerCol;\n"
+    "	vec4 outerCol;\n"
+    "	vec2 scissorExt;\n"
+    "	vec2 scissorScale;\n"
+    "	vec2 extent;\n"
+    "	float radius;\n"
+    "	float feather;\n"
+    "	float strokeMult;\n"
+    "	float strokeThr;\n"
+    "	int texType;\n"
+    "	int type;\n"
+    "};\n"
+    "uniform sampler2D tex;\n"
+    "in vec2 ftcoord;\n"
+    "in vec2 fpos;\n"
+    "out vec4 outColor;\n"
+    "\n"
+    "float sdroundrect(vec2 pt, vec2 ext, float rad) {\n"
+    "	vec2 ext2 = ext - vec2(rad,rad);\n"
+    "	vec2 d = abs(pt) - ext2;\n"
+    "	return min(max(d.x,d.y),0.0) + length(max(d,0.0)) - rad;\n"
+    "}\n"
+    "\n"
+    "// Scissoring\n"
+    "float scissorMask(vec2 p) {\n"
+    "	vec2 sc = (abs((scissorMat * vec3(p,1.0)).xy) - scissorExt);\n"
+    "	sc = vec2(0.5,0.5) - sc * scissorScale;\n"
+    "	return clamp(sc.x,0.0,1.0) * clamp(sc.y,0.0,1.0);\n"
+    "}\n"
+    "#ifdef EDGE_AA\n"
+    "// Stroke - from [0..1] to clipped pyramid, where the slope is 1px.\n"
+    "float strokeMask() {\n"
+    "	return min(1.0, (1.0-abs(ftcoord.x*2.0-1.0))*strokeMult) * min(1.0, ftcoord.y);\n"
+    "}\n"
+    "#endif\n"
+    "\n"
+    "void main(void) {\n"
+    "   vec4 result;\n"
+    "	float scissor = scissorMask(fpos);\n"
+    "#ifdef EDGE_AA\n"
+    "	float strokeAlpha = strokeMask();\n"
+    "	if (strokeAlpha < strokeThr) discard;\n"
+    "#else\n"
+    "	float strokeAlpha = 1.0;\n"
+    "#endif\n"
+    "	if (type == 0) {			// Gradient\n"
+    "		// Calculate gradient color using box gradient\n"
+    "		vec2 pt = (paintMat * vec3(fpos,1.0)).xy;\n"
+    "		float d = clamp((sdroundrect(pt, extent, radius) + feather*0.5) / feather, 0.0, 1.0);\n"
+    "		vec4 color = mix(innerCol,outerCol,d);\n"
+    "		// Combine alpha\n"
+    "		color *= strokeAlpha * scissor;\n"
+    "		result = color;\n"
+    "	} else if (type == 1) {		// Image\n"
+    "		// Calculate color fron texture\n"
+    "		vec2 pt = (paintMat * vec3(fpos,1.0)).xy / extent;\n"
+    "		vec4 color = texture(tex, pt);\n"
+    "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);"
+    "		if (texType == 2) color = vec4(color.x);"
+    "		// Apply color tint and alpha.\n"
+    "		color *= innerCol;\n"
+    "		// Combine alpha\n"
+    "		color *= strokeAlpha * scissor;\n"
+    "		result = color;\n"
+    "	} else if (type == 2) {		// Stencil fill\n"
+    "		result = vec4(1,1,1,1);\n"
+    "	} else if (type == 3) {		// Textured tris\n"
+    "		vec4 color = texture(tex, ftcoord);\n"
+    "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);"
+    "		if (texType == 2) color = vec4(color.x);"
+    "		color *= scissor;\n"
+    "		result = color * innerCol;\n"
+    "	}\n"
+    "	outColor = result;\n"
+    "}\n";
 
 enum NVGcreateFlags
 {
-    // Flag indicating if geometry based anti-aliasing is used (may not be needed when using MSAA).
-    NVG_ANTIALIAS = 1 << 0,
-    // Flag indicating if strokes should be drawn using stencil buffer. The rendering will be a little
-    // slower, but path overlaps (i.e. self-intersecting or sharp turns) will be drawn just once.
-    NVG_STENCIL_STROKES = 1 << 1,
-    // Flag indicating that additional debug checks are done.
     NVG_DEBUG = 1 << 2,
 };
-
-// Creates NanoVG contexts for different OpenGL (ES) versions.
-// Flags should be combination of the create flags above.
 
 NVGcontext* nvgCreateGL3(int flags);
 
@@ -47,15 +110,10 @@ int nvglCreateImageFromHandleGL3(NVGcontext* ctx, GLuint textureId, int w, int h
 
 GLuint nvglImageHandleGL3(NVGcontext* ctx, int image);
 
-// These are additional flags on top of NVGimageFlags.
 enum NVGimageFlagsGL
 {
     NVG_IMAGE_NODELETE = 1 << 16, // Do not delete GL texture handle.
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #ifdef NANOVG_GL3_IMPLEMENTATION
 
@@ -63,7 +121,6 @@ enum NVGimageFlagsGL
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "nanovg.h"
 
 enum RTVGuniformLoc
 {
@@ -88,14 +145,18 @@ enum RTVGuniformBindings
 
 struct RTVGshader
 {
-    GLuint prog;
-    GLuint frag;
-    GLuint vert;
-    GLint loc[RTVG_MAX_LOCS];
+    // GLuint prog;
+    // GLuint frag;
+    // GLuint vert;
+    // GLint loc[RTVG_MAX_LOCS];
 };
 
 struct RTVGtexture
 {
+    rt_texture_t texture;
+
+    // ==================
+
     int id;
     GLuint tex;
     int width, height;
@@ -159,15 +220,17 @@ struct RTVGfragUniforms
 
 struct RTVGcontext
 {
-    RTVGshader shader;
+    rt_buffer_t vertBuf;
+    rt_buffer_t fragBuf;
+
+    rt_texture_t dummyTex;
+
+    // ===================
     RTVGtexture* textures;
     float view[2];
     int ntextures;
     int ctextures;
     int textureId;
-    GLuint vertBuf;
-    GLuint vertArr;
-    GLuint fragBuf;
     int fragSize;
     int flags;
 
@@ -184,8 +247,6 @@ struct RTVGcontext
     unsigned char* uniforms;
     int cuniforms;
     int nuniforms;
-
-    int dummyTex;
 };
 
 [[deprecated]]
@@ -272,21 +333,7 @@ static void nvg_dumpProgramError(GLuint prog, const char* name)
 }
 
 [[deprecated]]
-static void nvg_checkError(RTVGcontext* gl, const char* str)
-{
-    GLenum err;
-    if ((gl->flags & NVG_DEBUG) == 0) return;
-    err = glGetError();
-    if (err != GL_NO_ERROR)
-    {
-        printf("Error %08x after %s\n", err, str);
-        return;
-    }
-}
-
-[[deprecated]]
-static int nvg_createShader(RTVGshader* shader, const char* name, const char* header, const char* opts,
-                            const char* vshader, const char* fshader)
+static int nvg_createShader(RTVGshader* shader, const char* name, const char* header, const char* opts, const char* vshader, const char* fshader)
 {
     GLint status;
     GLuint prog, vert, frag;
@@ -334,22 +381,7 @@ static int nvg_createShader(RTVGshader* shader, const char* name, const char* he
         return 0;
     }
 
-    shader->prog = prog;
-    shader->vert = vert;
-    shader->frag = frag;
-
     return 1;
-}
-
-[[deprecated]]
-static void nvg_deleteShader(RTVGshader* shader)
-{
-    if (shader->prog != 0)
-        glDeleteProgram(shader->prog);
-    if (shader->vert != 0)
-        glDeleteShader(shader->vert);
-    if (shader->frag != 0)
-        glDeleteShader(shader->frag);
 }
 
 static int rt_renderCreateTexture(void* uptr, int type, int w, int h, int imageFlags, const unsigned char* data);
@@ -359,141 +391,19 @@ static int rt_renderCreate(void* uptr)
     RTVGcontext* gl = (RTVGcontext*)uptr;
     int align = 4;
 
-    // TODO: mediump float may not be enough for GLES2 in iOS.
-    // see the following discussion: https://github.com/memononen/nanovg/issues/46
-    static const char* shaderHeader =
-        "#version 150 core\n"
-        "\n";
-
-    static const char* fillVertShader =
-        "	uniform vec2 viewSize;\n"
-        "	in vec2 vertex;\n"
-        "	in vec2 tcoord;\n"
-        "	out vec2 ftcoord;\n"
-        "	out vec2 fpos;\n"
-        "void main(void) {\n"
-        "	ftcoord = tcoord;\n"
-        "	fpos = vertex;\n"
-        "	gl_Position = vec4(2.0*vertex.x/viewSize.x - 1.0, 1.0 - 2.0*vertex.y/viewSize.y, 0, 1);\n"
-        "}\n";
-
-    static const char* fillFragShader =
-        "layout(std140) uniform frag {\n"
-        "	mat3 scissorMat;\n"
-        "	mat3 paintMat;\n"
-        "	vec4 innerCol;\n"
-        "	vec4 outerCol;\n"
-        "	vec2 scissorExt;\n"
-        "	vec2 scissorScale;\n"
-        "	vec2 extent;\n"
-        "	float radius;\n"
-        "	float feather;\n"
-        "	float strokeMult;\n"
-        "	float strokeThr;\n"
-        "	int texType;\n"
-        "	int type;\n"
-        "};\n"
-        "uniform sampler2D tex;\n"
-        "in vec2 ftcoord;\n"
-        "in vec2 fpos;\n"
-        "out vec4 outColor;\n"
-        "\n"
-        "float sdroundrect(vec2 pt, vec2 ext, float rad) {\n"
-        "	vec2 ext2 = ext - vec2(rad,rad);\n"
-        "	vec2 d = abs(pt) - ext2;\n"
-        "	return min(max(d.x,d.y),0.0) + length(max(d,0.0)) - rad;\n"
-        "}\n"
-        "\n"
-        "// Scissoring\n"
-        "float scissorMask(vec2 p) {\n"
-        "	vec2 sc = (abs((scissorMat * vec3(p,1.0)).xy) - scissorExt);\n"
-        "	sc = vec2(0.5,0.5) - sc * scissorScale;\n"
-        "	return clamp(sc.x,0.0,1.0) * clamp(sc.y,0.0,1.0);\n"
-        "}\n"
-        "#ifdef EDGE_AA\n"
-        "// Stroke - from [0..1] to clipped pyramid, where the slope is 1px.\n"
-        "float strokeMask() {\n"
-        "	return min(1.0, (1.0-abs(ftcoord.x*2.0-1.0))*strokeMult) * min(1.0, ftcoord.y);\n"
-        "}\n"
-        "#endif\n"
-        "\n"
-        "void main(void) {\n"
-        "   vec4 result;\n"
-        "	float scissor = scissorMask(fpos);\n"
-        "#ifdef EDGE_AA\n"
-        "	float strokeAlpha = strokeMask();\n"
-        "	if (strokeAlpha < strokeThr) discard;\n"
-        "#else\n"
-        "	float strokeAlpha = 1.0;\n"
-        "#endif\n"
-        "	if (type == 0) {			// Gradient\n"
-        "		// Calculate gradient color using box gradient\n"
-        "		vec2 pt = (paintMat * vec3(fpos,1.0)).xy;\n"
-        "		float d = clamp((sdroundrect(pt, extent, radius) + feather*0.5) / feather, 0.0, 1.0);\n"
-        "		vec4 color = mix(innerCol,outerCol,d);\n"
-        "		// Combine alpha\n"
-        "		color *= strokeAlpha * scissor;\n"
-        "		result = color;\n"
-        "	} else if (type == 1) {		// Image\n"
-        "		// Calculate color fron texture\n"
-        "		vec2 pt = (paintMat * vec3(fpos,1.0)).xy / extent;\n"
-        "		vec4 color = texture(tex, pt);\n"
-        "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);"
-        "		if (texType == 2) color = vec4(color.x);"
-        "		// Apply color tint and alpha.\n"
-        "		color *= innerCol;\n"
-        "		// Combine alpha\n"
-        "		color *= strokeAlpha * scissor;\n"
-        "		result = color;\n"
-        "	} else if (type == 2) {		// Stencil fill\n"
-        "		result = vec4(1,1,1,1);\n"
-        "	} else if (type == 3) {		// Textured tris\n"
-        "		vec4 color = texture(tex, ftcoord);\n"
-        "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);"
-        "		if (texType == 2) color = vec4(color.x);"
-        "		color *= scissor;\n"
-        "		result = color * innerCol;\n"
-        "	}\n"
-        "	outColor = result;\n"
-        "}\n";
-
-    nvg_checkError(gl, "init");
-
-    if (gl->flags & NVG_ANTIALIAS)
-    {
-        if (nvg_createShader(&gl->shader, "shader", shaderHeader, "#define EDGE_AA 1\n", fillVertShader,
-                             fillFragShader) == 0)
-            return 0;
-    }
-    else
-    {
-        if (nvg_createShader(&gl->shader, "shader", shaderHeader, nullptr, fillVertShader, fillFragShader) == 0)
-            return 0;
-    }
-
-    nvg_checkError(gl, "uniform locations");
-    gl->shader.loc[RTVG_LOC_VIEWSIZE] = glGetUniformLocation(gl->shader.prog, "viewSize");
-    gl->shader.loc[RTVG_LOC_TEX] = glGetUniformLocation(gl->shader.prog, "tex");
-    gl->shader.loc[RTVG_LOC_FRAG] = glGetUniformBlockIndex(gl->shader.prog, "frag");
-
     // Create dynamic vertex array
-    glGenVertexArrays(1, &gl->vertArr);
-    glGenBuffers(1, &gl->vertBuf);
+    gl->vertBuf = rt_create_buffer({.size = 1024,});
 
     // Create UBOs
-    glUniformBlockBinding(gl->shader.prog, gl->shader.loc[RTVG_LOC_FRAG], RTVG_FRAG_BINDING);
-    glGenBuffers(1, &gl->fragBuf);
-    glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &align);
+    gl->fragBuf = rt_create_buffer({.size = sizeof(RTVGfragUniforms),});
 
     gl->fragSize = sizeof(RTVGfragUniforms) + align - sizeof(RTVGfragUniforms) % align;
 
     // Some platforms does not allow to have samples to unset textures.
     // Create empty one which is bound when there's no texture specified.
-    gl->dummyTex = rt_renderCreateTexture(gl, NVG_TEXTURE_ALPHA, 1, 1, 0, nullptr);
+    gl->dummyTex = rt_create_texture({.width = 1, .height = 1, .format = RT_TEXTURE_R8UNORM,});
 
-    nvg_checkError(gl, "create done");
-
-    glFinish();
+    rt_submit();
 
     return 1;
 }
@@ -575,7 +485,6 @@ static int rt_renderCreateTexture(void* uptr, int type, int w, int h, int imageF
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
-    nvg_checkError(gl, "create tex");
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return tex->id;
@@ -746,7 +655,6 @@ static void nvg_setUniforms(RTVGcontext* gl, int uniformOffset, int image)
         tex = nvg_findTexture(gl, gl->dummyTex);
     }
     glBindTexture(GL_TEXTURE_2D, tex != nullptr ? tex->tex : 0);
-    nvg_checkError(gl, "tex paint tex");
 }
 
 static void rt_renderViewport(void* uptr, float width, float height, float devicePixelRatio)
@@ -763,43 +671,85 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     int i, npaths = call->pathCount;
 
     // Draw shapes
-    glEnable(GL_STENCIL_TEST);
-    glStencilMask(0xff);
-    glStencilFunc(GL_ALWAYS, 0, 0xff);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-    // set bindpoint for solid loc
-    nvg_setUniforms(gl, call->uniformOffset, 0);
-    nvg_checkError(gl, "fill simple");
-
-    glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP);
-    glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP);
-    glDisable(GL_CULL_FACE);
-    for (i = 0; i < npaths; i++)
-        glDrawArrays(GL_TRIANGLE_FAN, paths[i].fillOffset, paths[i].fillCount);
-    glEnable(GL_CULL_FACE);
+    {
+        static auto module = rt_create_module_render({
+            .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {{.write = {false, false, false, false},}},
+            .stencil = {
+                .read = 0xFF,
+                .write = 0xFF,
+                .back = {.func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR_WRAP},
+                .front = {.func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_DECR_WRAP},
+            },
+            .cull_mode = RT_CULL_NONE,
+            .primitive = RT_TRIANGLES,
+        });
+        rt_pass_render_t pass{
+            .stencil = {.refer = 0},
+        };
+        rt_begin_render(pass);
+        rt_bind_module_render(module);
+        // rt_bind_buffer(gl->fragBuf, {.binding = 0});
+        for (i = 0; i < npaths; i++)
+        {
+            rt_draw_array(nullptr, 0, paths[i].fillCount, 1, paths[i].fillOffset, 0);
+        }
+        rt_end_render(pass);
+    }
 
     // Draw anti-aliased pixels
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-    nvg_setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
-    nvg_checkError(gl, "fill fill");
-
-    if (gl->flags & NVG_ANTIALIAS)
     {
-        glStencilFunc(GL_EQUAL, 0x00, 0xff);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        // Draw fringes
+        static auto module = rt_create_module_render({
+            .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {{}},
+            .stencil = {
+                .read = 0xFF,
+                .write = 0xFF,
+                .back = {.func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP},
+                .front = {.func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP},
+            },
+            .cull_mode = RT_CULL_BACK,
+            .primitive = RT_TRIANGLE_STRIP,
+        });
+        rt_pass_render_t pass{
+            .stencil = {.refer = 0},
+        };
+        rt_begin_render(pass);
+        rt_bind_module_render(module);
+        // rt_bind_buffer(gl->fragBuf, {.binding = 0});
         for (i = 0; i < npaths; i++)
-            glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+        {
+            rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
+        }
+        rt_end_render(pass);
     }
 
     // Draw fill
-    glStencilFunc(GL_NOTEQUAL, 0x0, 0xff);
-    glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
-    glDrawArrays(GL_TRIANGLE_STRIP, call->triangleOffset, call->triangleCount);
-
-    glDisable(GL_STENCIL_TEST);
+    {
+        static auto module = rt_create_module_render({
+            .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {{}},
+            .stencil = {
+                .read = 0xFF,
+                .write = 0xFF,
+                .back = {.func = RT_NOTEQUAL, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO},
+                .front = {.func = RT_NOTEQUAL, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO},
+            },
+            .cull_mode = RT_CULL_BACK,
+            .primitive = RT_TRIANGLE_STRIP,
+        });
+        rt_pass_render_t pass{
+            .stencil = {.refer = 0},
+        };
+        rt_begin_render(pass);
+        rt_bind_module_render(module);
+        // rt_bind_buffer(gl->fragBuf, {.binding = 0});
+        for (i = 0; i < npaths; i++)
+        {
+            rt_draw_array(nullptr, 0, call->triangleCount, 1, call->triangleOffset, 0);
+        }
+        rt_end_render(pass);
+    }
 }
 
 static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
@@ -808,7 +758,6 @@ static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
     int i, npaths = call->pathCount;
 
     nvg_setUniforms(gl, call->uniformOffset, call->image);
-    nvg_checkError(gl, "convex fill");
 
     for (i = 0; i < npaths; i++)
     {
@@ -826,51 +775,37 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
     RTVGpath* paths = &gl->paths[call->pathOffset];
     int npaths = call->pathCount, i;
 
-    if (gl->flags & NVG_STENCIL_STROKES)
-    {
-        glEnable(GL_STENCIL_TEST);
-        glStencilMask(0xff);
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xff);
 
-        // Fill the stroke base without overlap
-        glStencilFunc(GL_EQUAL, 0x0, 0xff);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-        nvg_setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
-        nvg_checkError(gl, "stroke fill 0");
-        for (i = 0; i < npaths; i++)
-            glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+    // Fill the stroke base without overlap
+    glStencilFunc(GL_EQUAL, 0x0, 0xff);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    nvg_setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
+    for (i = 0; i < npaths; i++)
+        glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
 
-        // Draw anti-aliased pixels.
-        nvg_setUniforms(gl, call->uniformOffset, call->image);
-        glStencilFunc(GL_EQUAL, 0x00, 0xff);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        for (i = 0; i < npaths; i++)
-            glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+    // Draw anti-aliased pixels.
+    nvg_setUniforms(gl, call->uniformOffset, call->image);
+    glStencilFunc(GL_EQUAL, 0x00, 0xff);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    for (i = 0; i < npaths; i++)
+        glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
 
-        // Clear stencil buffer.
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glStencilFunc(GL_ALWAYS, 0x0, 0xff);
-        glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
-        nvg_checkError(gl, "stroke fill 1");
-        for (i = 0; i < npaths; i++)
-            glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    // Clear stencil buffer.
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glStencilFunc(GL_ALWAYS, 0x0, 0xff);
+    glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+    for (i = 0; i < npaths; i++)
+        glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-        glDisable(GL_STENCIL_TEST);
-    }
-    else
-    {
-        nvg_setUniforms(gl, call->uniformOffset, call->image);
-        nvg_checkError(gl, "stroke fill");
-        // Draw Strokes
-        for (i = 0; i < npaths; i++)
-            glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
-    }
+    glDisable(GL_STENCIL_TEST);
 }
 
 static void nvg_triangles(RTVGcontext* gl, RTVGcall* call)
 {
     nvg_setUniforms(gl, call->uniformOffset, call->image);
-    nvg_checkError(gl, "triangles fill");
 
     glDrawArrays(GL_TRIANGLES, call->triangleOffset, call->triangleCount);
 }
@@ -936,41 +871,6 @@ static void rt_renderFlush(void* uptr)
 
     if (gl->ncalls > 0)
     {
-        // Setup require GL state.
-        glUseProgram(gl->shader.prog);
-
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
-        glEnable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_SCISSOR_TEST);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glStencilMask(0xffffffff);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        glStencilFunc(GL_ALWAYS, 0, 0xffffffff);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        // Upload ubo for frag shaders
-        glBindBuffer(GL_UNIFORM_BUFFER, gl->fragBuf);
-        glBufferData(GL_UNIFORM_BUFFER, gl->nuniforms * gl->fragSize, gl->uniforms, GL_STREAM_DRAW);
-
-        // Upload vertex data
-        glBindVertexArray(gl->vertArr);
-        glBindBuffer(GL_ARRAY_BUFFER, gl->vertBuf);
-        glBufferData(GL_ARRAY_BUFFER, gl->nverts * sizeof(NVGvertex), gl->verts, GL_STREAM_DRAW);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(NVGvertex), (const GLvoid*)(size_t)0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(NVGvertex), (const GLvoid*)(0 + 2 * sizeof(float)));
-
-        // Set view and texture just once per frame.
-        glUniform1i(gl->shader.loc[RTVG_LOC_TEX], 0);
-        glUniform2fv(gl->shader.loc[RTVG_LOC_VIEWSIZE], 1, gl->view);
-
-        glBindBuffer(GL_UNIFORM_BUFFER, gl->fragBuf);
-
         for (i = 0; i < gl->ncalls; i++)
         {
             RTVGcall* call = &gl->calls[i];
@@ -984,14 +884,6 @@ static void rt_renderFlush(void* uptr)
             else if (call->type == RTVG_TRIANGLES)
                 nvg_triangles(gl, call);
         }
-
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glBindVertexArray(0);
-        glDisable(GL_CULL_FACE);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glUseProgram(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     // Reset calls
@@ -1219,23 +1111,13 @@ static void rt_renderStroke(void* uptr, NVGpaint* paint, NVGcompositeOperationSt
         }
     }
 
-    if (gl->flags & NVG_STENCIL_STROKES)
-    {
-        // Fill shader
-        call->uniformOffset = nvg_allocFragUniforms(gl, 2);
-        if (call->uniformOffset == -1) goto error;
+    // Fill shader
+    call->uniformOffset = nvg_allocFragUniforms(gl, 2);
+    if (call->uniformOffset == -1) goto error;
 
-        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe, -1.0f);
-        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, strokeWidth,
-                         fringe, 1.0f - 0.5f / 255.0f);
-    }
-    else
-    {
-        // Fill shader
-        call->uniformOffset = nvg_allocFragUniforms(gl, 1);
-        if (call->uniformOffset == -1) goto error;
-        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe, -1.0f);
-    }
+    nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe, -1.0f);
+    nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, strokeWidth,
+                     fringe, 1.0f - 0.5f / 255.0f);
 
     return;
 
@@ -1287,14 +1169,8 @@ static void rt_renderDelete(void* uptr)
     int i;
     if (gl == nullptr) return;
 
-    nvg_deleteShader(&gl->shader);
-
-    if (gl->fragBuf != 0)
-        glDeleteBuffers(1, &gl->fragBuf);
-    if (gl->vertArr != 0)
-        glDeleteVertexArrays(1, &gl->vertArr);
-    if (gl->vertBuf != 0)
-        glDeleteBuffers(1, &gl->vertBuf);
+    rt_destroy_buffer(gl->fragBuf);
+    rt_destroy_buffer(gl->vertBuf);
 
     for (i = 0; i < gl->ntextures; i++)
     {
@@ -1333,7 +1209,7 @@ NVGcontext* nvgCreateGL3(int flags)
     params.renderTriangles = rt_renderTriangles;
     params.renderDelete = rt_renderDelete;
     params.userPtr = gl;
-    params.edgeAntiAlias = flags & NVG_ANTIALIAS ? 1 : 0;
+    params.edgeAntiAlias = 1;
 
     gl->flags = flags;
 
