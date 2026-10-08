@@ -94,8 +94,6 @@ struct RTVGshader
     GLint loc[RTVG_MAX_LOCS];
 };
 
-typedef struct RTVGshader RTVGshader;
-
 struct RTVGtexture
 {
     int id;
@@ -105,8 +103,6 @@ struct RTVGtexture
     int flags;
 };
 
-typedef struct RTVGtexture RTVGtexture;
-
 struct RTVGblend
 {
     GLenum srcRGB;
@@ -114,8 +110,6 @@ struct RTVGblend
     GLenum srcAlpha;
     GLenum dstAlpha;
 };
-
-typedef struct RTVGblend RTVGblend;
 
 enum RTVGcallType
 {
@@ -138,8 +132,6 @@ struct RTVGcall
     RTVGblend blendFunc;
 };
 
-typedef struct RTVGcall RTVGcall;
-
 struct RTVGpath
 {
     int fillOffset;
@@ -147,8 +139,6 @@ struct RTVGpath
     int strokeOffset;
     int strokeCount;
 };
-
-typedef struct RTVGpath RTVGpath;
 
 struct RTVGfragUniforms
 {
@@ -166,8 +156,6 @@ struct RTVGfragUniforms
     int texType;
     int type;
 };
-
-typedef struct RTVGfragUniforms RTVGfragUniforms;
 
 struct RTVGcontext
 {
@@ -200,38 +188,12 @@ struct RTVGcontext
     int dummyTex;
 };
 
-typedef struct RTVGcontext RTVGcontext;
-
 [[deprecated]]
 static int nvg_maxi(int a, int b) { return a > b ? a : b; }
 
-[[deprecated]]
-static void nvg_bindTexture(RTVGcontext* gl, GLuint tex)
-{
-    glBindTexture(GL_TEXTURE_2D, tex);
-}
-
-[[deprecated]]
-static void nvg_stencilMask(RTVGcontext* gl, GLuint mask)
-{
-    glStencilMask(mask);
-}
-
-[[deprecated]]
-static void nvg_stencilFunc(RTVGcontext* gl, GLenum func, GLint ref, GLuint mask)
-{
-    glStencilFunc(func, ref, mask);
-}
-
-[[deprecated]]
-static void nvg_blendFuncSeparate(RTVGcontext* gl, const RTVGblend* blend)
-{
-    glBlendFuncSeparate(blend->srcRGB, blend->dstRGB, blend->srcAlpha, blend->dstAlpha);
-}
-
 static RTVGtexture* nvg_allocTexture(RTVGcontext* gl)
 {
-    RTVGtexture* tex = NULL;
+    RTVGtexture* tex = nullptr;
     int i;
 
     for (i = 0; i < gl->ntextures; i++)
@@ -242,14 +204,14 @@ static RTVGtexture* nvg_allocTexture(RTVGcontext* gl)
             break;
         }
     }
-    if (tex == NULL)
+    if (tex == nullptr)
     {
         if (gl->ntextures + 1 > gl->ctextures)
         {
             RTVGtexture* textures;
             int ctextures = nvg_maxi(gl->ntextures + 1, 4) + gl->ctextures / 2; // 1.5x Overallocate
             textures = (RTVGtexture*)realloc(gl->textures, sizeof(RTVGtexture) * ctextures);
-            if (textures == NULL) return NULL;
+            if (textures == nullptr) return nullptr;
             gl->textures = textures;
             gl->ctextures = ctextures;
         }
@@ -262,14 +224,13 @@ static RTVGtexture* nvg_allocTexture(RTVGcontext* gl)
     return tex;
 }
 
-[[deprecated]]
 static RTVGtexture* nvg_findTexture(RTVGcontext* gl, int id)
 {
     int i;
     for (i = 0; i < gl->ntextures; i++)
         if (gl->textures[i].id == id)
             return &gl->textures[i];
-    return NULL;
+    return nullptr;
 }
 
 [[deprecated]]
@@ -331,7 +292,7 @@ static int nvg_createShader(RTVGshader* shader, const char* name, const char* he
     GLuint prog, vert, frag;
     const char* str[3];
     str[0] = header;
-    str[1] = opts != NULL ? opts : "";
+    str[1] = opts != nullptr ? opts : "";
 
     memset(shader, 0, sizeof(*shader));
 
@@ -389,14 +350,6 @@ static void nvg_deleteShader(RTVGshader* shader)
         glDeleteShader(shader->vert);
     if (shader->frag != 0)
         glDeleteShader(shader->frag);
-}
-
-[[deprecated]]
-static void nvg_getUniforms(RTVGshader* shader)
-{
-    shader->loc[RTVG_LOC_VIEWSIZE] = glGetUniformLocation(shader->prog, "viewSize");
-    shader->loc[RTVG_LOC_TEX] = glGetUniformLocation(shader->prog, "tex");
-    shader->loc[RTVG_LOC_FRAG] = glGetUniformBlockIndex(shader->prog, "frag");
 }
 
 static int rt_renderCreateTexture(void* uptr, int type, int w, int h, int imageFlags, const unsigned char* data);
@@ -514,12 +467,14 @@ static int rt_renderCreate(void* uptr)
     }
     else
     {
-        if (nvg_createShader(&gl->shader, "shader", shaderHeader, NULL, fillVertShader, fillFragShader) == 0)
+        if (nvg_createShader(&gl->shader, "shader", shaderHeader, nullptr, fillVertShader, fillFragShader) == 0)
             return 0;
     }
 
     nvg_checkError(gl, "uniform locations");
-    nvg_getUniforms(&gl->shader);
+    gl->shader.loc[RTVG_LOC_VIEWSIZE] = glGetUniformLocation(gl->shader.prog, "viewSize");
+    gl->shader.loc[RTVG_LOC_TEX] = glGetUniformLocation(gl->shader.prog, "tex");
+    gl->shader.loc[RTVG_LOC_FRAG] = glGetUniformBlockIndex(gl->shader.prog, "frag");
 
     // Create dynamic vertex array
     glGenVertexArrays(1, &gl->vertArr);
@@ -534,7 +489,7 @@ static int rt_renderCreate(void* uptr)
 
     // Some platforms does not allow to have samples to unset textures.
     // Create empty one which is bound when there's no texture specified.
-    gl->dummyTex = rt_renderCreateTexture(gl, NVG_TEXTURE_ALPHA, 1, 1, 0, NULL);
+    gl->dummyTex = rt_renderCreateTexture(gl, NVG_TEXTURE_ALPHA, 1, 1, 0, nullptr);
 
     nvg_checkError(gl, "create done");
 
@@ -548,14 +503,14 @@ static int rt_renderCreateTexture(void* uptr, int type, int w, int h, int imageF
     RTVGcontext* gl = (RTVGcontext*)uptr;
     RTVGtexture* tex = nvg_allocTexture(gl);
 
-    if (tex == NULL) return 0;
+    if (tex == nullptr) return 0;
 
     glGenTextures(1, &tex->tex);
     tex->width = w;
     tex->height = h;
     tex->type = type;
     tex->flags = imageFlags;
-    nvg_bindTexture(gl, tex->tex);
+    glBindTexture(GL_TEXTURE_2D, tex->tex);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, tex->width);
@@ -615,15 +570,13 @@ static int rt_renderCreateTexture(void* uptr, int type, int w, int h, int imageF
     glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 
     // The new way to build mipmaps on GLES and GL3
-#if !defined(NANOVG_GL2)
     if (imageFlags & NVG_IMAGE_GENERATE_MIPMAPS)
     {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
-#endif
 
     nvg_checkError(gl, "create tex");
-    nvg_bindTexture(gl, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     return tex->id;
 }
@@ -639,8 +592,8 @@ static int rt_renderUpdateTexture(void* uptr, int image, int x, int y, int w, in
     RTVGcontext* gl = (RTVGcontext*)uptr;
     RTVGtexture* tex = nvg_findTexture(gl, image);
 
-    if (tex == NULL) return 0;
-    nvg_bindTexture(gl, tex->tex);
+    if (tex == nullptr) return 0;
+    glBindTexture(GL_TEXTURE_2D, tex->tex);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -658,7 +611,7 @@ static int rt_renderUpdateTexture(void* uptr, int image, int x, int y, int w, in
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
     glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 
-    nvg_bindTexture(gl, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     return 1;
 }
@@ -667,7 +620,7 @@ static int rt_renderGetTextureSize(void* uptr, int image, int* w, int* h)
 {
     RTVGcontext* gl = (RTVGcontext*)uptr;
     RTVGtexture* tex = nvg_findTexture(gl, image);
-    if (tex == NULL) return 0;
+    if (tex == nullptr) return 0;
     *w = tex->width;
     *h = tex->height;
     return 1;
@@ -702,7 +655,7 @@ static NVGcolor nvg_premulColor(NVGcolor c)
 static int nvg_convertPaint(RTVGcontext* gl, RTVGfragUniforms* frag, NVGpaint* paint, NVGscissor* scissor, float width,
                             float fringe, float strokeThr)
 {
-    RTVGtexture* tex = NULL;
+    RTVGtexture* tex = nullptr;
     float invxform[6];
 
     memset(frag, 0, sizeof(*frag));
@@ -737,7 +690,7 @@ static int nvg_convertPaint(RTVGcontext* gl, RTVGfragUniforms* frag, NVGpaint* p
     if (paint->image != 0)
     {
         tex = nvg_findTexture(gl, paint->image);
-        if (tex == NULL) return 0;
+        if (tex == nullptr) return 0;
         if ((tex->flags & NVG_IMAGE_FLIPY) != 0)
         {
             float m1[6], m2[6];
@@ -780,7 +733,7 @@ static RTVGfragUniforms* nvg_fragUniformPtr(RTVGcontext* gl, int i);
 
 static void nvg_setUniforms(RTVGcontext* gl, int uniformOffset, int image)
 {
-    RTVGtexture* tex = NULL;
+    RTVGtexture* tex = nullptr;
     glBindBufferRange(GL_UNIFORM_BUFFER, RTVG_FRAG_BINDING, gl->fragBuf, uniformOffset, sizeof(RTVGfragUniforms));
 
     if (image != 0)
@@ -788,11 +741,11 @@ static void nvg_setUniforms(RTVGcontext* gl, int uniformOffset, int image)
         tex = nvg_findTexture(gl, image);
     }
     // If no image is set, use empty texture
-    if (tex == NULL)
+    if (tex == nullptr)
     {
         tex = nvg_findTexture(gl, gl->dummyTex);
     }
-    nvg_bindTexture(gl, tex != NULL ? tex->tex : 0);
+    glBindTexture(GL_TEXTURE_2D, tex != nullptr ? tex->tex : 0);
     nvg_checkError(gl, "tex paint tex");
 }
 
@@ -811,8 +764,8 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
 
     // Draw shapes
     glEnable(GL_STENCIL_TEST);
-    nvg_stencilMask(gl, 0xff);
-    nvg_stencilFunc(gl, GL_ALWAYS, 0, 0xff);
+    glStencilMask(0xff);
+    glStencilFunc(GL_ALWAYS, 0, 0xff);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
     // set bindpoint for solid loc
@@ -834,7 +787,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
 
     if (gl->flags & NVG_ANTIALIAS)
     {
-        nvg_stencilFunc(gl, GL_EQUAL, 0x00, 0xff);
+        glStencilFunc(GL_EQUAL, 0x00, 0xff);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         // Draw fringes
         for (i = 0; i < npaths; i++)
@@ -842,7 +795,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     }
 
     // Draw fill
-    nvg_stencilFunc(gl, GL_NOTEQUAL, 0x0, 0xff);
+    glStencilFunc(GL_NOTEQUAL, 0x0, 0xff);
     glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
     glDrawArrays(GL_TRIANGLE_STRIP, call->triangleOffset, call->triangleCount);
 
@@ -876,10 +829,10 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
     if (gl->flags & NVG_STENCIL_STROKES)
     {
         glEnable(GL_STENCIL_TEST);
-        nvg_stencilMask(gl, 0xff);
+        glStencilMask(0xff);
 
         // Fill the stroke base without overlap
-        nvg_stencilFunc(gl, GL_EQUAL, 0x0, 0xff);
+        glStencilFunc(GL_EQUAL, 0x0, 0xff);
         glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
         nvg_setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
         nvg_checkError(gl, "stroke fill 0");
@@ -888,14 +841,14 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
 
         // Draw anti-aliased pixels.
         nvg_setUniforms(gl, call->uniformOffset, call->image);
-        nvg_stencilFunc(gl, GL_EQUAL, 0x00, 0xff);
+        glStencilFunc(GL_EQUAL, 0x00, 0xff);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         for (i = 0; i < npaths; i++)
             glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
 
         // Clear stencil buffer.
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        nvg_stencilFunc(gl, GL_ALWAYS, 0x0, 0xff);
+        glStencilFunc(GL_ALWAYS, 0x0, 0xff);
         glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
         nvg_checkError(gl, "stroke fill 1");
         for (i = 0; i < npaths; i++)
@@ -914,7 +867,6 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
     }
 }
 
-[[deprecated]]
 static void nvg_triangles(RTVGcontext* gl, RTVGcall* call)
 {
     nvg_setUniforms(gl, call->uniformOffset, call->image);
@@ -1022,7 +974,7 @@ static void rt_renderFlush(void* uptr)
         for (i = 0; i < gl->ncalls; i++)
         {
             RTVGcall* call = &gl->calls[i];
-            nvg_blendFuncSeparate(gl, &call->blendFunc);
+            glBlendFuncSeparate(call->blendFunc.srcRGB, call->blendFunc.dstRGB, call->blendFunc.srcAlpha, call->blendFunc.dstAlpha);
             if (call->type == RTVG_FILL)
                 nvg_fill(gl, call);
             else if (call->type == RTVG_CONVEXFILL)
@@ -1039,7 +991,7 @@ static void rt_renderFlush(void* uptr)
         glDisable(GL_CULL_FACE);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glUseProgram(0);
-        nvg_bindTexture(gl, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     // Reset calls
@@ -1062,13 +1014,13 @@ static int nvg_maxVertCount(const NVGpath* paths, int npaths)
 
 static RTVGcall* nvg_allocCall(RTVGcontext* gl)
 {
-    RTVGcall* ret = NULL;
+    RTVGcall* ret = nullptr;
     if (gl->ncalls + 1 > gl->ccalls)
     {
         RTVGcall* calls;
         int ccalls = nvg_maxi(gl->ncalls + 1, 128) + gl->ccalls / 2; // 1.5x Overallocate
         calls = (RTVGcall*)realloc(gl->calls, sizeof(RTVGcall) * ccalls);
-        if (calls == NULL) return NULL;
+        if (calls == nullptr) return nullptr;
         gl->calls = calls;
         gl->ccalls = ccalls;
     }
@@ -1085,7 +1037,7 @@ static int nvg_allocPaths(RTVGcontext* gl, int n)
         RTVGpath* paths;
         int cpaths = nvg_maxi(gl->npaths + n, 128) + gl->cpaths / 2; // 1.5x Overallocate
         paths = (RTVGpath*)realloc(gl->paths, sizeof(RTVGpath) * cpaths);
-        if (paths == NULL) return -1;
+        if (paths == nullptr) return -1;
         gl->paths = paths;
         gl->cpaths = cpaths;
     }
@@ -1102,7 +1054,7 @@ static int nvg_allocVerts(RTVGcontext* gl, int n)
         NVGvertex* verts;
         int cverts = nvg_maxi(gl->nverts + n, 4096) + gl->cverts / 2; // 1.5x Overallocate
         verts = (NVGvertex*)realloc(gl->verts, sizeof(NVGvertex) * cverts);
-        if (verts == NULL) return -1;
+        if (verts == nullptr) return -1;
         gl->verts = verts;
         gl->cverts = cverts;
     }
@@ -1119,7 +1071,7 @@ static int nvg_allocFragUniforms(RTVGcontext* gl, int n)
         unsigned char* uniforms;
         int cuniforms = nvg_maxi(gl->nuniforms + n, 128) + gl->cuniforms / 2; // 1.5x Overallocate
         uniforms = (unsigned char*)realloc(gl->uniforms, structSize * cuniforms);
-        if (uniforms == NULL) return -1;
+        if (uniforms == nullptr) return -1;
         gl->uniforms = uniforms;
         gl->cuniforms = cuniforms;
     }
@@ -1151,7 +1103,7 @@ static void rt_renderFill(void* uptr, NVGpaint* paint, NVGcompositeOperationStat
     RTVGfragUniforms* frag;
     int i, maxverts, offset;
 
-    if (call == NULL) return;
+    if (call == nullptr) return;
 
     call->type = RTVG_FILL;
     call->triangleCount = 4;
@@ -1239,7 +1191,7 @@ static void rt_renderStroke(void* uptr, NVGpaint* paint, NVGcompositeOperationSt
     RTVGcall* call = nvg_allocCall(gl);
     int i, maxverts, offset;
 
-    if (call == NULL) return;
+    if (call == nullptr) return;
 
     call->type = RTVG_STROKE;
     call->pathOffset = nvg_allocPaths(gl, npaths);
@@ -1301,7 +1253,7 @@ static void rt_renderTriangles(void* uptr, NVGpaint* paint, NVGcompositeOperatio
     RTVGcall* call = nvg_allocCall(gl);
     RTVGfragUniforms* frag;
 
-    if (call == NULL) return;
+    if (call == nullptr) return;
 
     call->type = RTVG_TRIANGLES;
     call->image = paint->image;
@@ -1333,7 +1285,7 @@ static void rt_renderDelete(void* uptr)
 {
     RTVGcontext* gl = (RTVGcontext*)uptr;
     int i;
-    if (gl == NULL) return;
+    if (gl == nullptr) return;
 
     nvg_deleteShader(&gl->shader);
 
@@ -1362,9 +1314,9 @@ static void rt_renderDelete(void* uptr)
 NVGcontext* nvgCreateGL3(int flags)
 {
     NVGparams params;
-    NVGcontext* ctx = NULL;
+    NVGcontext* ctx = nullptr;
     RTVGcontext* gl = (RTVGcontext*)malloc(sizeof(RTVGcontext));
-    if (gl == NULL) goto error;
+    if (gl == nullptr) goto error;
     memset(gl, 0, sizeof(RTVGcontext));
 
     memset(&params, 0, sizeof(params));
@@ -1386,14 +1338,14 @@ NVGcontext* nvgCreateGL3(int flags)
     gl->flags = flags;
 
     ctx = nvgCreateInternal(&params);
-    if (ctx == NULL) goto error;
+    if (ctx == nullptr) goto error;
 
     return ctx;
 
 error:
     // 'gl' is freed by nvgDeleteInternal.
-    if (ctx != NULL) nvgDeleteInternal(ctx);
-    return NULL;
+    if (ctx != nullptr) nvgDeleteInternal(ctx);
+    return nullptr;
 }
 
 void nvgDeleteGL3(NVGcontext* ctx)
@@ -1406,7 +1358,7 @@ int nvglCreateImageFromHandleGL3(NVGcontext* ctx, GLuint textureId, int w, int h
     RTVGcontext* gl = (RTVGcontext*)nvgInternalParams(ctx)->userPtr;
     RTVGtexture* tex = nvg_allocTexture(gl);
 
-    if (tex == NULL) return 0;
+    if (tex == nullptr) return 0;
 
     tex->type = NVG_TEXTURE_RGBA;
     tex->tex = textureId;
