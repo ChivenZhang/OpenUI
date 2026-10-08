@@ -6,6 +6,8 @@
 
 	add_subdirectory(OpenRT)
 
+	add_subdirectory(OpenVG)
+
 	add_subdirectory(SDLGPU)
 
 endif()
