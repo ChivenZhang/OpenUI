@@ -16,7 +16,7 @@
 #define NANOVG_GL3_IMPLEMENTATION
 #include <GL/glew.h>
 #include <nanovg.h>
-#include <nanovg_rt.h>
+#include <nanovg_gl.h>
 #include "demo.h"
 #include "perf.h"
 

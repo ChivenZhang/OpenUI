@@ -37,7 +37,7 @@ constexpr auto fillVertShader =
 constexpr auto fillFragShader =
     "#version 150 core\n"
     "#define EDGE_AA 1\n"
-    "layout(std140) uniform frag {\n"
+    "layout(std140, binding = 0) uniform frag {\n"
     "	mat3 scissorMat;\n"
     "	mat3 paintMat;\n"
     "	vec4 innerCol;\n"
