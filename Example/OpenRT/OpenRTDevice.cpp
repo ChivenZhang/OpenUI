@@ -266,7 +266,7 @@ bool OpenRTDevice::update()
 	auto t0 = SDL_GetTicks() * 0.001f;
 
 	SDL_GL_MakeCurrent(m_Window, m_Context);
-	static auto vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+	static auto vg = nvgCreateGL3(0);
 	static DemoData data;
 	static PerfGraph fps;
 	static auto loaded = []()
