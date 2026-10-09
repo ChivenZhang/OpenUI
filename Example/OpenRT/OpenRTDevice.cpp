@@ -39,10 +39,8 @@ OpenRTDevice::OpenRTDevice()
 	auto scale = SDL_GetWindowDisplayScale(window);
 	UIConfig config{.DisplayScale = scale};
 	auto canvas = UINew<UICanvas>(this, config);
-	auto render = UINew<OpenRTRender>(canvas.get(), W, H);
-	auto painter = UINew<OpenRTPainter>(canvas.get(), W, H);
-    canvas->setRender(render);
-    canvas->setPainter(painter);
+    canvas->setRender(UINew<OpenRTRender>(canvas.get(), W, H));
+    canvas->setPainter(UINew<OpenRTPainter>(canvas.get(), W, H));
     m_Canvas = canvas;
 
     SDL_ShowWindow(window);

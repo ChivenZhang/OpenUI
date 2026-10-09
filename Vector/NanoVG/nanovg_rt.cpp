@@ -7,6 +7,8 @@
 #include <math.h>
 #include <vector>
 
+#include "nanovg_gl.h"
+
 enum RTVGuniformLoc
 {
     RTVG_LOC_VIEWSIZE,
@@ -98,11 +100,11 @@ struct RTVGcontext
 {
     rt_buffer_t vertBuf;
     rt_buffer_t fragBuf;
+    rt_texture_t target;
 
     // ===================
     std::map<uint32_t, RTVGtexture> textures;
     float view[2];
-    int fragSize;
     int flags;
     int dummyTex;
 
@@ -345,11 +347,18 @@ static void rt_renderViewport(void* uptr, float width, float height, float devic
     auto gl = (RTVGcontext*)uptr;
     gl->view[0] = width;
     gl->view[1] = height;
+
+    if ((uint32_t)width != gl->target.width || (uint32_t)height != gl->target.height)
+    {
+        rt_destroy_texture(gl->target);
+        gl->target = rt_create_texture({.width = (uint32_t)width, .height = (uint32_t)height, .format = RT_TEXTURE_RGBA8UNORM, .mipmaps = 1,});
+    }
 }
 
 static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
 {
     auto paths = &gl->paths[call->pathOffset];
+    auto image = nvg_findTexture(gl, call->image);
 
     // glBlendFuncSeparate(call->blendFunc.srcRGB, call->blendFunc.dstRGB, call->blendFunc.srcAlpha, call->blendFunc.dstAlpha);
     // glEnable(GL_STENCIL_TEST);
@@ -372,10 +381,13 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     {
         static auto module = rt_create_module_render({
             .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {{.write = {false, false, false, false},}},
+            .colors = {
+                {
+                    .write = {false, false, false, false},
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }},
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
                 .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_DECR_WRAP },
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR_WRAP },
             },
@@ -384,12 +396,18 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
             .primitive = RT_TRIANGLES,
         });
         rt_pass_render_t pass{
+            .colors = {
+                {
+                    .texture_view = gl->target.default_view,
+                    .clear = false,
+                }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
         rt_bind_module_render(module);
-        rt_bind_buffer(gl->fragBuf, {.binding = 0,});
-        // TODO: bind uniform buffer & texture
+        rt_bind_texture(image->texture, {.binding = 0,});
+        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
         for (auto i = 0; i < call->pathCount; ++i)
         {
             rt_draw_array(nullptr, 0, paths[i].fillCount, 1, paths[i].fillOffset, 0);
@@ -413,10 +431,13 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     {
         static auto module = rt_create_module_render({
             .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {{}},
+            .colors = {
+                {
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }
+            },
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
                 .front = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
                 .back = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
             },
@@ -425,11 +446,18 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
             .primitive = RT_TRIANGLE_STRIP,
         });
         rt_pass_render_t pass{
+            .colors = {
+                    {
+                        .texture_view = gl->target.default_view,
+                        .clear = false,
+                    }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
         rt_bind_module_render(module);
-        // TODO: bind uniform buffer & texture
+        rt_bind_texture(image->texture, {.binding = 0,});
+        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset + sizeof(RTVGfragUniforms),});
         for (auto i = 0; i < call->pathCount; ++i)
         {
             rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
@@ -445,10 +473,13 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     {
         static auto module = rt_create_module_render({
             .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {{}},
+            .colors = {
+                {
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }
+            },
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
                 .front = { .func = RT_NOTEQUAL, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
                 .back = { .func = RT_NOTEQUAL, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
             },
@@ -457,15 +488,19 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
             .primitive = RT_TRIANGLE_STRIP,
         });
         rt_pass_render_t pass{
+            .colors = {
+                    {
+                        .texture_view = gl->target.default_view,
+                        .clear = false,
+                    }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
         rt_bind_module_render(module);
-        // TODO: bind uniform buffer & texture
-        for (auto i = 0; i < call->pathCount; ++i)
-        {
-            rt_draw_array(nullptr, 0, call->triangleCount, 1, call->triangleOffset, 0);
-        }
+        rt_bind_texture(image->texture, {.binding = 0,});
+        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset + sizeof(RTVGfragUniforms),});
+        rt_draw_array(nullptr, 0, call->triangleCount, 1, call->triangleOffset, 0);
         rt_end_render(pass);
     }
 }
@@ -473,6 +508,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
 static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
 {
     auto paths = &gl->paths[call->pathOffset];
+    auto image = nvg_findTexture(gl, call->image);
 
     // nvg_setUniforms(gl, call->uniformOffset, call->image);
     // for (i = 0; i < npaths; i++)
@@ -488,9 +524,13 @@ static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
     {
         static auto module = rt_create_module_render({
             .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {
+                {
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }
+            },
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
                 .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
             },
@@ -498,11 +538,18 @@ static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
             .primitive = RT_TRIANGLE_STRIP,
         });
         rt_pass_render_t pass{
+            .colors = {
+                    {
+                        .texture_view = gl->target.default_view,
+                        .clear = false,
+                    }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
         rt_bind_module_render(module);
-        // TODO: bind uniform buffer & texture
+        rt_bind_texture(image->texture, {.binding = 0,});
+        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
 
         for (auto i = 0; i < call->pathCount; i++)
         {
@@ -520,25 +567,38 @@ static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
 static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
 {
     auto paths = &gl->paths[call->pathOffset];
+    auto image = nvg_findTexture(gl, call->image);
 
+    // Fill the stroke base without overlap
     {
         static auto module = rt_create_module_render({
             .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {
+                {
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }
+            },
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
-                .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
-                .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
+                .front = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
+                .back = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
             },
             .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
             .primitive = RT_TRIANGLE_STRIP,
         });
         rt_pass_render_t pass{
+            .colors = {
+                    {
+                        .texture_view = gl->target.default_view,
+                        .clear = false,
+                    }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
         rt_bind_module_render(module);
-        // TODO: bind uniform buffer & texture
+        rt_bind_texture(image->texture, {.binding = 0,});
+        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset + sizeof(RTVGfragUniforms),});
         for (auto i = 0; i < call->pathCount; ++i)
         {
             rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
@@ -546,19 +606,23 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
         rt_end_render(pass);
     }
 
-    // Draw anti-aliased pixels.
     // nvg_setUniforms(gl, call->uniformOffset, call->image);
     // glStencilFunc(GL_EQUAL, 0x00, 0xff);
     // glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     // for (i = 0; i < npaths; i++)
     //     glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
 
+    // Draw anti-aliased pixels.
     {
         static auto module = rt_create_module_render({
             .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {
+                {
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }
+            },
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
                 .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
             },
@@ -566,11 +630,18 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
             .primitive = RT_TRIANGLE_STRIP,
         });
         rt_pass_render_t pass{
+            .colors = {
+                    {
+                        .texture_view = gl->target.default_view,
+                        .clear = false,
+                    }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
         rt_bind_module_render(module);
-        // TODO: bind uniform buffer & texture
+        rt_bind_texture(image->texture, {.binding = 0,});
+        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
         for (auto i = 0; i < call->pathCount; ++i)
         {
             rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
@@ -578,7 +649,6 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
         rt_end_render(pass);
     }
 
-    // Clear stencil buffer.
     // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     // glStencilFunc(GL_ALWAYS, 0x0, 0xff);
     // glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
@@ -587,13 +657,18 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
     // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     //glDisable(GL_STENCIL_TEST);
 
+    // Clear stencil buffer.
     {
         static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},\
-            .colors = {{.write = {false, false, false, false}},},
+            .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {
+                {
+                    .write = {false, false, false, false},
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }
+            },
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
                 .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
             },
@@ -601,11 +676,18 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
             .primitive = RT_TRIANGLE_STRIP,
         });
         rt_pass_render_t pass{
+            .colors = {
+                    {
+                        .texture_view = gl->target.default_view,
+                        .clear = false,
+                    }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
         rt_bind_module_render(module);
-        // TODO: bind uniform buffer & texture
+        rt_bind_texture(image->texture, {.binding = 0,});
+        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
         for (auto i = 0; i < call->pathCount; ++i)
         {
             rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
@@ -622,9 +704,14 @@ static void nvg_triangles(RTVGcontext* gl, RTVGcall* call)
     {
         static auto module = rt_create_module_render({
             .vshader = {fillVertShader}, .fshader = {fillFragShader},
+            .colors = {
+                {
+                    .write = {false, false, false, false},
+                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_SRC_ALPHA, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
+                }
+            },
             .stencil = {
-                .read = 0xFF,
-                .write = 0xFF,
                 .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
             },
@@ -632,6 +719,12 @@ static void nvg_triangles(RTVGcontext* gl, RTVGcall* call)
             .primitive = RT_TRIANGLES,
         });
         rt_pass_render_t pass{
+            .colors = {
+                    {
+                        .texture_view = gl->target.default_view,
+                        .clear = false,
+                    }
+            },
             .stencil = {.refer = 0},
         };
         rt_begin_render(pass);
@@ -704,18 +797,31 @@ static void rt_renderFlush(void* uptr)
     // glBindBuffer(GL_UNIFORM_BUFFER, gl->fragBuf);
     // glBufferData(GL_UNIFORM_BUFFER, gl->nuniforms * gl->fragSize, gl->uniforms, GL_STREAM_DRAW);
 
+    // glBindBuffer(GL_ARRAY_BUFFER, gl->vertBuf);
+    // glBufferData(GL_ARRAY_BUFFER, gl->nverts * sizeof(NVGvertex), gl->verts, GL_STREAM_DRAW);
+
     {
         rt_pass_transfer_t pass;
         rt_begin_transfer(pass);
         rt_copy_buffer_data(
             {
                 .data = (uint8_t*)gl->uniforms.data(),
-                .size = (size_t)gl->nuniforms * gl->fragSize,
+                .size = (size_t)gl->nuniforms * sizeof(RTVGfragUniforms),
             },
             {
                 .buffer = gl->fragBuf,
             },
-            gl->nuniforms * gl->fragSize
+            gl->nuniforms * sizeof(RTVGfragUniforms)
+            );
+        rt_copy_buffer_data(
+            {
+                .data = (uint8_t*)gl->verts.data(),
+                .size = (size_t)gl->nverts * sizeof(NVGvertex),
+            },
+            {
+                .buffer = gl->vertBuf,
+            },
+            gl->nverts * sizeof(NVGvertex)
             );
         rt_end_transfer(pass);
     }
@@ -781,9 +887,8 @@ static int nvg_allocVerts(RTVGcontext* gl, int n)
 
 static int nvg_allocFragUniforms(RTVGcontext* gl, int n)
 {
-    int ret = 0, structSize = gl->fragSize;
     if (gl->nuniforms + n > gl->uniforms.size()) gl->uniforms.resize(gl->uniforms.size() + n);
-    ret = gl->nuniforms * structSize;
+    auto ret = gl->nuniforms * sizeof(RTVGfragUniforms);
     gl->nuniforms += n;
     return ret;
 }
@@ -872,7 +977,7 @@ static void rt_renderFill(void* uptr, NVGpaint* paint, NVGcompositeOperationStat
         frag->strokeThr = -1.0f;
         frag->type = NSVG_SHADER_SIMPLE;
         // Fill shader
-        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, fringe, fringe,
+        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + sizeof(RTVGfragUniforms)), paint, scissor, fringe, fringe,
                          -1.0f);
     }
     else
@@ -932,7 +1037,7 @@ static void rt_renderStroke(void* uptr, NVGpaint* paint, NVGcompositeOperationSt
     if (call->uniformOffset == -1) goto error;
 
     nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe, -1.0f);
-    nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, strokeWidth,
+    nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + sizeof(RTVGfragUniforms)), paint, scissor, strokeWidth,
                      fringe, 1.0f - 0.5f / 255.0f);
 
     return;
@@ -985,19 +1090,16 @@ static int rt_renderCreate(void* uptr)
     int align = 4;
 
     // Create dynamic vertex array
-    gl->vertBuf = rt_create_buffer({.size = 1024,});
+    gl->vertBuf = rt_create_buffer({.size = sizeof(NVGvertex) * 1024,});
 
     // Create UBOs
     gl->fragBuf = rt_create_buffer({.size = sizeof(RTVGfragUniforms) * 1024,});
 
-    gl->fragSize = sizeof(RTVGfragUniforms) + align - sizeof(RTVGfragUniforms) % align;
-
     // Some platforms does not allow to have samples to unset textures.
     // Create empty one which is bound when there's no texture specified.
-    gl->dummyTex = rt_renderCreateTexture(gl, NVG_TEXTURE_ALPHA, 1, 1, 0, NULL);
+    gl->dummyTex = rt_renderCreateTexture(gl, NVG_TEXTURE_ALPHA, 1, 1, 0, nullptr);
 
     rt_submit();
-
     return 1;
 }
 
@@ -1009,10 +1111,11 @@ static void rt_renderDelete(void* uptr)
 
     rt_destroy_buffer(gl->vertBuf);
     rt_destroy_buffer(gl->fragBuf);
+    rt_destroy_texture(gl->target);
 
     for (auto& texture : gl->textures)
     {
-        if (texture.second.id != 0 && (texture.second.flags & NVG_IMAGE_NODELETE) == 0)
+        if (texture.second.id != 0)
             rt_destroy_texture(texture.second.texture);
     }
     gl->textures.clear();

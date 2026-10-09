@@ -3,11 +3,6 @@
 #include "nanovg.h"
 #include <GL/glew.h>
 
-enum NVGcreateFlags
-{
-    NVG_DEBUG = 1 << 2,
-};
-
 NVGcontext* nvgCreateGL3(int flags);
 
 void nvgDeleteGL3(NVGcontext* ctx);
@@ -15,11 +10,6 @@ void nvgDeleteGL3(NVGcontext* ctx);
 int nvglCreateImageFromHandleGL3(NVGcontext* ctx, GLuint textureId, int w, int h, int flags);
 
 GLuint nvglImageHandleGL3(NVGcontext* ctx, int image);
-
-enum NVGimageFlagsGL
-{
-    NVG_IMAGE_NODELETE = 1 << 16, // Do not delete GL texture handle.
-};
 
 constexpr auto fillVertShader =
     "#version 150 core\n"
