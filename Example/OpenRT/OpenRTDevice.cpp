@@ -265,18 +265,15 @@ bool OpenRTDevice::update()
 	auto t0 = SDL_GetTicks() * 0.001f;
 
 	SDL_GL_MakeCurrent(m_Window, m_Context);
-	static auto vg = rtCreateRT(RTVG_ANTIALIAS | RTVG_STENCIL_STROKES);
+	static NVGcontext* vg;
 	static DemoData data;
 	static PerfGraph fps;
-	static auto loaded = []()
+	static auto initialize = []()
 	{
+		vg = rtCreateRT(RTVG_ANTIALIAS | RTVG_STENCIL_STROKES);
 		loadDemoData(vg, &data);
 		return true;
 	}();
-
-	glViewport(0, 0, width, height);
-	glClearColor(0.3f, 0.3f, 0.32f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	// width/height are already in device pixels, so the pixel ratio is 1.
 	nvgBeginFrame(vg, width, height, 1.0f);
@@ -284,7 +281,7 @@ bool OpenRTDevice::update()
 	renderGraph(vg, 5,5, &fps);
 	nvgEndFrame(vg);
 
-	gl_draw_screen(width, height, {}, rtGetTargetRT(vg));
+	gl_draw_screen(width, height, {0.3f, 0.3f, 0.32f, 1.0f}, rtGetTargetRT(vg));
 
 	auto t1 = SDL_GetTicks() * 0.001f;
 	updateGraph(&fps, t1 - t0);
