@@ -484,12 +484,6 @@ static void nvg_bindPipeline(RTVGcontext* gl, const RTVGpipeline& p, int uniform
     }
 }
 
-static void nvg_drawVerts(RTVGcontext* gl, int offset, int count)
-{
-    if (count <= 0) return;
-    rt_draw_array(&gl->vertBuf, 1, (uint32_t)count, 1, (uint32_t)offset, 0);
-}
-
 static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
 {
     RTVGpath* paths = &gl->paths[call->pathOffset];
@@ -503,7 +497,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     p.back = {RT_ALWAYS, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_DECR_WRAP};
     nvg_bindPipeline(gl, p, call->uniformOffset, 0);
     for (i = 0; i < npaths; i++)
-        nvg_drawVerts(gl, paths[i].fillOffset, paths[i].fillCount);
+        rt_draw_array(&gl->vertBuf, 1, paths[i].fillCount, 1, paths[i].fillOffset, 0);
 
     // Draw anti-aliased pixels where the stencil is still zero.
     if (gl->flags & RTVG_ANTIALIAS)
@@ -512,14 +506,14 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
         p.front = p.back = {RT_EQUAL, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_KEEP};
         nvg_bindPipeline(gl, p, call->uniformOffset + (int)gl->fragSize, call->image);
         for (i = 0; i < npaths; i++)
-            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+            rt_draw_array(&gl->vertBuf, 1, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
     }
 
     // Draw fill through the bounding box where the stencil is non-zero, resetting it.
     p = nvg_pipelinePlain(call);
     p.front = p.back = {RT_NOTEQUAL, RT_STENCIL_ZERO, RT_STENCIL_ZERO, RT_STENCIL_ZERO};
     nvg_bindPipeline(gl, p, call->uniformOffset + (int)gl->fragSize, call->image);
-    nvg_drawVerts(gl, call->triangleOffset, call->triangleCount);
+    rt_draw_array(&gl->vertBuf, 1, call->triangleCount, 1, call->triangleOffset, 0);
 }
 
 static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
@@ -530,9 +524,10 @@ static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
     nvg_bindPipeline(gl, nvg_pipelinePlain(call), call->uniformOffset, call->image);
     for (i = 0; i < npaths; i++)
     {
-        nvg_drawVerts(gl, paths[i].fillOffset, paths[i].fillCount);
+        rt_draw_array(&gl->vertBuf, 1, paths[i].fillCount, 1, paths[i].fillOffset, 0);
         // Draw fringes
-        nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+        if (paths[i].strokeCount > 0)
+            rt_draw_array(&gl->vertBuf, 1, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
     }
 }
 
@@ -548,14 +543,14 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
         p.front = p.back = {RT_EQUAL, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_INCR};
         nvg_bindPipeline(gl, p, call->uniformOffset + (int)gl->fragSize, call->image);
         for (i = 0; i < npaths; i++)
-            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+            rt_draw_array(&gl->vertBuf, 1, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
 
         // Draw anti-aliased pixels.
         p = nvg_pipelinePlain(call);
         p.front = p.back = {RT_EQUAL, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_KEEP};
         nvg_bindPipeline(gl, p, call->uniformOffset, call->image);
         for (i = 0; i < npaths; i++)
-            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+            rt_draw_array(&gl->vertBuf, 1, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
 
         // Clear stencil buffer.
         p = nvg_pipelinePlain(call);
@@ -563,21 +558,21 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
         p.front = p.back = {RT_ALWAYS, RT_STENCIL_ZERO, RT_STENCIL_ZERO, RT_STENCIL_ZERO};
         nvg_bindPipeline(gl, p, call->uniformOffset, call->image);
         for (i = 0; i < npaths; i++)
-            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+            rt_draw_array(&gl->vertBuf, 1, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
     }
     else
     {
         // Draw Strokes
         nvg_bindPipeline(gl, nvg_pipelinePlain(call), call->uniformOffset, call->image);
         for (i = 0; i < npaths; i++)
-            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+            rt_draw_array(&gl->vertBuf, 1, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
     }
 }
 
 static void nvg_triangles(RTVGcontext* gl, RTVGcall* call)
 {
     nvg_bindPipeline(gl, nvg_pipelinePlain(call), call->uniformOffset, call->image);
-    nvg_drawVerts(gl, call->triangleOffset, call->triangleCount);
+    rt_draw_array(&gl->vertBuf, 1, call->triangleCount, 1, call->triangleOffset, 0);
 }
 
 // ====================================================================
