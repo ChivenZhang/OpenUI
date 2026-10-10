@@ -1063,9 +1063,8 @@ void rtDeleteRT(NVGcontext* ctx)
     nvgDeleteInternal(ctx);
 }
 
-rt_texture_t rtGetTargetRT(NVGcontext* ctx)
+rt_texture_t& rtGetTargetRT(NVGcontext* ctx)
 {
-    if (ctx == nullptr) return {};
     auto gl = (RTVGcontext*)nvgInternalParams(ctx)->userPtr;
     return gl->target;
 }

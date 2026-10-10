@@ -18,91 +18,8 @@
 #include <nanovg.h>
 #include <nanovg_rt.h>
 #include "demo.h"
+#include "OpenGL.h"
 #include "perf.h"
-
-// Optional fullscreen blit shaders for compositing rtGetTargetRT() onto the screen.
-// Vertex layout is NVGvertex (clip-space xy, uv); texture + sampler on slot 2.
-constexpr auto blitVertShader =
-	"#version 460 core\n"
-	"layout(location = 0) in vec2 vertex;\n"
-	"layout(location = 1) in vec2 tcoord;\n"
-	"layout(location = 0) out vec2 ftcoord;\n"
-	"void main(void) {\n"
-	"	ftcoord = tcoord;\n"
-	"	gl_Position = vec4(vertex, 0, 1);\n"
-	"}\n";
-
-constexpr auto blitFragShader =
-	"#version 460 core\n"
-	"layout(binding = 2) uniform sampler2D tex;\n"
-	"layout(location = 0) in vec2 ftcoord;\n"
-	"layout(location = 0) out vec4 outColor;\n"
-	"void main(void) {\n"
-	"	outColor = texture(tex, ftcoord);\n"
-	"}\n";
-
-// Composite the NanoVG offscreen target onto the current screen framebuffer
-// (premultiplied alpha). Blit resources are created lazily on first use.
-static void nvg_present(NVGcontext* vg)
-{
-	auto target = rtGetTargetRT(vg);
-	if (target.handle == 0) return;
-
-	static rt_buffer_t blitBuf;
-	static rt_sampler_t blitSampler;
-	static rt_module_render_t blitModule;
-	if (blitModule.handle == 0)
-	{
-		// Fullscreen triangle (clip-space xy, uv).
-		const NVGvertex blitVerts[3] = {
-			{-1.0f, -1.0f, 0.0f, 0.0f},
-			{+3.0f, -1.0f, 2.0f, 0.0f},
-			{-1.0f, +3.0f, 0.0f, 2.0f},
-		};
-		blitBuf = rt_create_buffer({.size = sizeof(blitVerts), .usage = RT_BUFFER_USAGE_VERTEX | RT_BUFFER_USAGE_COPY_DST, .data = blitVerts,});
-
-		blitSampler = rt_create_sampler({
-			.min_filter = RT_LINEAR, .mag_filter = RT_LINEAR,
-			.address_u = RT_CLAMP_TO_EDGE, .address_v = RT_CLAMP_TO_EDGE, .address_w = RT_CLAMP_TO_EDGE,
-		});
-
-		rt_module_render_info_t blit = {};
-		blit.vshader.code = blitVertShader;
-		blit.fshader.code = blitFragShader;
-		blit.colors[0].format = RT_TEXTURE_RGBA8UNORM;
-		blit.colors[0].color.func = RT_FUNC_ADD;
-		blit.colors[0].color.src = RT_BLEND_ONE;
-		blit.colors[0].color.dst = RT_BLEND_ONE_MINUS_SRC_ALPHA;
-		blit.colors[0].alpha.func = RT_FUNC_ADD;
-		blit.colors[0].alpha.src = RT_BLEND_ONE;
-		blit.colors[0].alpha.dst = RT_BLEND_ONE_MINUS_SRC_ALPHA;
-		blit.depth.write = false;
-		blit.depth.func = RT_ALWAYS;
-		blit.vertex[0].stride = sizeof(NVGvertex);
-		blit.vertex[0].attrib[0] = {.location = 0, .offset = (uint32_t)offsetof(NVGvertex, x), .format = RT_VERTEX_FLOAT32X2};
-		blit.vertex[0].attrib[1] = {.location = 1, .offset = (uint32_t)offsetof(NVGvertex, u), .format = RT_VERTEX_FLOAT32X2};
-		blit.binding[0] = {.binding = 2, .type = RT_BINDING_TEXTURE};
-		blit.binding[1] = {.binding = 2, .type = RT_BINDING_SAMPLER};
-		blit.cull_mode = RT_CULL_NONE;
-		blit.wind_mode = RT_CCW;
-		blit.fill_mode = RT_FILL;
-		blit.primitive = RT_TRIANGLES;
-		blitModule = rt_create_module_render(blit);
-	}
-
-	rt_pass_render_t pass = {};
-	pass.screen.color.clear = false;
-	pass.screen.color.blend.func = RT_FUNC_ADD;
-	pass.screen.color.blend.src = RT_BLEND_ONE;
-	pass.screen.color.blend.dst = RT_BLEND_ONE_MINUS_SRC_ALPHA;
-	rt_begin_render(pass);
-	rt_bind_module_render(blitModule);
-	rt_set_viewport(0.0f, 0.0f, (float)target.width, (float)target.height, 0.0f, 1.0f);
-	rt_bind_texture(target, {.binding = 2});
-	rt_bind_sampler(blitSampler, {.binding = 2});
-	rt_draw_array(&blitBuf, 1, 3, 1, 0, 0);
-	rt_end_render(pass);
-}
 
 OpenRTDevice::OpenRTDevice()
 {
@@ -366,7 +283,8 @@ bool OpenRTDevice::update()
 	renderDemo(vg, 0, 0, width, height, ::clock() * 0.001f, false, &data);
 	renderGraph(vg, 5,5, &fps);
 	nvgEndFrame(vg);
-	nvg_present(vg);
+
+	gl_draw_screen(width, height, {}, rtGetTargetRT(vg));
 
 	auto t1 = SDL_GetTicks() * 0.001f;
 	updateGraph(&fps, t1 - t0);

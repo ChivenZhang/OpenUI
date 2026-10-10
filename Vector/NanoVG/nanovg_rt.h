@@ -27,7 +27,7 @@ void rtDeleteRT(NVGcontext* ctx);
 // alpha, sized in device pixels (width * devicePixelRatio). handle == 0 until the
 // first nvgBeginFrame(). The texture is recreated when the frame size changes, so
 // re-query it every frame.
-rt_texture_t rtGetTargetRT(NVGcontext* ctx);
+rt_texture_t& rtGetTargetRT(NVGcontext* ctx);
 
 // ====================================================================
 // Shaders. Binding slots:
