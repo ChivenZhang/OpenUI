@@ -360,7 +360,6 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     auto paths = &gl->paths[call->pathOffset];
     auto image = nvg_findTexture(gl, call->image);
 
-    // glBlendFuncSeparate(call->blendFunc.srcRGB, call->blendFunc.dstRGB, call->blendFunc.srcAlpha, call->blendFunc.dstAlpha);
     // glEnable(GL_STENCIL_TEST);
     // glnvg__stencilMask(gl, 0xff);
     // glnvg__stencilFunc(gl, GL_ALWAYS, 0, 0xff);
@@ -374,8 +373,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
     // glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP);
     // glDisable(GL_CULL_FACE);
     // for (i = 0; i < npaths; i++)
-    //     glDrawArrays(GL_TRIANGLE_FAN, paths[i].fillOffset, paths[i].fillCount);
-    // glEnable(GL_CULL_FACE);
+    //     glDrawArrays(GL_TRIANGLES, paths[i].fillOffset, paths[i].fillCount);
 
     // Draw shapes
     {
@@ -415,16 +413,17 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
         rt_end_render(pass);
     }
 
+    // glEnable(GL_CULL_FACE);
+    // // Draw anti-aliased pixels
     // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     // glnvg__setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
     // glnvg__checkError(gl, "fill fill");
-    //
     // if (gl->flags & NVG_ANTIALIAS) {
     //     glnvg__stencilFunc(gl, GL_EQUAL, 0x00, 0xff);
     //     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     //     // Draw fringes
     //     for (i = 0; i < npaths; i++)
-    //         glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+    //         glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
     // }
 
     // Draw anti-aliased pixels
@@ -443,7 +442,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
             },
             .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
             .cull_mode = RT_CULL_BACK,
-            .primitive = RT_TRIANGLE_STRIP,
+            .primitive = RT_TRIANGLES,
         });
         rt_pass_render_t pass{
             .colors = {
@@ -467,7 +466,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
 
     // glnvg__stencilFunc(gl, GL_NOTEQUAL, 0x0, 0xff);
     // glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
-    // glDrawArrays(GL_TRIANGLE_STRIP, call->triangleOffset, call->triangleCount);
+    // glDrawArrays(GL_TRIANGLES, call->triangleOffset, call->triangleCount);
 
     // Draw fill
     {
@@ -485,7 +484,7 @@ static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
             },
             .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
             .cull_mode = RT_CULL_BACK,
-            .primitive = RT_TRIANGLE_STRIP,
+            .primitive = RT_TRIANGLES,
         });
         rt_pass_render_t pass{
             .colors = {
@@ -513,11 +512,11 @@ static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
     // nvg_setUniforms(gl, call->uniformOffset, call->image);
     // for (i = 0; i < npaths; i++)
     // {
-    //     glDrawArrays(GL_TRIANGLE_FAN, paths[i].fillOffset, paths[i].fillCount);
+    //     glDrawArrays(GL_TRIANGLES, paths[i].fillOffset, paths[i].fillCount);
     //     // Draw fringes
     //     if (paths[i].strokeCount > 0)
     //     {
-    //         glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+    //         glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
     //     }
     // }
 
@@ -535,7 +534,7 @@ static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
             },
             .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLE_STRIP,
+            .primitive = RT_TRIANGLES,
         });
         rt_pass_render_t pass{
             .colors = {
@@ -606,11 +605,11 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
         rt_end_render(pass);
     }
 
-    // nvg_setUniforms(gl, call->uniformOffset, call->image);
-    // glStencilFunc(GL_EQUAL, 0x00, 0xff);
+    // glnvg__setUniforms(gl, call->uniformOffset, call->image);
+    // glnvg__stencilFunc(gl, GL_EQUAL, 0x00, 0xff);
     // glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     // for (i = 0; i < npaths; i++)
-    //     glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+    //     glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
 
     // Draw anti-aliased pixels.
     {
@@ -627,7 +626,7 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
             },
             .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLE_STRIP,
+            .primitive = RT_TRIANGLES,
         });
         rt_pass_render_t pass{
             .colors = {
@@ -650,12 +649,12 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
     }
 
     // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    // glStencilFunc(GL_ALWAYS, 0x0, 0xff);
+    // glnvg__stencilFunc(gl, GL_ALWAYS, 0x0, 0xff);
     // glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+    // glnvg__checkError(gl, "stroke fill 1");
     // for (i = 0; i < npaths; i++)
-    //     glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+    //     glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
     // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    //glDisable(GL_STENCIL_TEST);
 
     // Clear stencil buffer.
     {
@@ -673,7 +672,7 @@ static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
                 .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
             },
             .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLE_STRIP,
+            .primitive = RT_TRIANGLES,
         });
         rt_pass_render_t pass{
             .colors = {
