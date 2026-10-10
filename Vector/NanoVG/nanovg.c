@@ -111,6 +111,8 @@ struct NVGpathCache {
 	NVGvertex* verts;
 	int nverts;
 	int cverts;
+	NVGvertex* triverts;	// Triangle-list copies of fan/strip vertices handed to the backend.
+	int ctriverts;
 	float bounds[4];
 };
 typedef struct NVGpathCache NVGpathCache;
@@ -173,6 +175,7 @@ static void nvg__deletePathCache(NVGpathCache* c)
 	if (c->points != NULL) free(c->points);
 	if (c->paths != NULL) free(c->paths);
 	if (c->verts != NULL) free(c->verts);
+	if (c->triverts != NULL) free(c->triverts);
 	free(c);
 }
 
@@ -196,6 +199,10 @@ static NVGpathCache* nvg__allocPathCache(void)
 	if (!c->verts) goto error;
 	c->nverts = 0;
 	c->cverts = NVG_INIT_VERTS_SIZE;
+
+	c->triverts = (NVGvertex*)malloc(sizeof(NVGvertex)*NVG_INIT_VERTS_SIZE);
+	if (!c->triverts) goto error;
+	c->ctriverts = NVG_INIT_VERTS_SIZE;
 
 	return c;
 error:
@@ -1241,6 +1248,20 @@ static NVGvertex* nvg__allocTempVerts(NVGcontext* ctx, int nverts)
 	return ctx->cache->verts;
 }
 
+static NVGvertex* nvg__allocTempTriVerts(NVGcontext* ctx, int nverts)
+{
+	if (nverts > ctx->cache->ctriverts) {
+		NVGvertex* verts;
+		int cverts = (nverts + 0xff) & ~0xff; // Round up to prevent allocations when things change just slightly.
+		verts = (NVGvertex*)realloc(ctx->cache->triverts, sizeof(NVGvertex)*cverts);
+		if (verts == NULL) return NULL;
+		ctx->cache->triverts = verts;
+		ctx->cache->ctriverts = cverts;
+	}
+
+	return ctx->cache->triverts;
+}
+
 static float nvg__triarea2(float ax, float ay, float bx, float by, float cx, float cy)
 {
 	float abx = bx - ax;
@@ -1727,6 +1748,76 @@ static void nvg__calculateJoins(NVGcontext* ctx, float w, int lineJoin, float mi
 }
 
 
+// Expand a triangle fan (v0, vi, vi+1) into an independent triangle list.
+static NVGvertex* nvg__fanToTriangles(NVGvertex* dst, const NVGvertex* src, int n)
+{
+	int i;
+	for (i = 1; i + 1 < n; i++) {
+		dst[0] = src[0];
+		dst[1] = src[i];
+		dst[2] = src[i+1];
+		dst += 3;
+	}
+	return dst;
+}
+
+// Expand a triangle strip into an independent triangle list.
+// Odd triangles are flipped so every triangle keeps the strip's facing.
+static NVGvertex* nvg__stripToTriangles(NVGvertex* dst, const NVGvertex* src, int n)
+{
+	int i;
+	for (i = 0; i + 2 < n; i++) {
+		if (i & 1) {
+			dst[0] = src[i+1];
+			dst[1] = src[i];
+		} else {
+			dst[0] = src[i];
+			dst[1] = src[i+1];
+		}
+		dst[2] = src[i+2];
+		dst += 3;
+	}
+	return dst;
+}
+
+// Rewrite every path's fill (fan) and stroke (strip) vertices as triangle
+// lists so that backends only ever need to draw plain triangles.
+static int nvg__triangulatePaths(NVGcontext* ctx)
+{
+	NVGpathCache* cache = ctx->cache;
+	NVGvertex* verts;
+	NVGvertex* dst;
+	int i, cverts = 0;
+
+	for (i = 0; i < cache->npaths; i++) {
+		NVGpath* path = &cache->paths[i];
+		cverts += nvg__maxi(path->nfill - 2, 0) * 3;
+		cverts += nvg__maxi(path->nstroke - 2, 0) * 3;
+	}
+
+	verts = nvg__allocTempTriVerts(ctx, cverts);
+	if (verts == NULL) return 0;
+
+	dst = verts;
+	for (i = 0; i < cache->npaths; i++) {
+		NVGpath* path = &cache->paths[i];
+		if (path->nfill > 0) {
+			NVGvertex* start = dst;
+			dst = nvg__fanToTriangles(dst, path->fill, path->nfill);
+			path->fill = start;
+			path->nfill = (int)(dst - start);
+		}
+		if (path->nstroke > 0) {
+			NVGvertex* start = dst;
+			dst = nvg__stripToTriangles(dst, path->stroke, path->nstroke);
+			path->stroke = start;
+			path->nstroke = (int)(dst - start);
+		}
+	}
+
+	return 1;
+}
+
 static int nvg__expandStroke(NVGcontext* ctx, float w, float fringe, int lineCap, int lineJoin, float miterLimit)
 {
 	NVGpathCache* cache = ctx->cache;
@@ -1848,7 +1939,7 @@ static int nvg__expandStroke(NVGcontext* ctx, float w, float fringe, int lineCap
 		verts = dst;
 	}
 
-	return 1;
+	return nvg__triangulatePaths(ctx);
 }
 
 static int nvg__expandFill(NVGcontext* ctx, float w, int lineJoin, float miterLimit)
@@ -1968,7 +2059,7 @@ static int nvg__expandFill(NVGcontext* ctx, float w, int lineJoin, float miterLi
 		}
 	}
 
-	return 1;
+	return nvg__triangulatePaths(ctx);
 }
 
 
@@ -2249,8 +2340,8 @@ void nvgFill(NVGcontext* ctx)
 	// Count triangles
 	for (i = 0; i < ctx->cache->npaths; i++) {
 		path = &ctx->cache->paths[i];
-		ctx->fillTriCount += path->nfill-2;
-		ctx->fillTriCount += path->nstroke-2;
+		ctx->fillTriCount += path->nfill/3;
+		ctx->fillTriCount += path->nstroke/3;
 		ctx->drawCallCount += 2;
 	}
 }
@@ -2291,7 +2382,7 @@ void nvgStroke(NVGcontext* ctx)
 	// Count triangles
 	for (i = 0; i < ctx->cache->npaths; i++) {
 		path = &ctx->cache->paths[i];
-		ctx->strokeTriCount += path->nstroke-2;
+		ctx->strokeTriCount += path->nstroke/3;
 		ctx->drawCallCount++;
 	}
 }

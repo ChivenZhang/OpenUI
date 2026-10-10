@@ -1027,7 +1027,7 @@ static void glnvg__fill(GLNVGcontext* gl, GLNVGcall* call)
 	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP);
 	glDisable(GL_CULL_FACE);
 	for (i = 0; i < npaths; i++)
-		glDrawArrays(GL_TRIANGLE_FAN, paths[i].fillOffset, paths[i].fillCount);
+		glDrawArrays(GL_TRIANGLES, paths[i].fillOffset, paths[i].fillCount);
 	glEnable(GL_CULL_FACE);
 
 	// Draw anti-aliased pixels
@@ -1041,13 +1041,13 @@ static void glnvg__fill(GLNVGcontext* gl, GLNVGcall* call)
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		// Draw fringes
 		for (i = 0; i < npaths; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+			glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
 	}
 
 	// Draw fill
 	glnvg__stencilFunc(gl, GL_NOTEQUAL, 0x0, 0xff);
 	glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
-	glDrawArrays(GL_TRIANGLE_STRIP, call->triangleOffset, call->triangleCount);
+	glDrawArrays(GL_TRIANGLES, call->triangleOffset, call->triangleCount);
 
 	glDisable(GL_STENCIL_TEST);
 }
@@ -1061,10 +1061,10 @@ static void glnvg__convexFill(GLNVGcontext* gl, GLNVGcall* call)
 	glnvg__checkError(gl, "convex fill");
 
 	for (i = 0; i < npaths; i++) {
-		glDrawArrays(GL_TRIANGLE_FAN, paths[i].fillOffset, paths[i].fillCount);
+		glDrawArrays(GL_TRIANGLES, paths[i].fillOffset, paths[i].fillCount);
 		// Draw fringes
 		if (paths[i].strokeCount > 0) {
-			glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+			glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
 		}
 	}
 }
@@ -1085,14 +1085,14 @@ static void glnvg__stroke(GLNVGcontext* gl, GLNVGcall* call)
 		glnvg__setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
 		glnvg__checkError(gl, "stroke fill 0");
 		for (i = 0; i < npaths; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+			glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
 
 		// Draw anti-aliased pixels.
 		glnvg__setUniforms(gl, call->uniformOffset, call->image);
 		glnvg__stencilFunc(gl, GL_EQUAL, 0x00, 0xff);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		for (i = 0; i < npaths; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+			glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
 
 		// Clear stencil buffer.
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -1100,7 +1100,7 @@ static void glnvg__stroke(GLNVGcontext* gl, GLNVGcall* call)
 		glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 		glnvg__checkError(gl, "stroke fill 1");
 		for (i = 0; i < npaths; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+			glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 		glDisable(GL_STENCIL_TEST);
@@ -1112,7 +1112,7 @@ static void glnvg__stroke(GLNVGcontext* gl, GLNVGcall* call)
 		glnvg__checkError(gl, "stroke fill");
 		// Draw Strokes
 		for (i = 0; i < npaths; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, paths[i].strokeOffset, paths[i].strokeCount);
+			glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
 	}
 }
 
@@ -1365,7 +1365,7 @@ static void glnvg__renderFill(void* uptr, NVGpaint* paint, NVGcompositeOperation
 	if (call == NULL) return;
 
 	call->type = GLNVG_FILL;
-	call->triangleCount = 4;
+	call->triangleCount = 6;	// Bounding box as two triangles
 	call->pathOffset = glnvg__allocPaths(gl, npaths);
 	if (call->pathOffset == -1) goto error;
 	call->pathCount = npaths;
@@ -1403,13 +1403,15 @@ static void glnvg__renderFill(void* uptr, NVGpaint* paint, NVGcompositeOperation
 
 	// Setup uniforms for draw calls
 	if (call->type == GLNVG_FILL) {
-		// Quad
+		// Quad as two triangles (same winding as the former 4-vertex strip)
 		call->triangleOffset = offset;
 		quad = &gl->verts[call->triangleOffset];
 		glnvg__vset(&quad[0], bounds[2], bounds[3], 0.5f, 1.0f);
 		glnvg__vset(&quad[1], bounds[2], bounds[1], 0.5f, 1.0f);
 		glnvg__vset(&quad[2], bounds[0], bounds[3], 0.5f, 1.0f);
-		glnvg__vset(&quad[3], bounds[0], bounds[1], 0.5f, 1.0f);
+		glnvg__vset(&quad[3], bounds[0], bounds[3], 0.5f, 1.0f);
+		glnvg__vset(&quad[4], bounds[2], bounds[1], 0.5f, 1.0f);
+		glnvg__vset(&quad[5], bounds[0], bounds[1], 0.5f, 1.0f);
 
 		call->uniformOffset = glnvg__allocFragUniforms(gl, 2);
 		if (call->uniformOffset == -1) goto error;
