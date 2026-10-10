@@ -1,32 +1,58 @@
 #pragma once
 #include <OpenRT.h>
 #include "nanovg.h"
-#include <GL/glew.h>
 
-NVGcontext* nvgCreateGL3(int flags);
+// Create flags for rtCreateRT(). Same bit layout as nanovg_gl.h's NVGcreateFlags,
+// named differently so both headers can coexist in one translation unit.
+enum NVGcreateFlagsRT
+{
+    // Flag indicating if geometry based anti-aliasing is used (may not be needed when using MSAA).
+    RTVG_ANTIALIAS = 1 << 0,
+    // Flag indicating if strokes should be drawn using stencil buffer. The rendering will be a little
+    // slower, but path overlaps (i.e. self-intersecting or sharp turns) will be drawn just once.
+    RTVG_STENCIL_STROKES = 1 << 1,
+    // Flag indicating that additional debug checks are done.
+    RTVG_DEBUG = 1 << 2,
+};
 
-void nvgDeleteGL3(NVGcontext* ctx);
+// Creates a NanoVG context that renders through the OpenRT API.
+// Geometry is rasterised into an offscreen RGBA8 colour (+ stencil) target at
+// nvgEndFrame(). The backend does not present; fetch the target with
+// rtGetTargetRT() and composite it yourself (see blitVertShader/blitFragShader).
+NVGcontext* rtCreateRT(int flags);
 
-int nvglCreateImageFromHandleGL3(NVGcontext* ctx, GLuint textureId, int w, int h, int flags);
+void rtDeleteRT(NVGcontext* ctx);
 
-GLuint nvglImageHandleGL3(NVGcontext* ctx, int image);
+// Returns the offscreen colour target of the last nvgEndFrame(). Premultiplied
+// alpha, sized in device pixels (width * devicePixelRatio). handle == 0 until the
+// first nvgBeginFrame(). The texture is recreated when the frame size changes, so
+// re-query it every frame.
+rt_texture_t rtGetTargetRT(NVGcontext* ctx);
+
+// ====================================================================
+// Shaders. Binding slots:
+//   UBO 0 : fragment paint uniforms (one block per draw call)
+//   UBO 1 : view size
+//   TEX 2 : paint image / font atlas (+ sampler on the same slot)
 
 constexpr auto fillVertShader =
-    "#version 150 core\n"
-    "	uniform vec2 viewSize;\n"
-    "	in vec2 vertex;\n"
-    "	in vec2 tcoord;\n"
-    "	out vec2 ftcoord;\n"
-    "	out vec2 fpos;\n"
+    "#version 460 core\n"
+    "layout(std140, binding = 1) uniform view {\n"
+    "	vec2 viewSize;\n"
+    "};\n"
+    "layout(location = 0) in vec2 vertex;\n"
+    "layout(location = 1) in vec2 tcoord;\n"
+    "layout(location = 0) out vec2 ftcoord;\n"
+    "layout(location = 1) out vec2 fpos;\n"
     "void main(void) {\n"
     "	ftcoord = tcoord;\n"
     "	fpos = vertex;\n"
     "	gl_Position = vec4(2.0*vertex.x/viewSize.x - 1.0, 1.0 - 2.0*vertex.y/viewSize.y, 0, 1);\n"
     "}\n";
 
-constexpr auto fillFragShader =
-    "#version 150 core\n"
-    "#define EDGE_AA 1\n"
+// Fragment shader body. The backend prepends "#version 460 core" and, when
+// RTVG_ANTIALIAS is set, "#define EDGE_AA 1".
+constexpr auto fillFragShaderBody =
     "layout(std140, binding = 0) uniform frag {\n"
     "	mat3 scissorMat;\n"
     "	mat3 paintMat;\n"
@@ -42,10 +68,10 @@ constexpr auto fillFragShader =
     "	int texType;\n"
     "	int type;\n"
     "};\n"
-    "layout(binding = 0) uniform sampler2D tex;\n"
-    "in vec2 ftcoord;\n"
-    "in vec2 fpos;\n"
-    "out vec4 outColor;\n"
+    "layout(binding = 2) uniform sampler2D tex;\n"
+    "layout(location = 0) in vec2 ftcoord;\n"
+    "layout(location = 1) in vec2 fpos;\n"
+    "layout(location = 0) out vec4 outColor;\n"
     "\n"
     "float sdroundrect(vec2 pt, vec2 ext, float rad) {\n"
     "	vec2 ext2 = ext - vec2(rad,rad);\n"
@@ -87,8 +113,8 @@ constexpr auto fillFragShader =
     "		// Calculate color fron texture\n"
     "		vec2 pt = (paintMat * vec3(fpos,1.0)).xy / extent;\n"
     "		vec4 color = texture(tex, pt);\n"
-    "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);"
-    "		if (texType == 2) color = vec4(color.x);"
+    "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);\n"
+    "		if (texType == 2) color = vec4(color.x);\n"
     "		// Apply color tint and alpha.\n"
     "		color *= innerCol;\n"
     "		// Combine alpha\n"
@@ -98,8 +124,8 @@ constexpr auto fillFragShader =
     "		result = vec4(1,1,1,1);\n"
     "	} else if (type == 3) {		// Textured tris\n"
     "		vec4 color = texture(tex, ftcoord);\n"
-    "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);"
-    "		if (texType == 2) color = vec4(color.x);"
+    "		if (texType == 1) color = vec4(color.xyz*color.w,color.w);\n"
+    "		if (texType == 2) color = vec4(color.x);\n"
     "		color *= scissor;\n"
     "		result = color * innerCol;\n"
     "	}\n"

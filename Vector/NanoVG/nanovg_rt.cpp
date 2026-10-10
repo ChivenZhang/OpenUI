@@ -1,21 +1,23 @@
+//
+// NanoVG backend on top of the OpenRT rendering interface.
+//
+// Mirrors nanovg_gl.h: nanovg hands us triangle lists for fills, fringes,
+// strokes and text; we batch them per frame and replay them in renderFlush.
+//
+// Because OpenRT bakes blend / stencil / colour-mask state into render modules
+// and only honours that state when rendering offscreen, all geometry is drawn
+// into an offscreen colour + depth-stencil target. The application fetches that
+// target with rtGetTargetRT() after nvgEndFrame() and composites it itself.
+//
 #include "nanovg_rt.h"
-
 #include <map>
+#include <string>
+#include <vector>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <vector>
-
-#include "nanovg_gl.h"
-
-enum RTVGuniformLoc
-{
-    RTVG_LOC_VIEWSIZE,
-    RTVG_LOC_TEX,
-    RTVG_LOC_FRAG,
-    RTVG_MAX_LOCS
-};
+#include <stddef.h>
 
 enum RTVGshaderType
 {
@@ -25,17 +27,22 @@ enum RTVGshaderType
     NSVG_SHADER_IMG
 };
 
-enum RTVGuniformBindings
+// Binding slots; must match the shaders in nanovg_rt.h.
+enum RTVGbinding
 {
     RTVG_FRAG_BINDING = 0,
+    RTVG_VIEW_BINDING = 1,
+    RTVG_TEX_BINDING = 2,
 };
+
+// rt_bind_buffer binds a sub-range of the uniform buffer, so every block must
+// start at an offset that satisfies the strictest alignment any backend asks for.
+constexpr size_t RTVG_UNIFORM_ALIGN = 256;
 
 struct RTVGtexture
 {
     rt_texture_t texture;
-
-    // ==================
-
+    rt_sampler_t sampler;
     int id;
     int width, height;
     int type;
@@ -44,10 +51,28 @@ struct RTVGtexture
 
 struct RTVGblend
 {
-    GLenum srcRGB;
-    GLenum dstRGB;
-    GLenum srcAlpha;
-    GLenum dstAlpha;
+    rt_blend_factor_t srcRGB;
+    rt_blend_factor_t dstRGB;
+    rt_blend_factor_t srcAlpha;
+    rt_blend_factor_t dstAlpha;
+};
+
+struct RTVGstencil
+{
+    rt_compare_op_t func;
+    rt_stencil_op_t sfail;
+    rt_stencil_op_t zfail;
+    rt_stencil_op_t zpass;
+};
+
+// Fixed-function state that is baked into a render module.
+struct RTVGpipeline
+{
+    RTVGblend blend;
+    bool colorWrite;
+    rt_cull_mode_t cull;
+    RTVGstencil front;
+    RTVGstencil back;
 };
 
 enum RTVGcallType
@@ -79,6 +104,7 @@ struct RTVGpath
     int strokeCount;
 };
 
+// Layout matches the std140 block "frag" in fillFragShaderBody.
 struct RTVGfragUniforms
 {
     float scissorMat[12]; // matrices are actually 3 vec4s
@@ -96,28 +122,50 @@ struct RTVGfragUniforms
     int type;
 };
 
+// Layout matches the std140 block "view" in fillVertShader.
+struct RTVGviewUniforms
+{
+    float viewSize[2];
+    float pad[2];
+};
+
 struct RTVGcontext
 {
+    int flags = 0;
+    float view[2] = {};
+
+    // Offscreen target nanovg renders into, sized in device pixels.
+    rt_texture_t target;
+    rt_texture_t stencil;
+    uint32_t targetWidth = 0, targetHeight = 0;
+    bool clearTarget = false;
+
+    // GPU buffers
     rt_buffer_t vertBuf;
     rt_buffer_t fragBuf;
-    rt_texture_t target;
+    rt_buffer_t viewBuf;
 
-    // ===================
-    std::map<uint32_t, RTVGtexture> textures;
-    float view[2];
-    int flags;
-    int dummyTex;
+    // Render modules keyed by fixed-function state.
+    std::string fragShaderSource;
+    std::map<uint64_t, rt_module_render_t> modules;
+
+    std::map<int, RTVGtexture> textures;
+    int dummyTex = 0;
 
     // Per frame buffers
-    int ncalls;
-    int npaths;
-    int nverts;
-    int nuniforms;
+    size_t fragSize = 0;
+    int ncalls = 0;
+    int npaths = 0;
+    int nverts = 0;
+    int nuniforms = 0;
     std::vector<RTVGcall> calls;
     std::vector<RTVGpath> paths;
     std::vector<NVGvertex> verts;
-    std::vector<RTVGfragUniforms> uniforms;
+    std::vector<uint8_t> uniforms;
 };
+
+// ====================================================================
+// Textures
 
 static RTVGtexture* nvg_findTexture(RTVGcontext* gl, int id)
 {
@@ -130,20 +178,43 @@ static int rt_renderCreateTexture(void* uptr, int type, int w, int h, int imageF
 {
     auto gl = (RTVGcontext*)uptr;
 
-    rt_texture_info_t info = {.width = (uint32_t)w, .height = (uint32_t)h, .data = data,};
-    info.format = (type == NVG_TEXTURE_RGBA) ? RT_TEXTURE_RGBA8UNORM : RT_TEXTURE_R8UNORM;
-    info.address_u = (imageFlags & NVG_IMAGE_REPEATX) ? RT_REPEAT : RT_CLAMP_TO_EDGE;
-    info.address_v = (imageFlags & NVG_IMAGE_REPEATY) ? RT_REPEAT : RT_CLAMP_TO_EDGE;
-    info.min_filter = (imageFlags & NVG_IMAGE_GENERATE_MIPMAPS)
-                          ? ((imageFlags & NVG_IMAGE_NEAREST) ? RT_NEAREST_MIPMAP_NEAREST : RT_LINEAR_MIPMAP_LINEAR)
-                          : (((imageFlags & NVG_IMAGE_NEAREST)) ? RT_NEAREST : RT_LINEAR);
-    info.mag_filter = (imageFlags & NVG_IMAGE_NEAREST) ? RT_NEAREST : RT_LINEAR;
-    info.mipmaps = (imageFlags & NVG_IMAGE_GENERATE_MIPMAPS) ? 0 : 1;
-    auto texture = rt_create_texture(info);
+    rt_filter_t minFilter, magFilter;
+    if (imageFlags & NVG_IMAGE_GENERATE_MIPMAPS)
+        minFilter = (imageFlags & NVG_IMAGE_NEAREST) ? RT_NEAREST_MIPMAP_NEAREST : RT_LINEAR_MIPMAP_LINEAR;
+    else
+        minFilter = (imageFlags & NVG_IMAGE_NEAREST) ? RT_NEAREST : RT_LINEAR;
+    magFilter = (imageFlags & NVG_IMAGE_NEAREST) ? RT_NEAREST : RT_LINEAR;
+    rt_address_t addressU = (imageFlags & NVG_IMAGE_REPEATX) ? RT_REPEAT : RT_CLAMP_TO_EDGE;
+    rt_address_t addressV = (imageFlags & NVG_IMAGE_REPEATY) ? RT_REPEAT : RT_CLAMP_TO_EDGE;
 
-    auto& tex = gl->textures[texture.handle];
-    tex.texture = rt_create_texture(info);
-    tex.id = (int32_t)texture.handle;
+    rt_texture_info_t info = {};
+    info.width = (uint32_t)w;
+    info.height = (uint32_t)h;
+    info.target = RT_TEXTURE_2D;
+    info.format = (type == NVG_TEXTURE_RGBA) ? RT_TEXTURE_RGBA8UNORM : RT_TEXTURE_R8UNORM;
+    info.usage = RT_TEXTURE_USAGE_COPY_SRC | RT_TEXTURE_USAGE_COPY_DST | RT_TEXTURE_USAGE_TEXTURE_BINDING;
+    info.min_filter = minFilter;
+    info.mag_filter = magFilter;
+    info.address_u = addressU;
+    info.address_v = addressV;
+    info.address_w = RT_CLAMP_TO_EDGE;
+    info.mipmaps = (imageFlags & NVG_IMAGE_GENERATE_MIPMAPS) ? 0 : 1;
+    info.data = data;
+    auto texture = rt_create_texture(info);
+    if (texture.handle == 0) return 0;
+
+    // Texture views do not carry sampler state, so bind an explicit sampler alongside.
+    rt_sampler_info_t sampler = {};
+    sampler.min_filter = minFilter;
+    sampler.mag_filter = magFilter;
+    sampler.address_u = addressU;
+    sampler.address_v = addressV;
+    sampler.address_w = RT_CLAMP_TO_EDGE;
+
+    auto& tex = gl->textures[(int)texture.handle];
+    tex.texture = texture;
+    tex.sampler = rt_create_sampler(sampler);
+    tex.id = (int)texture.handle;
     tex.width = w;
     tex.height = h;
     tex.type = type;
@@ -155,9 +226,10 @@ static int rt_renderDeleteTexture(void* uptr, int image)
 {
     auto gl = (RTVGcontext*)uptr;
 
-    if (auto result = nvg_findTexture(gl, image))
+    if (auto tex = nvg_findTexture(gl, image))
     {
-        rt_destroy_texture(result->texture);
+        rt_destroy_sampler(tex->sampler);
+        rt_destroy_texture(tex->texture);
         gl->textures.erase(image);
         return 1;
     }
@@ -170,40 +242,20 @@ static int rt_renderUpdateTexture(void* uptr, int image, int x, int y, int w, in
     RTVGtexture* tex = nvg_findTexture(gl, image);
     if (tex == nullptr) return 0;
 
+    // nanovg passes a pointer to the whole image and a dirty rectangle inside it.
+    uint32_t bpp = (tex->type == NVG_TEXTURE_RGBA) ? 4 : 1;
+    rt_texture_data_t source = {};
+    source.data = data;
+    source.size = (size_t)tex->width * tex->height * bpp;
+    source.offset = ((size_t)y * tex->width + x) * bpp;
+    source.bytesPerRow = (uint32_t)tex->width * bpp;
+    source.rowsPerImage = (uint32_t)h;
+
     rt_pass_transfer_t pass;
     rt_begin_transfer(pass);
-    if (tex->type == NVG_TEXTURE_RGBA)
-    {
-        rt_copy_texture_data(
-            {
-                .data = data,
-                .size = (size_t)w * h * 4,
-                .bytesPerRow = (uint32_t)w * 4,
-                .rowsPerImage = (uint32_t)h,
-            },
-            {
-                .texture = tex->texture,
-                .mipLevel = 1,
-                .origin = {(uint32_t)x, (uint32_t)y, 0},
-            },
-            {(uint32_t)w, (uint32_t)h, 1U});
-    }
-    else
-    {
-        rt_copy_texture_data(
-            {
-                .data = data,
-                .size = (size_t)w * h * 1,
-                .bytesPerRow = (uint32_t)w * 1,
-                .rowsPerImage = (uint32_t)h,
-            },
-            {
-                .texture = tex->texture,
-                .mipLevel = 1,
-                .origin = {(uint32_t)x, (uint32_t)y, 0},
-            },
-            {(uint32_t)w, (uint32_t)h, 1U});
-    }
+    rt_copy_texture_data(source,
+                         {.texture = tex->texture, .mipLevel = 0, .origin = {(uint32_t)x, (uint32_t)y, 0},},
+                         {(uint32_t)w, (uint32_t)h, 1U});
     rt_end_transfer(pass);
     return 1;
 }
@@ -218,7 +270,9 @@ static int rt_renderGetTextureSize(void* uptr, int image, int* w, int* h)
     return 1;
 }
 
-[[deprecated]]
+// ====================================================================
+// Paint conversion
+
 static void nvg_xformToMat3x4(float* m3, float* t)
 {
     m3[0] = t[0];
@@ -235,7 +289,6 @@ static void nvg_xformToMat3x4(float* m3, float* t)
     m3[11] = 0.0f;
 }
 
-[[deprecated]]
 static NVGcolor nvg_premulColor(NVGcolor c)
 {
     c.r *= c.a;
@@ -268,10 +321,8 @@ static int nvg_convertPaint(RTVGcontext* gl, RTVGfragUniforms* frag, NVGpaint* p
         nvg_xformToMat3x4(frag->scissorMat, invxform);
         frag->scissorExt[0] = scissor->extent[0];
         frag->scissorExt[1] = scissor->extent[1];
-        frag->scissorScale[0] = sqrtf(scissor->xform[0] * scissor->xform[0] + scissor->xform[2] * scissor->xform[2]) /
-            fringe;
-        frag->scissorScale[1] = sqrtf(scissor->xform[1] * scissor->xform[1] + scissor->xform[3] * scissor->xform[3]) /
-            fringe;
+        frag->scissorScale[0] = sqrtf(scissor->xform[0] * scissor->xform[0] + scissor->xform[2] * scissor->xform[2]) / fringe;
+        frag->scissorScale[1] = sqrtf(scissor->xform[1] * scissor->xform[1] + scissor->xform[3] * scissor->xform[3]) / fringe;
     }
 
     memcpy(frag->extent, paint->extent, sizeof(frag->extent));
@@ -303,8 +354,6 @@ static int nvg_convertPaint(RTVGcontext* gl, RTVGfragUniforms* frag, NVGpaint* p
             frag->texType = (tex->flags & NVG_IMAGE_PREMULTIPLIED) ? 0 : 1;
         else
             frag->texType = 2;
-
-        //		printf("frag->texType = %d\n", frag->texType);
     }
     else
     {
@@ -319,423 +368,268 @@ static int nvg_convertPaint(RTVGcontext* gl, RTVGfragUniforms* frag, NVGpaint* p
     return 1;
 }
 
-[[deprecated]]
-static RTVGfragUniforms* nvg_fragUniformPtr(RTVGcontext* gl, int i);
+// ====================================================================
+// Render modules
 
-// [[deprecated]]
-// static void nvg_setUniforms(RTVGcontext* gl, int uniformOffset, int image)
-// {
-//     RTVGtexture* tex = nullptr;
-//     glBindBufferRange(GL_UNIFORM_BUFFER, RTVG_FRAG_BINDING, gl->fragBuf, uniformOffset, sizeof(RTVGfragUniforms));
-//
-//     if (image != 0)
-//     {
-//         tex = nvg_findTexture(gl, image);
-//     }
-//     // If no image is set, use empty texture
-//     if (tex == nullptr)
-//     {
-//         tex = nvg_findTexture(gl, gl->dummyTex);
-//     }
-//     glBindTexture(GL_TEXTURE_2D, tex != nullptr ? tex->tex : 0);
-// }
-
-static void rt_renderViewport(void* uptr, float width, float height, float devicePixelRatio)
+static uint64_t nvg_pipelineKey(const RTVGpipeline& p)
 {
-    NVG_NOTUSED(devicePixelRatio);
-    auto gl = (RTVGcontext*)uptr;
-    gl->view[0] = width;
-    gl->view[1] = height;
+    // 14 fields, each fits in 4 bits.
+    uint64_t key = 0;
+    auto push = [&key](uint32_t v) { key = (key << 4) | (v & 0xF); };
+    push(p.blend.srcRGB);
+    push(p.blend.dstRGB);
+    push(p.blend.srcAlpha);
+    push(p.blend.dstAlpha);
+    push(p.colorWrite ? 1 : 0);
+    push(p.cull);
+    push(p.front.func);
+    push(p.front.sfail);
+    push(p.front.zfail);
+    push(p.front.zpass);
+    push(p.back.func);
+    push(p.back.sfail);
+    push(p.back.zfail);
+    push(p.back.zpass);
+    return key;
+}
 
-    if ((uint32_t)width != gl->target.width || (uint32_t)height != gl->target.height)
+static void nvg_setVertexLayout(rt_module_render_info_t& info)
+{
+    info.vertex[0].stride = sizeof(NVGvertex);
+    info.vertex[0].instance = false;
+    info.vertex[0].attrib[0] = {.location = 0, .offset = (uint32_t)offsetof(NVGvertex, x), .format = RT_VERTEX_FLOAT32X2};
+    info.vertex[0].attrib[1] = {.location = 1, .offset = (uint32_t)offsetof(NVGvertex, u), .format = RT_VERTEX_FLOAT32X2};
+}
+
+static rt_module_render_t& nvg_getModule(RTVGcontext* gl, const RTVGpipeline& p)
+{
+    auto key = nvg_pipelineKey(p);
+    auto found = gl->modules.find(key);
+    if (found != gl->modules.end()) return found->second;
+
+    rt_module_render_info_t info = {};
+    info.vshader.code = fillVertShader;
+    info.fshader.code = gl->fragShaderSource.c_str();
+
+    info.colors[0].format = RT_TEXTURE_RGBA8UNORM;
+    info.colors[0].write.r = p.colorWrite;
+    info.colors[0].write.g = p.colorWrite;
+    info.colors[0].write.b = p.colorWrite;
+    info.colors[0].write.a = p.colorWrite;
+    info.colors[0].color.func = RT_FUNC_ADD;
+    info.colors[0].color.src = p.blend.srcRGB;
+    info.colors[0].color.dst = p.blend.dstRGB;
+    info.colors[0].alpha.func = RT_FUNC_ADD;
+    info.colors[0].alpha.src = p.blend.srcAlpha;
+    info.colors[0].alpha.dst = p.blend.dstAlpha;
+
+    info.depth.write = false;
+    info.depth.func = RT_ALWAYS;
+
+    info.stencil.read = 0xFF;
+    info.stencil.write = 0xFF;
+    info.stencil.front.func = p.front.func;
+    info.stencil.front.sfail = p.front.sfail;
+    info.stencil.front.zfail = p.front.zfail;
+    info.stencil.front.zpass = p.front.zpass;
+    info.stencil.back.func = p.back.func;
+    info.stencil.back.sfail = p.back.sfail;
+    info.stencil.back.zfail = p.back.zfail;
+    info.stencil.back.zpass = p.back.zpass;
+
+    nvg_setVertexLayout(info);
+    info.binding[0] = {.binding = RTVG_FRAG_BINDING, .type = RT_BINDING_UNIFORM_BUFFER};
+    info.binding[1] = {.binding = RTVG_VIEW_BINDING, .type = RT_BINDING_UNIFORM_BUFFER};
+    info.binding[2] = {.binding = RTVG_TEX_BINDING, .type = RT_BINDING_TEXTURE};
+    info.binding[3] = {.binding = RTVG_TEX_BINDING, .type = RT_BINDING_SAMPLER};
+
+    info.cull_mode = p.cull;
+    info.wind_mode = RT_CCW;
+    info.fill_mode = RT_FILL;
+    info.primitive = RT_TRIANGLES;
+
+    return gl->modules.emplace(key, rt_create_module_render(info)).first->second;
+}
+
+static constexpr RTVGstencil RTVG_STENCIL_OFF = {RT_ALWAYS, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_KEEP};
+
+static RTVGpipeline nvg_pipelinePlain(const RTVGcall* call)
+{
+    RTVGpipeline p = {};
+    p.blend = call->blendFunc;
+    p.colorWrite = true;
+    p.cull = RT_CULL_BACK;
+    p.front = RTVG_STENCIL_OFF;
+    p.back = RTVG_STENCIL_OFF;
+    return p;
+}
+
+// ====================================================================
+// Draw calls (all run inside the offscreen render pass opened by renderFlush)
+
+static void nvg_bindPipeline(RTVGcontext* gl, const RTVGpipeline& p, int uniformOffset, int image)
+{
+    rt_bind_module_render(nvg_getModule(gl, p));
+    rt_bind_buffer(gl->viewBuf, {.binding = RTVG_VIEW_BINDING, .offset = 0, .size = sizeof(RTVGviewUniforms)});
+    rt_bind_buffer(gl->fragBuf, {.binding = RTVG_FRAG_BINDING, .offset = (size_t)uniformOffset, .size = gl->fragSize});
+
+    RTVGtexture* tex = nullptr;
+    if (image != 0) tex = nvg_findTexture(gl, image);
+    // If no image is set, use empty texture
+    if (tex == nullptr) tex = nvg_findTexture(gl, gl->dummyTex);
+    if (tex != nullptr)
     {
-        rt_destroy_texture(gl->target);
-        gl->target = rt_create_texture({.width = (uint32_t)width, .height = (uint32_t)height, .format = RT_TEXTURE_RGBA8UNORM,});
+        rt_bind_texture(tex->texture, {.binding = RTVG_TEX_BINDING});
+        rt_bind_sampler(tex->sampler, {.binding = RTVG_TEX_BINDING});
     }
+}
+
+static void nvg_drawVerts(RTVGcontext* gl, int offset, int count)
+{
+    if (count <= 0) return;
+    rt_draw_array(&gl->vertBuf, 1, (uint32_t)count, 1, (uint32_t)offset, 0);
 }
 
 static void nvg_fill(RTVGcontext* gl, RTVGcall* call)
 {
-    auto paths = &gl->paths[call->pathOffset];
-    auto image = nvg_findTexture(gl, call->image);
+    RTVGpath* paths = &gl->paths[call->pathOffset];
+    int i, npaths = call->pathCount;
 
-    // glEnable(GL_STENCIL_TEST);
-    // glnvg__stencilMask(gl, 0xff);
-    // glnvg__stencilFunc(gl, GL_ALWAYS, 0, 0xff);
-    // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    //
-    // // set bindpoint for solid loc
-    // glnvg__setUniforms(gl, call->uniformOffset, 0);
-    //
-    // glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP);
-    // glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP);
-    // glDisable(GL_CULL_FACE);
-    // for (i = 0; i < npaths; i++)
-    //     glDrawArrays(GL_TRIANGLES, paths[i].fillOffset, paths[i].fillCount);
+    // Draw shapes: stencil only, non-zero winding via INCR on front / DECR on back faces.
+    RTVGpipeline p = nvg_pipelinePlain(call);
+    p.colorWrite = false;
+    p.cull = RT_CULL_NONE;
+    p.front = {RT_ALWAYS, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_INCR_WRAP};
+    p.back = {RT_ALWAYS, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_DECR_WRAP};
+    nvg_bindPipeline(gl, p, call->uniformOffset, 0);
+    for (i = 0; i < npaths; i++)
+        nvg_drawVerts(gl, paths[i].fillOffset, paths[i].fillCount);
 
-    // Draw shapes
+    // Draw anti-aliased pixels where the stencil is still zero.
+    if (gl->flags & RTVG_ANTIALIAS)
     {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .write = {false, false, false, false},
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }},
-            .stencil = {
-                .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_DECR_WRAP },
-                .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR_WRAP },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .cull_mode = RT_CULL_NONE,
-            .primitive = RT_TRIANGLES,
-        });
-        rt_pass_render_t pass{
-            .colors = {
-                {
-                    .texture_view = gl->target.default_view,
-                    .clear = false,
-                }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
-        for (auto i = 0; i < call->pathCount; ++i)
-        {
-            rt_draw_array(nullptr, 0, paths[i].fillCount, 1, paths[i].fillOffset, 0);
-        }
-        rt_end_render(pass);
+        p = nvg_pipelinePlain(call);
+        p.front = p.back = {RT_EQUAL, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_KEEP};
+        nvg_bindPipeline(gl, p, call->uniformOffset + (int)gl->fragSize, call->image);
+        for (i = 0; i < npaths; i++)
+            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
     }
 
-    // glEnable(GL_CULL_FACE);
-    // // Draw anti-aliased pixels
-    // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    // glnvg__setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
-    // if (gl->flags & NVG_ANTIALIAS) {
-    //     glnvg__stencilFunc(gl, GL_EQUAL, 0x00, 0xff);
-    //     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    //     // Draw fringes
-    //     for (i = 0; i < npaths; i++)
-    //         glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
-    // }
-
-    // Draw anti-aliased pixels
-    {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }
-            },
-            .stencil = {
-                .front = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
-                .back = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .cull_mode = RT_CULL_BACK,
-            .primitive = RT_TRIANGLES,
-        });
-        rt_pass_render_t pass{
-            .colors = {
-                    {
-                        .texture_view = gl->target.default_view,
-                        .clear = false,
-                    }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset + sizeof(RTVGfragUniforms),});
-        for (auto i = 0; i < call->pathCount; ++i)
-        {
-            rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
-        }
-        rt_end_render(pass);
-    }
-
-    // glnvg__stencilFunc(gl, GL_NOTEQUAL, 0x0, 0xff);
-    // glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
-    // glDrawArrays(GL_TRIANGLES, call->triangleOffset, call->triangleCount);
-
-    // Draw fill
-    {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }
-            },
-            .stencil = {
-                .front = { .func = RT_NOTEQUAL, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
-                .back = { .func = RT_NOTEQUAL, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .cull_mode = RT_CULL_BACK,
-            .primitive = RT_TRIANGLES,
-        });
-        rt_pass_render_t pass{
-            .colors = {
-                    {
-                        .texture_view = gl->target.default_view,
-                        .clear = false,
-                    }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset + sizeof(RTVGfragUniforms),});
-        rt_draw_array(nullptr, 0, call->triangleCount, 1, call->triangleOffset, 0);
-        rt_end_render(pass);
-    }
+    // Draw fill through the bounding box where the stencil is non-zero, resetting it.
+    p = nvg_pipelinePlain(call);
+    p.front = p.back = {RT_NOTEQUAL, RT_STENCIL_ZERO, RT_STENCIL_ZERO, RT_STENCIL_ZERO};
+    nvg_bindPipeline(gl, p, call->uniformOffset + (int)gl->fragSize, call->image);
+    nvg_drawVerts(gl, call->triangleOffset, call->triangleCount);
 }
 
 static void nvg_convexFill(RTVGcontext* gl, RTVGcall* call)
 {
-    auto paths = &gl->paths[call->pathOffset];
-    auto image = nvg_findTexture(gl, call->image);
+    RTVGpath* paths = &gl->paths[call->pathOffset];
+    int i, npaths = call->pathCount;
 
-    // nvg_setUniforms(gl, call->uniformOffset, call->image);
-    // for (i = 0; i < npaths; i++)
-    // {
-    //     glDrawArrays(GL_TRIANGLES, paths[i].fillOffset, paths[i].fillCount);
-    //     // Draw fringes
-    //     if (paths[i].strokeCount > 0)
-    //     {
-    //         glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
-    //     }
-    // }
-
+    nvg_bindPipeline(gl, nvg_pipelinePlain(call), call->uniformOffset, call->image);
+    for (i = 0; i < npaths; i++)
     {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }
-            },
-            .stencil = {
-                .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
-                .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLES,
-        });
-        rt_pass_render_t pass{
-            .colors = {
-                    {
-                        .texture_view = gl->target.default_view,
-                        .clear = false,
-                    }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
-        for (auto i = 0; i < call->pathCount; i++)
-        {
-            rt_draw_array(nullptr, 0, paths[i].fillCount, 1, paths[i].fillOffset, 0);
-
-            if (paths[i].strokeCount > 0)
-            {
-                rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
-            }
-        }
-        rt_end_render(pass);
+        nvg_drawVerts(gl, paths[i].fillOffset, paths[i].fillCount);
+        // Draw fringes
+        nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
     }
 }
 
 static void nvg_stroke(RTVGcontext* gl, RTVGcall* call)
 {
-    auto paths = &gl->paths[call->pathOffset];
-    auto image = nvg_findTexture(gl, call->image);
+    RTVGpath* paths = &gl->paths[call->pathOffset];
+    int i, npaths = call->pathCount;
 
-    // glnvg__stencilFunc(gl, GL_EQUAL, 0x0, 0xff);
-    // glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-    // glnvg__setUniforms(gl, call->uniformOffset + gl->fragSize, call->image);
-    // for (i = 0; i < npaths; i++)
-    //     glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
-    
-    // Fill the stroke base without overlap
+    if (gl->flags & RTVG_STENCIL_STROKES)
     {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }
-            },
-            .stencil = {
-                .front = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
-                .back = { .func = RT_EQUAL, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLES,
-        });
-        rt_pass_render_t pass{
-            .colors = {
-                    {
-                        .texture_view = gl->target.default_view,
-                        .clear = false,
-                    }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset + sizeof(RTVGfragUniforms),});
-        for (auto i = 0; i < call->pathCount; ++i)
-        {
-            rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
-        }
-        rt_end_render(pass);
+        // Fill the stroke base without overlap
+        RTVGpipeline p = nvg_pipelinePlain(call);
+        p.front = p.back = {RT_EQUAL, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_INCR};
+        nvg_bindPipeline(gl, p, call->uniformOffset + (int)gl->fragSize, call->image);
+        for (i = 0; i < npaths; i++)
+            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+
+        // Draw anti-aliased pixels.
+        p = nvg_pipelinePlain(call);
+        p.front = p.back = {RT_EQUAL, RT_STENCIL_KEEP, RT_STENCIL_KEEP, RT_STENCIL_KEEP};
+        nvg_bindPipeline(gl, p, call->uniformOffset, call->image);
+        for (i = 0; i < npaths; i++)
+            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
+
+        // Clear stencil buffer.
+        p = nvg_pipelinePlain(call);
+        p.colorWrite = false;
+        p.front = p.back = {RT_ALWAYS, RT_STENCIL_ZERO, RT_STENCIL_ZERO, RT_STENCIL_ZERO};
+        nvg_bindPipeline(gl, p, call->uniformOffset, call->image);
+        for (i = 0; i < npaths; i++)
+            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
     }
-
-    // glnvg__setUniforms(gl, call->uniformOffset, call->image);
-    // glnvg__stencilFunc(gl, GL_EQUAL, 0x00, 0xff);
-    // glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    // for (i = 0; i < npaths; i++)
-    //     glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
-
-    // Draw anti-aliased pixels.
+    else
     {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }
-            },
-            .stencil = {
-                .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
-                .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_KEEP },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLES,
-        });
-        rt_pass_render_t pass{
-            .colors = {
-                    {
-                        .texture_view = gl->target.default_view,
-                        .clear = false,
-                    }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
-        for (auto i = 0; i < call->pathCount; ++i)
-        {
-            rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
-        }
-        rt_end_render(pass);
-    }
-
-    // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    // glnvg__stencilFunc(gl, GL_ALWAYS, 0x0, 0xff);
-    // glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
-    // for (i = 0; i < npaths; i++)
-    //     glDrawArrays(GL_TRIANGLES, paths[i].strokeOffset, paths[i].strokeCount);
-    // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-    // Clear stencil buffer.
-    {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .write = {false, false, false, false},
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }
-            },
-            .stencil = {
-                .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
-                .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_ZERO, .zfail = RT_STENCIL_ZERO, .zpass = RT_STENCIL_ZERO },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLES,
-        });
-        rt_pass_render_t pass{
-            .colors = {
-                    {
-                        .texture_view = gl->target.default_view,
-                        .clear = false,
-                    }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
-        for (auto i = 0; i < call->pathCount; ++i)
-        {
-            rt_draw_array(nullptr, 0, paths[i].strokeCount, 1, paths[i].strokeOffset, 0);
-        }
-        rt_end_render(pass);
+        // Draw Strokes
+        nvg_bindPipeline(gl, nvg_pipelinePlain(call), call->uniformOffset, call->image);
+        for (i = 0; i < npaths; i++)
+            nvg_drawVerts(gl, paths[i].strokeOffset, paths[i].strokeCount);
     }
 }
 
 static void nvg_triangles(RTVGcontext* gl, RTVGcall* call)
 {
-    auto image = nvg_findTexture(gl, call->image);
+    nvg_bindPipeline(gl, nvg_pipelinePlain(call), call->uniformOffset, call->image);
+    nvg_drawVerts(gl, call->triangleOffset, call->triangleCount);
+}
 
-    // nvg_setUniforms(gl, call->uniformOffset, call->image);
-    // glDrawArrays(GL_TRIANGLES, call->triangleOffset, call->triangleCount);
+// ====================================================================
+// Frame
 
+static void nvg_ensureBuffer(rt_buffer_t& buffer, size_t needed, rt_buffer_usages_t usage)
+{
+    if (needed <= buffer.size) return;
+    size_t size = buffer.size ? buffer.size : 1024;
+    while (size < needed) size *= 2;
+    rt_destroy_buffer(buffer);
+    buffer = rt_create_buffer({.size = size, .usage = usage,});
+}
+
+static void rt_renderViewport(void* uptr, float width, float height, float devicePixelRatio)
+{
+    auto gl = (RTVGcontext*)uptr;
+    gl->view[0] = width;
+    gl->view[1] = height;
+
+    // The offscreen target lives in device pixels.
+    uint32_t w = (uint32_t)(width * devicePixelRatio + 0.5f);
+    uint32_t h = (uint32_t)(height * devicePixelRatio + 0.5f);
+    if (w == 0) w = 1;
+    if (h == 0) h = 1;
+
+    if (w != gl->targetWidth || h != gl->targetHeight)
     {
-        static auto module = rt_create_module_render({
-            .vshader = {fillVertShader}, .fshader = {fillFragShader},
-            .colors = {
-                {
-                    .write = {false, false, false, false},
-                    .color = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                    .alpha = {.func = RT_FUNC_ADD, .src = RT_BLEND_ONE, .dst = RT_BLEND_ONE_MINUS_SRC_ALPHA,},
-                }
-            },
-            .stencil = {
-                .front = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
-                .back = { .func = RT_ALWAYS, .sfail = RT_STENCIL_KEEP, .zfail = RT_STENCIL_KEEP, .zpass = RT_STENCIL_INCR },
-            },
-            .vertex = {{.attrib = {{.location = 0, .offset = 0, .format = RT_VERTEX_FLOAT32X2,},{.location = 1, .offset = sizeof(float) * 2, .format = RT_VERTEX_FLOAT32X2,},},}},
-            .primitive = RT_TRIANGLES,
+        rt_destroy_texture(gl->target);
+        rt_destroy_texture(gl->stencil);
+        gl->target = rt_create_texture({
+            .width = w, .height = h, .target = RT_TEXTURE_2D,
+            .format = RT_TEXTURE_RGBA8UNORM,
+            .usage = RT_TEXTURE_USAGE_COPY_SRC | RT_TEXTURE_USAGE_TEXTURE_BINDING | RT_TEXTURE_USAGE_RENDER_ATTACHMENT,
+            .min_filter = RT_LINEAR, .mag_filter = RT_LINEAR,
+            .address_u = RT_CLAMP_TO_EDGE, .address_v = RT_CLAMP_TO_EDGE, .address_w = RT_CLAMP_TO_EDGE,
+            .mipmaps = 1,
         });
-        rt_pass_render_t pass{
-            .colors = {
-                    {
-                        .texture_view = gl->target.default_view,
-                        .clear = false,
-                    }
-            },
-            .stencil = {.refer = 0},
-        };
-        rt_begin_render(pass);
-        rt_bind_module_render(module);
-        rt_bind_texture(image->texture, {.binding = 0,});
-        rt_bind_buffer(gl->fragBuf, {.binding = 0, .offset = (size_t)call->uniformOffset,});
-        rt_draw_array(nullptr, 0, call->triangleCount, 1, call->triangleOffset, 0);
-        rt_end_render(pass);
+        gl->stencil = rt_create_texture({
+            .width = w, .height = h, .target = RT_TEXTURE_2D,
+            .format = RT_TEXTURE_DEPTH24PLUS_STENCIL8,
+            .usage = RT_TEXTURE_USAGE_RENDER_ATTACHMENT,
+            .min_filter = RT_NEAREST, .mag_filter = RT_NEAREST,
+            .address_u = RT_CLAMP_TO_EDGE, .address_v = RT_CLAMP_TO_EDGE, .address_w = RT_CLAMP_TO_EDGE,
+            .mipmaps = 1,
+        });
+        gl->targetWidth = w;
+        gl->targetHeight = h;
     }
+
+    // A new frame starts: the next flush begins from a transparent target.
+    gl->clearTarget = true;
 }
 
 static void rt_renderCancel(void* uptr)
@@ -747,46 +641,41 @@ static void rt_renderCancel(void* uptr)
     gl->nuniforms = 0;
 }
 
-static GLenum RTVG_convertBlendFuncFactor(int factor)
+static rt_blend_factor_t nvg_convertBlendFuncFactor(int factor, bool& valid)
 {
-    if (factor == NVG_ZERO)
-        return GL_ZERO;
-    if (factor == NVG_ONE)
-        return GL_ONE;
-    if (factor == NVG_SRC_COLOR)
-        return GL_SRC_COLOR;
-    if (factor == NVG_ONE_MINUS_SRC_COLOR)
-        return GL_ONE_MINUS_SRC_COLOR;
-    if (factor == NVG_DST_COLOR)
-        return GL_DST_COLOR;
-    if (factor == NVG_ONE_MINUS_DST_COLOR)
-        return GL_ONE_MINUS_DST_COLOR;
-    if (factor == NVG_SRC_ALPHA)
-        return GL_SRC_ALPHA;
-    if (factor == NVG_ONE_MINUS_SRC_ALPHA)
-        return GL_ONE_MINUS_SRC_ALPHA;
-    if (factor == NVG_DST_ALPHA)
-        return GL_DST_ALPHA;
-    if (factor == NVG_ONE_MINUS_DST_ALPHA)
-        return GL_ONE_MINUS_DST_ALPHA;
-    if (factor == NVG_SRC_ALPHA_SATURATE)
-        return GL_SRC_ALPHA_SATURATE;
-    return GL_INVALID_ENUM;
+    switch (factor)
+    {
+    case NVG_ZERO: return RT_BLEND_ZERO;
+    case NVG_ONE: return RT_BLEND_ONE;
+    case NVG_SRC_COLOR: return RT_BLEND_SRC_COLOR;
+    case NVG_ONE_MINUS_SRC_COLOR: return RT_BLEND_ONE_MINUS_SRC_COLOR;
+    case NVG_DST_COLOR: return RT_BLEND_DST_COLOR;
+    case NVG_ONE_MINUS_DST_COLOR: return RT_BLEND_ONE_MINUS_DST_COLOR;
+    case NVG_SRC_ALPHA: return RT_BLEND_SRC_ALPHA;
+    case NVG_ONE_MINUS_SRC_ALPHA: return RT_BLEND_ONE_MINUS_SRC_ALPHA;
+    case NVG_DST_ALPHA: return RT_BLEND_DST_ALPHA;
+    case NVG_ONE_MINUS_DST_ALPHA: return RT_BLEND_ONE_MINUS_DST_ALPHA;
+    case NVG_SRC_ALPHA_SATURATE: return RT_BLEND_SRC_ALPHA_SATURATE;
+    default:
+        valid = false;
+        return RT_BLEND_ONE;
+    }
 }
 
 static RTVGblend nvg_blendCompositeOperation(NVGcompositeOperationState op)
 {
+    bool valid = true;
     RTVGblend blend;
-    blend.srcRGB = RTVG_convertBlendFuncFactor(op.srcRGB);
-    blend.dstRGB = RTVG_convertBlendFuncFactor(op.dstRGB);
-    blend.srcAlpha = RTVG_convertBlendFuncFactor(op.srcAlpha);
-    blend.dstAlpha = RTVG_convertBlendFuncFactor(op.dstAlpha);
-    if (blend.srcRGB == GL_INVALID_ENUM || blend.dstRGB == GL_INVALID_ENUM || blend.srcAlpha == GL_INVALID_ENUM || blend.dstAlpha == GL_INVALID_ENUM)
+    blend.srcRGB = nvg_convertBlendFuncFactor(op.srcRGB, valid);
+    blend.dstRGB = nvg_convertBlendFuncFactor(op.dstRGB, valid);
+    blend.srcAlpha = nvg_convertBlendFuncFactor(op.srcAlpha, valid);
+    blend.dstAlpha = nvg_convertBlendFuncFactor(op.dstAlpha, valid);
+    if (!valid)
     {
-        blend.srcRGB = GL_ONE;
-        blend.dstRGB = GL_ONE_MINUS_SRC_ALPHA;
-        blend.srcAlpha = GL_ONE;
-        blend.dstAlpha = GL_ONE_MINUS_SRC_ALPHA;
+        blend.srcRGB = RT_BLEND_ONE;
+        blend.dstRGB = RT_BLEND_ONE_MINUS_SRC_ALPHA;
+        blend.srcAlpha = RT_BLEND_ONE;
+        blend.dstAlpha = RT_BLEND_ONE_MINUS_SRC_ALPHA;
     }
     return blend;
 }
@@ -794,52 +683,65 @@ static RTVGblend nvg_blendCompositeOperation(NVGcompositeOperationState op)
 static void rt_renderFlush(void* uptr)
 {
     auto gl = (RTVGcontext*)uptr;
+    int i;
 
-    // Upload ubo for frag shaders
-    // glBindBuffer(GL_UNIFORM_BUFFER, gl->fragBuf);
-    // glBufferData(GL_UNIFORM_BUFFER, gl->nuniforms * gl->fragSize, gl->uniforms, GL_STREAM_DRAW);
-
-    // glBindBuffer(GL_ARRAY_BUFFER, gl->vertBuf);
-    // glBufferData(GL_ARRAY_BUFFER, gl->nverts * sizeof(NVGvertex), gl->verts, GL_STREAM_DRAW);
-
+    if (gl->target.handle == 0)
     {
-        rt_pass_transfer_t pass;
-        rt_begin_transfer(pass);
-        rt_copy_buffer_data(
-            {
-                .data = (uint8_t*)gl->uniforms.data(),
-                .size = (size_t)gl->nuniforms * sizeof(RTVGfragUniforms),
-            },
-            {
-                .buffer = gl->fragBuf,
-            },
-            gl->nuniforms * sizeof(RTVGfragUniforms)
-            );
-        rt_copy_buffer_data(
-            {
-                .data = (uint8_t*)gl->verts.data(),
-                .size = (size_t)gl->nverts * sizeof(NVGvertex),
-            },
-            {
-                .buffer = gl->vertBuf,
-            },
-            gl->nverts * sizeof(NVGvertex)
-            );
-        rt_end_transfer(pass);
+        rt_renderCancel(uptr);
+        return;
     }
 
-    for (auto i = 0; i < gl->ncalls; i++)
+    if (gl->ncalls > 0)
     {
-        RTVGcall* call = &gl->calls[i];
+        // Upload vertices and fragment uniforms for this frame.
+        size_t vertBytes = (size_t)gl->nverts * sizeof(NVGvertex);
+        size_t fragBytes = (size_t)gl->nuniforms * gl->fragSize;
+        nvg_ensureBuffer(gl->vertBuf, vertBytes, RT_BUFFER_USAGE_VERTEX | RT_BUFFER_USAGE_COPY_DST);
+        nvg_ensureBuffer(gl->fragBuf, fragBytes, RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST);
 
-        if (call->type == RTVG_FILL)
-            nvg_fill(gl, call);
-        else if (call->type == RTVG_CONVEXFILL)
-            nvg_convexFill(gl, call);
-        else if (call->type == RTVG_STROKE)
-            nvg_stroke(gl, call);
-        else if (call->type == RTVG_TRIANGLES)
-            nvg_triangles(gl, call);
+        RTVGviewUniforms view = {{gl->view[0], gl->view[1]}, {0.0f, 0.0f}};
+
+        rt_pass_transfer_t transfer;
+        rt_begin_transfer(transfer);
+        if (vertBytes)
+            rt_copy_buffer_data({.data = (const uint8_t*)gl->verts.data(), .size = vertBytes,}, {.buffer = gl->vertBuf,}, vertBytes);
+        if (fragBytes)
+            rt_copy_buffer_data({.data = gl->uniforms.data(), .size = fragBytes,}, {.buffer = gl->fragBuf,}, fragBytes);
+        rt_copy_buffer_data({.data = (const uint8_t*)&view, .size = sizeof(view),}, {.buffer = gl->viewBuf,}, sizeof(view));
+        rt_end_transfer(transfer);
+    }
+
+    if (gl->ncalls > 0 || gl->clearTarget)
+    {
+        // Replay all calls into the offscreen target. Modules are swapped inside the
+        // single pass; the pass itself only decides attachments and clears.
+        rt_pass_render_t pass = {};
+        pass.colors[0].texture_view = gl->target.default_view;
+        pass.colors[0].clear = gl->clearTarget;
+        pass.colors[0].value = {0.0f, 0.0f, 0.0f, 0.0f};
+        pass.depth.texture_view = gl->stencil.default_view;
+        pass.depth.clear = gl->clearTarget;
+        pass.depth.value = 1.0f;
+        pass.stencil.clear = gl->clearTarget;
+        pass.stencil.value = 0;
+        pass.stencil.refer = 0;
+        rt_begin_render(pass);
+
+        for (i = 0; i < gl->ncalls; i++)
+        {
+            RTVGcall* call = &gl->calls[i];
+            if (call->type == RTVG_FILL)
+                nvg_fill(gl, call);
+            else if (call->type == RTVG_CONVEXFILL)
+                nvg_convexFill(gl, call);
+            else if (call->type == RTVG_STROKE)
+                nvg_stroke(gl, call);
+            else if (call->type == RTVG_TRIANGLES)
+                nvg_triangles(gl, call);
+        }
+
+        rt_end_render(pass);
+        gl->clearTarget = false;
     }
 
     // Reset calls
@@ -848,6 +750,9 @@ static void rt_renderFlush(void* uptr)
     gl->ncalls = 0;
     gl->nuniforms = 0;
 }
+
+// ====================================================================
+// Call recording
 
 static int nvg_maxVertCount(const NVGpath* paths, int npaths)
 {
@@ -862,42 +767,43 @@ static int nvg_maxVertCount(const NVGpath* paths, int npaths)
 
 static RTVGcall* nvg_allocCall(RTVGcontext* gl)
 {
-    RTVGcall* ret = nullptr;
-    if (gl->ncalls + 1 > gl->calls.size()) gl->calls.resize(gl->calls.size() + 1);
-    ret = &gl->calls[gl->ncalls++];
+    if ((size_t)gl->ncalls + 1 > gl->calls.size()) gl->calls.resize(gl->calls.size() * 2 + 1);
+    RTVGcall* ret = &gl->calls[gl->ncalls++];
     memset(ret, 0, sizeof(RTVGcall));
     return ret;
 }
 
 static int nvg_allocPaths(RTVGcontext* gl, int n)
 {
-    int ret = 0;
-    if (gl->npaths + n > gl->paths.size()) gl->paths.resize(gl->paths.size() + n);
-    ret = gl->npaths;
+    size_t needed = (size_t)gl->npaths + n;
+    if (needed > gl->paths.size()) gl->paths.resize(needed * 2);
+    int ret = gl->npaths;
     gl->npaths += n;
     return ret;
 }
 
 static int nvg_allocVerts(RTVGcontext* gl, int n)
 {
-    int ret = 0;
-    if (gl->nverts + n > gl->verts.size()) gl->verts.resize(gl->verts.size() + n);
-    ret = gl->nverts;
+    size_t needed = (size_t)gl->nverts + n;
+    if (needed > gl->verts.size()) gl->verts.resize(needed * 2);
+    int ret = gl->nverts;
     gl->nverts += n;
     return ret;
 }
 
+// Returns a byte offset into the uniform buffer; consecutive blocks are fragSize apart.
 static int nvg_allocFragUniforms(RTVGcontext* gl, int n)
 {
-    if (gl->nuniforms + n > gl->uniforms.size()) gl->uniforms.resize(gl->uniforms.size() + n);
-    auto ret = gl->nuniforms * sizeof(RTVGfragUniforms);
+    size_t needed = (size_t)(gl->nuniforms + n) * gl->fragSize;
+    if (needed > gl->uniforms.size()) gl->uniforms.resize(needed * 2);
+    int ret = (int)((size_t)gl->nuniforms * gl->fragSize);
     gl->nuniforms += n;
     return ret;
 }
 
 static RTVGfragUniforms* nvg_fragUniformPtr(RTVGcontext* gl, int i)
 {
-    return (RTVGfragUniforms*)&gl->uniforms[i];
+    return (RTVGfragUniforms*)&gl->uniforms[(size_t)i];
 }
 
 static void nvg_vset(NVGvertex* vtx, float x, float y, float u, float v)
@@ -921,9 +827,8 @@ static void rt_renderFill(void* uptr, NVGpaint* paint, NVGcompositeOperationStat
     if (call == nullptr) return;
 
     call->type = RTVG_FILL;
-    call->triangleCount = 4;
+    call->triangleCount = 6; // Bounding box as two triangles
     call->pathOffset = nvg_allocPaths(gl, npaths);
-    if (call->pathOffset == -1) goto error;
     call->pathCount = npaths;
     call->image = paint->image;
     call->blendFunc = nvg_blendCompositeOperation(compositeOperation);
@@ -937,7 +842,6 @@ static void rt_renderFill(void* uptr, NVGpaint* paint, NVGcompositeOperationStat
     // Allocate vertices for all the paths.
     maxverts = nvg_maxVertCount(paths, npaths) + call->triangleCount;
     offset = nvg_allocVerts(gl, maxverts);
-    if (offset == -1) goto error;
 
     for (i = 0; i < npaths; i++)
     {
@@ -963,39 +867,31 @@ static void rt_renderFill(void* uptr, NVGpaint* paint, NVGcompositeOperationStat
     // Setup uniforms for draw calls
     if (call->type == RTVG_FILL)
     {
-        // Quad
+        // Quad as two triangles (same winding as nanovg_gl.h)
         call->triangleOffset = offset;
         quad = &gl->verts[call->triangleOffset];
         nvg_vset(&quad[0], bounds[2], bounds[3], 0.5f, 1.0f);
         nvg_vset(&quad[1], bounds[2], bounds[1], 0.5f, 1.0f);
         nvg_vset(&quad[2], bounds[0], bounds[3], 0.5f, 1.0f);
-        nvg_vset(&quad[3], bounds[0], bounds[1], 0.5f, 1.0f);
+        nvg_vset(&quad[3], bounds[0], bounds[3], 0.5f, 1.0f);
+        nvg_vset(&quad[4], bounds[2], bounds[1], 0.5f, 1.0f);
+        nvg_vset(&quad[5], bounds[0], bounds[1], 0.5f, 1.0f);
 
         call->uniformOffset = nvg_allocFragUniforms(gl, 2);
-        if (call->uniformOffset == -1) goto error;
         // Simple shader for stencil
         frag = nvg_fragUniformPtr(gl, call->uniformOffset);
         memset(frag, 0, sizeof(*frag));
         frag->strokeThr = -1.0f;
         frag->type = NSVG_SHADER_SIMPLE;
         // Fill shader
-        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + sizeof(RTVGfragUniforms)), paint, scissor, fringe, fringe,
-                         -1.0f);
+        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + (int)gl->fragSize), paint, scissor, fringe, fringe, -1.0f);
     }
     else
     {
         call->uniformOffset = nvg_allocFragUniforms(gl, 1);
-        if (call->uniformOffset == -1) goto error;
         // Fill shader
         nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, fringe, fringe, -1.0f);
     }
-
-    return;
-
-error:
-    // We get here if call alloc was ok, but something else is not.
-    // Roll back the last call to prevent drawing it.
-    if (gl->ncalls > 0) gl->ncalls--;
 }
 
 static void rt_renderStroke(void* uptr, NVGpaint* paint, NVGcompositeOperationState compositeOperation,
@@ -1010,7 +906,6 @@ static void rt_renderStroke(void* uptr, NVGpaint* paint, NVGcompositeOperationSt
 
     call->type = RTVG_STROKE;
     call->pathOffset = nvg_allocPaths(gl, npaths);
-    if (call->pathOffset == -1) goto error;
     call->pathCount = npaths;
     call->image = paint->image;
     call->blendFunc = nvg_blendCompositeOperation(compositeOperation);
@@ -1018,7 +913,6 @@ static void rt_renderStroke(void* uptr, NVGpaint* paint, NVGcompositeOperationSt
     // Allocate vertices for all the paths.
     maxverts = nvg_maxVertCount(paths, npaths);
     offset = nvg_allocVerts(gl, maxverts);
-    if (offset == -1) goto error;
 
     for (i = 0; i < npaths; i++)
     {
@@ -1034,20 +928,19 @@ static void rt_renderStroke(void* uptr, NVGpaint* paint, NVGcompositeOperationSt
         }
     }
 
-    // Fill shader
-    call->uniformOffset = nvg_allocFragUniforms(gl, 2);
-    if (call->uniformOffset == -1) goto error;
-
-    nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe, -1.0f);
-    nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + sizeof(RTVGfragUniforms)), paint, scissor, strokeWidth,
-                     fringe, 1.0f - 0.5f / 255.0f);
-
-    return;
-
-error:
-    // We get here if call alloc was ok, but something else is not.
-    // Roll back the last call to prevent drawing it.
-    if (gl->ncalls > 0) gl->ncalls--;
+    if (gl->flags & RTVG_STENCIL_STROKES)
+    {
+        // Fill shader
+        call->uniformOffset = nvg_allocFragUniforms(gl, 2);
+        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe, -1.0f);
+        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset + (int)gl->fragSize), paint, scissor, strokeWidth, fringe, 1.0f - 0.5f / 255.0f);
+    }
+    else
+    {
+        // Fill shader
+        call->uniformOffset = nvg_allocFragUniforms(gl, 1);
+        nvg_convertPaint(gl, nvg_fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe, -1.0f);
+    }
 }
 
 static void rt_renderTriangles(void* uptr, NVGpaint* paint, NVGcompositeOperationState compositeOperation,
@@ -1066,35 +959,35 @@ static void rt_renderTriangles(void* uptr, NVGpaint* paint, NVGcompositeOperatio
 
     // Allocate vertices for all the paths.
     call->triangleOffset = nvg_allocVerts(gl, nverts);
-    if (call->triangleOffset == -1) goto error;
     call->triangleCount = nverts;
 
     memcpy(&gl->verts[call->triangleOffset], verts, sizeof(NVGvertex) * nverts);
 
     // Fill shader
     call->uniformOffset = nvg_allocFragUniforms(gl, 1);
-    if (call->uniformOffset == -1) goto error;
     frag = nvg_fragUniformPtr(gl, call->uniformOffset);
     nvg_convertPaint(gl, frag, paint, scissor, 1.0f, fringe, -1.0f);
     frag->type = NSVG_SHADER_IMG;
-
-    return;
-
-error:
-    // We get here if call alloc was ok, but something else is not.
-    // Roll back the last call to prevent drawing it.
-    if (gl->ncalls > 0) gl->ncalls--;
 }
+
+// ====================================================================
+// Lifetime
 
 static int rt_renderCreate(void* uptr)
 {
     auto gl = (RTVGcontext*)uptr;
 
-    // Create dynamic vertex array
-    gl->vertBuf = rt_create_buffer({.size = sizeof(NVGvertex) * 102400,});
+    gl->fragSize = (sizeof(RTVGfragUniforms) + RTVG_UNIFORM_ALIGN - 1) & ~(RTVG_UNIFORM_ALIGN - 1);
 
-    // Create UBOs
-    gl->fragBuf = rt_create_buffer({.size = sizeof(RTVGfragUniforms) * 1024,});
+    gl->fragShaderSource = "#version 460 core\n";
+    if (gl->flags & RTVG_ANTIALIAS)
+        gl->fragShaderSource += "#define EDGE_AA 1\n";
+    gl->fragShaderSource += fillFragShaderBody;
+
+    // Dynamic per-frame buffers; grown on demand in renderFlush.
+    gl->vertBuf = rt_create_buffer({.size = sizeof(NVGvertex) * 4096, .usage = RT_BUFFER_USAGE_VERTEX | RT_BUFFER_USAGE_COPY_DST,});
+    gl->fragBuf = rt_create_buffer({.size = gl->fragSize * 128, .usage = RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST,});
+    gl->viewBuf = rt_create_buffer({.size = RTVG_UNIFORM_ALIGN, .usage = RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST,});
 
     // Some platforms does not allow to have samples to unset textures.
     // Create empty one which is bound when there's no texture specified.
@@ -1107,35 +1000,34 @@ static int rt_renderCreate(void* uptr)
 static void rt_renderDelete(void* uptr)
 {
     auto gl = (RTVGcontext*)uptr;
-    int i;
     if (gl == nullptr) return;
 
-    rt_destroy_buffer(gl->vertBuf);
-    rt_destroy_buffer(gl->fragBuf);
-    rt_destroy_texture(gl->target);
+    for (auto& module : gl->modules)
+        rt_destroy_module_render(module.second);
+    gl->modules.clear();
 
     for (auto& texture : gl->textures)
     {
-        if (texture.second.id != 0)
-            rt_destroy_texture(texture.second.texture);
+        rt_destroy_sampler(texture.second.sampler);
+        rt_destroy_texture(texture.second.texture);
     }
     gl->textures.clear();
 
-    gl->paths.clear();
-    gl->verts.clear();
-    gl->uniforms.clear();
-    gl->calls.clear();
+    rt_destroy_texture(gl->target);
+    rt_destroy_texture(gl->stencil);
 
-    free(gl);
+    rt_destroy_buffer(gl->vertBuf);
+    rt_destroy_buffer(gl->fragBuf);
+    rt_destroy_buffer(gl->viewBuf);
+
+    delete gl;
 }
 
-NVGcontext* nvgCreateGL3(int flags)
+NVGcontext* rtCreateRT(int flags)
 {
     NVGparams params;
     NVGcontext* ctx = nullptr;
-    auto gl = (RTVGcontext*)malloc(sizeof(RTVGcontext));
-    if (gl == nullptr) goto error;
-    memset(gl, 0, sizeof(RTVGcontext));
+    auto gl = new RTVGcontext;
 
     memset(&params, 0, sizeof(params));
     params.renderCreate = rt_renderCreate;
@@ -1151,7 +1043,7 @@ NVGcontext* nvgCreateGL3(int flags)
     params.renderTriangles = rt_renderTriangles;
     params.renderDelete = rt_renderDelete;
     params.userPtr = gl;
-    params.edgeAntiAlias = 1;
+    params.edgeAntiAlias = (flags & RTVG_ANTIALIAS) ? 1 : 0;
 
     gl->flags = flags;
 
@@ -1166,7 +1058,14 @@ error:
     return nullptr;
 }
 
-void nvgDeleteGL3(NVGcontext* ctx)
+void rtDeleteRT(NVGcontext* ctx)
 {
     nvgDeleteInternal(ctx);
+}
+
+rt_texture_t rtGetTargetRT(NVGcontext* ctx)
+{
+    if (ctx == nullptr) return {};
+    auto gl = (RTVGcontext*)nvgInternalParams(ctx)->userPtr;
+    return gl->target;
 }

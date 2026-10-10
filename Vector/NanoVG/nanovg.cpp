@@ -30,13 +30,6 @@
 #include "stb_image.h"
 #endif
 
-#ifdef _MSC_VER
-#pragma warning(disable: 4100)  // unreferenced formal parameter
-#pragma warning(disable: 4127)  // conditional expression is constant
-#pragma warning(disable: 4204)  // nonstandard extension used : non-constant aggregate initializer
-#pragma warning(disable: 4706)  // assignment within conditional expression
-#endif
-
 #define NVG_INIT_FONTIMAGE_SIZE  512
 #define NVG_MAX_FONTIMAGE_SIZE   2048
 #define NVG_MAX_FONTIMAGES       4
@@ -373,7 +366,7 @@ void nvgDeleteInternal(NVGcontext* ctx)
 	if (ctx->params.renderDelete != NULL)
 		ctx->params.renderDelete(ctx->params.userPtr);
 
-	free(ctx);
+	delete ctx;
 }
 
 void nvgBeginFrame(NVGcontext* ctx, float windowWidth, float windowHeight, float devicePixelRatio)

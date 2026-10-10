@@ -18,10 +18,6 @@
 #ifndef NANOVG_GL_H
 #define NANOVG_GL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // Create flags
 
 enum NVGcreateFlags {
@@ -98,10 +94,6 @@ GLuint nvglImageHandleGLES3(NVGcontext* ctx, int image);
 enum NVGimageFlagsGL {
 	NVG_IMAGE_NODELETE			= 1<<16,	// Do not delete GL texture handle.
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* NANOVG_GL_H */
 

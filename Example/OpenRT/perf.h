@@ -3,10 +3,6 @@
 
 #include "nanovg.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum GraphrenderStyle {
     GRAPH_RENDER_FPS,
     GRAPH_RENDER_MS,
@@ -38,9 +34,5 @@ typedef struct GPUtimer GPUtimer;
 void initGPUTimer(GPUtimer* timer);
 void startGPUTimer(GPUtimer* timer);
 int stopGPUTimer(GPUtimer* timer, float* times, int maxTimes);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // PERF_H
