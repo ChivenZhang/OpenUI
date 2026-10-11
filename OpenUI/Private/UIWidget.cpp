@@ -185,12 +185,6 @@ void UIWidget::paint(UIRect client, UIPainterRaw painter)
 	painter->setClipRect(viewport.X, viewport.Y, viewport.W, viewport.H);
 }
 
-void UIWidget::repaint(UIRect client, UIPainterRaw painter)
-{
-	auto viewport = getViewport();
-	painter->setClipRect(viewport.X, viewport.Y, viewport.W, viewport.H);
-}
-
 bool UIWidget::filter(UIReactorRaw source, UIEventRaw event)
 {
 	return false;

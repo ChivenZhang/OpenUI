@@ -3,15 +3,12 @@
   "version-string" : "1.0.0",
   "builtin-baseline" : "478939b61bfc6aa9faf4ab18b5e2495f18ac1fea",
   "dependencies" : [ {
-    "name" : "yoga",
-    "version>=" : "3.2.1"
+    "name" : "yoga"
   }, {
     "name" : "sdl3",
-    "version>=" : "3.4.4",
     "features" : [ "vulkan" ]
   }, {
-    "name" : "stb",
-    "version>=" : "2024-07-29#1"
+    "name" : "stb"
   }, {
     "name" : "lexbor",
     "version>=" : "3.0.0"
@@ -32,10 +29,8 @@
     "name" : "libraqm",
     "version>=" : "0.11.0"
   }, {
-    "name" : "glm",
-    "version>=" : "1.0.3"
+    "name" : "glm"
   }, {
-    "name" : "glew",
-    "version>=" : "2.3.1"
+    "name" : "glew"
   } ]
 }

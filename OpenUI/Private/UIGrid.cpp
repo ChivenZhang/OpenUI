@@ -77,11 +77,7 @@ void UIGrid::paint(UIRect client, UIPainterRaw painter)
 	painter->setPen(UINoPen);
 	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
-}
 
-void UIGrid::repaint(UIRect client, UIPainterRaw painter)
-{
-	UIWidget::repaint(client, painter);
 	painter->setPen(PRIVATE()->Style.Pen);
 	painter->setBrush(UINoBrush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);

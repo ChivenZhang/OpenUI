@@ -19,8 +19,6 @@ int main()
     SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -32,6 +30,23 @@ int main()
     rt_load_library();
 
     auto device = UINew<OpenRTDevice>();
+    auto canvas = device->getCanvas();
+    canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
+        <style>
+            div {
+                width: 100%;
+                height: 100%;
+            }
+            button {
+                width: 120px;
+                height: 40px;
+            }
+        </style>
+        <div>
+            <button>Button</button>
+            <button>Button</button>
+        </div>
+    )"));
     while (device->update()) continue;
     device = nullptr;
 

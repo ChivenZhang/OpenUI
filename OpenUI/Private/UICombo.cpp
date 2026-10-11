@@ -128,11 +128,6 @@ void UICombo::layout(UIRect client)
 void UICombo::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-}
-
-void UICombo::repaint(UIRect client, UIPainterRaw painter)
-{
-	UIWidget::repaint(client, painter);
 
 	painter->setPen(PRIVATE()->Style.Button.Normal.Pen);
 	painter->drawLine(client.X + client.W - 20, client.Y + (client.H - 5) * 0.5f, client.X + client.W - 15, client.Y + (client.H + 5) * 0.5f);

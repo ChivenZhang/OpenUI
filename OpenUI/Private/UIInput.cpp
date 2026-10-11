@@ -111,11 +111,7 @@ void UIInput::paint(UIRect client, UIPainterRaw painter)
 		painter->setBrush({ .Style = UIBrush::NoBrush });
 		painter->drawLine(cursorRect.X, cursorRect.Y, cursorRect.X, cursorRect.Y + cursorRect.H);
 	}
-}
 
-void UIInput::repaint(UIRect client, UIPainterRaw painter)
-{
-	UIWidget::repaint(client, painter);
 	painter->setPen(PRIVATE()->Style.Background.Pen);
 	painter->setBrush(UINoBrush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);

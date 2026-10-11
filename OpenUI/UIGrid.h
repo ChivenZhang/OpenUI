@@ -27,7 +27,6 @@ public:
 	~UIGrid() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	bool addWidget(UIWidgetRef value) override;
 	bool addWidget(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan = 1, uint32_t columnSpan = 1);

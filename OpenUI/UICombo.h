@@ -90,7 +90,6 @@ public:
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIStringList const& getItems() const;
 	void setItems(UIStringList const& texts);

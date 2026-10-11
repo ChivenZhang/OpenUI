@@ -37,7 +37,6 @@ public:
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	void repaint(UIRect client, UIPainterRaw painter) override;
 	bool addWidget(UIWidgetRef value) override;
 	bool removeWidget(UIWidgetRef value) override;
 	void removeWidget() override;

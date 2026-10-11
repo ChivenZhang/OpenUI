@@ -27,7 +27,6 @@ public:
 	~UIVBox() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIVBoxStyle getStyle() const;
 	void setStyle(UIVBoxStyle value);

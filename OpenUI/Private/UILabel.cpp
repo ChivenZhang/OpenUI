@@ -187,6 +187,7 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 		} break;
 		}
 	}
+
 	if (PRIVATE()->Text.empty() == false)
 	{
 		if (getEnable() == false)
@@ -209,11 +210,6 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 		}
 		painter->drawText(client.X, client.Y, client.W, client.H, PRIVATE()->Text);
 	}
-}
-
-void UILabel::repaint(UIRect client, UIPainterRaw painter)
-{
-	UIWidget::repaint(client, painter);
 
 	painter->setBrush(UINoBrush);
 	if (getEnable() == false)

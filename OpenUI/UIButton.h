@@ -74,7 +74,6 @@ public:
 	~UIButton() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIString getText() const;
 	void setText(UIString const& text);

@@ -65,51 +65,26 @@ void UIButton::paint(UIRect client, UIPainterRaw painter)
 	painter->setPen(UINoPen);
 	if (getEnable() == false)
 	{
+		painter->setPen(PRIVATE()->Style.Disable.Pen);
 		painter->setBrush(PRIVATE()->Style.Disable.Brush);
 	}
 	else if (PRIVATE()->Checkable && PRIVATE()->Checked || PRIVATE()->Checkable == false && PRIVATE()->Pressed)
 	{
+		painter->setPen(PRIVATE()->Style.Press.Pen);
 		painter->setBrush(PRIVATE()->Style.Press.Brush);
 	}
 	else if (PRIVATE()->Hovered)
 	{
+		painter->setPen(PRIVATE()->Style.Hover.Pen);
 		painter->setBrush(PRIVATE()->Style.Hover.Brush);
 	}
 	else
 	{
+		painter->setPen(PRIVATE()->Style.Normal.Pen);
 		painter->setBrush(PRIVATE()->Style.Normal.Brush);
 	}
 
-	auto round = PRIVATE()->Style.Round;
-	if (round.X < 0.5f || round.Y < 0.5f)
-		painter->drawRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2);
-	else
-		painter->drawRoundedRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2, round.X, round.Y);
-}
-
-void UIButton::repaint(UIRect client, UIPainterRaw painter)
-{
-	UIWidget::repaint(client, painter);
-
-	painter->setBrush(UINoBrush);
-	if (getEnable() == false)
-	{
-		painter->setPen(PRIVATE()->Style.Disable.Pen);
-	}
-	else if (PRIVATE()->Checkable && PRIVATE()->Checked || PRIVATE()->Checkable == false && PRIVATE()->Pressed)
-	{
-		painter->setPen(PRIVATE()->Style.Press.Pen);
-	}
-	else if (PRIVATE()->Hovered)
-	{
-		painter->setPen(PRIVATE()->Style.Hover.Pen);
-	}
-	else
-	{
-		painter->setPen(PRIVATE()->Style.Normal.Pen);
-	}
-
-	auto round = PRIVATE()->Style.Round;
+	auto round = UIFloat2{6, 6};// PRIVATE()->Style.Round;
 	if (round.X < 0.5f || round.Y < 0.5f)
 		painter->drawRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2);
 	else

@@ -46,7 +46,6 @@ public:
 	void arrange(UIRect client) override;
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIInputStyle getStyle() const;
 	void setStyle(UIInputStyle value);

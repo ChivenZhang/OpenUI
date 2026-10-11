@@ -35,7 +35,7 @@ struct OpenRTPainterPrivate : UIPrivate
 	bool EnableClip = true;
 	bool InFrame = false;
 	UIImageRaw Target = nullptr;
-	UIList<int> FrameImages; // NanoVG images created during the current frame
+	UIList<int> Images; // NanoVG images created during the current frame
 };
 #define PRIVATE() ((OpenRTPainterPrivate*) m_Private)
 #define CONTEXT() (PRIVATE()->Context)
@@ -255,11 +255,10 @@ OpenRTPainter::OpenRTPainter(UICanvasRaw canvas, int width, int height)
 
 OpenRTPainter::~OpenRTPainter()
 {
-	auto vg = CONTEXT();
-	if (vg)
+	if (auto vg = CONTEXT())
 	{
 		if (PRIVATE()->InFrame) nvgCancelFrame(vg);
-		for (auto image : PRIVATE()->FrameImages) nvgDeleteImage(vg, image);
+		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
 	}
 	delete m_Private; m_Private = nullptr;
 }
@@ -278,20 +277,19 @@ UIImageRaw OpenRTPainter::getTarget() const
 		// End paint: flush NanoVG into its offscreen target.
 		nvgEndFrame(vg);
 		PRIVATE()->InFrame = false;
-		for (auto image : PRIVATE()->FrameImages) nvgDeleteImage(vg, image);
-		PRIVATE()->FrameImages.clear();
+		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
+		PRIVATE()->Images.clear();
 
 		// Copy the result into the GPU target (Handle is an rt_texture_t*).
 		if (target->Format == UIImage::GPUByte && target->Handle)
 		{
-			auto src = rtGetTargetRT(vg);
+			auto& src = rtGetTargetRT(vg);
 			auto& dst = *(rt_texture_t*)(uintptr_t)target->Handle;
 			if (src.handle && dst.handle)
 			{
-				rt_size_t size{std::min(src.width, dst.width), std::min(src.height, dst.height), 1};
 				rt_pass_transfer_t pass;
 				rt_begin_transfer(pass);
-				rt_copy_texture({.texture = src}, {.texture = dst}, size);
+				rt_copy_texture({.texture = src}, {.texture = dst}, {std::min(src.width, dst.width), std::min(src.height, dst.height), 1});
 				rt_end_transfer(pass);
 			}
 		}
@@ -307,8 +305,8 @@ void OpenRTPainter::setTarget(UIImageRaw value)
 		// A previous session was never finished; drop it.
 		nvgCancelFrame(vg);
 		PRIVATE()->InFrame = false;
-		for (auto image : PRIVATE()->FrameImages) nvgDeleteImage(vg, image);
-		PRIVATE()->FrameImages.clear();
+		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
+		PRIVATE()->Images.clear();
 	}
 	PRIVATE()->Target = value;
 	if (vg && value && value->Width && value->Height)
@@ -365,7 +363,7 @@ void OpenRTPainter::drawImage(float x, float y, UIImage image, float sx, float s
 		}
 	}
 	if (handle == -1) return;
-	PRIVATE()->FrameImages.push_back(handle); // deleted after nvgEndFrame
+	PRIVATE()->Images.push_back(handle); // deleted after nvgEndFrame
 
 	if (sw < 0) sw = (float)image.Width - sx;
 	if (sh < 0) sh = (float)image.Height - sy;

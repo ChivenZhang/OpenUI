@@ -27,7 +27,6 @@ public:
 	~UIHBox() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	void repaint(UIRect client, UIPainterRaw painter) override;
 
 	UIHBoxStyle getStyle() const;
 	void setStyle(UIHBoxStyle value);
