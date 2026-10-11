@@ -85,7 +85,7 @@ void UIButton::paint(UIRect client, UIPainterRaw painter)
 		painter->setBrush(PRIVATE()->Style.Normal.Brush);
 	}
 
-	auto round = UIFloat2{6, 6};// PRIVATE()->Style.Round;
+	auto round = PRIVATE()->Style.Round;
 	if (round.X < 0.5f || round.Y < 0.5f)
 		painter->drawRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2);
 	else
