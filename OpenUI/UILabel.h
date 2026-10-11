@@ -50,7 +50,7 @@ public:
 	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
 
-	UIString getText() const;
+	UIString& getText() const;
 	void setText(UIString const& text);
 
 	using UIWidget::getStyle;

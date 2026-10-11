@@ -34,18 +34,7 @@ UILabel::UILabel(UICanvasRaw canvas)
 	linkHovered = &PRIVATE()->LinkHovered;
 	linkActivated = &PRIVATE()->LinkActivated;
 
-#if 0 // TEST CSS
-	auto& styleData = PRIVATE()->Style;
-	this->setEmbedStyle("background.color", styleData.Normal.Background.Brush.Color);
-	this->setEmbedStyle("normal.background.color", styleData.Normal.Background.Brush.Color);
-	this->setEmbedStyle("hover.background.color", styleData.Hover.Background.Brush.Color);
-
-	UI_INFO("%s", this->hasStyle<UIColor>("background.color") ? "true" : "false");
-	UI_INFO("%s", this->hasStyle<UIPoint>("background.color") ? "true" : "false");
-	UI_INFO("%s", this->hasStyle<UIColor>("foreground.color") ? "true" : "false");
-	auto& color = this->getStyle<UIColor>("background.color");
-	UI_INFO("%f %f %f %f", color.R, color.G, color.B, color.A);
-#endif
+	this->setEmbedAttrib("textContent", PRIVATE()->Text);
 }
 
 UILabel::~UILabel()
@@ -188,7 +177,8 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 		}
 	}
 
-	if (PRIVATE()->Text.empty() == false)
+	auto textContent = this->getAttribText("textContent");
+	if (textContent.empty() == false)
 	{
 		if (getEnable() == false)
 		{
@@ -208,7 +198,7 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 			painter->setFont(PRIVATE()->Style.Normal.Foreground.Font);
 			painter->setBrush(PRIVATE()->Style.Normal.Foreground.Brush);
 		}
-		painter->drawText(client.X, client.Y, client.W, client.H, PRIVATE()->Text);
+		painter->drawText(client.X, client.Y, client.W, client.H, textContent);
 	}
 
 	painter->setBrush(UINoBrush);
@@ -227,7 +217,7 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
-UIString UILabel::getText() const
+UIString& UILabel::getText() const
 {
 	return PRIVATE()->Text;
 }

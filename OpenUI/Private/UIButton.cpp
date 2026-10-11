@@ -40,9 +40,10 @@ UIButton::UIButton(UICanvasRaw canvas)
 	toggled = &PRIVATE()->OnToggled;
 
 	PRIVATE()->Label = UINew<UILabel>(canvas);
-	addWidget(PRIVATE()->Label);
+	this->setEmbedAttrib("textContent", PRIVATE()->Label->getText());
+	this->addWidget(PRIVATE()->Label);
 
-	setStyle(PRIVATE()->Style);
+	this->setStyle(PRIVATE()->Style);
 }
 
 UIButton::~UIButton()

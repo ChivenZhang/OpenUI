@@ -74,7 +74,7 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 			auto widget = factory->second->newWidget(getCanvas());
 			if (widget == nullptr) return {};
 			widget->setID(w.ID);
-			widget->setAttribText("textContent", w.Text);
+			if (w.Text.empty() == false) widget->setAttribText("textContent", w.Text);
 
 			// Process each widget
 
