@@ -15,45 +15,7 @@
 #include "../SDL3InputEnum.h"
 #include <nanovg.h>
 #include <nanovg_rt.h>
-
 #include "OpenGL.h"
-
-static const float kScreenPoints[] = {
-	-1.0f, -1.0f, 0.0f,
-	+3.0f, -1.0f, 0.0f,
-	-1.0f, +3.0f, 0.0f,
-};
-static const float kScreenUVs[] = {
-	0.0f, 0.0f,
-	2.0f, 0.0f,
-	0.0f, 2.0f,
-};
-
-static constexpr auto kPresentVS = R"(
-	#version 460
-	layout(location = 0) in vec3 in_vertex;
-	layout(location = 2) in vec2 in_uv;
-	layout(location = 0) out vec2 v_uv;
-
-	void main()
-	{
-		v_uv = in_uv;
-		gl_Position = vec4(in_vertex, 1.0);
-	}
-)";
-
-static constexpr auto kPresentFS = R"(
-	#version 460
-	layout(location = 0) in vec2 v_uv;
-	layout(location = 0) out vec4 final;
-
-	layout(binding = 0) uniform sampler2D texture0;
-
-	void main()
-	{
-		final = texture(texture0, v_uv);
-	}
-)";
 
 static void presentFrame(rt_module_render_t& module, rt_mesh_t& mesh, int width, int height, rt_texture_t* source)
 {
@@ -62,8 +24,6 @@ static void presentFrame(rt_module_render_t& module, rt_mesh_t& mesh, int width,
 	pass.screen.color.value = {0.3f, 0.3f, 0.32f, 1.0f};
 	pass.screen.color.blend.src = RT_BLEND_ONE;
 	pass.screen.color.blend.dst = RT_BLEND_ONE_MINUS_SRC_ALPHA;
-	pass.screen.depth.clear = true;
-	pass.screen.stencil.clear = true;
 	rt_begin_render(pass);
 	rt_set_viewport(0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f);
 	if (source && source->handle && module.handle && mesh.handle)
@@ -377,7 +337,10 @@ bool OpenRTDevice::update()
 	SDL_GetWindowSizeInPixels(window, &width, &height);
 	if (width <= 0 || height <= 0) return true;
 
+
 	SDL_GL_MakeCurrent(m_Window, m_Context);
+
+	auto t0 = ::clock();
 	if (render)
 	{
 		auto source = render->newImage((uint32_t)width, (uint32_t)height);
@@ -398,6 +361,10 @@ bool OpenRTDevice::update()
 		gl_draw_screen(width, height, {}, empty);
 		SDL_GL_SwapWindow(m_Window);
 	}
+
+	auto t1 = ::clock();
+
+	std::cout << (t1 - t0) << " ms" << std::endl;
 	return true;
 }
 

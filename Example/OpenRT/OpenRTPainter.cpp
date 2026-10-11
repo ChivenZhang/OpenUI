@@ -268,6 +268,27 @@ UICanvasRaw OpenRTPainter::getCanvas() const
     return m_Canvas;
 }
 
+void OpenRTPainter::setTarget(UIImageRaw value)
+{
+	auto vg = CONTEXT();
+	if (vg && PRIVATE()->InFrame)
+	{
+		// A previous session was never finished; drop it.
+		nvgCancelFrame(vg);
+		PRIVATE()->InFrame = false;
+		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
+		PRIVATE()->Images.clear();
+	}
+	PRIVATE()->Target = value;
+	if (vg && value && value->Width && value->Height)
+	{
+		// Begin paint.
+		auto density = m_Canvas ? m_Canvas->getConfig().PixelDensity : 1.0f;
+		nvgBeginFrame(vg, (float)value->Width, (float)value->Height, density > 0 ? density : 1.0f);
+		PRIVATE()->InFrame = true;
+	}
+}
+
 UIImageRaw OpenRTPainter::getTarget() const
 {
 	auto vg = CONTEXT();
@@ -295,27 +316,6 @@ UIImageRaw OpenRTPainter::getTarget() const
 		}
 	}
     return target;
-}
-
-void OpenRTPainter::setTarget(UIImageRaw value)
-{
-	auto vg = CONTEXT();
-	if (vg && PRIVATE()->InFrame)
-	{
-		// A previous session was never finished; drop it.
-		nvgCancelFrame(vg);
-		PRIVATE()->InFrame = false;
-		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
-		PRIVATE()->Images.clear();
-	}
-	PRIVATE()->Target = value;
-	if (vg && value && value->Width && value->Height)
-	{
-		// Begin paint.
-		auto density = m_Canvas ? m_Canvas->getConfig().PixelDensity : 1.0f;
-		nvgBeginFrame(vg, (float)value->Width, (float)value->Height, density > 0 ? density : 1.0f);
-		PRIVATE()->InFrame = true;
-	}
 }
 
 UIRect OpenRTPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect)

@@ -86,8 +86,7 @@ void UICombo::arrange(UIRect client)
 	auto painter = getCanvas()->getPainter();
 	painter->setFont(PRIVATE()->Style.Button.Label.Normal.Foreground.Font);
 
-	auto content = PRIVATE()->Popup->getContentView();
-	if (content)
+	if (auto content = PRIVATE()->Popup->getContentView())
 	{
 		content->setFixedWidth({0, UI_CSS_WIDTH_LENGTH});
 		content->setFixedHeight({0, UI_CSS_HEIGHT_LENGTH});

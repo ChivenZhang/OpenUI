@@ -663,6 +663,7 @@ bool UICanvas::paintWidget(UIRect client)
 	{
 		if (widget->getVisible() == false) return;
 		auto subWidgets = widget->getWidgets();
+		auto& cssFilter = widget->getStyle<UIPropFilter>("filter");
 
 		// Paint Widget
 
@@ -688,7 +689,7 @@ bool UICanvas::paintWidget(UIRect client)
 		{
 			auto subWidget = subWidgets[i].get();
 			auto transform = glm::translate(matrix, glm::vec3(subWidget->getTranslate().X, subWidget->getTranslate().Y, 0.0f));
-			transform = glm::rotate(transform, glm::radians(subWidget->getRotate()), {0.0f, 0.0f, 1.0f});
+			transform = glm::rotate(transform, glm::radians(subWidget->getRotate()), { 0.0f, 0.0f, 1.0f });
 			transform = glm::scale(transform, glm::vec3(subWidget->getScale()));
 
 			render->render(client, transform, subWidget->getTarget(), widget->getTarget(), subWidget->getStyleComputed());
@@ -699,7 +700,6 @@ bool UICanvas::paintWidget(UIRect client)
 
 		// Filter Widget
 
-		auto& cssFilter = widget->getStyle<UIPropFilter>("filter");
 		if (auto filter = this->getRender(cssFilter.Func))
 		{
 			auto filterRT = render->newImage(screenRT->Width, screenRT->Height);

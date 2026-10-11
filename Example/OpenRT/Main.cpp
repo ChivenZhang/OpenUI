@@ -18,49 +18,50 @@ void sample(UICanvasRaw context, SDL_Window* window);
 
 int main()
 {
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-    auto window = SDL_CreateWindow("OpenGL Context", 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    auto context = SDL_GL_CreateContext(window);
-    SDL_GL_MakeCurrent(window, context);
-    SDL_GL_SetSwapInterval(0);
-    rt_load_library();
+	auto window = SDL_CreateWindow("OpenGL Context", 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+	auto context = SDL_GL_CreateContext(window);
+	SDL_GL_MakeCurrent(window, context);
+	SDL_GL_SetSwapInterval(0);
+	rt_load_library();
 
-    auto device = UINew<OpenRTDevice>();
-    auto canvas = device->getCanvas();
+	auto device = UINew<OpenRTDevice>();
+	auto canvas = device->getCanvas();
+	device->setCursor("pointer");
 
-    // canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
-    //     <style>
-    //         div {
-    //             width: 100%;
-    //             height: 100%;
-    //         }
-    //         button {
-    //             width: 120px;
-    //             height: 40px;
-    //         }
-    //     </style>
-    //     <div>
-    //         <button>Button</button>
-    //         <button>Button</button>
-    //     </div>
-    // )"));
+	//canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
+	//	<style>
+	//		div {
+	//			width: 100%;
+	//			height: 100%;
+	//		}
+	//		button {
+	//			width: 120px;
+	//			height: 40px;
+	//		}
+	//	</style>
+	//	<div>
+	//		<button>Button</button>
+	//		<button>Button</button>
+	//	</div>
+	//)"));
 
 	sample(canvas, window);
 
-    while (device->update()) continue;
-    device = nullptr;
+	while (device->update()) continue;
+	device = nullptr;
 
-    SDL_GL_MakeCurrent(window, context);
-    rt_unload_library();
+	SDL_GL_MakeCurrent(window, context);
+	rt_unload_library();
 
-    SDL_Quit();
-    return 0;
+	SDL_Quit();
+	return 0;
 }
 
 #include "OpenUI/UICanvas.h"
@@ -102,7 +103,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 			label->setScaledContents(UILabel::ScaleKeepRatio);
 			int img_width, img_height, channels;
 			auto image_data = stbi_load("../../OpenUI.png", &img_width, &img_height, &channels, 4);
-			if (image_data) label->setPixmap({(uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4), 0, image_data });
+			if (image_data) label->setPixmap({ (uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4), 0, image_data });
 			stbi_image_free(image_data);
 		}
 	}

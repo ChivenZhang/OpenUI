@@ -22,9 +22,9 @@ public:
 
 	virtual UICanvasRaw getCanvas() const = 0;
 
-	virtual UIImageRaw getTarget() const = 0;
-
 	virtual void setTarget(UIImageRaw value) = 0;
+
+	virtual UIImageRaw getTarget() const = 0;
 
 	virtual UIRect boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect = nullptr) = 0;
 
