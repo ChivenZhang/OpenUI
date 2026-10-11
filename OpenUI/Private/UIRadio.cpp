@@ -100,7 +100,7 @@ UIRadio::UIRadio(UICanvasRaw canvas)
 UIRadio::~UIRadio()
 {
 	if (PRIVATE()->SelfGroup->Active == this) PRIVATE()->SelfGroup->Active = nullptr;
-	if (PRIVATE()->OtherGroup->Active == this) PRIVATE()->OtherGroup->Active = nullptr;
+	if (PRIVATE()->OtherGroup && PRIVATE()->OtherGroup->Active == this) PRIVATE()->OtherGroup->Active = nullptr;
 	PRIVATE()->OtherGroup = nullptr;
 	delete m_Private; m_Private = nullptr;
 }

@@ -15,6 +15,10 @@ enum NVGcreateFlagsRT
     RTVG_DEBUG = 1 << 2,
 };
 
+enum NVGimageFlagsRT {
+    RTVG_IMAGE_NODELETE			= 1<<16,	// Do not delete GL texture handle.
+};
+
 // Creates a NanoVG context that renders through the OpenRT API.
 // Geometry is rasterised into an offscreen RGBA8 colour (+ stencil) target at
 // nvgEndFrame(). The backend does not present; fetch the target with
@@ -28,6 +32,10 @@ void rtDeleteRT(NVGcontext* ctx);
 // first nvgBeginFrame(). The texture is recreated when the frame size changes, so
 // re-query it every frame.
 rt_texture_t& rtGetTargetRT(NVGcontext* ctx);
+
+int rtCreateTextureNative(NVGcontext* ctx, int imageFlags, rt_texture_t const& texture);
+
+rt_texture_t rtGetTextureNative(NVGcontext* ctx, int imageHandle);
 
 // ====================================================================
 // Shaders. Binding slots:

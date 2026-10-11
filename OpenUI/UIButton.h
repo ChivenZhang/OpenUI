@@ -54,7 +54,7 @@ struct UIButtonStyle
 		UIPen Pen;
 		UIBrush Brush;
 	};
-	UIFloat2 Round{ 0, 0 };
+	UIFloat2 Round{ 5, 5, };
 	UILabelStyle Label =
 	{
 		.Normal {.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }}, .Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},},

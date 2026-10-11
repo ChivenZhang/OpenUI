@@ -100,6 +100,11 @@ void OpenRTRender::delImage(UIImage value)
 {
     if (value.Handle == 0 || value.Format != UIImage::GPUByte) return;
     m_Targets.emplace_back(value);
+
+    auto& texture = *(rt_texture_t*)value.Handle;
+    rt_pass_render_t pass{.colors = {{.texture_view = texture.default_view, .clear = true,}},};
+    rt_begin_render(pass);
+    rt_end_render(pass);
 }
 
 void OpenRTRender::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style)

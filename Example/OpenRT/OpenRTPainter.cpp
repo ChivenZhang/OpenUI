@@ -362,6 +362,12 @@ void OpenRTPainter::drawImage(float x, float y, UIImage image, float sx, float s
 			handle = nvgCreateImageRGBA(vg, (int)image.Width, (int)image.Height, 0, packed.data());
 		}
 	}
+	else if (image.Format == UIImage::GPUByte && image.Pixels && image.Channel == 4)
+	{
+		auto& texture = *(rt_texture_t*)image.Handle;
+		handle = rtCreateTextureNative(vg, 0, texture);
+	}
+
 	if (handle == -1) return;
 	PRIVATE()->Images.push_back(handle); // deleted after nvgEndFrame
 

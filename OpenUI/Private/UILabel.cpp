@@ -81,6 +81,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
+			PRIVATE()->ImageScaled.Channel = 4;
 			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
@@ -97,6 +98,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
+			PRIVATE()->ImageScaled.Channel = 4;
 			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;
@@ -123,6 +125,7 @@ void UILabel::layout(UIRect client)
 			PRIVATE()->ImageScaled.Width = newWidth;
 			PRIVATE()->ImageScaled.Height = newHeight;
 			PRIVATE()->ImageScaled.Stride = newStride;
+			PRIVATE()->ImageScaled.Channel = 4;
 			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
 		}
 	} break;

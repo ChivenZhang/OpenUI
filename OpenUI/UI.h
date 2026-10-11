@@ -727,7 +727,7 @@ struct UIPen
 		RoundJoin,
 	};
 	style_t Style = SolidLine;
-	cap_style_t CapStyle = SquareCap;
+	cap_style_t CapStyle = RoundCap;
 	join_style_t JoinStyle = BevelJoin;
 	UIColor Color = UIColor{ 0, 0, 0, 1 };
 	float Width = 2.0f, DashOffset = 0.0f, MiterLimit = 10.0f;
