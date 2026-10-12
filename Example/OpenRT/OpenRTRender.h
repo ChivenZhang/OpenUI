@@ -11,6 +11,7 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_OPENRT
 #include <OpenUI/UIRender.h>
+#include <OpenRT.h>
 
 class OpenRTRender : public UIRender
 {
@@ -26,6 +27,7 @@ public:
 protected:
     UICanvasRaw m_Canvas;
     UIList<UIImage> m_Targets;
+    UIMap<uint32_t, rt_texture_t> m_Textures;
 };
 
 #endif

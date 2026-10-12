@@ -26,12 +26,11 @@ OpenRTRender::OpenRTRender(UICanvasRaw canvas, int width, int height)
 
 OpenRTRender::~OpenRTRender()
 {
-    for (auto const& image : m_Targets)
+    for (auto& texture : m_Textures)
     {
-        auto* texture = (rt_texture_t*)(uintptr_t)image.Handle;
-        rt_destroy_texture(*texture);
-        delete texture;
+        rt_destroy_texture(texture.second);
     }
+    m_Textures.clear();
     m_Targets.clear();
 }
 
@@ -51,16 +50,16 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
 
     while (!m_Targets.empty() && (m_Targets.back().Width != width || m_Targets.back().Height != height))
     {
-        auto* texture = (rt_texture_t*)(uintptr_t)m_Targets.back().Handle;
-        rt_destroy_texture(*texture);
-        delete texture;
+        auto texture = *(rt_texture_t*)m_Targets.back().Handle;
+        rt_destroy_texture(texture);
+        m_Textures.erase(texture.handle);
         m_Targets.pop_back();
     }
 
     UIImage image;
     if (m_Targets.empty())
     {
-        auto* texture = new rt_texture_t(rt_create_texture({
+        rt_texture_t texture = rt_create_texture({
             .width = width,
             .height = height,
             .target = RT_TEXTURE_2D,
@@ -73,18 +72,16 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
             .address_w = RT_CLAMP_TO_BORDER,
             .mipmaps = 1,
             .border = {0.0f, 0.0f, 0.0f, 0.0f},
-        }));
-        if (texture->handle == 0)
+        });
+        auto result = m_Textures.emplace(texture.handle, texture);
+
+        image = UIImage
         {
-            delete texture;
-            return {};
-        }
-        image = UIImage{
             .Width = width,
             .Height = height,
             .Stride = width * 4,
             .Channel = 4,
-            .Handle = (uint64_t)(uintptr_t)texture,
+            .Handle = (uint64_t)(uintptr_t)&result.first->second,
             .Format = UIImage::GPUByte,
         };
     }
