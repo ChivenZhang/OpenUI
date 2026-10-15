@@ -23,10 +23,9 @@ endif()
 include_directories(${OPENUI_SOURCE_DIR})
 include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
 include_directories(${OPENUI_SOURCE_DIR}/Vector/NanoVG)
-include_directories(${OPENUI_SOURCE_DIR}/Vector/OpenVG)
 add_subdirectory(OpenUI)
-add_subdirectory(External/OpenRT)
 add_subdirectory(Vector)
+add_subdirectory(External/OpenRT)
 
 if (OPENUI_ENABLE_EXAMPLE)
 

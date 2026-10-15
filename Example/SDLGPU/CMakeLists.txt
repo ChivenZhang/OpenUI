@@ -4,7 +4,7 @@ if(OPENUI_ENABLE_SDLGPU)
 
     file(GLOB_RECURSE SDLGPU_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
     add_executable (UI-SDLGPU ${SDLGPU_EXAMPLE_SRC})
-    add_dependencies(UI-SDLGPU OpenUI OpenVG NanoVG Shader)
+    add_dependencies(UI-SDLGPU OpenUI Shader)
 
     find_package(SDL3 CONFIG REQUIRED)
     target_link_libraries(UI-SDLGPU PRIVATE SDL3::SDL3)
@@ -21,6 +21,6 @@ if(OPENUI_ENABLE_SDLGPU)
         target_link_directories(UI-SDLGPU PRIVATE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
     endif()
 
-    target_link_libraries(UI-SDLGPU PRIVATE OpenUI OpenVG NanoVG)
+    target_link_libraries(UI-SDLGPU PRIVATE OpenUI)
 
 endif ()
