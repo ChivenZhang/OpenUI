@@ -21,9 +21,16 @@
 // UIPainter implemented on top of NanoVG (OpenRT backend).
 //
 // The NVGcontext is owned by OpenRTDevice; the painter only borrows it.
-// A paint session runs between setTarget(target) [nvgBeginFrame] and the first
-// getTarget() afterwards [nvgEndFrame]. When the target is a GPU image whose
-// Handle points at an rt_texture_t, NanoVG's offscreen result is copied into it.
+// A paint session runs between setTarget(target) [nvgBeginFrame] and
+// setTarget(nullptr) [nvgEndFrame]. Each GPU target keeps one NVGtarget:
+// the image's colour texture plus a matching stencil owned here. That group is
+// passed to nvgBeginFrame.
+
+struct OpenRTNVGTarget
+{
+	rt_texture_t stencil = {};
+	NVGtarget target = {};
+};
 
 struct OpenRTPainterPrivate : UIPrivate
 {
@@ -36,6 +43,7 @@ struct OpenRTPainterPrivate : UIPrivate
 	bool InFrame = false;
 	UIImageRaw Target = nullptr;
 	UIList<int> Images; // NanoVG images created during the current frame
+	UIMap<rt_texture_t*, OpenRTNVGTarget> Targets; // one NVGtarget group per colour attachment
 };
 #define PRIVATE() ((OpenRTPainterPrivate*) m_Private)
 #define CONTEXT() (PRIVATE()->Context)
@@ -260,7 +268,17 @@ OpenRTPainter::~OpenRTPainter()
 		if (PRIVATE()->InFrame) nvgCancelFrame(vg);
 		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
 	}
+	for (auto& slot : PRIVATE()->Targets) rt_destroy_texture(slot.second.stencil);
 	delete m_Private; m_Private = nullptr;
+}
+
+void OpenRTPainter::releaseTarget(rt_texture_t* color)
+{
+	if (m_Private == nullptr || color == nullptr) return;
+	auto found = PRIVATE()->Targets.find(color);
+	if (found == PRIVATE()->Targets.end()) return;
+	rt_destroy_texture(found->second.stencil);
+	PRIVATE()->Targets.erase(found);
 }
 
 UICanvasRaw OpenRTPainter::getCanvas() const
@@ -271,6 +289,18 @@ UICanvasRaw OpenRTPainter::getCanvas() const
 void OpenRTPainter::setTarget(UIImageRaw value)
 {
 	auto vg = CONTEXT();
+	if (value == nullptr)
+	{
+		if (vg && PRIVATE()->Target && PRIVATE()->InFrame)
+		{
+			nvgEndFrame(vg);
+			PRIVATE()->InFrame = false;
+			for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
+			PRIVATE()->Images.clear();
+		}
+		PRIVATE()->Target = nullptr;
+		return;
+	}
 	if (vg && PRIVATE()->InFrame)
 	{
 		// A previous session was never finished; drop it.
@@ -282,40 +312,31 @@ void OpenRTPainter::setTarget(UIImageRaw value)
 	PRIVATE()->Target = value;
 	if (vg && value && value->Width && value->Height)
 	{
-		// Begin paint.
+		NVGtarget nvgTarget = {};
+		if (value->Format == UIImage::GPUByte && value->Handle)
+		{
+			auto* color = (rt_texture_t*)(uintptr_t)value->Handle;
+			auto& slot = PRIVATE()->Targets[color];
+			if (slot.stencil.handle == 0 || slot.stencil.width != color->width || slot.stencil.height != color->height)
+			{
+				if (slot.stencil.handle) rt_destroy_texture(slot.stencil);
+				slot.stencil = rt_create_texture({
+					.width = color->width, .height = color->height, .target = RT_TEXTURE_2D,
+					.format = RT_TEXTURE_DEPTH24PLUS_STENCIL8,
+					.usage = RT_TEXTURE_USAGE_RENDER_ATTACHMENT,
+					.min_filter = RT_NEAREST, .mag_filter = RT_NEAREST,
+					.address_u = RT_CLAMP_TO_EDGE, .address_v = RT_CLAMP_TO_EDGE, .address_w = RT_CLAMP_TO_EDGE,
+					.mipmaps = 1,
+				});
+			}
+			slot.target.colorTarget = color;
+			slot.target.stencilTarget = &slot.stencil;
+			nvgTarget = slot.target;
+		}
 		auto density = m_Canvas ? m_Canvas->getConfig().PixelDensity : 1.0f;
-		nvgBeginFrame(vg, (float)value->Width, (float)value->Height, density > 0 ? density : 1.0f);
+		nvgBeginFrame(vg, nvgTarget, (float)value->Width, (float)value->Height, density > 0 ? density : 1.0f);
 		PRIVATE()->InFrame = true;
 	}
-}
-
-UIImageRaw OpenRTPainter::getTarget() const
-{
-	auto vg = CONTEXT();
-	auto target = PRIVATE()->Target;
-	if (vg && target && PRIVATE()->InFrame)
-	{
-		// End paint: flush NanoVG into its offscreen target.
-		nvgEndFrame(vg);
-		PRIVATE()->InFrame = false;
-		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
-		PRIVATE()->Images.clear();
-
-		// Copy the result into the GPU target (Handle is an rt_texture_t*).
-		if (target->Format == UIImage::GPUByte && target->Handle)
-		{
-			auto& src = rtGetTargetRT(vg);
-			auto& dst = *(rt_texture_t*)(uintptr_t)target->Handle;
-			if (src.handle && dst.handle)
-			{
-				rt_pass_transfer_t pass;
-				rt_begin_transfer(pass);
-				rt_copy_texture({.texture = src}, {.texture = dst}, {std::min(src.width, dst.width), std::min(src.height, dst.height), 1});
-				rt_end_transfer(pass);
-			}
-		}
-	}
-    return target;
 }
 
 UIRect OpenRTPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect)

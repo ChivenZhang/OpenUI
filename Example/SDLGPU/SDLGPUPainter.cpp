@@ -55,25 +55,28 @@ UICanvasRaw SDLGPUPainter::getCanvas() const
     return m_Canvas;
 }
 
-UIImageRaw SDLGPUPainter::getTarget() const
-{
-	auto target = PRIVATE()->Target;
-	VGImage source
-	{
-		.Width = target->Width,
-		.Height = target->Height,
-		.Stride = target->Stride,
-		.Channel = target->Channel,
-		.Handle = target->Handle,
-		.Format = (decltype(VGImage::Format))target->Format,
-	};
-	CONTEXT()->getRender()->setTarget(&source);
-	CONTEXT()->renderElement({0, 0, (float)PRIVATE()->Target->Width, (float)PRIVATE()->Target->Height});
-    return PRIVATE()->Target;
-}
-
 void SDLGPUPainter::setTarget(UIImageRaw value)
 {
+	if (value == nullptr)
+	{
+		auto target = PRIVATE()->Target;
+		if (target)
+		{
+			VGImage source
+			{
+				.Width = target->Width,
+				.Height = target->Height,
+				.Stride = target->Stride,
+				.Channel = target->Channel,
+				.Handle = target->Handle,
+				.Format = (decltype(VGImage::Format))target->Format,
+			};
+			CONTEXT()->getRender()->setTarget(&source);
+			CONTEXT()->renderElement({0, 0, (float)target->Width, (float)target->Height});
+		}
+		PRIVATE()->Target = nullptr;
+		return;
+	}
 	PRIVATE()->Target = value;
 }
 

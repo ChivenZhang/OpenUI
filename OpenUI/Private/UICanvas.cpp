@@ -671,7 +671,7 @@ bool UICanvas::paintWidget(UIRect client)
 		widget->setTarget(widgetRT);
 		painter->setTarget(widget->getTarget());
 		widget->paint(client, painter);
-		(void)painter->getTarget();
+		painter->setTarget(nullptr);
 
 		for (size_t i = 0; i < subWidgets.size(); ++i)
 		{

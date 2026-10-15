@@ -42,25 +42,19 @@ UICanvasRaw SDLNanoVGPainter::getCanvas() const
     return m_Canvas;
 }
 
-UIImageRaw SDLNanoVGPainter::getTarget() const
-{
-    if (m_Target)
-    {
-        nvgEndFrame(m_Context);
-    }
-    return m_Target;
-}
-
 void SDLNanoVGPainter::setTarget(UIImageRaw value)
 {
-    m_Target = value;
-    if (m_Target)
+    if (value == nullptr)
     {
-        auto width = m_Canvas->getTarget()->Width;
-        auto height = m_Canvas->getTarget()->Height;
-        auto density = m_Canvas->getConfig().PixelDensity;
-        nvgBeginFrame(m_Context, width, height, density);
+        if (m_Target) nvgEndFrame(m_Context);
+        m_Target = nullptr;
+        return;
     }
+    m_Target = value;
+    auto width = m_Canvas->getTarget()->Width;
+    auto height = m_Canvas->getTarget()->Height;
+    auto density = m_Canvas->getConfig().PixelDensity;
+    nvgBeginFrame(m_Context, {}, width, height, density);
 }
 
 UIRect SDLNanoVGPainter::boundingRect(float x, float y, float width, float height, const UIString& text, float cursor, UIRectRaw cursorRect)

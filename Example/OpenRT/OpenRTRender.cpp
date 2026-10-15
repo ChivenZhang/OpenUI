@@ -12,6 +12,7 @@
 #include "OpenRTRender.h"
 #include <OpenRT.h>
 #include <OpenUI/UICanvas.h>
+#include "OpenRTPainter.h"
 
 #include "OpenGL.h"
 #include "OpenRTX.h"
@@ -28,6 +29,8 @@ OpenRTRender::~OpenRTRender()
 {
     for (auto& texture : m_Textures)
     {
+        if (auto painter = UICast<OpenRTPainter>(m_Canvas ? m_Canvas->getPainter() : nullptr))
+            painter->releaseTarget(&texture.second);
         rt_destroy_texture(texture.second);
     }
     m_Textures.clear();
@@ -50,7 +53,10 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
 
     while (!m_Targets.empty() && (m_Targets.back().Width != width || m_Targets.back().Height != height))
     {
-        auto texture = *(rt_texture_t*)m_Targets.back().Handle;
+        auto* color = (rt_texture_t*)(uintptr_t)m_Targets.back().Handle;
+        if (auto painter = UICast<OpenRTPainter>(m_Canvas ? m_Canvas->getPainter() : nullptr))
+            painter->releaseTarget(color);
+        auto texture = *color;
         rt_destroy_texture(texture);
         m_Textures.erase(texture.handle);
         m_Targets.pop_back();

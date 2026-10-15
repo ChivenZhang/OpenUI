@@ -337,10 +337,9 @@ bool OpenRTDevice::update()
 	SDL_GetWindowSizeInPixels(window, &width, &height);
 	if (width <= 0 || height <= 0) return true;
 
-
 	SDL_GL_MakeCurrent(m_Window, m_Context);
 
-	auto t0 = ::clock();
+	auto t0 = SDL_GetTicksNS() * 1e-9;
 	if (render)
 	{
 		auto source = render->newImage((uint32_t)width, (uint32_t)height);
@@ -362,9 +361,9 @@ bool OpenRTDevice::update()
 		SDL_GL_SwapWindow(m_Window);
 	}
 
-	auto t1 = ::clock();
+	auto t1 = SDL_GetTicksNS() * 1e-9;
 
-	std::cout << (t1 - t0) << " ms" << std::endl;
+	std::cout << 1.0f / (t1 - t0) << " fps" << std::endl;
 	return true;
 }
 

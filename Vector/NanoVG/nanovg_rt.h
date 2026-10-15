@@ -20,18 +20,12 @@ enum NVGimageFlagsRT {
 };
 
 // Creates a NanoVG context that renders through the OpenRT API.
-// Geometry is rasterised into an offscreen RGBA8 colour (+ stencil) target at
-// nvgEndFrame(). The backend does not present; fetch the target with
-// rtGetTargetRT() and composite it yourself (see blitVertShader/blitFragShader).
+// Geometry is rasterised at nvgEndFrame() into the NVGtarget passed to
+// nvgBeginFrame. Colour and stencil pointers are rt_texture_t*. The backend
+// does not allocate them or present.
 NVGcontext* rtCreateRT(int flags);
 
 void rtDeleteRT(NVGcontext* ctx);
-
-// Returns the offscreen colour target of the last nvgEndFrame(). Premultiplied
-// alpha, sized in device pixels (width * devicePixelRatio). handle == 0 until the
-// first nvgBeginFrame(). The texture is recreated when the frame size changes, so
-// re-query it every frame.
-rt_texture_t& rtGetTargetRT(NVGcontext* ctx);
 
 int rtCreateTextureNative(NVGcontext* ctx, int imageFlags, rt_texture_t const& texture);
 

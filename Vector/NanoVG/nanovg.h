@@ -116,6 +116,13 @@ enum NVGimageFlags {
 	NVG_IMAGE_NEAREST			= 1<<5,		// Image interpolation is Nearest instead Linear
 };
 
+struct NVGtarget
+{
+	void* colorTarget;
+	void* stencilTarget;
+};
+typedef struct NVGtarget NVGtarget;
+
 // Begin drawing a new frame
 // Calls to nanovg drawing API should be wrapped in nvgBeginFrame() & nvgEndFrame()
 // nvgBeginFrame() defines the size of the window to render to in relation currently
@@ -124,7 +131,7 @@ enum NVGimageFlags {
 // For example, GLFW returns two dimension for an opened window: window size and
 // frame buffer size. In that case you would set windowWidth/Height to the window size
 // devicePixelRatio to: frameBufferWidth / windowWidth.
-void nvgBeginFrame(NVGcontext* ctx, float windowWidth, float windowHeight, float devicePixelRatio);
+void nvgBeginFrame(NVGcontext* ctx, NVGtarget renderTarget, float windowWidth, float windowHeight, float devicePixelRatio);
 
 // Cancels drawing the current frame.
 void nvgCancelFrame(NVGcontext* ctx);
@@ -200,6 +207,9 @@ void nvgRestore(NVGcontext* ctx);
 
 // Resets current render state to default values. Does not affect the render state stack.
 void nvgReset(NVGcontext* ctx);
+
+// Render target of the current frame, set by nvgBeginFrame().
+NVGtarget nvgTarget(NVGcontext* ctx);
 
 //
 // Render styles

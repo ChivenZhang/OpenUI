@@ -1,36 +1,40 @@
 {
-  "name" : "openui",
-  "version-string" : "1.0.0",
-  "builtin-baseline" : "478939b61bfc6aa9faf4ab18b5e2495f18ac1fea",
-  "dependencies" : [ {
-    "name" : "yoga"
-  }, {
-    "name" : "sdl3",
-    "features" : [ "vulkan" ]
-  }, {
-    "name" : "stb"
-  }, {
-    "name" : "lexbor",
-    "version>=" : "3.0.0"
-  }, {
-    "name" : "fontconfig",
-    "version>=" : "2.17.1#2"
-  }, {
-    "name" : "fribidi",
-    "version>=" : "1.0.16"
-  }, {
-    "name" : "freetype",
-    "version>=" : "2.14.3"
-  }, {
-    "name" : "harfbuzz",
-    "version>=" : "13.0.1",
-    "features" : [ "freetype", "icu" ]
-  }, {
-    "name" : "libraqm",
-    "version>=" : "0.11.0"
-  }, {
-    "name" : "glm"
-  }, {
-    "name" : "glew"
-  } ]
+  "name": "openui",
+  "version-string": "1.0.0",
+  "builtin-baseline": "44ccfd88b3eca6929d6d16398c7b19945c29a5f6",
+  "dependencies": [
+    {
+      "name": "yoga"
+    },
+    {
+      "name": "stb"
+    },
+    {
+      "name": "lexbor"
+    },
+    {
+      "name": "fontconfig"
+    },
+    {
+      "name": "harfbuzz",
+      "features": [
+        "icu"
+      ]
+    },
+    {
+      "name": "pango"
+    },
+    {
+      "name": "glm"
+    },
+    {
+      "name": "glew"
+    },
+    {
+      "name": "sdl3",
+      "features": [
+        "vulkan"
+      ]
+    }
+  ]
 }

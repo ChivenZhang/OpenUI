@@ -130,6 +130,7 @@ struct NVGcontext {
 	int fillTriCount;
 	int strokeTriCount;
 	int textTriCount;
+	NVGtarget renderTarget;
 };
 
 static float nvg__sqrtf(float a) { return sqrtf(a); }
@@ -369,7 +370,7 @@ void nvgDeleteInternal(NVGcontext* ctx)
 	delete ctx;
 }
 
-void nvgBeginFrame(NVGcontext* ctx, float windowWidth, float windowHeight, float devicePixelRatio)
+void nvgBeginFrame(NVGcontext* ctx, NVGtarget renderTarget, float windowWidth, float windowHeight, float devicePixelRatio)
 {
 /*	printf("Tris: draws:%d  fill:%d  stroke:%d  text:%d  TOT:%d\n",
 		ctx->drawCallCount, ctx->fillTriCount, ctx->strokeTriCount, ctx->textTriCount,
@@ -378,6 +379,7 @@ void nvgBeginFrame(NVGcontext* ctx, float windowWidth, float windowHeight, float
 	ctx->nstates = 0;
 	nvgSave(ctx);
 	nvgReset(ctx);
+	ctx->renderTarget = renderTarget;
 
 	nvg__setDevicePixelRatio(ctx, devicePixelRatio);
 
@@ -669,6 +671,11 @@ void nvgReset(NVGcontext* ctx)
 	state->fontBlur = 0.0f;
 	state->textAlign = NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE;
 	state->fontId = 0;
+}
+
+NVGtarget nvgTarget(NVGcontext* ctx)
+{
+	return ctx->renderTarget;
 }
 
 // State setting

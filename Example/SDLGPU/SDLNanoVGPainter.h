@@ -24,7 +24,6 @@ public:
     SDLNanoVGPainter(UICanvasRaw canvas, int width, int height, SDL_GPUDevice* device);
     ~SDLNanoVGPainter() override;
     UICanvasRaw getCanvas() const override;
-    UIImageRaw getTarget() const override;
     void setTarget(UIImageRaw value) override;
     UIRect boundingRect(float x, float y, float width, float height, const UIString& text, float cursor, UIRectRaw cursorRect) override;
     UIRect boundingRect(float x, float y, float width, float height, const UIString& text, float posX, float posY, int* cursor, UIRectRaw cursorRect) override;

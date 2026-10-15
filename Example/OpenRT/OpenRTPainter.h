@@ -12,14 +12,17 @@
 #ifdef OPENUI_ENABLE_OPENRT
 #include <OpenUI/UIPainter.h>
 
+struct rt_texture_t;
+
 class OpenRTPainter : public UIPainter
 {
 public:
     OpenRTPainter(UICanvasRaw canvas, int width, int height);
     ~OpenRTPainter() override;
+    // Drops the NVGtarget group cached for this colour attachment.
+    void releaseTarget(rt_texture_t* color);
     UICanvasRaw getCanvas() const override;
     void setTarget(UIImageRaw value) override;
-    UIImageRaw getTarget() const override;
     UIRect boundingRect(float x, float y, float width, float height, const UIString& text, float cursor, UIRectRaw cursorRect) override;
     UIRect boundingRect(float x, float y, float width, float height, const UIString& text, float posX, float posY, int* cursor, UIRectRaw cursorRect) override;
     void drawPoint(float x, float y) override;
