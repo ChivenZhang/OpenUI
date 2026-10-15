@@ -14,7 +14,14 @@
 #include <OpenUI/UICanvas.h>
 #include <nanovg.h>
 #include <nanovg_rt.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <pango/pangoft2.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <algorithm>
 
@@ -44,6 +51,8 @@ struct OpenRTPainterPrivate : UIPrivate
 	UIImageRaw Target = nullptr;
 	UIList<int> Images; // NanoVG images created during the current frame
 	UIMap<rt_texture_t*, OpenRTNVGTarget> Targets; // one NVGtarget group per colour attachment
+	PangoFontMap* FontMap = nullptr;
+	PangoLayout* Layout = nullptr;
 };
 #define PRIVATE() ((OpenRTPainterPrivate*) m_Private)
 #define CONTEXT() (PRIVATE()->Context)
@@ -97,20 +106,6 @@ static void nvg_applyBrush(NVGcontext* vg, UIBrush const& brush)
 	nvgFillColor(vg, nvg_color(brush.Color));
 }
 
-static void nvg_applyFont(NVGcontext* vg, UIFont const& font)
-{
-	const char* face = "sans";
-	if (font.Weight >= UIFont::WeightDemiBold) face = "sans-bold";
-	else if (font.Weight <= UIFont::WeightLight) face = "sans-light";
-	if (!font.Family.empty() && nvgFindFont(vg, font.Family.c_str()) != -1) face = font.Family.c_str();
-	if (nvgFindFont(vg, face) == -1) face = "sans";
-	nvgFontFace(vg, face);
-	nvgFontSize(vg, (float)font.Size);
-	nvgTextLetterSpacing(vg, (float)font.Spacing);
-	nvgTextLineHeight(vg, font.LineSpacing > 0 ? font.LineSpacing : 1.0f);
-	nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-}
-
 // Rounded rectangle with independent x / y radii (NanoVG only offers a single radius).
 static void nvg_roundedRectPath(NVGcontext* vg, float x, float y, float w, float h, float rx, float ry)
 {
@@ -134,118 +129,283 @@ static void nvg_roundedRectPath(NVGcontext* vg, float x, float y, float w, float
 }
 
 // ====================================================================
-// Text layout
+// Text layout (Pango) and glyph drawing (NanoVG)
 
-struct OpenRTTextRow
+// Positive finite sizes become Pango units. Non-positive and huge values
+// (callers pass FLT_MAX to measure unwrapped text) mean "unconstrained".
+static int pango_units(float pixels)
 {
-	const char* Start;
-	const char* End;
-	float Width;
+	if (!(pixels > 0.0f) || pixels >= 1.0e6f) return -1;
+	auto units = std::lround((double)pixels * PANGO_SCALE);
+	if (units <= 0 || units > INT32_MAX) return -1;
+	return (int)units;
+}
+
+static float pango_pixels(int units)
+{
+	return (float)units / (float)PANGO_SCALE;
+}
+
+struct OpenRTTextFrame
+{
+	UIRect Rect;     // aligned content rectangle in target coordinates
+	float OriginX = 0; // Pango layout origin (box left, aligned top)
+	float OriginY = 0;
 };
 
-struct OpenRTTextLayout
+static void pango_applyFont(PangoLayout* layout, UIFont const& font)
 {
-	UIRect Rect; // aligned text rectangle in target coordinates
-	float LineHeight = 0;
-	float AlignFactor = 0; // 0 = left, 0.5 = centre, 1 = right (per-row offset inside Rect)
-	UIList<OpenRTTextRow> Rows;
+	auto* desc = pango_font_description_new();
+	pango_font_description_set_family(desc, font.Family.empty() ? OPENUI_FONT_FAMILY : font.Family.c_str());
+	pango_font_description_set_style(desc, (PangoStyle)font.Style);
+	pango_font_description_set_weight(desc, (PangoWeight)font.Weight);
+	int size = font.Size > 0 ? (int)font.Size : 1;
+	pango_font_description_set_absolute_size(desc, (double)size * PANGO_SCALE);
+	pango_layout_set_font_description(layout, desc);
+	pango_font_description_free(desc);
 
-	float rowX(size_t row) const { return Rect.X + (Rect.W - Rows[row].Width) * AlignFactor; }
-	float rowY(size_t row) const { return Rect.Y + LineHeight * row; }
-};
+	pango_layout_set_justify(layout, (font.Align & UIFont::AlignJustify) ? TRUE : FALSE);
+	if (font.Align & UIFont::AlignRight) pango_layout_set_alignment(layout, PANGO_ALIGN_RIGHT);
+	else if (font.Align & UIFont::AlignCenter) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
+	else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
 
-static OpenRTTextLayout nvg_layoutText(NVGcontext* vg, UIFont const& font, float x, float y, float width, float height, UIString const& text)
-{
-	OpenRTTextLayout layout;
-	nvg_applyFont(vg, font);
-
-	float ascender, descender, lineh;
-	nvgTextMetrics(vg, &ascender, &descender, &lineh);
-	layout.LineHeight = lineh;
-
-	const char* start = text.c_str();
-	const char* end = start + text.size();
-	float textWidth = 0;
-	if (font.LineWrap && width > 0)
+	if (font.Direction == UIFont::DirectionAutoLayout)
 	{
-		NVGtextRow rows[16];
-		const char* cursor = start;
-		int nrows;
-		while ((nrows = nvgTextBreakLines(vg, cursor, end, width, rows, 16)) > 0)
-		{
-			for (int i = 0; i < nrows; ++i)
-			{
-				layout.Rows.push_back({rows[i].start, rows[i].end, rows[i].width});
-				textWidth = std::max(textWidth, rows[i].width);
-			}
-			cursor = rows[nrows - 1].next;
-		}
+		pango_layout_set_auto_dir(layout, TRUE);
 	}
 	else
 	{
-		textWidth = nvgTextBounds(vg, 0, 0, start, end, nullptr);
-		layout.Rows.push_back({start, end, textWidth});
+		pango_layout_set_auto_dir(layout, FALSE);
+		auto dir = font.Direction == UIFont::DirectionRightToLeft ? PANGO_DIRECTION_RTL : PANGO_DIRECTION_LTR;
+		pango_context_set_base_dir(pango_layout_get_context(layout), dir);
 	}
-	if (layout.Rows.empty()) layout.Rows.push_back({start, end, 0.0f});
-	float textHeight = lineh * (float)layout.Rows.size();
 
-	UIRect rect{x, y, textWidth, textHeight};
-	if (width > 0)
+	switch (font.Ellipsize)
 	{
-		if (font.Align & UIFont::AlignRight) { rect.X = x + width - textWidth; layout.AlignFactor = 1.0f; }
-		else if (font.Align & UIFont::AlignCenter) { rect.X = x + std::round((width - textWidth) * 0.5f); layout.AlignFactor = 0.5f; }
+	case UIFont::EllipsizeStart: pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_START); break;
+	case UIFont::EllipsizeMiddle: pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_MIDDLE); break;
+	case UIFont::EllipsizeEnd: pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END); break;
+	default: pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_NONE); break;
 	}
-	if (height > 0)
+
+	pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
+	pango_layout_set_single_paragraph_mode(layout, font.LineWrap ? FALSE : TRUE);
+	pango_layout_set_line_spacing(layout, font.LineSpacing > 0 ? font.LineSpacing : 1.0f);
+
+	auto* attrs = pango_attr_list_new();
+	if (font.Spacing != 0)
 	{
-		if (font.Align & UIFont::AlignBottom) rect.Y = y + height - textHeight;
-		else if (font.Align & UIFont::AlignVCenter) rect.Y = y + std::round((height - textHeight) * 0.5f);
+		auto* spacing = pango_attr_letter_spacing_new((int)font.Spacing * PANGO_SCALE);
+		spacing->start_index = 0;
+		spacing->end_index = G_MAXUINT;
+		pango_attr_list_insert(attrs, spacing);
 	}
-	layout.Rect = rect;
-	return layout;
+	pango_layout_set_attributes(layout, attrs);
+	pango_attr_list_unref(attrs);
 }
 
-// Caret rectangle for a byte offset into the text.
-static UIRect nvg_cursorRect(NVGcontext* vg, OpenRTTextLayout const& layout, UIString const& text, int cursor)
+static OpenRTTextFrame pango_layoutText(PangoLayout* layout, UIFont const& font, float x, float y, float width, float height, UIString const& text)
 {
-	const char* base = text.c_str();
-	cursor = std::clamp<int>(cursor, 0, (int)text.size());
-	const char* pos = base + cursor;
+	OpenRTTextFrame frame;
+	pango_applyFont(layout, font);
+	pango_layout_set_width(layout, pango_units(width));
+	pango_layout_set_height(layout, pango_units(height));
+	pango_layout_set_text(layout, text.c_str(), (int)text.size());
 
-	size_t row = layout.Rows.size() - 1;
-	for (size_t i = 0; i < layout.Rows.size(); ++i)
+	int contentUnits = 0;
+	auto* iter = pango_layout_get_iter(layout);
+	if (iter)
 	{
-		const char* next = (i + 1 < layout.Rows.size()) ? layout.Rows[i + 1].Start : nullptr;
-		if (next == nullptr || pos < next) { row = i; break; }
+		do
+		{
+			auto* line = pango_layout_iter_get_line_readonly(iter);
+			int lineUnits = 0;
+			if (line)
+			{
+				for (auto* run = line->runs; run; run = run->next)
+				{
+					auto* item = (PangoGlyphItem*)run->data;
+					lineUnits += item->start_x_offset + pango_glyph_string_get_width(item->glyphs) + item->end_x_offset;
+				}
+			}
+			contentUnits = std::max(contentUnits, lineUnits);
+		} while (pango_layout_iter_next_line(iter));
+		pango_layout_iter_free(iter);
 	}
-	auto const& r = layout.Rows[row];
-	const char* clamped = std::clamp(pos, r.Start, r.End);
-	float advance = nvgTextBounds(vg, 0, 0, r.Start, clamped, nullptr);
-	return UIRect{layout.rowX(row) + advance, layout.rowY(row), 0, layout.LineHeight};
+
+	int pixelW = 0, pixelH = 0;
+	pango_layout_get_pixel_size(layout, &pixelW, &pixelH);
+	float textW = pango_pixels(contentUnits);
+	float textH = (float)pixelH;
+	if (textW <= 0.0f) textW = (float)pixelW;
+
+	frame.OriginX = x;
+	frame.OriginY = y;
+	if (height > 0.0f && height < 1.0e6f)
+	{
+		if (font.Align & UIFont::AlignBottom) frame.OriginY = y + height - textH;
+		else if (font.Align & UIFont::AlignVCenter) frame.OriginY = y + std::round((height - textH) * 0.5f);
+	}
+
+	frame.Rect = {x, frame.OriginY, textW, textH};
+	if (width > 0.0f && width < 1.0e6f)
+	{
+		if (font.Align & UIFont::AlignRight) frame.Rect.X = x + width - textW;
+		else if (font.Align & UIFont::AlignCenter) frame.Rect.X = x + std::round((width - textW) * 0.5f);
+	}
+	return frame;
 }
 
-// Byte offset of the caret closest to a point.
-static int nvg_hitTest(NVGcontext* vg, OpenRTTextLayout const& layout, UIString const& text, float posX, float posY)
+static UIRect pango_cursorRect(PangoLayout* layout, OpenRTTextFrame const& frame, int cursor)
 {
-	const char* base = text.c_str();
-	size_t row = 0;
-	if (layout.LineHeight > 0)
-	{
-		auto index = (int)std::floor((posY - layout.Rect.Y) / layout.LineHeight);
-		row = (size_t)std::clamp<int>(index, 0, (int)layout.Rows.size() - 1);
-	}
-	auto const& r = layout.Rows[row];
-	if (r.End <= r.Start) return (int)(r.Start - base);
+	PangoRectangle strongPos, weakPos;
+	pango_layout_get_cursor_pos(layout, cursor, &strongPos, &weakPos);
+	return {
+		frame.OriginX + pango_pixels(strongPos.x),
+		frame.OriginY + pango_pixels(strongPos.y),
+		pango_pixels(strongPos.width),
+		pango_pixels(strongPos.height),
+	};
+}
 
-	UIList<NVGglyphPosition> glyphs((size_t)(r.End - r.Start) + 1);
-	float rowX = layout.rowX(row);
-	int count = nvgTextGlyphPositions(vg, rowX, 0, r.Start, r.End, glyphs.data(), (int)glyphs.size());
-	for (int i = 0; i < count; ++i)
+static int pango_hitTest(PangoLayout* layout, OpenRTTextFrame const& frame, UIString const& text, float posX, float posY)
+{
+	int index = 0, trailing = 0;
+	pango_layout_xy_to_index(layout,
+		(int)((posX - frame.OriginX) * PANGO_SCALE),
+		(int)((posY - frame.OriginY) * PANGO_SCALE),
+		&index, &trailing);
+	if (trailing && index >= 0 && index < (int)text.size())
+		index += UIUTF8Num(text[(size_t)index]);
+	return index;
+}
+
+// FreeType rasterizes the glyph. NanoVG only blits that bitmap.
+static bool nvg_drawGlyphBitmap(NVGcontext* vg, UIList<int>& images, FT_Face face, FT_UInt glyph, float x, float y, UIColor const& color)
+{
+	if (FT_Load_Glyph(face, glyph, FT_LOAD_RENDER | FT_LOAD_COLOR) != 0) return false;
+	auto const& bitmap = face->glyph->bitmap;
+	if (bitmap.width == 0 || bitmap.rows == 0 || bitmap.buffer == nullptr) return false;
+
+	int pitch = bitmap.pitch;
+	const uint8_t* src = bitmap.buffer;
+	if (pitch < 0)
 	{
-		float x0 = glyphs[i].x;
-		float x1 = (i + 1 < count) ? glyphs[i + 1].x : rowX + r.Width;
-		if (posX < (x0 + x1) * 0.5f) return (int)(glyphs[i].str - base);
+		src += (size_t)(bitmap.rows - 1) * (size_t)(-pitch);
+		pitch = -pitch;
 	}
-	return (int)(r.End - base);
+
+	UIList<uint8_t> pixels((size_t)bitmap.width * bitmap.rows * 4);
+	if (bitmap.pixel_mode == FT_PIXEL_MODE_BGRA)
+	{
+		for (unsigned row = 0; row < bitmap.rows; ++row)
+		{
+			auto const* line = src + (size_t)row * pitch;
+			for (unsigned col = 0; col < bitmap.width; ++col)
+			{
+				auto const* p = line + col * 4;
+				auto* d = pixels.data() + ((size_t)row * bitmap.width + col) * 4;
+				uint8_t b = p[0], g = p[1], r = p[2], a = p[3];
+				if (a == 0) { d[0] = d[1] = d[2] = d[3] = 0; }
+				else
+				{
+					d[0] = (uint8_t)std::min(255, r * 255 / a);
+					d[1] = (uint8_t)std::min(255, g * 255 / a);
+					d[2] = (uint8_t)std::min(255, b * 255 / a);
+					d[3] = a;
+				}
+			}
+		}
+	}
+	else if (bitmap.pixel_mode == FT_PIXEL_MODE_GRAY)
+	{
+		uint8_t r = (uint8_t)std::lround(std::clamp(color.R, 0.0f, 1.0f) * 255.0f);
+		uint8_t g = (uint8_t)std::lround(std::clamp(color.G, 0.0f, 1.0f) * 255.0f);
+		uint8_t b = (uint8_t)std::lround(std::clamp(color.B, 0.0f, 1.0f) * 255.0f);
+		for (unsigned row = 0; row < bitmap.rows; ++row)
+		{
+			auto const* line = src + (size_t)row * pitch;
+			for (unsigned col = 0; col < bitmap.width; ++col)
+			{
+				auto* d = pixels.data() + ((size_t)row * bitmap.width + col) * 4;
+				d[0] = r; d[1] = g; d[2] = b; d[3] = line[col];
+			}
+		}
+	}
+	else return false;
+
+	int image = nvgCreateImageRGBA(vg, (int)bitmap.width, (int)bitmap.rows, 0, pixels.data());
+	if (image == -1) return false;
+	images.push_back(image);
+
+	float ix = x + (float)face->glyph->bitmap_left;
+	float iy = y - (float)face->glyph->bitmap_top;
+	float w = (float)bitmap.width;
+	float h = (float)bitmap.rows;
+	auto paint = nvgImagePattern(vg, ix, iy, w, h, 0.0f, image, color.A);
+	nvgBeginPath(vg);
+	nvgRect(vg, ix, iy, w, h);
+	nvgFillPaint(vg, paint);
+	nvgFill(vg);
+	return true;
+}
+
+// Positions come from Pango (same rules as pango_renderer_draw_layout).
+// Every glyph is a FreeType bitmap.
+static void nvg_drawLayoutGlyphs(NVGcontext* vg, UIList<int>& images, PangoLayout* layout, OpenRTTextFrame const& frame, UIColor const& color)
+{
+	auto* iter = pango_layout_get_iter(layout);
+	if (iter == nullptr) return;
+	do
+	{
+		auto* line = pango_layout_iter_get_line_readonly(iter);
+		if (line == nullptr) continue;
+		PangoRectangle logical;
+		pango_layout_iter_get_line_extents(iter, nullptr, &logical);
+		int baseline = pango_layout_iter_get_baseline(iter);
+		int xOff = 0;
+		for (auto* link = line->runs; link; link = link->next)
+		{
+			auto* run = (PangoGlyphItem*)link->data;
+			xOff += run->start_x_offset;
+			int yOff = run->y_offset;
+			PangoFont* font = run->item ? run->item->analysis.font : nullptr;
+			if (font && (run->item->analysis.flags & PANGO_ANALYSIS_FLAG_CENTERED_BASELINE))
+			{
+				PangoRectangle runLogical;
+				pango_glyph_string_extents(run->glyphs, font, nullptr, &runLogical);
+				int adjustment = runLogical.y + runLogical.height / 2;
+				if (((runLogical.y | runLogical.height) & (PANGO_SCALE - 1)) == 0)
+					adjustment = PANGO_UNITS_ROUND(adjustment);
+				yOff += adjustment;
+			}
+
+			float baseX = frame.OriginX + pango_pixels(logical.x + xOff);
+			float baseY = frame.OriginY + pango_pixels(baseline - yOff);
+			// Pango's hb_font is not created with hb-ft, so hb_ft_font_lock_face returns null.
+			// The FreeType face lives on the PangoFcFont that PangoFT2 uses.
+			PangoFcFont* fcFont = (font && PANGO_IS_FC_FONT(font)) ? PANGO_FC_FONT(font) : nullptr;
+			FT_Face face = fcFont ? pango_fc_font_lock_face(fcFont) : nullptr;
+
+			int pen = 0;
+			for (int i = 0; i < run->glyphs->num_glyphs; ++i)
+			{
+				auto const& glyph = run->glyphs->glyphs[i];
+				float gx = baseX + pango_pixels(pen + glyph.geometry.x_offset);
+				float gy = baseY + pango_pixels(glyph.geometry.y_offset);
+				pen += glyph.geometry.width;
+				if (glyph.glyph == PANGO_GLYPH_EMPTY || face == nullptr) continue;
+
+				// Unknown input has no font glyph; draw the face's .notdef bitmap.
+				auto index = (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) ? (FT_UInt)0 : (FT_UInt)glyph.glyph;
+				nvg_drawGlyphBitmap(vg, images, face, index, gx, gy, color);
+			}
+
+			if (fcFont && face) pango_fc_font_unlock_face(fcFont);
+			xOff += pango_glyph_string_get_width(run->glyphs) + run->end_x_offset;
+		}
+	} while (pango_layout_iter_next_line(iter));
+	pango_layout_iter_free(iter);
 }
 
 // ====================================================================
@@ -259,6 +419,14 @@ OpenRTPainter::OpenRTPainter(UICanvasRaw canvas, int width, int height)
 	{
 		PRIVATE()->Context = device->getNanoVG();
 	}
+	PRIVATE()->FontMap = pango_ft2_font_map_new();
+	if (PRIVATE()->FontMap)
+	{
+		pango_ft2_font_map_set_resolution(PANGO_FT2_FONT_MAP(PRIVATE()->FontMap), 96.0, 96.0);
+		auto* context = pango_font_map_create_context(PRIVATE()->FontMap);
+		PRIVATE()->Layout = pango_layout_new(context);
+		g_object_unref(context);
+	}
 }
 
 OpenRTPainter::~OpenRTPainter()
@@ -269,6 +437,8 @@ OpenRTPainter::~OpenRTPainter()
 		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
 	}
 	for (auto& slot : PRIVATE()->Targets) rt_destroy_texture(slot.second.stencil);
+	if (PRIVATE()->Layout) g_object_unref(PRIVATE()->Layout);
+	if (PRIVATE()->FontMap) g_object_unref(PRIVATE()->FontMap);
 	delete m_Private; m_Private = nullptr;
 }
 
@@ -341,22 +511,22 @@ void OpenRTPainter::setTarget(UIImageRaw value)
 
 UIRect OpenRTPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float cursor, UIRectRaw cursorRect)
 {
-	auto vg = CONTEXT();
-	if (vg == nullptr) return {};
-	auto layout = nvg_layoutText(vg, PRIVATE()->Font, x, y, width, height, text);
-	if (cursorRect) (*cursorRect) = nvg_cursorRect(vg, layout, text, (int)cursor);
-	return layout.Rect;
+	auto layout = PRIVATE()->Layout;
+	if (layout == nullptr) return {};
+	auto frame = pango_layoutText(layout, PRIVATE()->Font, x, y, width, height, text);
+	if (cursorRect) (*cursorRect) = pango_cursorRect(layout, frame, std::clamp((int)cursor, 0, (int)text.size()));
+	return frame.Rect;
 }
 
 UIRect OpenRTPainter::boundingRect(float x, float y, float width, float height, UIString const& text, float posX, float posY, int* cursor, UIRectRaw cursorRect)
 {
-	auto vg = CONTEXT();
-	if (vg == nullptr) return {};
-	auto layout = nvg_layoutText(vg, PRIVATE()->Font, x, y, width, height, text);
-	auto index = nvg_hitTest(vg, layout, text, posX, posY);
+	auto layout = PRIVATE()->Layout;
+	if (layout == nullptr) return {};
+	auto frame = pango_layoutText(layout, PRIVATE()->Font, x, y, width, height, text);
+	auto index = pango_hitTest(layout, frame, text, posX, posY);
 	if (cursor) (*cursor) = index;
-	if (cursorRect) (*cursorRect) = nvg_cursorRect(vg, layout, text, index);
-	return layout.Rect;
+	if (cursorRect) (*cursorRect) = pango_cursorRect(layout, frame, index);
+	return frame.Rect;
 }
 
 void OpenRTPainter::drawImage(float x, float y, UIImage image, float sx, float sy, float sw, float sh)
@@ -504,24 +674,19 @@ void OpenRTPainter::drawRoundedRect(float x, float y, float width, float height,
 
 void OpenRTPainter::drawText(float x, float y, float width, float height, const UIString& text, UIRectRaw boundingRect, float cursor, UIRectRaw cursorRect)
 {
+	auto layout = PRIVATE()->Layout;
+	if (layout == nullptr) return;
+
+	auto frame = pango_layoutText(layout, PRIVATE()->Font, x, y, width, height, text);
+	if (boundingRect) (*boundingRect) = frame.Rect;
+	if (cursorRect) (*cursorRect) = pango_cursorRect(layout, frame, std::clamp((int)cursor, 0, (int)text.size()));
+
 	auto vg = CONTEXT();
-	if (vg == nullptr) return;
-
-	auto layout = nvg_layoutText(vg, PRIVATE()->Font, x, y, width, height, text);
-	if (boundingRect) (*boundingRect) = layout.Rect;
-	if (cursorRect) (*cursorRect) = nvg_cursorRect(vg, layout, text, (int)cursor);
-
-	if (!PRIVATE()->InFrame) return;
+	if (vg == nullptr || !PRIVATE()->InFrame) return;
 	if (PRIVATE()->Brush.Style == UIBrush::NoBrush) return;
 	if (!nvg_applyClip(vg, PRIVATE()->Scissor, PRIVATE()->EnableClip)) return;
 
-	nvgFillColor(vg, nvg_color(PRIVATE()->Brush.Color));
-	for (size_t i = 0; i < layout.Rows.size(); ++i)
-	{
-		auto const& row = layout.Rows[i];
-		if (row.End <= row.Start) continue;
-		nvgText(vg, layout.rowX(i), layout.rowY(i), row.Start, row.End);
-	}
+	nvg_drawLayoutGlyphs(vg, PRIVATE()->Images, layout, frame, PRIVATE()->Brush.Color);
 }
 
 UIPen const& OpenRTPainter::getPen() const

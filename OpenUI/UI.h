@@ -819,7 +819,7 @@ static constexpr UIBrush UIFrameBrush
 };
 
 #ifndef OPENUI_FONT_FAMILY
-#define OPENUI_FONT_FAMILY "Segoe UI"
+#define OPENUI_FONT_FAMILY "Arial"
 #endif
 
 struct UIFont
