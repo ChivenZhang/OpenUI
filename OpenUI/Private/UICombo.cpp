@@ -86,35 +86,27 @@ void UICombo::arrange(UIRect client)
 	auto painter = getCanvas()->getPainter();
 	painter->setFont(PRIVATE()->Style.Button.Label.Normal.Foreground.Font);
 
-	if (auto content = PRIVATE()->Popup->getContentView())
+	if (auto contentView = PRIVATE()->Popup->getContentView())
 	{
-		content->setFixedWidth({0, UI_CSS_WIDTH_LENGTH});
-		content->setFixedHeight({0, UI_CSS_HEIGHT_LENGTH});
-		for (size_t i = 0; content && i < content->getWidgets().size(); ++i)
-		{
-			auto itemWidget = UICast<UIButton>(content->getWidgets()[i]);
-			auto textRect = painter->boundingRect(0, 0, FLT_MAX, FLT_MAX, itemWidget->getText(), 0);
-
-			content->getWidgets()[i]->setFlexGrow({1, UI_CSS_FLEX_GROW_NUMBER});
-			content->getWidgets()[i]->setMinWidth({textRect.W, UI_CSS_MIN_WIDTH_LENGTH});
-			content->getWidgets()[i]->setMinHeight({textRect.H, UI_CSS_MIN_HEIGHT_LENGTH});
-			content->setFixedWidth({std::max(content->getFixedWidth().Value, textRect.W + 8 + 20), UI_CSS_WIDTH_LENGTH});
-			content->setFixedHeight({content->getFixedHeight().Value + textRect.H, UI_CSS_HEIGHT_LENGTH});
-
-			if (std::isnan(getFixedWidth().Value) == false)
-			{
-				content->setFixedWidth({std::max<float>(getFixedWidth().Value, content->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
-				PRIVATE()->Popup->setFixedWidth({std::max<float>(getFixedWidth().Value, content->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
-			}
-			PRIVATE()->Popup->setFixedWidth({std::max<float>(PRIVATE()->Popup->getFixedWidth().Value, content->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
-			if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight({content->getFixedHeight().Value, UI_CSS_HEIGHT_LENGTH});
-		}
-	}
-	else
-	{
+		contentView->setFixedWidth({0, UI_CSS_WIDTH_LENGTH});
+		contentView->setFixedHeight({0, UI_CSS_HEIGHT_LENGTH});
 		if (std::isnan(getFixedWidth().Value) == false)
 		{
 			PRIVATE()->Popup->setFixedWidth({std::max<float>(getFixedWidth().Value, PRIVATE()->Popup->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
+		}
+		for (size_t i = 0; i < contentView->getWidgets().size(); ++i)
+		{
+			auto itemWidget = UICast<UIButton>(contentView->getWidgets()[i]);
+			auto textRect = painter->boundingRect(0, 0, FLT_MAX, FLT_MAX, itemWidget->getText(), 0);
+
+			contentView->getWidgets()[i]->setFlexGrow({1, UI_CSS_FLEX_GROW_NUMBER});
+			contentView->getWidgets()[i]->setMinWidth({textRect.W, UI_CSS_MIN_WIDTH_LENGTH});
+			contentView->getWidgets()[i]->setMinHeight({textRect.H, UI_CSS_MIN_HEIGHT_LENGTH});
+			contentView->setFixedWidth({std::max(contentView->getFixedWidth().Value, textRect.W), UI_CSS_WIDTH_LENGTH});
+			contentView->setFixedHeight({contentView->getFixedHeight().Value + textRect.H, UI_CSS_HEIGHT_LENGTH});
+
+			PRIVATE()->Popup->setFixedWidth({std::max<float>(PRIVATE()->Popup->getFixedWidth().Value, contentView->getFixedWidth().Value), UI_CSS_WIDTH_LENGTH});
+			if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight({contentView->getFixedHeight().Value, UI_CSS_HEIGHT_LENGTH});
 		}
 	}
 	PRIVATE()->Popup->setFixedHeight({std::max<float>(painter->getFont().Size, PRIVATE()->Popup->getFixedHeight().Value), UI_CSS_HEIGHT_LENGTH});

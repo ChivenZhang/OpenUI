@@ -442,15 +442,6 @@ OpenRTPainter::~OpenRTPainter()
 	delete m_Private; m_Private = nullptr;
 }
 
-void OpenRTPainter::releaseTarget(rt_texture_t* color)
-{
-	if (m_Private == nullptr || color == nullptr) return;
-	auto found = PRIVATE()->Targets.find(color);
-	if (found == PRIVATE()->Targets.end()) return;
-	rt_destroy_texture(found->second.stencil);
-	PRIVATE()->Targets.erase(found);
-}
-
 UICanvasRaw OpenRTPainter::getCanvas() const
 {
     return m_Canvas;
@@ -686,7 +677,59 @@ void OpenRTPainter::drawText(float x, float y, float width, float height, const 
 	if (PRIVATE()->Brush.Style == UIBrush::NoBrush) return;
 	if (!nvg_applyClip(vg, PRIVATE()->Scissor, PRIVATE()->EnableClip)) return;
 
-	nvg_drawLayoutGlyphs(vg, PRIVATE()->Images, layout, frame, PRIVATE()->Brush.Color);
+	if (auto* iter = pango_layout_get_iter(layout))
+	{
+		do
+		{
+			auto* line = pango_layout_iter_get_line_readonly(iter);
+			if (line == nullptr) continue;
+			PangoRectangle logical;
+			pango_layout_iter_get_line_extents(iter, nullptr, &logical);
+			int baseline = pango_layout_iter_get_baseline(iter);
+			int xOff = 0;
+			for (auto* link = line->runs; link; link = link->next)
+			{
+				auto* run = (PangoGlyphItem*)link->data;
+				xOff += run->start_x_offset;
+				int yOff = run->y_offset;
+				PangoFont* font = run->item ? run->item->analysis.font : nullptr;
+				if (font && (run->item->analysis.flags & PANGO_ANALYSIS_FLAG_CENTERED_BASELINE))
+				{
+					PangoRectangle runLogical;
+					pango_glyph_string_extents(run->glyphs, font, nullptr, &runLogical);
+					int adjustment = runLogical.y + runLogical.height / 2;
+					if (((runLogical.y | runLogical.height) & (PANGO_SCALE - 1)) == 0)
+						adjustment = PANGO_UNITS_ROUND(adjustment);
+					yOff += adjustment;
+				}
+
+				float baseX = frame.OriginX + pango_pixels(logical.x + xOff);
+				float baseY = frame.OriginY + pango_pixels(baseline - yOff);
+				// Pango's hb_font is not created with hb-ft, so hb_ft_font_lock_face returns null.
+				// The FreeType face lives on the PangoFcFont that PangoFT2 uses.
+				PangoFcFont* fcFont = (font && PANGO_IS_FC_FONT(font)) ? PANGO_FC_FONT(font) : nullptr;
+				FT_Face face = fcFont ? pango_fc_font_lock_face(fcFont) : nullptr;
+
+				int pen = 0;
+				for (int i = 0; i < run->glyphs->num_glyphs; ++i)
+				{
+					auto const& glyph = run->glyphs->glyphs[i];
+					float gx = baseX + pango_pixels(pen + glyph.geometry.x_offset);
+					float gy = baseY + pango_pixels(glyph.geometry.y_offset);
+					pen += glyph.geometry.width;
+					if (glyph.glyph == PANGO_GLYPH_EMPTY || face == nullptr) continue;
+
+					// Unknown input has no font glyph; draw the face's .notdef bitmap.
+					auto index = (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) ? (FT_UInt)0 : (FT_UInt)glyph.glyph;
+					nvg_drawGlyphBitmap(vg, PRIVATE()->Images, face, index, gx, gy, PRIVATE()->Brush.Color);
+				}
+
+				if (fcFont && face) pango_fc_font_unlock_face(fcFont);
+				xOff += pango_glyph_string_get_width(run->glyphs) + run->end_x_offset;
+			}
+		} while (pango_layout_iter_next_line(iter));
+		pango_layout_iter_free(iter);
+	}
 }
 
 UIPen const& OpenRTPainter::getPen() const

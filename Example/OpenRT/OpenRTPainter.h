@@ -20,7 +20,6 @@ public:
     OpenRTPainter(UICanvasRaw canvas, int width, int height);
     ~OpenRTPainter() override;
     // Drops the NVGtarget group cached for this colour attachment.
-    void releaseTarget(rt_texture_t* color);
     UICanvasRaw getCanvas() const override;
     void setTarget(UIImageRaw value) override;
     UIRect boundingRect(float x, float y, float width, float height, const UIString& text, float cursor, UIRectRaw cursorRect) override;
