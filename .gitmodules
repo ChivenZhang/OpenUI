@@ -2,6 +2,3 @@
 	path = External/OpenRT
 	url = https://github.com/ChivenZhang/OpenRT.git
 
-[submodule "External/yoga"]
-	path = External/yoga
-	url = https://github.com/react/yoga.git
