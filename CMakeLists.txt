@@ -10,12 +10,6 @@ set(OPENUI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "OpenUI Source Pa
 set(OPENUI_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External CACHE STRING "OpenUI External Path")
 option(OPENUI_ENABLE_EXAMPLE "Enable Example Compile" OFF)
 
-if (MSVC)
-    add_compile_options(/utf-8)
-else ()
-    add_compile_options(-finput-charset=UTF-8)
-endif ()
-
 if(CMAKE_HOST_WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
@@ -26,10 +20,11 @@ include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
 include_directories(${OPENUI_EXTERNAL_DIR}/nanovg)
 add_subdirectory(OpenUI)
 add_subdirectory(External/yoga)
-add_subdirectory(External/OpenRT)
-add_subdirectory(External/nanovg)
 
 if (OPENUI_ENABLE_EXAMPLE)
+
+    add_subdirectory(External/OpenRT)
+    add_subdirectory(External/nanovg)
 
     find_program(SLANGC_EXECUTABLE slangc)
     find_program(GLSLANG_VALIDATOR glslangValidator)
