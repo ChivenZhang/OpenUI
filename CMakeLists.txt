@@ -21,10 +21,12 @@ if(CMAKE_HOST_WIN32)
 endif()
 
 include_directories(${OPENUI_SOURCE_DIR})
+include_directories(${OPENUI_EXTERNAL_DIR}/yoga)
 include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
 include_directories(${OPENUI_SOURCE_DIR}/Vector/NanoVG)
 add_subdirectory(OpenUI)
 add_subdirectory(Vector)
+add_subdirectory(External/yoga)
 add_subdirectory(External/OpenRT)
 
 if (OPENUI_ENABLE_EXAMPLE)

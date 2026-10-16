@@ -239,11 +239,6 @@ struct UIPropDominantBaseline
     ui_css_dominant_baseline_type_t Value = UI_CSS_DOMINANT_BASELINE_AUTO;
 };
 
-struct UIPropFlex
-{
-    ui_css_flex_type_t Value = UI_CSS_FLEX_NONE;
-};
-
 struct UIPropFlexBasis
 {
     float Value = UINAN;
@@ -270,6 +265,137 @@ struct UIPropFlexShrink
 struct UIPropFlexWrap
 {
     ui_css_flex_wrap_type_t Value = UI_CSS_FLEX_WRAP_NOWRAP;
+};
+
+struct UIPropFlex
+{
+    UIPropFlexGrow Grow = {0, UI_CSS_FLEX_GROW_NUMBER};
+    UIPropFlexShrink Shrink = {1, UI_CSS_FLEX_SHRINK_NUMBER};
+    UIPropFlexBasis Basis = {};
+};
+
+struct UIGridTrack
+{
+    ui_css_grid_track_type_t Type = UI_CSS_GRID_TRACK_AUTO;
+    float Value = 0;
+    ui_css_grid_track_type_t MinType = UI_CSS_GRID_TRACK_AUTO;
+    float MinValue = 0;
+    ui_css_grid_track_type_t MaxType = UI_CSS_GRID_TRACK_AUTO;
+    float MaxValue = 0;
+};
+
+inline UIGridTrack UIGridTrackAuto()
+{
+    return {};
+}
+
+inline UIGridTrack UIGridTrackPoints(float value)
+{
+    UIGridTrack track;
+    track.Type = UI_CSS_GRID_TRACK_POINTS;
+    track.Value = value;
+    return track;
+}
+
+inline UIGridTrack UIGridTrackPercent(float value)
+{
+    UIGridTrack track;
+    track.Type = UI_CSS_GRID_TRACK_PERCENT;
+    track.Value = value;
+    return track;
+}
+
+inline UIGridTrack UIGridTrackFr(float value)
+{
+    UIGridTrack track;
+    track.Type = UI_CSS_GRID_TRACK_FR;
+    track.Value = value;
+    return track;
+}
+
+inline UIGridTrack UIGridTrackMinMax(ui_css_grid_track_type_t minType, float minValue, ui_css_grid_track_type_t maxType, float maxValue)
+{
+    UIGridTrack track;
+    track.Type = UI_CSS_GRID_TRACK_MINMAX;
+    track.MinType = minType;
+    track.MinValue = minValue;
+    track.MaxType = maxType;
+    track.MaxValue = maxValue;
+    return track;
+}
+
+struct UIPropGridTemplateColumns
+{
+    UIList<UIGridTrack> Tracks;
+};
+
+struct UIPropGridTemplateRows
+{
+    UIList<UIGridTrack> Tracks;
+};
+
+struct UIPropGridAutoColumns
+{
+    UIList<UIGridTrack> Tracks;
+};
+
+struct UIPropGridAutoRows
+{
+    UIList<UIGridTrack> Tracks;
+};
+
+struct UIPropGridColumnStart
+{
+    int Value = 0;
+    ui_css_grid_line_type_t Type = UI_CSS_GRID_LINE_AUTO;
+};
+
+struct UIPropGridColumnEnd
+{
+    int Value = 0;
+    ui_css_grid_line_type_t Type = UI_CSS_GRID_LINE_AUTO;
+};
+
+struct UIPropGridRowStart
+{
+    int Value = 0;
+    ui_css_grid_line_type_t Type = UI_CSS_GRID_LINE_AUTO;
+};
+
+struct UIPropGridRowEnd
+{
+    int Value = 0;
+    ui_css_grid_line_type_t Type = UI_CSS_GRID_LINE_AUTO;
+};
+
+struct UIPropGridColumnGap
+{
+    float Value = 0;
+    ui_css_grid_gap_type_t Type = UI_CSS_GRID_GAP_LENGTH;
+};
+
+struct UIPropGridRowGap
+{
+    float Value = 0;
+    ui_css_grid_gap_type_t Type = UI_CSS_GRID_GAP_LENGTH;
+};
+
+struct UIPropGap
+{
+    UIPropGridRowGap Row;
+    UIPropGridColumnGap Column;
+};
+
+struct UIPropGridColumn
+{
+    UIPropGridColumnStart Start;
+    UIPropGridColumnEnd End;
+};
+
+struct UIPropGridRow
+{
+    UIPropGridRowStart Start;
+    UIPropGridRowEnd End;
 };
 
 struct UIPropFloat
@@ -364,6 +490,22 @@ struct UIPropInsetInlineStart
 struct UIPropJustifyContent
 {
     ui_css_justify_content_type_t Value = UI_CSS_JUSTIFY_CONTENT_FLEX_START;
+};
+
+struct UIPropJustifyItems
+{
+    ui_css_justify_content_type_t Value = UI_CSS_JUSTIFY_CONTENT_STRETCH;
+};
+
+struct UIPropJustifySelf
+{
+    ui_css_justify_content_type_t Value = UI_CSS_JUSTIFY_CONTENT_AUTO;
+};
+
+struct UIPropAspectRatio
+{
+    float Value = UINAN;
+    bool Auto = true;
 };
 
 struct UIPropLetterSpacing
@@ -474,6 +616,12 @@ struct UIPropOverflowX
 struct UIPropOverflowY
 {
     ui_css_overflow_y_type_t Value = UI_CSS_OVERFLOW_Y_VISIBLE;
+};
+
+struct UIPropOverflow
+{
+    UIPropOverflowX X;
+    UIPropOverflowY Y;
 };
 
 struct UIPropPaddingTop
@@ -678,11 +826,322 @@ static inline UIString UITrim(UIString s)
     return s.substr(start, end - start);
 }
 
+enum
+{
+    UI_CSS_MEASURE_KEYWORD,
+    UI_CSS_MEASURE_LENGTH,
+    UI_CSS_MEASURE_PERCENT,
+};
+
+struct UICssMeasure
+{
+    UIString Keyword;
+    float Value = 0;
+    int Kind = UI_CSS_MEASURE_KEYWORD;
+};
+
+inline bool UIParseMeasure(UIString const& src, UICssMeasure& dst)
+{
+    auto s = UITrim(src);
+    if (s.empty()) return false;
+    if (s.starts_with("fit-content"))
+    {
+        dst.Kind = UI_CSS_MEASURE_KEYWORD;
+        dst.Keyword = "fit-content";
+        return true;
+    }
+    if (s.ends_with('%'))
+    {
+        dst.Kind = UI_CSS_MEASURE_PERCENT;
+        dst.Value = std::stof(s);
+        return true;
+    }
+    if (s.ends_with("fr") && s.size() > 2 && (isdigit((unsigned char)s[0]) || s[0] == '.' || s[0] == '+' || s[0] == '-'))
+    {
+        dst.Kind = UI_CSS_MEASURE_KEYWORD;
+        dst.Keyword = s;
+        dst.Value = std::stof(s);
+        return true;
+    }
+    if (s[0] == '+' || s[0] == '-' || s[0] == '.' || isdigit((unsigned char)s[0]))
+    {
+        dst.Kind = UI_CSS_MEASURE_LENGTH;
+        dst.Value = std::stof(s);
+        return true;
+    }
+    dst.Kind = UI_CSS_MEASURE_KEYWORD;
+    dst.Keyword = s;
+    return true;
+}
+
+inline UIList<UIString> UISplitCssTokens(UIString const& src)
+{
+    UIList<UIString> tokens;
+    UIString current;
+    int depth = 0;
+    for (char ch : src)
+    {
+        if (ch == '(') { ++depth; current.push_back(ch); }
+        else if (ch == ')')
+        {
+            if (depth > 0) --depth;
+            current.push_back(ch);
+        }
+        else if (depth == 0 && isspace((unsigned char)ch))
+        {
+            if (current.empty() == false)
+            {
+                tokens.push_back(current);
+                current.clear();
+            }
+        }
+        else current.push_back(ch);
+    }
+    if (current.empty() == false) tokens.push_back(UITrim(current));
+    return tokens;
+}
+
+inline UIList<UIString> UISplitCssSlash(UIString const& src)
+{
+    UIList<UIString> parts;
+    UIString current;
+    int depth = 0;
+    for (char ch : src)
+    {
+        if (ch == '(') { ++depth; current.push_back(ch); }
+        else if (ch == ')')
+        {
+            if (depth > 0) --depth;
+            current.push_back(ch);
+        }
+        else if (ch == '/' && depth == 0)
+        {
+            parts.push_back(UITrim(current));
+            current.clear();
+        }
+        else current.push_back(ch);
+    }
+    parts.push_back(UITrim(current));
+    return parts;
+}
+
+inline bool UIParseGridTrack(UIString const& src, UIGridTrack& dst);
+inline bool UIParseGridTracks(UIString const& src, UIList<UIGridTrack>& tracks);
+
+inline bool UIParseGridTrack(UIString const& src, UIGridTrack& dst)
+{
+    auto s = UITrim(src);
+    if (s == "auto" || s == "min-content" || s == "max-content" || s == "fit-content" || s.starts_with("fit-content("))
+    {
+        dst = UIGridTrackAuto();
+        return true;
+    }
+    if (s.starts_with("minmax(") && s.ends_with(')'))
+    {
+        auto inner = s.substr(7, s.size() - 8);
+        int depth = 0;
+        size_t comma = UIString::npos;
+        for (size_t i = 0; i < inner.size(); ++i)
+        {
+            if (inner[i] == '(') ++depth;
+            else if (inner[i] == ')') { if (depth > 0) --depth; }
+            else if (inner[i] == ',' && depth == 0) { comma = i; break; }
+        }
+        if (comma == UIString::npos) return false;
+        UIGridTrack minTrack;
+        UIGridTrack maxTrack;
+        if (UIParseGridTrack(inner.substr(0, comma), minTrack) == false) return false;
+        if (UIParseGridTrack(inner.substr(comma + 1), maxTrack) == false) return false;
+        if (minTrack.Type == UI_CSS_GRID_TRACK_MINMAX || maxTrack.Type == UI_CSS_GRID_TRACK_MINMAX) return false;
+        dst = UIGridTrackMinMax(minTrack.Type, minTrack.Value, maxTrack.Type, maxTrack.Value);
+        return true;
+    }
+    UICssMeasure measure;
+    if (UIParseMeasure(s, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT)
+    {
+        dst = UIGridTrackPercent(measure.Value);
+        return true;
+    }
+    if (measure.Keyword.ends_with("fr"))
+    {
+        dst = UIGridTrackFr(measure.Value);
+        return true;
+    }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH)
+    {
+        dst = UIGridTrackPoints(measure.Value);
+        return true;
+    }
+    return false;
+}
+
+inline bool UIParseGridTracks(UIString const& src, UIList<UIGridTrack>& tracks)
+{
+    auto s = UITrim(src);
+    if (s == "none")
+    {
+        tracks.clear();
+        return true;
+    }
+    auto tokens = UISplitCssTokens(s);
+    if (tokens.empty()) return false;
+    tracks.clear();
+    for (auto const& token : tokens)
+    {
+        if (token.starts_with("repeat(") && token.ends_with(')'))
+        {
+            auto inner = token.substr(7, token.size() - 8);
+            int depth = 0;
+            size_t comma = UIString::npos;
+            for (size_t i = 0; i < inner.size(); ++i)
+            {
+                if (inner[i] == '(') ++depth;
+                else if (inner[i] == ')') { if (depth > 0) --depth; }
+                else if (inner[i] == ',' && depth == 0) { comma = i; break; }
+            }
+            if (comma == UIString::npos) return false;
+            auto countText = UITrim(inner.substr(0, comma));
+            if (countText.empty() || isdigit((unsigned char)countText[0]) == false) return false;
+            int count = std::stoi(countText);
+            UIList<UIGridTrack> repeated;
+            if (UIParseGridTracks(inner.substr(comma + 1), repeated) == false) return false;
+            for (int n = 0; n < count; ++n) tracks.insert(tracks.end(), repeated.begin(), repeated.end());
+            continue;
+        }
+        UIGridTrack track;
+        if (UIParseGridTrack(token, track) == false) return false;
+        tracks.push_back(track);
+    }
+    return true;
+}
+
+inline UIString UIFormatGridTrack(UIGridTrack const& track)
+{
+    auto formatOne = [](ui_css_grid_track_type_t type, float value) -> UIString
+    {
+        switch (type)
+        {
+        case UI_CSS_GRID_TRACK_POINTS: return std::to_string(value) + "px";
+        case UI_CSS_GRID_TRACK_PERCENT: return std::to_string(value) + "%";
+        case UI_CSS_GRID_TRACK_FR: return std::to_string(value) + "fr";
+        default: return "auto";
+        }
+    };
+    if (track.Type == UI_CSS_GRID_TRACK_MINMAX)
+        return "minmax(" + formatOne(track.MinType, track.MinValue) + ", " + formatOne(track.MaxType, track.MaxValue) + ")";
+    return formatOne(track.Type, track.Value);
+}
+
+inline UIString UIFormatGridTracks(UIList<UIGridTrack> const& tracks)
+{
+    if (tracks.empty()) return "none";
+    UIString text;
+    for (size_t i = 0; i < tracks.size(); ++i)
+    {
+        if (i) text += " ";
+        text += UIFormatGridTrack(tracks[i]);
+    }
+    return text;
+}
+
+inline bool UIParseGridLine(UIString const& src, int& value, ui_css_grid_line_type_t& type)
+{
+    auto tokens = UISplitCssTokens(src);
+    if (tokens.size() == 1 && tokens[0] == "auto")
+    {
+        type = UI_CSS_GRID_LINE_AUTO;
+        value = 0;
+        return true;
+    }
+    if (tokens.size() == 1 && tokens[0] == "span")
+    {
+        type = UI_CSS_GRID_LINE_SPAN;
+        value = 1;
+        return true;
+    }
+    if (tokens.size() == 2 && tokens[0] == "span")
+    {
+        type = UI_CSS_GRID_LINE_SPAN;
+        value = std::stoi(tokens[1]);
+        return true;
+    }
+    if (tokens.size() == 1)
+    {
+        type = UI_CSS_GRID_LINE_INTEGER;
+        value = std::stoi(tokens[0]);
+        return true;
+    }
+    return false;
+}
+
+inline UIString UIFormatGridLine(ui_css_grid_line_type_t type, int value)
+{
+    if (type == UI_CSS_GRID_LINE_SPAN) return "span " + std::to_string(value);
+    if (type == UI_CSS_GRID_LINE_INTEGER) return std::to_string(value);
+    return "auto";
+}
+
+inline bool UIParseFlexBasis(UIString const& src, UIPropFlexBasis& dst)
+{
+    UICssMeasure measure;
+    if (UIParseMeasure(src, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT)
+    {
+        dst.Type = UI_CSS_FLEX_BASIS_PERCENTAGE;
+        dst.Value = measure.Value;
+        return true;
+    }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH)
+    {
+        dst.Type = UI_CSS_FLEX_BASIS_LENGTH;
+        dst.Value = measure.Value;
+        return true;
+    }
+    if (measure.Keyword == "auto" || measure.Keyword == "content")
+    {
+        dst.Type = UI_CSS_FLEX_BASIS_AUTO;
+        dst.Value = UINAN;
+        return true;
+    }
+    if (measure.Keyword == "min-content") { dst.Type = UI_CSS_FLEX_BASIS_MIN_CONTENT; return true; }
+    if (measure.Keyword == "max-content") { dst.Type = UI_CSS_FLEX_BASIS_MAX_CONTENT; return true; }
+    if (measure.Keyword == "fit-content") { dst.Type = UI_CSS_FLEX_BASIS_FIT_CONTENT; return true; }
+    if (measure.Keyword == "stretch") { dst.Type = UI_CSS_FLEX_BASIS_STRETCH; return true; }
+    return false;
+}
+
+inline bool UIParseGap(UIString const& src, float& value, ui_css_grid_gap_type_t& type)
+{
+    auto s = UITrim(src);
+    if (s == "normal")
+    {
+        value = 0;
+        type = UI_CSS_GRID_GAP_LENGTH;
+        return true;
+    }
+    UICssMeasure measure;
+    if (UIParseMeasure(s, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT)
+    {
+        value = measure.Value;
+        type = UI_CSS_GRID_GAP_PERCENTAGE;
+        return true;
+    }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH)
+    {
+        value = measure.Value;
+        type = UI_CSS_GRID_GAP_LENGTH;
+        return true;
+    }
+    return false;
+}
+
 // Align Content
 template <>
 inline bool UITypeC(UIString const& src, UIPropAlignContent& dst)
 {
-    switch (UIHash(src))
+    switch (UIHash(UITrim(src)))
     {
     default: return false;
     case UIHash("flex-start"): dst.Value = UI_CSS_ALIGN_CONTENT_FLEX_START;
@@ -695,7 +1154,16 @@ inline bool UITypeC(UIString const& src, UIPropAlignContent& dst)
         break;
     case UIHash("space-around"): dst.Value = UI_CSS_ALIGN_CONTENT_SPACE_AROUND;
         break;
-    case UIHash("stretch"): dst.Value = UI_CSS_ALIGN_CONTENT_STRETCH;
+    case UIHash("space-evenly"): dst.Value = UI_CSS_ALIGN_CONTENT_SPACE_EVENLY;
+        break;
+    case UIHash("stretch"):
+    case UIHash("normal"): dst.Value = UI_CSS_ALIGN_CONTENT_STRETCH;
+        break;
+    case UIHash("baseline"): dst.Value = UI_CSS_ALIGN_CONTENT_BASE_LINE;
+        break;
+    case UIHash("start"): dst.Value = UI_CSS_ALIGN_CONTENT_START;
+        break;
+    case UIHash("end"): dst.Value = UI_CSS_ALIGN_CONTENT_END;
         break;
     }
     return true;
@@ -718,6 +1186,14 @@ inline bool UITypeC(UIPropAlignContent const& src, UIString& dst)
         break;
     case UI_CSS_ALIGN_CONTENT_STRETCH: dst = "stretch";
         break;
+    case UI_CSS_ALIGN_CONTENT_SPACE_EVENLY: dst = "space-evenly";
+        break;
+    case UI_CSS_ALIGN_CONTENT_BASE_LINE: dst = "baseline";
+        break;
+    case UI_CSS_ALIGN_CONTENT_START: dst = "start";
+        break;
+    case UI_CSS_ALIGN_CONTENT_END: dst = "end";
+        break;
     }
     return true;
 }
@@ -726,7 +1202,7 @@ inline bool UITypeC(UIPropAlignContent const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropAlignItems& dst)
 {
-    switch (UIHash(src))
+    switch (UIHash(UITrim(src)))
     {
     default: return false;
     case UIHash("flex-start"): dst.Value = UI_CSS_ALIGN_ITEMS_FLEX_START;
@@ -737,7 +1213,16 @@ inline bool UITypeC(UIString const& src, UIPropAlignItems& dst)
         break;
     case UIHash("baseline"): dst.Value = UI_CSS_ALIGN_ITEMS_BASELINE;
         break;
-    case UIHash("stretch"): dst.Value = UI_CSS_ALIGN_ITEMS_STRETCH;
+    case UIHash("stretch"):
+    case UIHash("normal"): dst.Value = UI_CSS_ALIGN_ITEMS_STRETCH;
+        break;
+    case UIHash("space-evenly"): dst.Value = UI_CSS_ALIGN_ITEMS_SPACE_EVENLY;
+        break;
+    case UIHash("space-around"): dst.Value = UI_CSS_ALIGN_ITEMS_SPACE_AROUND;
+        break;
+    case UIHash("start"): dst.Value = UI_CSS_ALIGN_ITEMS_START;
+        break;
+    case UIHash("end"): dst.Value = UI_CSS_ALIGN_ITEMS_END;
         break;
     }
     return true;
@@ -758,6 +1243,14 @@ inline bool UITypeC(UIPropAlignItems const& src, UIString& dst)
         break;
     case UI_CSS_ALIGN_ITEMS_STRETCH: dst = "stretch";
         break;
+    case UI_CSS_ALIGN_ITEMS_START: dst = "start";
+        break;
+    case UI_CSS_ALIGN_ITEMS_END: dst = "end";
+        break;
+    case UI_CSS_ALIGN_ITEMS_SPACE_EVENLY: dst = "space-evenly";
+        break;
+    case UI_CSS_ALIGN_ITEMS_SPACE_AROUND: dst = "space-around";
+        break;
     }
     return true;
 }
@@ -766,7 +1259,7 @@ inline bool UITypeC(UIPropAlignItems const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropAlignSelf& dst)
 {
-    switch (UIHash(src))
+    switch (UIHash(UITrim(src)))
     {
     default: return false;
     case UIHash("auto"): dst.Value = UI_CSS_ALIGN_SELF_AUTO;
@@ -780,6 +1273,14 @@ inline bool UITypeC(UIString const& src, UIPropAlignSelf& dst)
     case UIHash("baseline"): dst.Value = UI_CSS_ALIGN_SELF_BASELINE;
         break;
     case UIHash("stretch"): dst.Value = UI_CSS_ALIGN_SELF_STRETCH;
+        break;
+    case UIHash("start"): dst.Value = UI_CSS_ALIGN_SELF_START;
+        break;
+    case UIHash("end"): dst.Value = UI_CSS_ALIGN_SELF_END;
+        break;
+    case UIHash("space-evenly"): dst.Value = UI_CSS_ALIGN_SPACE_EVENLY;
+        break;
+    case UIHash("space-around"): dst.Value = UI_CSS_ALIGN_SPACE_AROUND;
         break;
     }
     return true;
@@ -802,6 +1303,14 @@ inline bool UITypeC(UIPropAlignSelf const& src, UIString& dst)
     case UI_CSS_ALIGN_SELF_BASELINE: dst = "baseline";
         break;
     case UI_CSS_ALIGN_SELF_STRETCH: dst = "stretch";
+        break;
+    case UI_CSS_ALIGN_SELF_START: dst = "start";
+        break;
+    case UI_CSS_ALIGN_SELF_END: dst = "end";
+        break;
+    case UI_CSS_ALIGN_SPACE_EVENLY: dst = "space-evenly";
+        break;
+    case UI_CSS_ALIGN_SPACE_AROUND: dst = "space-around";
         break;
     }
     return true;
@@ -952,12 +1461,66 @@ inline bool UITypeC(UIPropBaselineSource const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropBorder& dst)
 {
-    return false;
+    auto parseSide = [](UIString const& token, float& value, ui_css_border_type_t& type) -> bool
+    {
+        auto s = UITrim(token);
+        switch (UIHash(s))
+        {
+        case UIHash("thin"): type = UI_CSS_BORDER_THIN; return true;
+        case UIHash("medium"): type = UI_CSS_BORDER_MEDIUM; return true;
+        case UIHash("thick"): type = UI_CSS_BORDER_THICK; return true;
+        case UIHash("none"): type = UI_CSS_BORDER_NONE; return true;
+        case UIHash("hidden"): type = UI_CSS_BORDER_HIDDEN; return true;
+        default: break;
+        }
+        UICssMeasure measure;
+        if (UIParseMeasure(s, measure) == false || measure.Kind != UI_CSS_MEASURE_LENGTH) return false;
+        type = UI_CSS_BORDER_LENGTH;
+        value = measure.Value;
+        return true;
+    };
+    auto tokens = UISplitCssTokens(src);
+    float values[4] = {};
+    ui_css_border_type_t types[4] = {};
+    size_t count = 0;
+    for (auto const& token : tokens)
+    {
+        float value = 0;
+        ui_css_border_type_t type = UI_CSS_BORDER_NONE;
+        if (parseSide(token, value, type) == false) continue;
+        if (count == 4) return false;
+        values[count] = value;
+        types[count] = type;
+        ++count;
+    }
+    if (count == 0) return false;
+    auto rightIndex = count > 1 ? 1 : 0;
+    auto bottomIndex = count > 2 ? 2 : 0;
+    auto leftIndex = count > 3 ? 3 : rightIndex;
+    dst.Top = {values[0], types[0]};
+    dst.Right = {values[rightIndex], types[rightIndex]};
+    dst.Bottom = {values[bottomIndex], types[bottomIndex]};
+    dst.Left = {values[leftIndex], types[leftIndex]};
+    return true;
 }
 template <>
 inline bool UITypeC(UIPropBorder const& src, UIString& dst)
 {
-    return false;
+    auto formatSide = [](float value, ui_css_border_type_t type) -> UIString
+    {
+        switch (type)
+        {
+        case UI_CSS_BORDER_THIN: return "thin";
+        case UI_CSS_BORDER_MEDIUM: return "medium";
+        case UI_CSS_BORDER_THICK: return "thick";
+        case UI_CSS_BORDER_NONE: return "none";
+        case UI_CSS_BORDER_HIDDEN: return "hidden";
+        case UI_CSS_BORDER_LENGTH: return std::to_string(value) + "px";
+        default: return "none";
+        }
+    };
+    dst = formatSide(src.Top.Value, src.Top.Type) + " " + formatSide(src.Right.Value, src.Right.Type) + " " + formatSide(src.Bottom.Value, src.Bottom.Type) + " " + formatSide(src.Left.Value, src.Left.Type);
+    return true;
 }
 
 template <>
@@ -1367,6 +1930,7 @@ inline bool UITypeC(UIString const& src, UIPropDirection& dst)
     default: return false;
     case UIHash("ltr"): dst.Value = UI_CSS_DIRECTION_LTR; return true;
     case UIHash("rtl"): dst.Value = UI_CSS_DIRECTION_RTL; return true;
+    case UIHash("inherit"): dst.Value = UI_CSS_DIRECTION_INHERIT; return true;
     }
 }
 template <>
@@ -1378,6 +1942,8 @@ inline bool UITypeC(UIPropDirection const& src, UIString& dst)
     case UI_CSS_DIRECTION_LTR: dst = "ltr";
         return true;
     case UI_CSS_DIRECTION_RTL: dst = "rtl";
+        return true;
+    case UI_CSS_DIRECTION_INHERIT: dst = "inherit";
         return true;
     }
 }
@@ -1460,35 +2026,27 @@ inline bool UITypeC(UIPropDisplay const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropFlexBasis& dst)
 {
-    auto s = UITrim(src);
-    if (s == "content")
-    {
-        dst.Type = UI_CSS_FLEX_BASIS_AUTO;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_BOTTOM_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_BOTTOM_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    return UIParseFlexBasis(src, dst);
 }
 template <>
 inline bool UITypeC(UIPropFlexBasis const& src, UIString& dst)
 {
-    // Note: fallback uses px/percent/number
     switch (src.Type)
     {
     default: return false;
-    case UI_CSS_FLEX_BASIS_AUTO: dst = "content";
+    case UI_CSS_FLEX_BASIS_AUTO: dst = "auto";
         return true;
     case UI_CSS_FLEX_BASIS_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
     case UI_CSS_FLEX_BASIS_PERCENTAGE: dst = std::to_string(src.Value) + "%";
+        return true;
+    case UI_CSS_FLEX_BASIS_MIN_CONTENT: dst = "min-content";
+        return true;
+    case UI_CSS_FLEX_BASIS_MAX_CONTENT: dst = "max-content";
+        return true;
+    case UI_CSS_FLEX_BASIS_FIT_CONTENT: dst = "fit-content";
+        return true;
+    case UI_CSS_FLEX_BASIS_STRETCH: dst = "stretch";
         return true;
     }
 }
@@ -1845,22 +2403,16 @@ inline bool UITypeC(UIPropBottom const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropWidth& dst)
 {
-    auto s = UITrim(src);
-    if (s == "auto")
-    {
-        dst.Type = UI_CSS_WIDTH_AUTO;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_WIDTH_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_WIDTH_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    UICssMeasure measure;
+    if (UIParseMeasure(src, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT) { dst.Type = UI_CSS_WIDTH_PERCENTAGE; dst.Value = measure.Value; return true; }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH) { dst.Type = UI_CSS_WIDTH_LENGTH; dst.Value = measure.Value; return true; }
+    if (measure.Keyword == "auto") { dst.Type = UI_CSS_WIDTH_AUTO; return true; }
+    if (measure.Keyword == "min-content") { dst.Type = UI_CSS_WIDTH_MIN_CONTENT; return true; }
+    if (measure.Keyword == "max-content") { dst.Type = UI_CSS_WIDTH_MAX_CONTENT; return true; }
+    if (measure.Keyword == "fit-content") { dst.Type = UI_CSS_WIDTH_FIT_CONTENT; return true; }
+    if (measure.Keyword == "stretch") { dst.Type = UI_CSS_WIDTH_STRETCH; return true; }
+    return false;
 }
 template<>
 inline bool UITypeC(UIPropWidth const& src, UIString& dst)
@@ -1868,6 +2420,10 @@ inline bool UITypeC(UIPropWidth const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_WIDTH_AUTO: dst = "auto"; return true;
+    case UI_CSS_WIDTH_MIN_CONTENT: dst = "min-content"; return true;
+    case UI_CSS_WIDTH_MAX_CONTENT: dst = "max-content"; return true;
+    case UI_CSS_WIDTH_FIT_CONTENT: dst = "fit-content"; return true;
+    case UI_CSS_WIDTH_STRETCH: dst = "stretch"; return true;
     case UI_CSS_WIDTH_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
     case UI_CSS_WIDTH_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     case UI_CSS_WIDTH_NUMBER: dst = std::to_string(src.Value); return true;
@@ -1878,22 +2434,16 @@ inline bool UITypeC(UIPropWidth const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropHeight& dst)
 {
-    auto s = UITrim(src);
-    if (s == "auto")
-    {
-        dst.Type = UI_CSS_HEIGHT_AUTO;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_HEIGHT_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_HEIGHT_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    UICssMeasure measure;
+    if (UIParseMeasure(src, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT) { dst.Type = UI_CSS_HEIGHT_PERCENTAGE; dst.Value = measure.Value; return true; }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH) { dst.Type = UI_CSS_HEIGHT_LENGTH; dst.Value = measure.Value; return true; }
+    if (measure.Keyword == "auto") { dst.Type = UI_CSS_HEIGHT_AUTO; return true; }
+    if (measure.Keyword == "min-content") { dst.Type = UI_CSS_HEIGHT_MIN_CONTENT; return true; }
+    if (measure.Keyword == "max-content") { dst.Type = UI_CSS_HEIGHT_MAX_CONTENT; return true; }
+    if (measure.Keyword == "fit-content") { dst.Type = UI_CSS_HEIGHT_FIT_CONTENT; return true; }
+    if (measure.Keyword == "stretch") { dst.Type = UI_CSS_HEIGHT_STRETCH; return true; }
+    return false;
 }
 template <>
 inline bool UITypeC(UIPropHeight const& src, UIString& dst)
@@ -1902,6 +2452,14 @@ inline bool UITypeC(UIPropHeight const& src, UIString& dst)
     {
     default: return false;
     case UI_CSS_HEIGHT_AUTO: dst = "auto";
+        return true;
+    case UI_CSS_HEIGHT_MIN_CONTENT: dst = "min-content";
+        return true;
+    case UI_CSS_HEIGHT_MAX_CONTENT: dst = "max-content";
+        return true;
+    case UI_CSS_HEIGHT_FIT_CONTENT: dst = "fit-content";
+        return true;
+    case UI_CSS_HEIGHT_STRETCH: dst = "stretch";
         return true;
     case UI_CSS_HEIGHT_LENGTH: dst = std::to_string(src.Value) + "px";
         return true;
@@ -1914,22 +2472,16 @@ inline bool UITypeC(UIPropHeight const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropMinWidth& dst)
 {
-    auto s = UITrim(src);
-    if (s == "auto")
-    {
-        dst.Type = UI_CSS_MIN_WIDTH_AUTO;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_MIN_WIDTH_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_MIN_WIDTH_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    UICssMeasure measure;
+    if (UIParseMeasure(src, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT) { dst.Type = UI_CSS_MIN_WIDTH_PERCENTAGE; dst.Value = measure.Value; return true; }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH) { dst.Type = UI_CSS_MIN_WIDTH_LENGTH; dst.Value = measure.Value; return true; }
+    if (measure.Keyword == "auto") { dst.Type = UI_CSS_MIN_WIDTH_AUTO; return true; }
+    if (measure.Keyword == "min-content") { dst.Type = UI_CSS_MIN_WIDTH_MIN_CONTENT; return true; }
+    if (measure.Keyword == "max-content") { dst.Type = UI_CSS_MIN_WIDTH_MAX_CONTENT; return true; }
+    if (measure.Keyword == "fit-content") { dst.Type = UI_CSS_MIN_WIDTH_FIT_CONTENT; return true; }
+    if (measure.Keyword == "stretch") { dst.Type = UI_CSS_MIN_WIDTH_STRETCH; return true; }
+    return false;
 }
 template<>
 inline bool UITypeC(UIPropMinWidth const& src, UIString& dst)
@@ -1937,6 +2489,10 @@ inline bool UITypeC(UIPropMinWidth const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MIN_WIDTH_AUTO: dst = "auto"; return true;
+    case UI_CSS_MIN_WIDTH_MIN_CONTENT: dst = "min-content"; return true;
+    case UI_CSS_MIN_WIDTH_MAX_CONTENT: dst = "max-content"; return true;
+    case UI_CSS_MIN_WIDTH_FIT_CONTENT: dst = "fit-content"; return true;
+    case UI_CSS_MIN_WIDTH_STRETCH: dst = "stretch"; return true;
     case UI_CSS_MIN_WIDTH_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
     case UI_CSS_MIN_WIDTH_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
@@ -1945,22 +2501,16 @@ inline bool UITypeC(UIPropMinWidth const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropMaxWidth& dst)
 {
-    auto s = UITrim(src);
-    if (s == "none")
-    {
-        dst.Type = UI_CSS_MAX_WIDTH_NONE;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_MAX_WIDTH_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_MAX_WIDTH_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    UICssMeasure measure;
+    if (UIParseMeasure(src, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT) { dst.Type = UI_CSS_MAX_WIDTH_PERCENTAGE; dst.Value = measure.Value; return true; }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH) { dst.Type = UI_CSS_MAX_WIDTH_LENGTH; dst.Value = measure.Value; return true; }
+    if (measure.Keyword == "none") { dst.Type = UI_CSS_MAX_WIDTH_NONE; return true; }
+    if (measure.Keyword == "min-content") { dst.Type = UI_CSS_MAX_WIDTH_MIN_CONTENT; return true; }
+    if (measure.Keyword == "max-content") { dst.Type = UI_CSS_MAX_WIDTH_MAX_CONTENT; return true; }
+    if (measure.Keyword == "fit-content") { dst.Type = UI_CSS_MAX_WIDTH_FIT_CONTENT; return true; }
+    if (measure.Keyword == "stretch") { dst.Type = UI_CSS_MAX_WIDTH_STRETCH; return true; }
+    return false;
 }
 template<>
 inline bool UITypeC(UIPropMaxWidth const& src, UIString& dst)
@@ -1968,6 +2518,10 @@ inline bool UITypeC(UIPropMaxWidth const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MAX_WIDTH_NONE: dst = "none"; return true;
+    case UI_CSS_MAX_WIDTH_MIN_CONTENT: dst = "min-content"; return true;
+    case UI_CSS_MAX_WIDTH_MAX_CONTENT: dst = "max-content"; return true;
+    case UI_CSS_MAX_WIDTH_FIT_CONTENT: dst = "fit-content"; return true;
+    case UI_CSS_MAX_WIDTH_STRETCH: dst = "stretch"; return true;
     case UI_CSS_MAX_WIDTH_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
     case UI_CSS_MAX_WIDTH_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
@@ -1976,22 +2530,16 @@ inline bool UITypeC(UIPropMaxWidth const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropMinHeight& dst)
 {
-    auto s = UITrim(src);
-    if (s == "auto")
-    {
-        dst.Type = UI_CSS_MIN_HEIGHT_AUTO;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_MIN_HEIGHT_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_MIN_HEIGHT_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    UICssMeasure measure;
+    if (UIParseMeasure(src, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT) { dst.Type = UI_CSS_MIN_HEIGHT_PERCENTAGE; dst.Value = measure.Value; return true; }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH) { dst.Type = UI_CSS_MIN_HEIGHT_LENGTH; dst.Value = measure.Value; return true; }
+    if (measure.Keyword == "auto") { dst.Type = UI_CSS_MIN_HEIGHT_AUTO; return true; }
+    if (measure.Keyword == "min-content") { dst.Type = UI_CSS_MIN_HEIGHT_MIN_CONTENT; return true; }
+    if (measure.Keyword == "max-content") { dst.Type = UI_CSS_MIN_HEIGHT_MAX_CONTENT; return true; }
+    if (measure.Keyword == "fit-content") { dst.Type = UI_CSS_MIN_HEIGHT_FIT_CONTENT; return true; }
+    if (measure.Keyword == "stretch") { dst.Type = UI_CSS_MIN_HEIGHT_STRETCH; return true; }
+    return false;
 }
 template<>
 inline bool UITypeC(UIPropMinHeight const& src, UIString& dst)
@@ -1999,6 +2547,10 @@ inline bool UITypeC(UIPropMinHeight const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MIN_HEIGHT_AUTO: dst = "auto"; return true;
+    case UI_CSS_MIN_HEIGHT_MIN_CONTENT: dst = "min-content"; return true;
+    case UI_CSS_MIN_HEIGHT_MAX_CONTENT: dst = "max-content"; return true;
+    case UI_CSS_MIN_HEIGHT_FIT_CONTENT: dst = "fit-content"; return true;
+    case UI_CSS_MIN_HEIGHT_STRETCH: dst = "stretch"; return true;
     case UI_CSS_MIN_HEIGHT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
     case UI_CSS_MIN_HEIGHT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
@@ -2007,22 +2559,16 @@ inline bool UITypeC(UIPropMinHeight const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropMaxHeight& dst)
 {
-    auto s = UITrim(src);
-    if (s == "none")
-    {
-        dst.Type = UI_CSS_MAX_HEIGHT_NONE;
-    }
-    else if (s.ends_with('%'))
-    {
-        dst.Type = UI_CSS_MAX_HEIGHT_PERCENTAGE;
-        dst.Value = std::stof(s);
-    }
-    else
-    {
-        dst.Type = UI_CSS_MAX_HEIGHT_LENGTH;
-        dst.Value = std::stof(s);
-    }
-    return true;
+    UICssMeasure measure;
+    if (UIParseMeasure(src, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT) { dst.Type = UI_CSS_MAX_HEIGHT_PERCENTAGE; dst.Value = measure.Value; return true; }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH) { dst.Type = UI_CSS_MAX_HEIGHT_LENGTH; dst.Value = measure.Value; return true; }
+    if (measure.Keyword == "none") { dst.Type = UI_CSS_MAX_HEIGHT_NONE; return true; }
+    if (measure.Keyword == "min-content") { dst.Type = UI_CSS_MAX_HEIGHT_MIN_CONTENT; return true; }
+    if (measure.Keyword == "max-content") { dst.Type = UI_CSS_MAX_HEIGHT_MAX_CONTENT; return true; }
+    if (measure.Keyword == "fit-content") { dst.Type = UI_CSS_MAX_HEIGHT_FIT_CONTENT; return true; }
+    if (measure.Keyword == "stretch") { dst.Type = UI_CSS_MAX_HEIGHT_STRETCH; return true; }
+    return false;
 }
 template<>
 inline bool UITypeC(UIPropMaxHeight const& src, UIString& dst)
@@ -2030,6 +2576,10 @@ inline bool UITypeC(UIPropMaxHeight const& src, UIString& dst)
     switch (src.Type) {
     default: return false;
     case UI_CSS_MAX_HEIGHT_NONE: dst = "none"; return true;
+    case UI_CSS_MAX_HEIGHT_MIN_CONTENT: dst = "min-content"; return true;
+    case UI_CSS_MAX_HEIGHT_MAX_CONTENT: dst = "max-content"; return true;
+    case UI_CSS_MAX_HEIGHT_FIT_CONTENT: dst = "fit-content"; return true;
+    case UI_CSS_MAX_HEIGHT_STRETCH: dst = "stretch"; return true;
     case UI_CSS_MAX_HEIGHT_LENGTH: dst = std::to_string(src.Value) + "px"; return true;
     case UI_CSS_MAX_HEIGHT_PERCENTAGE: dst = std::to_string(src.Value) + "%"; return true;
     }
@@ -2140,12 +2690,42 @@ inline bool UITypeC(UIPropTabSize const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropMargin& dst)
 {
-    return false;
+    auto parseSide = [](UIString const& token, float& value, ui_css_margin_type_t& type) -> bool
+    {
+        auto s = UITrim(token);
+        if (s == "auto") { type = UI_CSS_MARGIN_AUTO; value = 0; return true; }
+        UICssMeasure measure;
+        if (UIParseMeasure(s, measure) == false) return false;
+        if (measure.Kind == UI_CSS_MEASURE_PERCENT) { type = UI_CSS_MARGIN_PERCENTAGE; value = measure.Value; return true; }
+        if (measure.Kind == UI_CSS_MEASURE_LENGTH) { type = UI_CSS_MARGIN_LENGTH; value = measure.Value; return true; }
+        return false;
+    };
+    auto tokens = UISplitCssTokens(src);
+    if (tokens.empty() || tokens.size() > 4) return false;
+    float values[4] = {};
+    ui_css_margin_type_t types[4] = {};
+    for (size_t i = 0; i < tokens.size(); ++i)
+        if (parseSide(tokens[i], values[i], types[i]) == false) return false;
+    auto right = tokens.size() > 1 ? 1 : 0;
+    auto bottom = tokens.size() > 2 ? 2 : 0;
+    auto left = tokens.size() > 3 ? 3 : right;
+    dst.Top = {values[0], types[0]};
+    dst.Right = {values[right], types[right]};
+    dst.Bottom = {values[bottom], types[bottom]};
+    dst.Left = {values[left], types[left]};
+    return true;
 }
 template<>
 inline bool UITypeC(UIPropMargin const& src, UIString& dst)
 {
-    return false;
+    auto formatSide = [](float value, ui_css_margin_type_t type) -> UIString
+    {
+        if (type == UI_CSS_MARGIN_AUTO) return "auto";
+        if (type == UI_CSS_MARGIN_PERCENTAGE) return std::to_string(value) + "%";
+        return std::to_string(value) + "px";
+    };
+    dst = formatSide(src.Top.Value, src.Top.Type) + " " + formatSide(src.Right.Value, src.Right.Type) + " " + formatSide(src.Bottom.Value, src.Bottom.Type) + " " + formatSide(src.Left.Value, src.Left.Type);
+    return true;
 }
 
 template<>
@@ -2276,12 +2856,42 @@ inline bool UITypeC(UIPropMarginBottom const& src, UIString& dst)
 template<>
 inline bool UITypeC(UIString const& src, UIPropPadding& dst)
 {
-    return false;
+    auto parseSide = [](UIString const& token, float& value, ui_css_padding_type_t& type) -> bool
+    {
+        auto s = UITrim(token);
+        if (s == "auto") { type = UI_CSS_PADDING_AUTO; value = 0; return true; }
+        UICssMeasure measure;
+        if (UIParseMeasure(s, measure) == false) return false;
+        if (measure.Kind == UI_CSS_MEASURE_PERCENT) { type = UI_CSS_PADDING_PERCENTAGE; value = measure.Value; return true; }
+        if (measure.Kind == UI_CSS_MEASURE_LENGTH) { type = UI_CSS_PADDING_LENGTH; value = measure.Value; return true; }
+        return false;
+    };
+    auto tokens = UISplitCssTokens(src);
+    if (tokens.empty() || tokens.size() > 4) return false;
+    float values[4] = {};
+    ui_css_padding_type_t types[4] = {};
+    for (size_t i = 0; i < tokens.size(); ++i)
+        if (parseSide(tokens[i], values[i], types[i]) == false) return false;
+    auto right = tokens.size() > 1 ? 1 : 0;
+    auto bottom = tokens.size() > 2 ? 2 : 0;
+    auto left = tokens.size() > 3 ? 3 : right;
+    dst.Top = {values[0], types[0]};
+    dst.Right = {values[right], types[right]};
+    dst.Bottom = {values[bottom], types[bottom]};
+    dst.Left = {values[left], types[left]};
+    return true;
 }
 template<>
 inline bool UITypeC(UIPropPadding const& src, UIString& dst)
 {
-    return false;
+    auto formatSide = [](float value, ui_css_padding_type_t type) -> UIString
+    {
+        if (type == UI_CSS_PADDING_AUTO) return "auto";
+        if (type == UI_CSS_PADDING_PERCENTAGE) return std::to_string(value) + "%";
+        return std::to_string(value) + "px";
+    };
+    dst = formatSide(src.Top.Value, src.Top.Type) + " " + formatSide(src.Right.Value, src.Right.Type) + " " + formatSide(src.Bottom.Value, src.Bottom.Type) + " " + formatSide(src.Left.Value, src.Left.Type);
+    return true;
 }
 
 template<>
@@ -2404,6 +3014,8 @@ inline bool UITypeC(UIString const& src, UIPropOverflowX& dst)
         return true;
     case UIHash("auto"): dst.Value = UI_CSS_OVERFLOW_X_AUTO;
         return true;
+    case UIHash("clip"): dst.Value = UI_CSS_OVERFLOW_X_CLIP;
+        return true;
     }
 }
 template <>
@@ -2420,6 +3032,45 @@ inline bool UITypeC(UIPropOverflowX const& src, UIString& dst)
         return true;
     case UI_CSS_OVERFLOW_X_AUTO: dst = "auto";
         return true;
+    case UI_CSS_OVERFLOW_X_CLIP: dst = "clip";
+        return true;
+    }
+}
+template <>
+inline bool UITypeC(UIString const& src, UIPropOverflowY& dst)
+{
+    auto s = UITrim(src);
+    switch (UIHash(s))
+    {
+    default: return false;
+    case UIHash("visible"): dst.Value = UI_CSS_OVERFLOW_Y_VISIBLE;
+        return true;
+    case UIHash("hidden"): dst.Value = UI_CSS_OVERFLOW_Y_HIDDEN;
+        return true;
+    case UIHash("scroll"): dst.Value = UI_CSS_OVERFLOW_Y_SCROLL;
+        return true;
+    case UIHash("auto"): dst.Value = UI_CSS_OVERFLOW_Y_AUTO;
+        return true;
+    case UIHash("clip"): dst.Value = UI_CSS_OVERFLOW_Y_CLIP;
+        return true;
+    }
+}
+template <>
+inline bool UITypeC(UIPropOverflowY const& src, UIString& dst)
+{
+    switch (src.Value)
+    {
+    default: return false;
+    case UI_CSS_OVERFLOW_Y_VISIBLE: dst = "visible";
+        return true;
+    case UI_CSS_OVERFLOW_Y_HIDDEN: dst = "hidden";
+        return true;
+    case UI_CSS_OVERFLOW_Y_SCROLL: dst = "scroll";
+        return true;
+    case UI_CSS_OVERFLOW_Y_AUTO: dst = "auto";
+        return true;
+    case UI_CSS_OVERFLOW_Y_CLIP: dst = "clip";
+        return true;
     }
 }
 
@@ -2427,7 +3078,7 @@ inline bool UITypeC(UIPropOverflowX const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropJustifyContent& dst)
 {
-    switch (UIHash(src))
+    switch (UIHash(UITrim(src)))
     {
     default: return false;
     case UIHash("flex-start"): dst.Value = UI_CSS_JUSTIFY_CONTENT_FLEX_START;
@@ -2441,6 +3092,14 @@ inline bool UITypeC(UIString const& src, UIPropJustifyContent& dst)
     case UIHash("space-around"): dst.Value = UI_CSS_JUSTIFY_CONTENT_SPACE_AROUND;
         break;
     case UIHash("space-evenly"): dst.Value = UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY;
+        break;
+    case UIHash("start"): dst.Value = UI_CSS_JUSTIFY_CONTENT_START;
+        break;
+    case UIHash("end"): dst.Value = UI_CSS_JUSTIFY_CONTENT_END;
+        break;
+    case UIHash("stretch"): dst.Value = UI_CSS_JUSTIFY_CONTENT_STRETCH;
+        break;
+    case UIHash("auto"): dst.Value = UI_CSS_JUSTIFY_CONTENT_AUTO;
         break;
     }
     return true;
@@ -2462,6 +3121,14 @@ inline bool UITypeC(UIPropJustifyContent const& src, UIString& dst)
     case UI_CSS_JUSTIFY_CONTENT_SPACE_AROUND: dst = "space-around";
         return true;
     case UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY: dst = "space-evenly";
+        return true;
+    case UI_CSS_JUSTIFY_CONTENT_START: dst = "start";
+        return true;
+    case UI_CSS_JUSTIFY_CONTENT_END: dst = "end";
+        return true;
+    case UI_CSS_JUSTIFY_CONTENT_STRETCH: dst = "stretch";
+        return true;
+    case UI_CSS_JUSTIFY_CONTENT_AUTO: dst = "auto";
         return true;
     }
 }
@@ -2620,6 +3287,411 @@ inline bool UITypeC(UIPropFilter const& src, UIString& dst)
     case UI_CSS_FILTER_CUSTOM0: dst = src.Func + "(" + src.Args + ")";
         return true;
     }
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropFlexDirection& dst)
+{
+    switch (UIHash(UITrim(src)))
+    {
+    default: return false;
+    case UIHash("row"): dst.Value = UI_CSS_FLEX_DIRECTION_ROW; return true;
+    case UIHash("row-reverse"): dst.Value = UI_CSS_FLEX_DIRECTION_ROW_REVERSE; return true;
+    case UIHash("column"): dst.Value = UI_CSS_FLEX_DIRECTION_COLUMN; return true;
+    case UIHash("column-reverse"): dst.Value = UI_CSS_FLEX_DIRECTION_COLUMN_REVERSE; return true;
+    }
+}
+template <>
+inline bool UITypeC(UIPropFlexDirection const& src, UIString& dst)
+{
+    switch (src.Value)
+    {
+    default: return false;
+    case UI_CSS_FLEX_DIRECTION_ROW: dst = "row"; return true;
+    case UI_CSS_FLEX_DIRECTION_ROW_REVERSE: dst = "row-reverse"; return true;
+    case UI_CSS_FLEX_DIRECTION_COLUMN: dst = "column"; return true;
+    case UI_CSS_FLEX_DIRECTION_COLUMN_REVERSE: dst = "column-reverse"; return true;
+    }
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropFlexWrap& dst)
+{
+    switch (UIHash(UITrim(src)))
+    {
+    default: return false;
+    case UIHash("nowrap"): dst.Value = UI_CSS_FLEX_WRAP_NOWRAP; return true;
+    case UIHash("wrap"): dst.Value = UI_CSS_FLEX_WRAP_WRAP; return true;
+    case UIHash("wrap-reverse"): dst.Value = UI_CSS_FLEX_WRAP_WRAP_REVERSE; return true;
+    }
+}
+template <>
+inline bool UITypeC(UIPropFlexWrap const& src, UIString& dst)
+{
+    switch (src.Value)
+    {
+    default: return false;
+    case UI_CSS_FLEX_WRAP_NOWRAP: dst = "nowrap"; return true;
+    case UI_CSS_FLEX_WRAP_WRAP: dst = "wrap"; return true;
+    case UI_CSS_FLEX_WRAP_WRAP_REVERSE: dst = "wrap-reverse"; return true;
+    }
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropFlex& dst)
+{
+    auto tokens = UISplitCssTokens(src);
+    if (tokens.size() == 1 && tokens[0] == "none")
+    {
+        dst.Grow.Value = 0;
+        dst.Shrink.Value = 0;
+        dst.Basis = {};
+        return true;
+    }
+    if (tokens.size() == 1 && tokens[0] == "auto")
+    {
+        dst.Grow.Value = 1;
+        dst.Shrink.Value = 1;
+        dst.Basis = {};
+        return true;
+    }
+    UIList<float> factors;
+    UIString basis;
+    for (auto const& token : tokens)
+    {
+        UICssMeasure measure;
+        if (UIParseMeasure(token, measure) == false) return false;
+        if (measure.Kind == UI_CSS_MEASURE_LENGTH && token.find('%') == UIString::npos && token.find("px") == UIString::npos && token.find("fr") == UIString::npos)
+            factors.push_back(measure.Value);
+        else
+        {
+            if (basis.empty() == false) return false;
+            basis = token;
+        }
+    }
+    dst.Grow.Value = 1;
+    dst.Shrink.Value = 1;
+    dst.Basis.Type = UI_CSS_FLEX_BASIS_LENGTH;
+    dst.Basis.Value = 0;
+    if (basis.empty() == false && UIParseFlexBasis(basis, dst.Basis) == false) return false;
+    if (factors.size() == 1) dst.Grow.Value = factors[0];
+    else if (factors.size() == 2)
+    {
+        dst.Grow.Value = factors[0];
+        dst.Shrink.Value = factors[1];
+    }
+    else if (factors.empty() && basis.empty() == false)
+    {
+        dst.Grow.Value = 1;
+        dst.Shrink.Value = 1;
+    }
+    else return false;
+    if (basis.empty())
+    {
+        dst.Basis.Type = UI_CSS_FLEX_BASIS_LENGTH;
+        dst.Basis.Value = 0;
+    }
+    return true;
+}
+template <>
+inline bool UITypeC(UIPropFlex const& src, UIString& dst)
+{
+    if (src.Grow.Value == 0 && src.Shrink.Value == 0 && src.Basis.Type == UI_CSS_FLEX_BASIS_AUTO) { dst = "none"; return true; }
+    if (src.Grow.Value == 1 && src.Shrink.Value == 1 && src.Basis.Type == UI_CSS_FLEX_BASIS_AUTO) { dst = "auto"; return true; }
+    UIString basis;
+    if (UITypeC(src.Basis, basis) == false) return false;
+    dst = std::to_string(src.Grow.Value) + " " + std::to_string(src.Shrink.Value) + " " + basis;
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropJustifyItems& dst)
+{
+    UIPropJustifyContent content;
+    if (UITypeC(src, content) == false) return false;
+    dst.Value = content.Value;
+    return true;
+}
+template <>
+inline bool UITypeC(UIPropJustifyItems const& src, UIString& dst)
+{
+    return UITypeC(UIPropJustifyContent{src.Value}, dst);
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropJustifySelf& dst)
+{
+    UIPropJustifyContent content;
+    if (UITypeC(src, content) == false) return false;
+    dst.Value = content.Value;
+    return true;
+}
+template <>
+inline bool UITypeC(UIPropJustifySelf const& src, UIString& dst)
+{
+    return UITypeC(UIPropJustifyContent{src.Value}, dst);
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropAspectRatio& dst)
+{
+    auto s = UITrim(src);
+    if (s == "auto")
+    {
+        dst.Auto = true;
+        dst.Value = UINAN;
+        return true;
+    }
+    auto slash = s.find('/');
+    if (slash != UIString::npos)
+    {
+        auto left = std::stof(s.substr(0, slash));
+        auto right = std::stof(s.substr(slash + 1));
+        if (right == 0) return false;
+        dst.Auto = false;
+        dst.Value = left / right;
+        return true;
+    }
+    dst.Auto = false;
+    dst.Value = std::stof(s);
+    return true;
+}
+template <>
+inline bool UITypeC(UIPropAspectRatio const& src, UIString& dst)
+{
+    if (src.Auto) { dst = "auto"; return true; }
+    dst = std::to_string(src.Value);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridColumnGap& dst)
+{
+    return UIParseGap(src, dst.Value, dst.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridColumnGap const& src, UIString& dst)
+{
+    if (src.Type == UI_CSS_GRID_GAP_PERCENTAGE) dst = std::to_string(src.Value) + "%";
+    else dst = std::to_string(src.Value) + "px";
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridRowGap& dst)
+{
+    return UIParseGap(src, dst.Value, dst.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridRowGap const& src, UIString& dst)
+{
+    if (src.Type == UI_CSS_GRID_GAP_PERCENTAGE) dst = std::to_string(src.Value) + "%";
+    else dst = std::to_string(src.Value) + "px";
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGap& dst)
+{
+    auto tokens = UISplitCssTokens(src);
+    if (tokens.size() == 1)
+    {
+        if (UIParseGap(tokens[0], dst.Row.Value, dst.Row.Type) == false) return false;
+        dst.Column.Value = dst.Row.Value;
+        dst.Column.Type = dst.Row.Type;
+        return true;
+    }
+    if (tokens.size() == 2)
+    {
+        if (UIParseGap(tokens[0], dst.Row.Value, dst.Row.Type) == false) return false;
+        if (UIParseGap(tokens[1], dst.Column.Value, dst.Column.Type) == false) return false;
+        return true;
+    }
+    return false;
+}
+template <>
+inline bool UITypeC(UIPropGap const& src, UIString& dst)
+{
+    UIString row, column;
+    if (UITypeC(src.Row, row) == false || UITypeC(src.Column, column) == false) return false;
+    dst = row + " " + column;
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridTemplateColumns& dst)
+{
+    return UIParseGridTracks(src, dst.Tracks);
+}
+template <>
+inline bool UITypeC(UIPropGridTemplateColumns const& src, UIString& dst)
+{
+    dst = UIFormatGridTracks(src.Tracks);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridTemplateRows& dst)
+{
+    return UIParseGridTracks(src, dst.Tracks);
+}
+template <>
+inline bool UITypeC(UIPropGridTemplateRows const& src, UIString& dst)
+{
+    dst = UIFormatGridTracks(src.Tracks);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridAutoColumns& dst)
+{
+    return UIParseGridTracks(src, dst.Tracks);
+}
+template <>
+inline bool UITypeC(UIPropGridAutoColumns const& src, UIString& dst)
+{
+    dst = UIFormatGridTracks(src.Tracks);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridAutoRows& dst)
+{
+    return UIParseGridTracks(src, dst.Tracks);
+}
+template <>
+inline bool UITypeC(UIPropGridAutoRows const& src, UIString& dst)
+{
+    dst = UIFormatGridTracks(src.Tracks);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridColumnStart& dst)
+{
+    return UIParseGridLine(src, dst.Value, dst.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridColumnStart const& src, UIString& dst)
+{
+    dst = UIFormatGridLine(src.Type, src.Value);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridColumnEnd& dst)
+{
+    return UIParseGridLine(src, dst.Value, dst.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridColumnEnd const& src, UIString& dst)
+{
+    dst = UIFormatGridLine(src.Type, src.Value);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridRowStart& dst)
+{
+    return UIParseGridLine(src, dst.Value, dst.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridRowStart const& src, UIString& dst)
+{
+    dst = UIFormatGridLine(src.Type, src.Value);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridRowEnd& dst)
+{
+    return UIParseGridLine(src, dst.Value, dst.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridRowEnd const& src, UIString& dst)
+{
+    dst = UIFormatGridLine(src.Type, src.Value);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridColumn& dst)
+{
+    auto parts = UISplitCssSlash(src);
+    if (parts.empty() || parts.size() > 2) return false;
+    if (UIParseGridLine(parts[0], dst.Start.Value, dst.Start.Type) == false) return false;
+    if (parts.size() == 1)
+    {
+        dst.End.Type = UI_CSS_GRID_LINE_AUTO;
+        dst.End.Value = 0;
+        return true;
+    }
+    return UIParseGridLine(parts[1], dst.End.Value, dst.End.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridColumn const& src, UIString& dst)
+{
+    dst = UIFormatGridLine(src.Start.Type, src.Start.Value) + " / " + UIFormatGridLine(src.End.Type, src.End.Value);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropGridRow& dst)
+{
+    auto parts = UISplitCssSlash(src);
+    if (parts.empty() || parts.size() > 2) return false;
+    if (UIParseGridLine(parts[0], dst.Start.Value, dst.Start.Type) == false) return false;
+    if (parts.size() == 1)
+    {
+        dst.End.Type = UI_CSS_GRID_LINE_AUTO;
+        dst.End.Value = 0;
+        return true;
+    }
+    return UIParseGridLine(parts[1], dst.End.Value, dst.End.Type);
+}
+template <>
+inline bool UITypeC(UIPropGridRow const& src, UIString& dst)
+{
+    dst = UIFormatGridLine(src.Start.Type, src.Start.Value) + " / " + UIFormatGridLine(src.End.Type, src.End.Value);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropOverflow& dst)
+{
+    auto tokens = UISplitCssTokens(src);
+    if (tokens.empty() || tokens.size() > 2) return false;
+    auto parseOne = [](UIString const& token, unsigned int& value) -> bool
+    {
+        switch (UIHash(UITrim(token)))
+        {
+        case UIHash("visible"): value = UI_CSS_OVERFLOW_X_VISIBLE; return true;
+        case UIHash("hidden"): value = UI_CSS_OVERFLOW_X_HIDDEN; return true;
+        case UIHash("clip"): value = UI_CSS_OVERFLOW_X_CLIP; return true;
+        case UIHash("scroll"): value = UI_CSS_OVERFLOW_X_SCROLL; return true;
+        case UIHash("auto"): value = UI_CSS_OVERFLOW_X_AUTO; return true;
+        default: return false;
+        }
+    };
+    unsigned int x = UI_CSS_OVERFLOW_X_VISIBLE;
+    unsigned int y = UI_CSS_OVERFLOW_Y_VISIBLE;
+    if (parseOne(tokens[0], x) == false) return false;
+    if (tokens.size() == 2)
+    {
+        if (parseOne(tokens[1], y) == false) return false;
+    }
+    else y = x;
+    dst.X.Value = x;
+    dst.Y.Value = y;
+    return true;
+}
+template <>
+inline bool UITypeC(UIPropOverflow const& src, UIString& dst)
+{
+    UIString x, y;
+    if (UITypeC(src.X, x) == false || UITypeC(src.Y, y) == false) return false;
+    dst = x + " " + y;
+    return true;
 }
 
 // Note: Not all properties' tokens/keywords are exhaustively implemented here. This provides full numeric parsing for length/percentage/number where applicable and common keyword mappings. Further refinements can be added per-property on request.

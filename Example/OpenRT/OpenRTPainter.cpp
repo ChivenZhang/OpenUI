@@ -20,10 +20,11 @@
 #include <pango/pangoft2.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <algorithm>
+#include <functional>
 
 // UIPainter implemented on top of NanoVG (OpenRT backend).
 //
@@ -37,6 +38,34 @@ struct OpenRTNVGTarget
 {
 	rt_texture_t stencil = {};
 	NVGtarget target = {};
+};
+
+// One uploaded glyph texture. Image < 0 means the glyph has no bitmap (for example a space).
+struct OpenRTGlyphImage
+{
+	int Image = -1;
+	int Left = 0;
+	int Top = 0;
+	int Width = 0;
+	int Height = 0;
+};
+
+// Face pointer is the PangoFcFont's FreeType face. PixelSize keeps resized faces apart.
+// Rgb is the baked text colour; colour emoji still keys on it so lookup does not reload the glyph.
+struct OpenRTGlyphKey
+{
+	FT_Face Face = nullptr;
+	FT_UInt Index = 0;
+	unsigned PixelSize = 0;
+	uint32_t Rgb = 0;
+
+	bool operator<(OpenRTGlyphKey const& other) const
+	{
+		if (Face != other.Face) return std::less<FT_Face>{}(Face, other.Face);
+		if (Index != other.Index) return Index < other.Index;
+		if (PixelSize != other.PixelSize) return PixelSize < other.PixelSize;
+		return Rgb < other.Rgb;
+	}
 };
 
 struct OpenRTPainterPrivate : UIPrivate
@@ -53,6 +82,7 @@ struct OpenRTPainterPrivate : UIPrivate
 	UIMap<rt_texture_t*, OpenRTNVGTarget> Targets; // one NVGtarget group per colour attachment
 	PangoFontMap* FontMap = nullptr;
 	PangoLayout* Layout = nullptr;
+	UIMap<OpenRTGlyphKey, OpenRTGlyphImage> Glyphs;
 };
 #define PRIVATE() ((OpenRTPainterPrivate*) m_Private)
 #define CONTEXT() (PRIVATE()->Context)
@@ -280,12 +310,55 @@ static int pango_hitTest(PangoLayout* layout, OpenRTTextFrame const& frame, UISt
 	return index;
 }
 
-// FreeType rasterizes the glyph. NanoVG only blits that bitmap.
-static bool nvg_drawGlyphBitmap(NVGcontext* vg, UIList<int>& images, FT_Face face, FT_UInt glyph, float x, float y, UIColor const& color)
+static void nvg_blitGlyph(NVGcontext* vg, OpenRTGlyphImage const& glyph, float x, float y, float alpha)
 {
+	if (glyph.Image < 0 || glyph.Width <= 0 || glyph.Height <= 0) return;
+	float ix = x + (float)glyph.Left;
+	float iy = y - (float)glyph.Top;
+	float w = (float)glyph.Width;
+	float h = (float)glyph.Height;
+	auto paint = nvgImagePattern(vg, ix, iy, w, h, 0.0f, glyph.Image, alpha);
+	nvgBeginPath(vg);
+	nvgRect(vg, ix, iy, w, h);
+	nvgFillPaint(vg, paint);
+	nvgFill(vg);
+}
+
+static uint32_t nvg_glyphRgb(UIColor const& color)
+{
+	uint32_t r = (uint32_t)std::lround(std::clamp(color.R, 0.0f, 1.0f) * 255.0f);
+	uint32_t g = (uint32_t)std::lround(std::clamp(color.G, 0.0f, 1.0f) * 255.0f);
+	uint32_t b = (uint32_t)std::lround(std::clamp(color.B, 0.0f, 1.0f) * 255.0f);
+	return (r << 16) | (g << 8) | b;
+}
+
+// FreeType rasterizes a miss. Later draws reuse the NanoVG texture.
+static bool nvg_drawGlyphBitmap(NVGcontext* vg, UIMap<OpenRTGlyphKey, OpenRTGlyphImage>& cache, FT_Face face, FT_UInt glyph, float x, float y, UIColor const& color)
+{
+	OpenRTGlyphKey key;
+	key.Face = face;
+	key.Index = glyph;
+	key.PixelSize = face->size ? (unsigned)face->size->metrics.y_ppem : 0;
+	key.Rgb = nvg_glyphRgb(color);
+	auto found = cache.find(key);
+	if (found != cache.end())
+	{
+		nvg_blitGlyph(vg, found->second, x, y, color.A);
+		return true;
+	}
+
 	if (FT_Load_Glyph(face, glyph, FT_LOAD_RENDER | FT_LOAD_COLOR) != 0) return false;
 	auto const& bitmap = face->glyph->bitmap;
-	if (bitmap.width == 0 || bitmap.rows == 0 || bitmap.buffer == nullptr) return false;
+	OpenRTGlyphImage cached;
+	cached.Left = face->glyph->bitmap_left;
+	cached.Top = face->glyph->bitmap_top;
+	cached.Width = (int)bitmap.width;
+	cached.Height = (int)bitmap.rows;
+	if (bitmap.width == 0 || bitmap.rows == 0 || bitmap.buffer == nullptr)
+	{
+		cache.emplace(key, cached);
+		return true;
+	}
 
 	int pitch = bitmap.pitch;
 	const uint8_t* src = bitmap.buffer;
@@ -319,9 +392,9 @@ static bool nvg_drawGlyphBitmap(NVGcontext* vg, UIList<int>& images, FT_Face fac
 	}
 	else if (bitmap.pixel_mode == FT_PIXEL_MODE_GRAY)
 	{
-		uint8_t r = (uint8_t)std::lround(std::clamp(color.R, 0.0f, 1.0f) * 255.0f);
-		uint8_t g = (uint8_t)std::lround(std::clamp(color.G, 0.0f, 1.0f) * 255.0f);
-		uint8_t b = (uint8_t)std::lround(std::clamp(color.B, 0.0f, 1.0f) * 255.0f);
+		uint8_t r = (uint8_t)((key.Rgb >> 16) & 0xFF);
+		uint8_t g = (uint8_t)((key.Rgb >> 8) & 0xFF);
+		uint8_t b = (uint8_t)(key.Rgb & 0xFF);
 		for (unsigned row = 0; row < bitmap.rows; ++row)
 		{
 			auto const* line = src + (size_t)row * pitch;
@@ -334,78 +407,11 @@ static bool nvg_drawGlyphBitmap(NVGcontext* vg, UIList<int>& images, FT_Face fac
 	}
 	else return false;
 
-	int image = nvgCreateImageRGBA(vg, (int)bitmap.width, (int)bitmap.rows, 0, pixels.data());
-	if (image == -1) return false;
-	images.push_back(image);
-
-	float ix = x + (float)face->glyph->bitmap_left;
-	float iy = y - (float)face->glyph->bitmap_top;
-	float w = (float)bitmap.width;
-	float h = (float)bitmap.rows;
-	auto paint = nvgImagePattern(vg, ix, iy, w, h, 0.0f, image, color.A);
-	nvgBeginPath(vg);
-	nvgRect(vg, ix, iy, w, h);
-	nvgFillPaint(vg, paint);
-	nvgFill(vg);
+	cached.Image = nvgCreateImageRGBA(vg, cached.Width, cached.Height, 0, pixels.data());
+	if (cached.Image == -1) return false;
+	auto stored = cache.emplace(key, cached).first;
+	nvg_blitGlyph(vg, stored->second, x, y, color.A);
 	return true;
-}
-
-// Positions come from Pango (same rules as pango_renderer_draw_layout).
-// Every glyph is a FreeType bitmap.
-static void nvg_drawLayoutGlyphs(NVGcontext* vg, UIList<int>& images, PangoLayout* layout, OpenRTTextFrame const& frame, UIColor const& color)
-{
-	auto* iter = pango_layout_get_iter(layout);
-	if (iter == nullptr) return;
-	do
-	{
-		auto* line = pango_layout_iter_get_line_readonly(iter);
-		if (line == nullptr) continue;
-		PangoRectangle logical;
-		pango_layout_iter_get_line_extents(iter, nullptr, &logical);
-		int baseline = pango_layout_iter_get_baseline(iter);
-		int xOff = 0;
-		for (auto* link = line->runs; link; link = link->next)
-		{
-			auto* run = (PangoGlyphItem*)link->data;
-			xOff += run->start_x_offset;
-			int yOff = run->y_offset;
-			PangoFont* font = run->item ? run->item->analysis.font : nullptr;
-			if (font && (run->item->analysis.flags & PANGO_ANALYSIS_FLAG_CENTERED_BASELINE))
-			{
-				PangoRectangle runLogical;
-				pango_glyph_string_extents(run->glyphs, font, nullptr, &runLogical);
-				int adjustment = runLogical.y + runLogical.height / 2;
-				if (((runLogical.y | runLogical.height) & (PANGO_SCALE - 1)) == 0)
-					adjustment = PANGO_UNITS_ROUND(adjustment);
-				yOff += adjustment;
-			}
-
-			float baseX = frame.OriginX + pango_pixels(logical.x + xOff);
-			float baseY = frame.OriginY + pango_pixels(baseline - yOff);
-			// Pango's hb_font is not created with hb-ft, so hb_ft_font_lock_face returns null.
-			// The FreeType face lives on the PangoFcFont that PangoFT2 uses.
-			PangoFcFont* fcFont = (font && PANGO_IS_FC_FONT(font)) ? PANGO_FC_FONT(font) : nullptr;
-			FT_Face face = fcFont ? pango_fc_font_lock_face(fcFont) : nullptr;
-
-			int pen = 0;
-			for (int i = 0; i < run->glyphs->num_glyphs; ++i)
-			{
-				auto const& glyph = run->glyphs->glyphs[i];
-				float gx = baseX + pango_pixels(pen + glyph.geometry.x_offset);
-				float gy = baseY + pango_pixels(glyph.geometry.y_offset);
-				pen += glyph.geometry.width;
-				if (glyph.glyph == PANGO_GLYPH_EMPTY || face == nullptr) continue;
-
-				// Unknown input has no font glyph; draw the face's .notdef bitmap.
-				auto index = (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) ? (FT_UInt)0 : (FT_UInt)glyph.glyph;
-				nvg_drawGlyphBitmap(vg, images, face, index, gx, gy, color);
-			}
-
-			if (fcFont && face) pango_fc_font_unlock_face(fcFont);
-			xOff += pango_glyph_string_get_width(run->glyphs) + run->end_x_offset;
-		}
-	} while (pango_layout_iter_next_line(iter));
-	pango_layout_iter_free(iter);
 }
 
 // ====================================================================
@@ -435,6 +441,8 @@ OpenRTPainter::~OpenRTPainter()
 	{
 		if (PRIVATE()->InFrame) nvgCancelFrame(vg);
 		for (auto image : PRIVATE()->Images) nvgDeleteImage(vg, image);
+		for (auto& glyph : PRIVATE()->Glyphs)
+			if (glyph.second.Image >= 0) nvgDeleteImage(vg, glyph.second.Image);
 	}
 	for (auto& slot : PRIVATE()->Targets) rt_destroy_texture(slot.second.stencil);
 	if (PRIVATE()->Layout) g_object_unref(PRIVATE()->Layout);
@@ -677,59 +685,58 @@ void OpenRTPainter::drawText(float x, float y, float width, float height, const 
 	if (PRIVATE()->Brush.Style == UIBrush::NoBrush) return;
 	if (!nvg_applyClip(vg, PRIVATE()->Scissor, PRIVATE()->EnableClip)) return;
 
-	if (auto* iter = pango_layout_get_iter(layout))
+	auto* iter = pango_layout_get_iter(layout);
+	if (iter == nullptr) return;
+	do
 	{
-		do
+		auto* line = pango_layout_iter_get_line_readonly(iter);
+		if (line == nullptr) continue;
+		PangoRectangle logical;
+		pango_layout_iter_get_line_extents(iter, nullptr, &logical);
+		int baseline = pango_layout_iter_get_baseline(iter);
+		int xOff = 0;
+		for (auto* link = line->runs; link; link = link->next)
 		{
-			auto* line = pango_layout_iter_get_line_readonly(iter);
-			if (line == nullptr) continue;
-			PangoRectangle logical;
-			pango_layout_iter_get_line_extents(iter, nullptr, &logical);
-			int baseline = pango_layout_iter_get_baseline(iter);
-			int xOff = 0;
-			for (auto* link = line->runs; link; link = link->next)
+			auto* run = (PangoGlyphItem*)link->data;
+			xOff += run->start_x_offset;
+			int yOff = run->y_offset;
+			PangoFont* font = run->item ? run->item->analysis.font : nullptr;
+			if (font && (run->item->analysis.flags & PANGO_ANALYSIS_FLAG_CENTERED_BASELINE))
 			{
-				auto* run = (PangoGlyphItem*)link->data;
-				xOff += run->start_x_offset;
-				int yOff = run->y_offset;
-				PangoFont* font = run->item ? run->item->analysis.font : nullptr;
-				if (font && (run->item->analysis.flags & PANGO_ANALYSIS_FLAG_CENTERED_BASELINE))
-				{
-					PangoRectangle runLogical;
-					pango_glyph_string_extents(run->glyphs, font, nullptr, &runLogical);
-					int adjustment = runLogical.y + runLogical.height / 2;
-					if (((runLogical.y | runLogical.height) & (PANGO_SCALE - 1)) == 0)
-						adjustment = PANGO_UNITS_ROUND(adjustment);
-					yOff += adjustment;
-				}
-
-				float baseX = frame.OriginX + pango_pixels(logical.x + xOff);
-				float baseY = frame.OriginY + pango_pixels(baseline - yOff);
-				// Pango's hb_font is not created with hb-ft, so hb_ft_font_lock_face returns null.
-				// The FreeType face lives on the PangoFcFont that PangoFT2 uses.
-				PangoFcFont* fcFont = (font && PANGO_IS_FC_FONT(font)) ? PANGO_FC_FONT(font) : nullptr;
-				FT_Face face = fcFont ? pango_fc_font_lock_face(fcFont) : nullptr;
-
-				int pen = 0;
-				for (int i = 0; i < run->glyphs->num_glyphs; ++i)
-				{
-					auto const& glyph = run->glyphs->glyphs[i];
-					float gx = baseX + pango_pixels(pen + glyph.geometry.x_offset);
-					float gy = baseY + pango_pixels(glyph.geometry.y_offset);
-					pen += glyph.geometry.width;
-					if (glyph.glyph == PANGO_GLYPH_EMPTY || face == nullptr) continue;
-
-					// Unknown input has no font glyph; draw the face's .notdef bitmap.
-					auto index = (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) ? (FT_UInt)0 : (FT_UInt)glyph.glyph;
-					nvg_drawGlyphBitmap(vg, PRIVATE()->Images, face, index, gx, gy, PRIVATE()->Brush.Color);
-				}
-
-				if (fcFont && face) pango_fc_font_unlock_face(fcFont);
-				xOff += pango_glyph_string_get_width(run->glyphs) + run->end_x_offset;
+				PangoRectangle runLogical;
+				pango_glyph_string_extents(run->glyphs, font, nullptr, &runLogical);
+				int adjustment = runLogical.y + runLogical.height / 2;
+				if (((runLogical.y | runLogical.height) & (PANGO_SCALE - 1)) == 0)
+					adjustment = PANGO_UNITS_ROUND(adjustment);
+				yOff += adjustment;
 			}
-		} while (pango_layout_iter_next_line(iter));
-		pango_layout_iter_free(iter);
-	}
+
+			float baseX = frame.OriginX + pango_pixels(logical.x + xOff);
+			float baseY = frame.OriginY + pango_pixels(baseline - yOff);
+			// Pango's hb_font is not created with hb-ft, so hb_ft_font_lock_face returns null.
+			// The FreeType face lives on the PangoFcFont that PangoFT2 uses.
+			PangoFcFont* fcFont = (font && PANGO_IS_FC_FONT(font)) ? PANGO_FC_FONT(font) : nullptr;
+			FT_Face face = fcFont ? pango_fc_font_lock_face(fcFont) : nullptr;
+
+			int pen = 0;
+			for (int i = 0; i < run->glyphs->num_glyphs; ++i)
+			{
+				auto const& glyph = run->glyphs->glyphs[i];
+				float gx = baseX + pango_pixels(pen + glyph.geometry.x_offset);
+				float gy = baseY + pango_pixels(glyph.geometry.y_offset);
+				pen += glyph.geometry.width;
+				if (glyph.glyph == PANGO_GLYPH_EMPTY || face == nullptr) continue;
+
+				// Unknown input has no font glyph; draw the face's .notdef bitmap.
+				auto index = (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) ? (FT_UInt)0 : (FT_UInt)glyph.glyph;
+				nvg_drawGlyphBitmap(vg, PRIVATE()->Glyphs, face, index, gx, gy, PRIVATE()->Brush.Color);
+			}
+
+			if (fcFont && face) pango_fc_font_unlock_face(fcFont);
+			xOff += pango_glyph_string_get_width(run->glyphs) + run->end_x_offset;
+		}
+	} while (pango_layout_iter_next_line(iter));
+	pango_layout_iter_free(iter);
 }
 
 UIPen const& OpenRTPainter::getPen() const

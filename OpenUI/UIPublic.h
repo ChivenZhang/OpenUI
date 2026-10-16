@@ -27,6 +27,8 @@ enum
     UI_CSS_ALIGN_CONTENT_STRETCH,
     UI_CSS_ALIGN_CONTENT_SPACE_EVENLY,
     UI_CSS_ALIGN_CONTENT_BASE_LINE,
+    UI_CSS_ALIGN_CONTENT_START,
+    UI_CSS_ALIGN_CONTENT_END,
 };
 
 typedef unsigned int ui_css_align_content_type_t;
@@ -40,6 +42,8 @@ enum
     UI_CSS_ALIGN_ITEMS_STRETCH,
     UI_CSS_ALIGN_ITEMS_SPACE_EVENLY,
     UI_CSS_ALIGN_ITEMS_SPACE_AROUND,
+    UI_CSS_ALIGN_ITEMS_START,
+    UI_CSS_ALIGN_ITEMS_END,
 };
 
 typedef unsigned int ui_css_align_items_type_t;
@@ -54,6 +58,8 @@ enum
     UI_CSS_ALIGN_SELF_STRETCH,
     UI_CSS_ALIGN_SPACE_EVENLY,
     UI_CSS_ALIGN_SPACE_AROUND,
+    UI_CSS_ALIGN_SELF_START,
+    UI_CSS_ALIGN_SELF_END,
 };
 
 typedef unsigned int ui_css_align_self_type_t;
@@ -329,6 +335,7 @@ enum
 {
     UI_CSS_DIRECTION_LTR,
     UI_CSS_DIRECTION_RTL,
+    UI_CSS_DIRECTION_INHERIT,
 };
 
 typedef unsigned int ui_css_direction_type_t;
@@ -394,6 +401,10 @@ enum
     UI_CSS_FLEX_BASIS_AUTO,
     UI_CSS_FLEX_BASIS_LENGTH,
     UI_CSS_FLEX_BASIS_PERCENTAGE,
+    UI_CSS_FLEX_BASIS_MIN_CONTENT,
+    UI_CSS_FLEX_BASIS_MAX_CONTENT,
+    UI_CSS_FLEX_BASIS_FIT_CONTENT,
+    UI_CSS_FLEX_BASIS_STRETCH,
 };
 
 typedef unsigned int ui_css_flex_basis_type_t;
@@ -572,6 +583,8 @@ enum
     UI_CSS_HEIGHT_PERCENTAGE,
     UI_CSS_HEIGHT_NUMBER,
     UI_CSS_HEIGHT_ANGLE,
+    UI_CSS_HEIGHT_FIT_CONTENT,
+    UI_CSS_HEIGHT_STRETCH,
 };
 
 typedef unsigned int ui_css_height_type_t;
@@ -629,9 +642,42 @@ enum
     UI_CSS_JUSTIFY_CONTENT_SPACE_BETWEEN,
     UI_CSS_JUSTIFY_CONTENT_SPACE_AROUND,
     UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY,
+    UI_CSS_JUSTIFY_CONTENT_START,
+    UI_CSS_JUSTIFY_CONTENT_END,
+    UI_CSS_JUSTIFY_CONTENT_STRETCH,
+    UI_CSS_JUSTIFY_CONTENT_AUTO,
 };
 
 typedef unsigned int ui_css_justify_content_type_t;
+
+// Values match YGGridTrackType in External/yoga/yoga/YGEnums.h
+enum
+{
+    UI_CSS_GRID_TRACK_AUTO,
+    UI_CSS_GRID_TRACK_POINTS,
+    UI_CSS_GRID_TRACK_PERCENT,
+    UI_CSS_GRID_TRACK_FR,
+    UI_CSS_GRID_TRACK_MINMAX,
+};
+
+typedef unsigned int ui_css_grid_track_type_t;
+
+enum
+{
+    UI_CSS_GRID_LINE_AUTO,
+    UI_CSS_GRID_LINE_INTEGER,
+    UI_CSS_GRID_LINE_SPAN,
+};
+
+typedef unsigned int ui_css_grid_line_type_t;
+
+enum
+{
+    UI_CSS_GRID_GAP_LENGTH,
+    UI_CSS_GRID_GAP_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_grid_gap_type_t;
 
 enum
 {
@@ -681,6 +727,8 @@ enum
     UI_CSS_MAX_HEIGHT_PERCENTAGE,
     UI_CSS_MAX_HEIGHT_NUMBER,
     UI_CSS_MAX_HEIGHT_ANGLE,
+    UI_CSS_MAX_HEIGHT_FIT_CONTENT,
+    UI_CSS_MAX_HEIGHT_STRETCH,
 };
 
 typedef unsigned int ui_css_max_height_type_t;
@@ -694,6 +742,8 @@ enum
     UI_CSS_MAX_WIDTH_PERCENTAGE,
     UI_CSS_MAX_WIDTH_NUMBER,
     UI_CSS_MAX_WIDTH_ANGLE,
+    UI_CSS_MAX_WIDTH_FIT_CONTENT,
+    UI_CSS_MAX_WIDTH_STRETCH,
 };
 
 typedef unsigned int ui_css_max_width_type_t;
@@ -707,6 +757,8 @@ enum
     UI_CSS_MIN_HEIGHT_PERCENTAGE,
     UI_CSS_MIN_HEIGHT_NUMBER,
     UI_CSS_MIN_HEIGHT_ANGLE,
+    UI_CSS_MIN_HEIGHT_FIT_CONTENT,
+    UI_CSS_MIN_HEIGHT_STRETCH,
 };
 
 typedef unsigned int ui_css_min_height_type_t;
@@ -720,6 +772,8 @@ enum
     UI_CSS_MIN_WIDTH_PERCENTAGE,
     UI_CSS_MIN_WIDTH_NUMBER,
     UI_CSS_MIN_WIDTH_ANGLE,
+    UI_CSS_MIN_WIDTH_FIT_CONTENT,
+    UI_CSS_MIN_WIDTH_STRETCH,
 };
 
 typedef unsigned int ui_css_min_width_type_t;
@@ -1029,6 +1083,8 @@ enum
     UI_CSS_WIDTH_PERCENTAGE,
     UI_CSS_WIDTH_NUMBER,
     UI_CSS_WIDTH_ANGLE,
+    UI_CSS_WIDTH_FIT_CONTENT,
+    UI_CSS_WIDTH_STRETCH,
 };
 
 typedef unsigned int ui_css_width_type_t;

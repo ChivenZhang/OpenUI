@@ -16,7 +16,6 @@
 #include <yoga/Yoga.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "OpenUI/UICheck.h"
@@ -284,9 +283,47 @@ bool UICanvas::layoutWidget(UIRect client)
 		default:
 		case UI_CSS_DISPLAY_NONE: YGNodeStyleSetDisplay(node, YGDisplayNone);
 			break;
-		case UI_CSS_DISPLAY_FLEX: YGNodeStyleSetDisplay(node, YGDisplayFlex);
+		case UI_CSS_DISPLAY_FLEX:
+		case UI_CSS_DISPLAY_INLINE_FLEX: YGNodeStyleSetDisplay(node, YGDisplayFlex);
+			break;
+		case UI_CSS_DISPLAY_GRID:
+		case UI_CSS_DISPLAY_INLINE_GRID: YGNodeStyleSetDisplay(node, YGDisplayGrid);
+			break;
+		case UI_CSS_DISPLAY_CONTENTS: YGNodeStyleSetDisplay(node, YGDisplayContents);
 			break;
 		}
+		switch (widget->getStyle<UIPropDirection>("direction").Value)
+		{
+		default:
+		case UI_CSS_DIRECTION_INHERIT: YGNodeStyleSetDirection(node, YGDirectionInherit);
+			break;
+		case UI_CSS_DIRECTION_LTR: YGNodeStyleSetDirection(node, YGDirectionLTR);
+			break;
+		case UI_CSS_DIRECTION_RTL: YGNodeStyleSetDirection(node, YGDirectionRTL);
+			break;
+		}
+		switch (widget->getStyle<UIPropBoxSizing>("box-sizing").Value)
+		{
+		default:
+		case UI_CSS_BOX_SIZING_CONTENT_BOX: YGNodeStyleSetBoxSizing(node, YGBoxSizingContentBox);
+			break;
+		case UI_CSS_BOX_SIZING_BORDER_BOX: YGNodeStyleSetBoxSizing(node, YGBoxSizingBorderBox);
+			break;
+		}
+		switch (widget->getStyle<UIPropOverflowX>("overflow-x").Value)
+		{
+		default:
+		case UI_CSS_OVERFLOW_X_VISIBLE: YGNodeStyleSetOverflow(node, YGOverflowVisible);
+			break;
+		case UI_CSS_OVERFLOW_X_HIDDEN:
+		case UI_CSS_OVERFLOW_X_CLIP: YGNodeStyleSetOverflow(node, YGOverflowHidden);
+			break;
+		case UI_CSS_OVERFLOW_X_SCROLL:
+		case UI_CSS_OVERFLOW_X_AUTO: YGNodeStyleSetOverflow(node, YGOverflowScroll);
+			break;
+		}
+		auto aspectRatio = widget->getStyle<UIPropAspectRatio>("aspect-ratio");
+		if (aspectRatio.Auto == false) YGNodeStyleSetAspectRatio(node, aspectRatio.Value);
 		switch (widget->getPositionType().Value)
 		{
 		default:
@@ -327,6 +364,13 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_WIDTH_PERCENTAGE: YGNodeStyleSetWidthPercent(node, widget->getFixedWidth().Value);
 			break;
+		case UI_CSS_WIDTH_MIN_CONTENT:
+		case UI_CSS_WIDTH_MAX_CONTENT: YGNodeStyleSetWidthMaxContent(node);
+			break;
+		case UI_CSS_WIDTH_FIT_CONTENT: YGNodeStyleSetWidthFitContent(node);
+			break;
+		case UI_CSS_WIDTH_STRETCH: YGNodeStyleSetWidthStretch(node);
+			break;
 		}
 		switch (widget->getFixedHeight().Type)
 		{
@@ -338,6 +382,13 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_HEIGHT_PERCENTAGE: YGNodeStyleSetHeightPercent(node, widget->getFixedHeight().Value);
 			break;
+		case UI_CSS_HEIGHT_MIN_CONTENT:
+		case UI_CSS_HEIGHT_MAX_CONTENT: YGNodeStyleSetHeightMaxContent(node);
+			break;
+		case UI_CSS_HEIGHT_FIT_CONTENT: YGNodeStyleSetHeightFitContent(node);
+			break;
+		case UI_CSS_HEIGHT_STRETCH: YGNodeStyleSetHeightStretch(node);
+			break;
 		}
 		switch (widget->getMinWidth().Type)
 		{
@@ -346,6 +397,13 @@ bool UICanvas::layoutWidget(UIRect client)
 		case UI_CSS_MIN_WIDTH_LENGTH: YGNodeStyleSetMinWidth(node, widget->getMinWidth().Value);
 			break;
 		case UI_CSS_MIN_WIDTH_PERCENTAGE: YGNodeStyleSetMinWidthPercent(node, widget->getMinWidth().Value);
+			break;
+		case UI_CSS_MIN_WIDTH_MIN_CONTENT:
+		case UI_CSS_MIN_WIDTH_MAX_CONTENT: YGNodeStyleSetMinWidthMaxContent(node);
+			break;
+		case UI_CSS_MIN_WIDTH_FIT_CONTENT: YGNodeStyleSetMinWidthFitContent(node);
+			break;
+		case UI_CSS_MIN_WIDTH_STRETCH: YGNodeStyleSetMinWidthStretch(node);
 			break;
 		}
 		switch (widget->getMinHeight().Type)
@@ -356,6 +414,13 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_MIN_HEIGHT_PERCENTAGE: YGNodeStyleSetMinHeightPercent(node, widget->getMinHeight().Value);
 			break;
+		case UI_CSS_MIN_HEIGHT_MIN_CONTENT:
+		case UI_CSS_MIN_HEIGHT_MAX_CONTENT: YGNodeStyleSetMinHeightMaxContent(node);
+			break;
+		case UI_CSS_MIN_HEIGHT_FIT_CONTENT: YGNodeStyleSetMinHeightFitContent(node);
+			break;
+		case UI_CSS_MIN_HEIGHT_STRETCH: YGNodeStyleSetMinHeightStretch(node);
+			break;
 		}
 		switch (widget->getMaxWidth().Type)
 		{
@@ -365,6 +430,13 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_MAX_WIDTH_PERCENTAGE: YGNodeStyleSetMaxWidthPercent(node, widget->getMaxWidth().Value);
 			break;
+		case UI_CSS_MAX_WIDTH_MIN_CONTENT:
+		case UI_CSS_MAX_WIDTH_MAX_CONTENT: YGNodeStyleSetMaxWidthMaxContent(node);
+			break;
+		case UI_CSS_MAX_WIDTH_FIT_CONTENT: YGNodeStyleSetMaxWidthFitContent(node);
+			break;
+		case UI_CSS_MAX_WIDTH_STRETCH: YGNodeStyleSetMaxWidthStretch(node);
+			break;
 		}
 		switch (widget->getMaxHeight().Type)
 		{
@@ -373,6 +445,13 @@ bool UICanvas::layoutWidget(UIRect client)
 		case UI_CSS_MAX_HEIGHT_LENGTH: YGNodeStyleSetMaxHeight(node, widget->getMaxHeight().Value);
 			break;
 		case UI_CSS_MAX_HEIGHT_PERCENTAGE: YGNodeStyleSetMaxHeightPercent(node, widget->getMaxHeight().Value);
+			break;
+		case UI_CSS_MAX_HEIGHT_MIN_CONTENT:
+		case UI_CSS_MAX_HEIGHT_MAX_CONTENT: YGNodeStyleSetMaxHeightMaxContent(node);
+			break;
+		case UI_CSS_MAX_HEIGHT_FIT_CONTENT: YGNodeStyleSetMaxHeightFitContent(node);
+			break;
+		case UI_CSS_MAX_HEIGHT_STRETCH: YGNodeStyleSetMaxHeightStretch(node);
 			break;
 		}
 		YGNodeStyleSetBorder(node, YGEdgeLeft, widget->getBorderLeft().Value);
@@ -459,24 +538,6 @@ bool UICanvas::layoutWidget(UIRect client)
 		case UI_CSS_PADDING_PERCENTAGE: YGNodeStyleSetPaddingPercent(node, YGEdgeBottom, widget->getPaddingBottom().Value);
 			break;
 		}
-		// switch (widget->getSpacing().Type)
-		// {
-		// case UI_CSS_UnitNone: YGNodeStyleSetGap(node, YGGutterRow, 0);
-		// 	break;
-		// case UI_CSS_UnitPoint: YGNodeStyleSetGap(node, YGGutterRow, widget->getSpacing().Value);
-		// 	break;
-		// case UI_CSS_UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterRow, widget->getSpacing().Value);
-		// 	break;
-		// }
-		// switch (widget->getSpacing().Type)
-		// {
-		// case UI_CSS_UnitNone: YGNodeStyleSetGap(node, YGGutterColumn, 0);
-		// 	break;
-		// case UI_CSS_UnitPoint: YGNodeStyleSetGap(node, YGGutterColumn, widget->getSpacing().Value);
-		// 	break;
-		// case UI_CSS_UnitPercent: YGNodeStyleSetGapPercent(node, YGGutterColumn, widget->getSpacing().Value);
-		// 	break;
-		// }
 		switch (widget->getFlexDirection().Value)
 		{
 		default:
@@ -519,6 +580,10 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_ALIGN_CONTENT_SPACE_EVENLY: YGNodeStyleSetAlignContent(node, YGAlignSpaceEvenly);
 			break;
+		case UI_CSS_ALIGN_CONTENT_START: YGNodeStyleSetAlignContent(node, YGAlignStart);
+			break;
+		case UI_CSS_ALIGN_CONTENT_END: YGNodeStyleSetAlignContent(node, YGAlignEnd);
+			break;
 		}
 		switch (widget->getAlignItems().Value)
 		{
@@ -538,6 +603,10 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_ALIGN_ITEMS_SPACE_AROUND: YGNodeStyleSetAlignItems(node, YGAlignSpaceAround);
 			break;
+		case UI_CSS_ALIGN_ITEMS_START: YGNodeStyleSetAlignItems(node, YGAlignStart);
+			break;
+		case UI_CSS_ALIGN_ITEMS_END: YGNodeStyleSetAlignItems(node, YGAlignEnd);
+			break;
 		}
 		switch (widget->getJustifyContent().Value)
 		{
@@ -554,6 +623,38 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY: YGNodeStyleSetJustifyContent(node, YGJustifySpaceEvenly);
 			break;
+		case UI_CSS_JUSTIFY_CONTENT_START: YGNodeStyleSetJustifyContent(node, YGJustifyStart);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_END: YGNodeStyleSetJustifyContent(node, YGJustifyEnd);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_STRETCH: YGNodeStyleSetJustifyContent(node, YGJustifyStretch);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_AUTO: YGNodeStyleSetJustifyContent(node, YGJustifyAuto);
+			break;
+		}
+		switch (widget->getStyle<UIPropJustifyItems>("justify-items").Value)
+		{
+		default:
+		case UI_CSS_JUSTIFY_CONTENT_STRETCH: YGNodeStyleSetJustifyItems(node, YGJustifyStretch);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_FLEX_START: YGNodeStyleSetJustifyItems(node, YGJustifyFlexStart);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_FLEX_END: YGNodeStyleSetJustifyItems(node, YGJustifyFlexEnd);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_CENTER: YGNodeStyleSetJustifyItems(node, YGJustifyCenter);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_BETWEEN: YGNodeStyleSetJustifyItems(node, YGJustifySpaceBetween);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_AROUND: YGNodeStyleSetJustifyItems(node, YGJustifySpaceAround);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY: YGNodeStyleSetJustifyItems(node, YGJustifySpaceEvenly);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_START: YGNodeStyleSetJustifyItems(node, YGJustifyStart);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_END: YGNodeStyleSetJustifyItems(node, YGJustifyEnd);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_AUTO: YGNodeStyleSetJustifyItems(node, YGJustifyAuto);
+			break;
 		}
 		switch (widget->getFlexBasis().Type)
 		{
@@ -564,6 +665,37 @@ bool UICanvas::layoutWidget(UIRect client)
 		case UI_CSS_FLEX_BASIS_LENGTH: YGNodeStyleSetFlexBasis(node, widget->getFlexBasis().Value);
 			break;
 		case UI_CSS_FLEX_BASIS_PERCENTAGE: YGNodeStyleSetFlexBasisPercent(node, widget->getFlexBasis().Value);
+			break;
+		case UI_CSS_FLEX_BASIS_MIN_CONTENT:
+		case UI_CSS_FLEX_BASIS_MAX_CONTENT: YGNodeStyleSetFlexBasisMaxContent(node);
+			break;
+		case UI_CSS_FLEX_BASIS_FIT_CONTENT: YGNodeStyleSetFlexBasisFitContent(node);
+			break;
+		case UI_CSS_FLEX_BASIS_STRETCH: YGNodeStyleSetFlexBasisStretch(node);
+			break;
+		}
+		switch (widget->getStyle<UIPropJustifySelf>("justify-self").Value)
+		{
+		default:
+		case UI_CSS_JUSTIFY_CONTENT_AUTO: YGNodeStyleSetJustifySelf(node, YGJustifyAuto);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_FLEX_START: YGNodeStyleSetJustifySelf(node, YGJustifyFlexStart);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_FLEX_END: YGNodeStyleSetJustifySelf(node, YGJustifyFlexEnd);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_CENTER: YGNodeStyleSetJustifySelf(node, YGJustifyCenter);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_BETWEEN: YGNodeStyleSetJustifySelf(node, YGJustifySpaceBetween);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_AROUND: YGNodeStyleSetJustifySelf(node, YGJustifySpaceAround);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY: YGNodeStyleSetJustifySelf(node, YGJustifySpaceEvenly);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_STRETCH: YGNodeStyleSetJustifySelf(node, YGJustifyStretch);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_START: YGNodeStyleSetJustifySelf(node, YGJustifyStart);
+			break;
+		case UI_CSS_JUSTIFY_CONTENT_END: YGNodeStyleSetJustifySelf(node, YGJustifyEnd);
 			break;
 		}
 		switch (widget->getAlignSelf().Value)
@@ -585,9 +717,117 @@ bool UICanvas::layoutWidget(UIRect client)
 			break;
 		case UI_CSS_ALIGN_SPACE_AROUND: YGNodeStyleSetAlignSelf(node, YGAlignSpaceAround);
 			break;
+		case UI_CSS_ALIGN_SELF_START: YGNodeStyleSetAlignSelf(node, YGAlignStart);
+			break;
+		case UI_CSS_ALIGN_SELF_END: YGNodeStyleSetAlignSelf(node, YGAlignEnd);
+			break;
 		}
 		YGNodeStyleSetFlexGrow(node, widget->getFlexGrow().Value);
 		YGNodeStyleSetFlexShrink(node, widget->getFlexShrink().Value);
+
+		auto templateColumns = widget->getGridTemplateColumns().Tracks;
+		if (templateColumns.size())
+		{
+			YGNodeStyleSetGridTemplateColumnsCount(node, templateColumns.size());
+			for (size_t i = 0; i < templateColumns.size(); ++i)
+			{
+				auto const& track = templateColumns[i];
+				if (track.Type == UI_CSS_GRID_TRACK_MINMAX)
+					YGNodeStyleSetGridTemplateColumnMinMax(node, i, (YGGridTrackType)track.MinType, track.MinValue, (YGGridTrackType)track.MaxType, track.MaxValue);
+				else
+					YGNodeStyleSetGridTemplateColumn(node, i, (YGGridTrackType)track.Type, track.Value);
+			}
+		}
+		auto templateRows = widget->getGridTemplateRows().Tracks;
+		if (templateRows.size())
+		{
+			YGNodeStyleSetGridTemplateRowsCount(node, templateRows.size());
+			for (size_t i = 0; i < templateRows.size(); ++i)
+			{
+				auto const& track = templateRows[i];
+				if (track.Type == UI_CSS_GRID_TRACK_MINMAX)
+					YGNodeStyleSetGridTemplateRowMinMax(node, i, (YGGridTrackType)track.MinType, track.MinValue, (YGGridTrackType)track.MaxType, track.MaxValue);
+				else
+					YGNodeStyleSetGridTemplateRow(node, i, (YGGridTrackType)track.Type, track.Value);
+			}
+		}
+		auto autoColumns = widget->getGridAutoColumns().Tracks;
+		if (autoColumns.size())
+		{
+			YGNodeStyleSetGridAutoColumnsCount(node, autoColumns.size());
+			for (size_t i = 0; i < autoColumns.size(); ++i)
+			{
+				auto const& track = autoColumns[i];
+				if (track.Type == UI_CSS_GRID_TRACK_MINMAX)
+					YGNodeStyleSetGridAutoColumnMinMax(node, i, (YGGridTrackType)track.MinType, track.MinValue, (YGGridTrackType)track.MaxType, track.MaxValue);
+				else
+					YGNodeStyleSetGridAutoColumn(node, i, (YGGridTrackType)track.Type, track.Value);
+			}
+		}
+		auto autoRows = widget->getGridAutoRows().Tracks;
+		if (autoRows.size())
+		{
+			YGNodeStyleSetGridAutoRowsCount(node, autoRows.size());
+			for (size_t i = 0; i < autoRows.size(); ++i)
+			{
+				auto const& track = autoRows[i];
+				if (track.Type == UI_CSS_GRID_TRACK_MINMAX)
+					YGNodeStyleSetGridAutoRowMinMax(node, i, (YGGridTrackType)track.MinType, track.MinValue, (YGGridTrackType)track.MaxType, track.MaxValue);
+				else
+					YGNodeStyleSetGridAutoRow(node, i, (YGGridTrackType)track.Type, track.Value);
+			}
+		}
+
+		switch (widget->getGridColumnStart().Type)
+		{
+		default: YGNodeStyleSetGridColumnStartAuto(node);
+			break;
+		case UI_CSS_GRID_LINE_INTEGER: YGNodeStyleSetGridColumnStart(node, widget->getGridColumnStart().Value);
+			break;
+		case UI_CSS_GRID_LINE_SPAN: YGNodeStyleSetGridColumnStartSpan(node, widget->getGridColumnStart().Value);
+			break;
+		}
+		switch (widget->getGridColumnEnd().Type)
+		{
+		default: YGNodeStyleSetGridColumnEndAuto(node);
+			break;
+		case UI_CSS_GRID_LINE_INTEGER: YGNodeStyleSetGridColumnEnd(node, widget->getGridColumnEnd().Value);
+			break;
+		case UI_CSS_GRID_LINE_SPAN: YGNodeStyleSetGridColumnEndSpan(node, widget->getGridColumnEnd().Value);
+			break;
+		}
+		switch (widget->getGridRowStart().Type)
+		{
+		default: YGNodeStyleSetGridRowStartAuto(node);
+			break;
+		case UI_CSS_GRID_LINE_INTEGER: YGNodeStyleSetGridRowStart(node, widget->getGridRowStart().Value);
+			break;
+		case UI_CSS_GRID_LINE_SPAN: YGNodeStyleSetGridRowStartSpan(node, widget->getGridRowStart().Value);
+			break;
+		}
+		switch (widget->getGridRowEnd().Type)
+		{
+		default: YGNodeStyleSetGridRowEndAuto(node);
+			break;
+		case UI_CSS_GRID_LINE_INTEGER: YGNodeStyleSetGridRowEnd(node, widget->getGridRowEnd().Value);
+			break;
+		case UI_CSS_GRID_LINE_SPAN: YGNodeStyleSetGridRowEndSpan(node, widget->getGridRowEnd().Value);
+			break;
+		}
+		switch (widget->getGridColumnGap().Type)
+		{
+		default: YGNodeStyleSetGap(node, YGGutterColumn, widget->getGridColumnGap().Value);
+			break;
+		case UI_CSS_GRID_GAP_PERCENTAGE: YGNodeStyleSetGapPercent(node, YGGutterColumn, widget->getGridColumnGap().Value);
+			break;
+		}
+		switch (widget->getGridRowGap().Type)
+		{
+		default: YGNodeStyleSetGap(node, YGGutterRow, widget->getGridRowGap().Value);
+			break;
+		case UI_CSS_GRID_GAP_PERCENTAGE: YGNodeStyleSetGapPercent(node, YGGutterRow, widget->getGridRowGap().Value);
+			break;
+		}
 
 		for (size_t i = 0; i < widget->getWidgets().size(); ++i)
 		{

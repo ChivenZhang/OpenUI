@@ -84,7 +84,7 @@ public:
 	bool inBounds(UIFloat2 pos);
 	bool inBounds(float x, float y);
 
-	// ================================= Flex Query ======================================
+	// ================================= Flex Layout ======================================
 
 	UIPropDisplay getDisplayType() const;
 	void setDisplayType(UIPropDisplay value);
@@ -174,6 +174,53 @@ public:
 	UIPropAlignSelf getAlignSelf() const;
 	void setAlignSelf(UIPropAlignSelf value);
 	void setFlex(UIPropFlexGrow grow, UIPropFlexShrink shrink, UIPropFlexBasis basis);
+
+	// ================================= Grid Layout ======================================
+
+	UIPropGridTemplateColumns getGridTemplateColumns() const;
+	void setGridTemplateColumns(UIPropGridTemplateColumns value);
+	void setGridTemplateColumns(UIList<UIGridTrack> value);
+	UIPropGridTemplateRows getGridTemplateRows() const;
+	void setGridTemplateRows(UIPropGridTemplateRows value);
+	void setGridTemplateRows(UIList<UIGridTrack> value);
+	UIPropGridAutoColumns getGridAutoColumns() const;
+	void setGridAutoColumns(UIPropGridAutoColumns value);
+	void setGridAutoColumns(UIList<UIGridTrack> value);
+	UIPropGridAutoRows getGridAutoRows() const;
+	void setGridAutoRows(UIPropGridAutoRows value);
+	void setGridAutoRows(UIList<UIGridTrack> value);
+
+	UIPropGridColumnStart getGridColumnStart() const;
+	void setGridColumnStart(UIPropGridColumnStart value);
+	void setGridColumnStart(int value);
+	void setGridColumnStartAuto();
+	void setGridColumnStartSpan(int span);
+	UIPropGridColumnEnd getGridColumnEnd() const;
+	void setGridColumnEnd(UIPropGridColumnEnd value);
+	void setGridColumnEnd(int value);
+	void setGridColumnEndAuto();
+	void setGridColumnEndSpan(int span);
+	UIPropGridRowStart getGridRowStart() const;
+	void setGridRowStart(UIPropGridRowStart value);
+	void setGridRowStart(int value);
+	void setGridRowStartAuto();
+	void setGridRowStartSpan(int span);
+	UIPropGridRowEnd getGridRowEnd() const;
+	void setGridRowEnd(UIPropGridRowEnd value);
+	void setGridRowEnd(int value);
+	void setGridRowEndAuto();
+	void setGridRowEndSpan(int span);
+
+	UIPropGridColumnGap getGridColumnGap() const;
+	void setGridColumnGap(UIPropGridColumnGap value);
+	void setGridColumnGap(float value);
+	void setGridColumnGapPercent(float value);
+	UIPropGridRowGap getGridRowGap() const;
+	void setGridRowGap(UIPropGridRowGap value);
+	void setGridRowGap(float value);
+	void setGridRowGapPercent(float value);
+	void setGridGap(float value);
+	void setGridGap(float row, float column);
 
 	// =================================CSS Style======================================
 
