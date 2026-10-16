@@ -19,7 +19,7 @@ enum NVGimageFlagsRT {
     RTVG_IMAGE_NODELETE			= 1<<16,	// Do not delete GL texture handle.
 };
 
-// Creates a NanoVG context that renders through the OpenRT API.
+// Creates a nanovg context that renders through the OpenRT API.
 // Geometry is rasterised at nvgEndFrame() into the NVGtarget passed to
 // nvgBeginFrame. Colour and stencil pointers are rt_texture_t*. The backend
 // does not allocate them or present.

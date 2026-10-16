@@ -1,5 +1,5 @@
 //
-// NanoVG backend on top of the OpenRT rendering interface.
+// nanovg backend on top of the OpenRT rendering interface.
 //
 // Mirrors nanovg_gl.h: nanovg hands us triangle lists for fills, fringes,
 // strokes and text; we batch them per frame and replay them in renderFlush.

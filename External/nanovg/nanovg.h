@@ -142,7 +142,7 @@ void nvgEndFrame(NVGcontext* ctx);
 //
 // Composite operation
 //
-// The composite operations in NanoVG are modeled after HTML Canvas API, and
+// The composite operations in nanovg are modeled after HTML Canvas API, and
 // the blend func is based on OpenGL (see corresponding manuals for more info).
 // The colors in the blending state have premultiplied alpha.
 
@@ -158,7 +158,7 @@ void nvgGlobalCompositeBlendFuncSeparate(NVGcontext* ctx, int srcRGB, int dstRGB
 //
 // Color utils
 //
-// Colors in NanoVG are stored as unsigned ints in ABGR format.
+// Colors in nanovg are stored as unsigned ints in ABGR format.
 
 // Returns a color value from red, green, blue values. Alpha will be set to 255 (1.0f).
 NVGcolor nvgRGB(unsigned char r, unsigned char g, unsigned char b);
@@ -194,7 +194,7 @@ NVGcolor nvgHSLA(float h, float s, float l, unsigned char a);
 //
 // State Handling
 //
-// NanoVG contains state which represents how paths will be rendered.
+// nanovg contains state which represents how paths will be rendered.
 // The state contains transform, fill and stroke styles, text and font styles,
 // and scissor clipping.
 
@@ -345,7 +345,7 @@ float nvgRadToDeg(float rad);
 //
 // Images
 //
-// NanoVG allows you to load jpg, png, psd, tga, pic and gif files to be used for rendering.
+// nanovg allows you to load jpg, png, psd, tga, pic and gif files to be used for rendering.
 // In addition you can upload your own image. The image loading is provided by stb_image.
 // The parameter imageFlags is combination of flags defined in NVGimageFlags.
 
@@ -373,7 +373,7 @@ void nvgDeleteImage(NVGcontext* ctx, int image);
 //
 // Paints
 //
-// NanoVG supports four types of paints: linear gradient, box gradient, radial gradient and image pattern.
+// nanovg supports four types of paints: linear gradient, box gradient, radial gradient and image pattern.
 // These can be used as paints for strokes and fills.
 
 // Creates and returns a linear gradient. Parameters (sx,sy)-(ex,ey) specify the start and end coordinates
@@ -431,7 +431,7 @@ void nvgResetScissor(NVGcontext* ctx);
 // to draw common shapes like rectangles and circles, and lower level step-by-step functions,
 // which allow to define a path curve by curve.
 //
-// NanoVG uses even-odd fill rule to draw the shapes. Solid shapes should have counter clockwise
+// nanovg uses even-odd fill rule to draw the shapes. Solid shapes should have counter clockwise
 // winding and holes should have counter clockwise order. To specify winding of a path you can
 // call nvgPathWinding(). This is useful especially for the common shapes, which are drawn CCW.
 //
@@ -494,7 +494,7 @@ void nvgStroke(NVGcontext* ctx);
 //
 // Text
 //
-// NanoVG allows you to load .ttf files and use the font to render text.
+// nanovg allows you to load .ttf files and use the font to render text.
 //
 // The appearance of the text can be defined by setting the current text style
 // and by specifying the fill color. Common text and font settings such as

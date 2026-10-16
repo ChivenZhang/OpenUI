@@ -6,12 +6,12 @@ if (OPENUI_ENABLE_OPENRT)
 
     file(GLOB_RECURSE OPENRT_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.c ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
     add_executable(UI-OpenRT ${OPENRT_EXAMPLE_SRC})
-    add_dependencies(UI-OpenRT OpenUI OpenRT NanoVG Shader)
+    add_dependencies(UI-OpenRT OpenUI OpenRT nanovg Shader)
 
     find_package(SDL3 CONFIG REQUIRED)
     target_link_libraries(UI-OpenRT PRIVATE SDL3::SDL3)
 
-    target_link_libraries(UI-OpenRT PRIVATE OpenUI OpenRT NanoVG)
+    target_link_libraries(UI-OpenRT PRIVATE OpenUI OpenRT nanovg)
 
     target_include_directories(UI-OpenRT PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
     target_include_directories(UI-OpenRT PUBLIC ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/harfbuzz)

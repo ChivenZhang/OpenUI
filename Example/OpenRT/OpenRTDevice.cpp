@@ -54,10 +54,10 @@ OpenRTDevice::OpenRTDevice()
 	m_Window = window;
 	m_Context = context;
 
-	// Initialize NanoVG context (OpenRT backend) and default UI fonts
+	// Initialize nanovg context (OpenRT backend) and default UI fonts
 
 	m_NanoVG = rtCreateRT(RTVG_ANTIALIAS | RTVG_STENCIL_STROKES);
-	if (m_NanoVG == nullptr) UI_FATAL("NanoVG context could not be created");
+	if (m_NanoVG == nullptr) UI_FATAL("nanovg context could not be created");
 	auto fontSans = nvgCreateFont(m_NanoVG, "sans", "../../Example/OpenRT/Roboto-Regular.ttf");
 	auto fontBold = nvgCreateFont(m_NanoVG, "sans-bold", "../../Example/OpenRT/Roboto-Bold.ttf");
 	auto fontLight = nvgCreateFont(m_NanoVG, "sans-light", "../../Example/OpenRT/Roboto-Light.ttf");

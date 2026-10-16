@@ -26,7 +26,7 @@
 #include <cstring>
 #include <functional>
 
-// UIPainter implemented on top of NanoVG (OpenRT backend).
+// UIPainter implemented on top of nanovg (OpenRT backend).
 //
 // The NVGcontext is owned by OpenRTDevice; the painter only borrows it.
 // A paint session runs between setTarget(target) [nvgBeginFrame] and
@@ -78,7 +78,7 @@ struct OpenRTPainterPrivate : UIPrivate
 	bool EnableClip = true;
 	bool InFrame = false;
 	UIImageRaw Target = nullptr;
-	UIList<int> Images; // NanoVG images created during the current frame
+	UIList<int> Images; // nanovg images created during the current frame
 	UIMap<rt_texture_t*, OpenRTNVGTarget> Targets; // one NVGtarget group per colour attachment
 	PangoFontMap* FontMap = nullptr;
 	PangoLayout* Layout = nullptr;
@@ -127,7 +127,7 @@ static void nvg_applyPen(NVGcontext* vg, UIPen const& pen)
 	case UIPen::BevelJoin: nvgLineJoin(vg, NVG_BEVEL); break;
 	case UIPen::RoundJoin: nvgLineJoin(vg, NVG_ROUND); break;
 	}
-	// Dash patterns are not supported by NanoVG; all pens render as solid lines.
+	// Dash patterns are not supported by nanovg; all pens render as solid lines.
 }
 
 static void nvg_applyBrush(NVGcontext* vg, UIBrush const& brush)
@@ -136,7 +136,7 @@ static void nvg_applyBrush(NVGcontext* vg, UIBrush const& brush)
 	nvgFillColor(vg, nvg_color(brush.Color));
 }
 
-// Rounded rectangle with independent x / y radii (NanoVG only offers a single radius).
+// Rounded rectangle with independent x / y radii (nanovg only offers a single radius).
 static void nvg_roundedRectPath(NVGcontext* vg, float x, float y, float w, float h, float rx, float ry)
 {
 	rx = std::clamp(rx, 0.0f, w * 0.5f);
@@ -159,7 +159,7 @@ static void nvg_roundedRectPath(NVGcontext* vg, float x, float y, float w, float
 }
 
 // ====================================================================
-// Text layout (Pango) and glyph drawing (NanoVG)
+// Text layout (Pango) and glyph drawing (nanovg)
 
 // Positive finite sizes become Pango units. Non-positive and huge values
 // (callers pass FLT_MAX to measure unwrapped text) mean "unconstrained".
@@ -332,7 +332,7 @@ static uint32_t nvg_glyphRgb(UIColor const& color)
 	return (r << 16) | (g << 8) | b;
 }
 
-// FreeType rasterizes a miss. Later draws reuse the NanoVG texture.
+// FreeType rasterizes a miss. Later draws reuse the nanovg texture.
 static bool nvg_drawGlyphBitmap(NVGcontext* vg, UIMap<OpenRTGlyphKey, OpenRTGlyphImage>& cache, FT_Face face, FT_UInt glyph, float x, float y, UIColor const& color)
 {
 	OpenRTGlyphKey key;
