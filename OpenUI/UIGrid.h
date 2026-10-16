@@ -26,6 +26,7 @@ public:
 	explicit UIGrid(UICanvasRaw canvas);
 	~UIGrid() override;
 	void arrange(UIRect client) override;
+	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
 
 	bool addWidget(UIWidgetRef value) override;

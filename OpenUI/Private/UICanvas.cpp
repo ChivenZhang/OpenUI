@@ -724,6 +724,7 @@ bool UICanvas::paintWidget(UIRect client)
 		render->delImage(*widgetRT);
 		widget.Widget->setTarget({});
 	}
+
 	return true;
 }
 

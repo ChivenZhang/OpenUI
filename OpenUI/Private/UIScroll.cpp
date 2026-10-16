@@ -15,7 +15,7 @@ struct UIScrollPrivate : UIPrivate
 {
 	UIScroll::policy_t HorizontalPolicy = UIScroll::PolicyAsNeeded;
 	UIScroll::policy_t VerticalPolicy = UIScroll::PolicyAsNeeded;
-	UIScrollBarRef HorizontalScrollBar;
+	UIScrollBarRef HorizonScrollBar;
 	UIScrollBarRef VerticalScrollBar;
 	UIScrollStyle Style;
 };
@@ -27,16 +27,16 @@ UIScroll::UIScroll(UICanvasRaw canvas)
 {
 	m_Private = new UIScrollPrivate;
 
-	PRIVATE()->HorizontalScrollBar = UINew<UIScrollBar>(canvas);
-	addWidget(PRIVATE()->HorizontalScrollBar);
-	PRIVATE()->HorizontalScrollBar->setFixedHeight({12, UI_CSS_HEIGHT_LENGTH});
-	PRIVATE()->HorizontalScrollBar->setMinWidth({12, UI_CSS_MIN_WIDTH_LENGTH});
-	PRIVATE()->HorizontalScrollBar->setOrientation(UI::Horizontal);
-	PRIVATE()->HorizontalScrollBar->setSingleStep(80);
-	auto style = PRIVATE()->HorizontalScrollBar->getHandle()->getStyle();
+	PRIVATE()->HorizonScrollBar = UINew<UIScrollBar>(canvas);
+	addWidget(PRIVATE()->HorizonScrollBar);
+	PRIVATE()->HorizonScrollBar->setFixedHeight({12, UI_CSS_HEIGHT_LENGTH});
+	PRIVATE()->HorizonScrollBar->setMinWidth({12, UI_CSS_MIN_WIDTH_LENGTH});
+	PRIVATE()->HorizonScrollBar->setOrientation(UI::Horizontal);
+	PRIVATE()->HorizonScrollBar->setSingleStep(80);
+	auto style = PRIVATE()->HorizonScrollBar->getHandle()->getStyle();
 	style.Round = { 0, 0 };
 	style.Normal.Pen = UIFramePen;
-	PRIVATE()->HorizontalScrollBar->getHandle()->setStyle(style);
+	PRIVATE()->HorizonScrollBar->getHandle()->setStyle(style);
 
 	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(canvas);
 	addWidget(PRIVATE()->VerticalScrollBar);
@@ -59,8 +59,8 @@ void UIScroll::arrange(UIRect client)
 {
 	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_FLEX_END});
 
-	PRIVATE()->HorizontalScrollBar->setFixedHeight({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH});
-	PRIVATE()->HorizontalScrollBar->setMinWidth({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_MIN_WIDTH_LENGTH});
+	PRIVATE()->HorizonScrollBar->setFixedHeight({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH});
+	PRIVATE()->HorizonScrollBar->setMinWidth({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_MIN_WIDTH_LENGTH});
 
 	PRIVATE()->VerticalScrollBar->setFixedWidth({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_WIDTH_LENGTH});
 	PRIVATE()->VerticalScrollBar->setMinHeight({12 * getCanvas()->getConfig().DisplayScale, UI_CSS_MIN_HEIGHT_LENGTH});
@@ -91,22 +91,22 @@ void UIScroll::layout(UIRect client)
 		case UIScroll::PolicyAlwaysOff: showV = false; break;
 		case UIScroll::PolicyAlwaysOn: showV = true; break;
 		}
-		PRIVATE()->HorizontalScrollBar->setVisible(showH);
+		PRIVATE()->HorizonScrollBar->setVisible(showH);
 		PRIVATE()->VerticalScrollBar->setVisible(showV);
 
 		auto width = PRIVATE()->VerticalScrollBar->getFixedWidth().Value;
-		auto height = PRIVATE()->HorizontalScrollBar->getFixedHeight().Value;
+		auto height = PRIVATE()->HorizonScrollBar->getFixedHeight().Value;
 
 		if (showH)
 		{
 			if (showV)
 			{
-				PRIVATE()->HorizontalScrollBar->setLocalBounds({ 0, client.H - height, client.W - width, height });
+				PRIVATE()->HorizonScrollBar->setLocalBounds({ 0, client.H - height, client.W - width, height });
 				PRIVATE()->VerticalScrollBar->setLocalBounds({ client.W - width, 0, width, client.H - height });
 			}
 			else
 			{
-				PRIVATE()->HorizontalScrollBar->setLocalBounds({ 0, client.H - height, client.W, height });
+				PRIVATE()->HorizonScrollBar->setLocalBounds({ 0, client.H - height, client.W, height });
 				PRIVATE()->VerticalScrollBar->setLocalBounds({ 0, 0, 0, client.H - height });
 			}
 		}
@@ -114,26 +114,26 @@ void UIScroll::layout(UIRect client)
 		{
 			if (showV)
 			{
-				PRIVATE()->HorizontalScrollBar->setLocalBounds({ 0, 0, client.W - width, 0 });
+				PRIVATE()->HorizonScrollBar->setLocalBounds({ 0, 0, client.W - width, 0 });
 				PRIVATE()->VerticalScrollBar->setLocalBounds({ client.W - width, 0, width, client.H });
 			}
 			else
 			{
-				PRIVATE()->HorizontalScrollBar->setLocalBounds({ 0, 0, client.W, 0 });
+				PRIVATE()->HorizonScrollBar->setLocalBounds({ 0, 0, client.W, 0 });
 				PRIVATE()->VerticalScrollBar->setLocalBounds({ 0, 0, 0, client.H });
 			}
 		}
 
-		auto bounds = PRIVATE()->HorizontalScrollBar->getLocalBounds();
-		PRIVATE()->HorizontalScrollBar->setViewport({ client.X + bounds.X, client.Y + bounds.Y, bounds.W, bounds.H });
-		PRIVATE()->HorizontalScrollBar->setRange(0, std::max<int32_t>(0, content->getWidth()));
+		auto bounds = PRIVATE()->HorizonScrollBar->getLocalBounds();
+		PRIVATE()->HorizonScrollBar->setViewport({ client.X + bounds.X, client.Y + bounds.Y, bounds.W, bounds.H });
+		PRIVATE()->HorizonScrollBar->setRange(0, std::max<int32_t>(0, content->getWidth()));
 
 		bounds = PRIVATE()->VerticalScrollBar->getLocalBounds();
 		PRIVATE()->VerticalScrollBar->setViewport({ client.X + bounds.X, client.Y + bounds.Y, bounds.W, bounds.H });
 		PRIVATE()->VerticalScrollBar->setRange(0, std::max<int32_t>(0, content->getHeight()));
 
 		content->setLocalBounds({
-			showH ? -(PRIVATE()->HorizontalScrollBar->getValue() / content->getWidth() * (content->getWidth() - client.W)) : 0,
+			showH ? -(PRIVATE()->HorizonScrollBar->getValue() / content->getWidth() * (content->getWidth() - client.W)) : 0,
 			showV ? -(PRIVATE()->VerticalScrollBar->getValue() / content->getHeight() * (content->getHeight() - client.H)) : 0,
 			content->getWidth(),
 			content->getHeight(),
@@ -141,14 +141,14 @@ void UIScroll::layout(UIRect client)
 		content->setViewport({
 			client.X + 1,
 			client.Y + 1,
-			PRIVATE()->HorizontalScrollBar->getLocalBounds().W - 2,
+			PRIVATE()->HorizonScrollBar->getLocalBounds().W - 2,
 			PRIVATE()->VerticalScrollBar->getLocalBounds().H - 2
 			});
 
 	}
 	else
 	{
-		PRIVATE()->HorizontalScrollBar->setRange(0, 0);
+		PRIVATE()->HorizonScrollBar->setRange(0, 0);
 		PRIVATE()->VerticalScrollBar->setRange(0, 0);
 
 		auto showH = false, showV = false;
@@ -164,7 +164,7 @@ void UIScroll::layout(UIRect client)
 		case UIScroll::PolicyAlwaysOff: showV = false; break;
 		case UIScroll::PolicyAlwaysOn: showV = true; break;
 		}
-		PRIVATE()->HorizontalScrollBar->setVisible(showH);
+		PRIVATE()->HorizonScrollBar->setVisible(showH);
 		PRIVATE()->VerticalScrollBar->setVisible(showV);
 	}
 }
@@ -172,12 +172,9 @@ void UIScroll::layout(UIRect client)
 void UIScroll::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(UINoPen);
-	painter->setBrush(PRIVATE()->Style.Brush);
-	painter->drawRect(client.X, client.Y, client.W, client.H);
 
 	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(UINoBrush);
+	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
@@ -258,7 +255,7 @@ void UIScroll::setVerticalValue(float value)
 
 UIScrollBarRaw UIScroll::getHorizontalBar() const
 {
-	return PRIVATE()->HorizontalScrollBar.get();
+	return PRIVATE()->HorizonScrollBar.get();
 }
 
 UIScrollBarRaw UIScroll::getVerticalBar() const

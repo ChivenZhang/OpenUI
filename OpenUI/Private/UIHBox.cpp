@@ -41,7 +41,7 @@ void UIHBox::arrange(UIRect client)
 		auto child = getWidgets()[i];
 		if (child->getFixedWidth().Type == UI_CSS_WIDTH_AUTO) child->setFlexGrow({1.0f, UI_CSS_FLEX_GROW_NUMBER});
 		else child->setFlexGrow({0.0f, UI_CSS_FLEX_GROW_NUMBER});
-		if (child->getFixedHeight().Type == UI_CSS_HEIGHT_AUTO) child->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
+		if (child->getFixedHeight().Type == UI_CSS_HEIGHT_AUTO) child->setAlignSelf({UI_CSS_ALIGN_SELF_AUTO});
 		else child->setAlignSelf({UI_CSS_ALIGN_SELF_CENTER});
 	}
 }

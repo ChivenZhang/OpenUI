@@ -47,6 +47,7 @@ UICombo::UICombo(UICanvasRaw canvas)
 
 	PRIVATE()->Button = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Button);
+
 	PRIVATE()->Popup = UINew<UIScroll>(canvas);
 	PRIVATE()->Popup->setEventFilter(this);
 	setStyle(PRIVATE()->Style);
@@ -109,6 +110,7 @@ void UICombo::arrange(UIRect client)
 			if (PRIVATE()->MaxCount == -1 || i < PRIVATE()->MaxCount) PRIVATE()->Popup->setFixedHeight({contentView->getFixedHeight().Value, UI_CSS_HEIGHT_LENGTH});
 		}
 	}
+
 	PRIVATE()->Popup->setFixedHeight({std::max<float>(painter->getFont().Size, PRIVATE()->Popup->getFixedHeight().Value), UI_CSS_HEIGHT_LENGTH});
 }
 

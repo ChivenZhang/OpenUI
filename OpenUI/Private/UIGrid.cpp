@@ -46,12 +46,9 @@ void UIGrid::arrange(UIRect client)
 	for (size_t i = 0; i < getWidgets().size(); ++i)
 	{
 		getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_NONE});
+
 		auto result = PRIVATE()->GridItemMap.find(getWidgets()[i].get());
-		if (result == PRIVATE()->GridItemMap.end())
-		{
-			getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_NONE});
-		}
-		else
+		if (result != PRIVATE()->GridItemMap.end())
 		{
 			auto row = result->second.Row;
 			auto col = result->second.Column;
@@ -60,7 +57,7 @@ void UIGrid::arrange(UIRect client)
 			auto posX = PRIVATE()->ColumnSummary[col];
 			auto posY = PRIVATE()->RowSummary[row];
 			auto width = 0.0f, height = 0.0f;
-			for (size_t k = 0; k < rowSpan && row + k < getColumnCount(); ++k) height += PRIVATE()->RowPercent[row + k];
+			for (size_t k = 0; k < rowSpan && row + k < getRowCount(); ++k) height += PRIVATE()->RowPercent[row + k];
 			for (size_t k = 0; k < colSpan && col + k < getColumnCount(); ++k) width += PRIVATE()->ColumnPercent[col + k];
 
 			getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_FLEX});
@@ -71,15 +68,17 @@ void UIGrid::arrange(UIRect client)
 	}
 }
 
+void UIGrid::layout(UIRect client)
+{
+	UIWidget::layout(client);
+}
+
 void UIGrid::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(UINoPen);
-	painter->setBrush(PRIVATE()->Style.Brush);
-	painter->drawRect(client.X, client.Y, client.W, client.H);
 
 	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(UINoBrush);
+	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 

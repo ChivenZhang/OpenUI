@@ -1,9 +1,7 @@
-[submodule "External/earcut.hpp"]
-	path = External/earcut.hpp
-	url = https://github.com/mapbox/earcut.hpp.git
-[submodule "External/stb"]
-	path = External/stb
-	url = https://github.com/nothings/stb.git
 [submodule "External/OpenRT"]
 	path = External/OpenRT
 	url = https://github.com/ChivenZhang/OpenRT.git
+[submodule "External/yoga"]
+	path = External/yoga
+	url = https://github.com/react/yoga.git
+
