@@ -10,8 +10,6 @@ if (OPENUI_ENABLE_OPENRT)
 
     target_link_libraries(UI-OpenRT PRIVATE OpenUI OpenRT nanovg)
 
-    find_package(PkgConfig REQUIRED)
-
     find_package(Freetype REQUIRED)
     target_link_libraries(UI-OpenRT PRIVATE Freetype::Freetype) # since CMake 3.10
 

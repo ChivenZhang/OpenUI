@@ -14,6 +14,8 @@ if(CMAKE_HOST_WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
+find_package(PkgConfig REQUIRED)
+
 include_directories(${OPENUI_SOURCE_DIR})
 include_directories(${OPENUI_EXTERNAL_DIR}/yoga)
 include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
