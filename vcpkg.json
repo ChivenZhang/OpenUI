@@ -21,6 +21,5 @@
     "features" : [ "vulkan" ]
   }, {
     "name" : "pkgconf"
-  } ],
-  "builtin-baseline" : "7d5f3c6241729acbbb7774f54bf687429aaf6492"
+  } ]
 }
