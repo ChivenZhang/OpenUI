@@ -53,21 +53,7 @@ OpenRTDevice::OpenRTDevice()
 	SDL_GL_SetSwapInterval(0);
 	m_Window = window;
 	m_Context = context;
-
-	// Initialize nanovg context (OpenRT backend) and default UI fonts
-
 	m_NanoVG = rtCreateRT(RTVG_ANTIALIAS | RTVG_STENCIL_STROKES);
-	if (m_NanoVG == nullptr) UI_FATAL("nanovg context could not be created");
-	auto fontSans = nvgCreateFont(m_NanoVG, "sans", "../../Example/OpenRT/Roboto-Regular.ttf");
-	auto fontBold = nvgCreateFont(m_NanoVG, "sans-bold", "../../Example/OpenRT/Roboto-Bold.ttf");
-	auto fontLight = nvgCreateFont(m_NanoVG, "sans-light", "../../Example/OpenRT/Roboto-Light.ttf");
-	auto fontEmoji = nvgCreateFont(m_NanoVG, "emoji", "../../Example/OpenRT/NotoEmoji-Regular.ttf");
-	if (fontEmoji != -1)
-	{
-		if (fontSans != -1) nvgAddFallbackFontId(m_NanoVG, fontSans, fontEmoji);
-		if (fontBold != -1) nvgAddFallbackFontId(m_NanoVG, fontBold, fontEmoji);
-		if (fontLight != -1) nvgAddFallbackFontId(m_NanoVG, fontLight, fontEmoji);
-	}
 
 	// Initialize OpenUI context
 
