@@ -16,7 +16,7 @@
 class OpenRTRender : public UIRender
 {
 public:
-    OpenRTRender(UICanvasRaw canvas, int width, int height);
+    OpenRTRender(UICanvasRaw canvas);
     ~OpenRTRender() override;
     UICanvasRaw getCanvas() const override;
     UIString getName() const override;

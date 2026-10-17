@@ -14,12 +14,10 @@
 #include <OpenUI/UICanvas.h>
 #include "OpenRTX.h"
 
-OpenRTRender::OpenRTRender(UICanvasRaw canvas, int width, int height)
+OpenRTRender::OpenRTRender(UICanvasRaw canvas)
     :
     m_Canvas(canvas)
 {
-    (void)width;
-    (void)height;
 }
 
 OpenRTRender::~OpenRTRender()

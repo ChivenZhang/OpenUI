@@ -58,7 +58,7 @@ OpenRTDevice::OpenRTDevice()
 	UIConfig config{.DisplayScale = scale};
 	auto canvas = UINew<UICanvas>(config);
 	canvas->setDevice(this);
-    canvas->setRender(UINew<OpenRTRender>(canvas.get(), W, H));
+    canvas->setRender(UINew<OpenRTRender>(canvas.get()));
     canvas->setPainter(UINew<OpenRTPainter>(canvas.get(), W, H));
     m_Canvas = canvas;
 
