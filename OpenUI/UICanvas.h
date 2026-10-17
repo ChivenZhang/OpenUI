@@ -28,11 +28,13 @@ public:
 class OPENUI_API UICanvas
 {
 public:
-	explicit UICanvas(UIDeviceRaw device, UIConfig config = {});
+	explicit UICanvas(UIConfig config = {});
 	~UICanvas();
 	UIConfig const& getConfig() const;
-	UIDeviceRaw getDevice() const;
 	UIBuilderRaw getBuilder() const;
+
+	UIDeviceRaw getDevice() const;
+	void setDevice(UIDeviceRaw value);
 
 	UIImageRaw getTarget() const;
 	void setTarget(UIImage value);

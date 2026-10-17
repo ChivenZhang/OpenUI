@@ -45,10 +45,10 @@ struct UICanvasPrivate : UIPrivate
 };
 #define PRIVATE() ((UICanvasPrivate*) m_Private)
 
-UICanvas::UICanvas(UIDeviceRaw device, UIConfig config)
+UICanvas::UICanvas(UIConfig config)
 {
 	m_Private = new UICanvasPrivate;
-	PRIVATE()->Device = device;
+	PRIVATE()->Device = nullptr;
 	PRIVATE()->Config = config;
 	PRIVATE()->Builder = UINew<UIBuilder>(this);
 
@@ -83,14 +83,19 @@ UIConfig const& UICanvas::getConfig() const
 	return PRIVATE()->Config;
 }
 
+UIBuilderRaw UICanvas::getBuilder() const
+{
+	return PRIVATE()->Builder.get();
+}
+
 UIDeviceRaw UICanvas::getDevice() const
 {
 	return PRIVATE()->Device;
 }
 
-UIBuilderRaw UICanvas::getBuilder() const
+void UICanvas::setDevice(UIDeviceRaw value)
 {
-	return PRIVATE()->Builder.get();
+	PRIVATE()->Device = value;
 }
 
 UIImageRaw UICanvas::getTarget() const
