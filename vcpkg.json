@@ -1,37 +1,26 @@
 {
-  "name": "openui",
-  "version-string": "1.0.0",
-  "dependencies": [
-    {
-      "name": "stb"
-    },
-    {
-      "name": "lexbor"
-    },
-    {
-      "name": "fontconfig"
-    },
-    {
-      "name": "harfbuzz",
-      "features": [
-        "icu"
-      ]
-    },
-    {
-      "name": "pango"
-    },
-    {
-      "name": "glm"
-    },
-    {
-      "name": "glew"
-    },
-    {
-      "name": "sdl3",
-      "features": [
-        "vulkan"
-      ]
-    }
-  ],
-  "builtin-baseline": "7d5f3c6241729acbbb7774f54bf687429aaf6492"
+  "name" : "openui",
+  "version-string" : "1.0.0",
+  "dependencies" : [ {
+    "name" : "stb"
+  }, {
+    "name" : "lexbor"
+  }, {
+    "name" : "fontconfig"
+  }, {
+    "name" : "harfbuzz",
+    "features" : [ "icu" ]
+  }, {
+    "name" : "pango"
+  }, {
+    "name" : "glm"
+  }, {
+    "name" : "glew"
+  }, {
+    "name" : "sdl3",
+    "features" : [ "vulkan" ]
+  }, {
+    "name" : "pkgconf"
+  } ],
+  "builtin-baseline" : "7d5f3c6241729acbbb7774f54bf687429aaf6492"
 }
