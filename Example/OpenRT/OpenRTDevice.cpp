@@ -13,8 +13,6 @@
 #include "OpenRTRender.h"
 #include "OpenRTPainter.h"
 #include "../SDL3InputEnum.h"
-#include <nanovg.h>
-#include <nanovg_rt.h>
 #include "OpenGL.h"
 
 static void presentFrame(rt_module_render_t& module, rt_mesh_t& mesh, int width, int height, rt_texture_t* source)
@@ -53,7 +51,6 @@ OpenRTDevice::OpenRTDevice()
 	SDL_GL_SetSwapInterval(0);
 	m_Window = window;
 	m_Context = context;
-	m_NanoVG = rtCreateRT(RTVG_ANTIALIAS | RTVG_STENCIL_STROKES);
 
 	// Initialize OpenUI context
 
@@ -72,7 +69,6 @@ OpenRTDevice::~OpenRTDevice()
 	SDL_GL_MakeCurrent(m_Window, m_Context);
 	m_Canvas = nullptr;
 
-	if (m_NanoVG) { rtDeleteRT(m_NanoVG); m_NanoVG = nullptr; }
 	if (m_Cursor) { SDL_DestroyCursor(m_Cursor); m_Cursor = nullptr; }
 
 	SDL_GL_DestroyContext(m_Context); m_Context = nullptr;
@@ -356,11 +352,6 @@ bool OpenRTDevice::update()
 SDL_Window* OpenRTDevice::getWindow() const
 {
     return m_Window;
-}
-
-NVGcontext* OpenRTDevice::getNanoVG() const
-{
-    return m_NanoVG;
 }
 
 #endif

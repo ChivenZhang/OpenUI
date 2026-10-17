@@ -10,7 +10,6 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_OPENRT
 #include "OpenRTPainter.h"
-#include "OpenRTDevice.h"
 #include <OpenUI/UICanvas.h>
 #include <nanovg.h>
 #include <nanovg_rt.h>
@@ -28,7 +27,7 @@
 
 // UIPainter implemented on top of nanovg (OpenRT backend).
 //
-// The NVGcontext is owned by OpenRTDevice; the painter only borrows it.
+// The painter owns its NVGcontext.
 // A paint session runs between setTarget(target) [nvgBeginFrame] and
 // setTarget(nullptr) [nvgEndFrame]. Each GPU target keeps one NVGtarget:
 // the image's colour texture plus a matching stencil owned here. That group is
@@ -70,7 +69,7 @@ struct OpenRTGlyphKey
 
 struct OpenRTPainterPrivate : UIPrivate
 {
-	NVGcontext* Context = nullptr; // owned by OpenRTDevice
+	NVGcontext* Context = nullptr;
 	UIPen Pen;
 	UIFont Font;
 	UIBrush Brush;
@@ -421,10 +420,8 @@ OpenRTPainter::OpenRTPainter(UICanvasRaw canvas, int width, int height)
     m_Canvas(canvas)
 {
 	m_Private = new OpenRTPainterPrivate;
-	if (auto device = UICast<OpenRTDevice>(canvas->getDevice()))
-	{
-		PRIVATE()->Context = device->getNanoVG();
-	}
+	PRIVATE()->Context = rtCreateRT(RTVG_ANTIALIAS | RTVG_STENCIL_STROKES);
+	if (PRIVATE()->Context == nullptr) UI_FATAL("NanoVG context could not be created");
 	PRIVATE()->FontMap = pango_ft2_font_map_new();
 	if (PRIVATE()->FontMap)
 	{
@@ -445,6 +442,7 @@ OpenRTPainter::~OpenRTPainter()
 			if (glyph.second.Image >= 0) nvgDeleteImage(vg, glyph.second.Image);
 	}
 	for (auto& slot : PRIVATE()->Targets) rt_destroy_texture(slot.second.stencil);
+	if (PRIVATE()->Context) { rtDeleteRT(PRIVATE()->Context); PRIVATE()->Context = nullptr; }
 	if (PRIVATE()->Layout) g_object_unref(PRIVATE()->Layout);
 	if (PRIVATE()->FontMap) g_object_unref(PRIVATE()->FontMap);
 	delete m_Private; m_Private = nullptr;
