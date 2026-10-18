@@ -326,16 +326,16 @@ bool OpenRTDevice::update()
 	if (render)
 	{
 		auto source = render->newImage((uint32_t)width, (uint32_t)height);
-		if (source.Handle)
+		if (source.Texture)
 		{
 			canvas->setTarget(source);
 			canvas->updateWidget(::clock() * 0.001f, UIRect{0, 0, (float)width, (float)height});
 		}
-		auto* target = source.Handle ? (rt_texture_t*)(uintptr_t)source.Handle : nullptr;
+		auto* target = source.Texture ? (rt_texture_t*)(uintptr_t)source.Texture : nullptr;
 		gl_draw_screen(width, height, {}, *target);
 		SDL_GL_SwapWindow(m_Window);
 
-		if (source.Handle) render->delImage(source);
+		if (source.Texture) render->delImage(source);
 	}
 	else
 	{

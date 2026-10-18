@@ -480,9 +480,9 @@ void OpenRTPainter::setTarget(UIImageRaw value)
 	if (vg && value && value->Width && value->Height)
 	{
 		NVGtarget nvgTarget = {};
-		if (value->Format == UIImage::GPUByte && value->Handle)
+		if (value->Format == UIImage::GPUByte && value->Texture)
 		{
-			auto* color = (rt_texture_t*)(uintptr_t)value->Handle;
+			auto* color = (rt_texture_t*)(uintptr_t)value->Texture;
 			auto& slot = PRIVATE()->Targets[color];
 			if (slot.stencil.handle == 0 || slot.stencil.width != color->width || slot.stencil.height != color->height)
 			{
@@ -552,7 +552,7 @@ void OpenRTPainter::drawImage(float x, float y, UIImage image, float sx, float s
 	}
 	else if (image.Format == UIImage::GPUByte && image.Pixels && image.Channel == 4)
 	{
-		auto& texture = *(rt_texture_t*)image.Handle;
+		auto& texture = *(rt_texture_t*)image.Texture;
 		handle = rtCreateTextureNative(vg, 0, texture);
 	}
 

@@ -46,7 +46,7 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
 
     while (!m_Targets.empty() && (m_Targets.back().Width != width || m_Targets.back().Height != height))
     {
-        auto& texture = *(rt_texture_t*)m_Targets.back().Handle;
+        auto& texture = *(rt_texture_t*)m_Targets.back().Texture;
         rt_destroy_texture(texture);
         m_Textures.erase(texture.handle);
         m_Targets.pop_back();
@@ -77,7 +77,7 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
             .Height = height,
             .Stride = width * 4,
             .Channel = 4,
-            .Handle = (uint64_t)(uintptr_t)&result.first->second,
+            .Texture = (uint64_t)(uintptr_t)&result.first->second,
             .Format = UIImage::GPUByte,
         };
     }
@@ -91,10 +91,10 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
 
 void OpenRTRender::delImage(UIImage value)
 {
-    if (value.Handle == 0 || value.Format != UIImage::GPUByte) return;
+    if (value.Texture == 0 || value.Format != UIImage::GPUByte) return;
     m_Targets.emplace_back(value);
 
-    auto& texture = *(rt_texture_t*)value.Handle;
+    auto& texture = *(rt_texture_t*)value.Texture;
     rt_pass_render_t pass{.colors = {{.texture_view = texture.default_view, .clear = true,}},};
     rt_begin_render(pass);
     rt_end_render(pass);
@@ -103,11 +103,11 @@ void OpenRTRender::delImage(UIImage value)
 void OpenRTRender::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIImageRaw dstImg, UIComputedStyleRaw style)
 {
     if (srcImg == nullptr || dstImg == nullptr) return;
-    if (srcImg->Handle == 0 || dstImg->Handle == 0 || srcImg->Handle == dstImg->Handle) return;
+    if (srcImg->Texture == 0 || dstImg->Texture == 0 || srcImg->Texture == dstImg->Texture) return;
     if (srcImg->Format != UIImage::GPUByte || dstImg->Format != UIImage::GPUByte) return;
 
-    auto* src = (rt_texture_t*)srcImg->Handle;
-    auto* dst = (rt_texture_t*)dstImg->Handle;
+    auto* src = (rt_texture_t*)srcImg->Texture;
+    auto* dst = (rt_texture_t*)dstImg->Texture;
     uint32_t width = std::min(src->width, dst->width);
     uint32_t height = std::min(src->height, dst->height);
     if (width == 0 || height == 0) return;

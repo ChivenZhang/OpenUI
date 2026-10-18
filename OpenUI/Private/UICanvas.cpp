@@ -901,7 +901,7 @@ bool UICanvas::paintWidget(UIRect client)
 	auto painter = PRIVATE()->Painter.get();
 	auto screenRT = &PRIVATE()->Target;
 	if (render == nullptr || painter == nullptr) return false;
-	if (screenRT == nullptr || !screenRT->Handle) return false;
+	if (screenRT == nullptr || !screenRT->Texture) return false;
 
 	UILambda<void(UIWidgetRaw, UIRect, UIMat4)> foreach_func;
 	foreach_func = [&](UIWidgetRaw widget, UIRect client, UIMat4 matrix)

@@ -159,7 +159,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 			button->setText("Button3");
 		}
 	}
-	//if (false)
+	if (false)
 	{
 		auto grid = builder->newWidget<UIGrid>();
 		layout->addWidget(grid);

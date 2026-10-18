@@ -10,7 +10,6 @@
 * =================================================*/
 #include "../UILabel.h"
 #include "../UICanvas.h"
-#include <stb_image.h>
 #include <stb_image_resize2.h>
 
 struct UILabelPrivate : UIPrivate
@@ -50,85 +49,92 @@ void UILabel::layout(UIRect client)
 	auto rawHeight = PRIVATE()->Image.Height;
 	auto rawStride = PRIVATE()->Image.Stride;
 
-	switch (PRIVATE()->ScaledContents)
+	if (PRIVATE()->Image.Pixels && PRIVATE()->Image.Format == UIImage::Byte)
 	{
-	case ScaleFixed:
-	{
-		PRIVATE()->PixelScaled.clear();
-		PRIVATE()->ImageScaled = UIImage{};
-	} break;
-	case ScaleAuto:
-	{
-		uint32_t newWidth = client.W;
-		uint32_t newHeight = client.H;
+		switch (PRIVATE()->ScaledContents)
+		{
+		case ScaleFixed:
+			{
+				PRIVATE()->PixelScaled.clear();
+				PRIVATE()->ImageScaled = UIImage{};
+			} break;
+		case ScaleAuto:
+			{
+				uint32_t newWidth = client.W;
+				uint32_t newHeight = client.H;
 
-		if (rawWidth * newHeight <= rawHeight * newWidth)
-		{
-			newWidth = client.W;
-			newHeight = rawHeight * client.W / rawWidth;
+				if (rawWidth * newHeight <= rawHeight * newWidth)
+				{
+					newWidth = client.W;
+					newHeight = rawHeight * client.W / rawWidth;
+				}
+				else
+				{
+					newWidth = rawWidth * client.H / rawHeight;
+					newHeight = client.H;
+				}
+				uint32_t newStride = newWidth * 4;
+				PRIVATE()->PixelScaled.resize(newHeight * newStride);
+				auto newPixels = PRIVATE()->PixelScaled.data();
+				if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
+					newPixels, newWidth, newHeight, newStride, STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
+				{
+					PRIVATE()->ImageScaled.Width = newWidth;
+					PRIVATE()->ImageScaled.Height = newHeight;
+					PRIVATE()->ImageScaled.Stride = newStride;
+					PRIVATE()->ImageScaled.Channel = 4;
+					PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
+				}
+			} break;
+		case ScaleNoRatio:
+			{
+				uint32_t newWidth = client.W;
+				uint32_t newHeight = client.H;
+				uint32_t newStride = newWidth * 4;
+				PRIVATE()->PixelScaled.resize(newHeight * newStride);
+				auto newPixels = PRIVATE()->PixelScaled.data();
+				if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
+					newPixels, newWidth, newHeight, newStride, STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
+				{
+					PRIVATE()->ImageScaled.Width = newWidth;
+					PRIVATE()->ImageScaled.Height = newHeight;
+					PRIVATE()->ImageScaled.Stride = newStride;
+					PRIVATE()->ImageScaled.Channel = 4;
+					PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
+				}
+			} break;
+		case ScaleKeepRatio:
+			{
+				uint32_t newWidth = client.W;
+				uint32_t newHeight = client.H;
+				if (rawWidth * newHeight <= rawHeight * newWidth)
+				{
+					newWidth = rawWidth * client.H / rawHeight;
+					newHeight = client.H;
+				}
+				else
+				{
+					newWidth = client.W;
+					newHeight = rawHeight * client.W / rawWidth;
+				}
+				uint32_t newStride = newWidth * 4;
+				PRIVATE()->PixelScaled.resize(newHeight * newStride);
+				auto newPixels = PRIVATE()->PixelScaled.data();
+				if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
+					newPixels, newWidth, newHeight, newStride, STBIR_BGRA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
+				{
+					PRIVATE()->ImageScaled.Width = newWidth;
+					PRIVATE()->ImageScaled.Height = newHeight;
+					PRIVATE()->ImageScaled.Stride = newStride;
+					PRIVATE()->ImageScaled.Channel = 4;
+					PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
+				}
+			} break;
 		}
-		else
-		{
-			newWidth = rawWidth * client.H / rawHeight;
-			newHeight = client.H;
-		}
-		uint32_t newStride = newWidth * 4;
-		PRIVATE()->PixelScaled.resize(newHeight * newStride);
-		auto newPixels = PRIVATE()->PixelScaled.data();
-		if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
-			newPixels, newWidth, newHeight, newStride, STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
-		{
-			PRIVATE()->ImageScaled.Width = newWidth;
-			PRIVATE()->ImageScaled.Height = newHeight;
-			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Channel = 4;
-			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
-		}
-	} break;
-	case ScaleNoRatio:
+	}
+	else if (PRIVATE()->Image.Texture && PRIVATE()->Image.Format == UIImage::GPUByte)
 	{
-		uint32_t newWidth = client.W;
-		uint32_t newHeight = client.H;
-		uint32_t newStride = newWidth * 4;
-		PRIVATE()->PixelScaled.resize(newHeight * newStride);
-		auto newPixels = PRIVATE()->PixelScaled.data();
-		if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
-			newPixels, newWidth, newHeight, newStride, STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
-		{
-			PRIVATE()->ImageScaled.Width = newWidth;
-			PRIVATE()->ImageScaled.Height = newHeight;
-			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Channel = 4;
-			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
-		}
-	} break;
-	case ScaleKeepRatio:
-	{
-		uint32_t newWidth = client.W;
-		uint32_t newHeight = client.H;
-		if (rawWidth * newHeight <= rawHeight * newWidth)
-		{
-			newWidth = rawWidth * client.H / rawHeight;
-			newHeight = client.H;
-		}
-		else
-		{
-			newWidth = client.W;
-			newHeight = rawHeight * client.W / rawWidth;
-		}
-		uint32_t newStride = newWidth * 4;
-		PRIVATE()->PixelScaled.resize(newHeight * newStride);
-		auto newPixels = PRIVATE()->PixelScaled.data();
-		if (stbir_resize(rawPixels, rawWidth, rawHeight, rawStride,
-			newPixels, newWidth, newHeight, newStride, STBIR_BGRA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT))
-		{
-			PRIVATE()->ImageScaled.Width = newWidth;
-			PRIVATE()->ImageScaled.Height = newHeight;
-			PRIVATE()->ImageScaled.Stride = newStride;
-			PRIVATE()->ImageScaled.Channel = 4;
-			PRIVATE()->ImageScaled.Pixels = PRIVATE()->PixelScaled.data();
-		}
-	} break;
+		PRIVATE()->ImageScaled = PRIVATE()->Image;
 	}
 }
 
@@ -275,12 +281,19 @@ void UILabel::setPixmap(UIImage image)
 			dstPixels[dstIndex + 3] = (3 < channel) ? srcPixels[srcIndex + 3] : 255;
 		}
 	}
+	else if (image.Pixels && image.Format == UIImage::GPUByte && image.Width * 4 == image.Stride)
+	{
+		PRIVATE()->Pixel.clear();
+		PRIVATE()->Image = image;
+		PRIVATE()->PixelScaled.clear();
+		PRIVATE()->ImageScaled = {};
+	}
 	else
 	{
 		PRIVATE()->Pixel.clear();
-		PRIVATE()->Image = UIImage{};
+		PRIVATE()->Image = {};
 		PRIVATE()->PixelScaled.clear();
-		PRIVATE()->ImageScaled = UIImage{};
+		PRIVATE()->ImageScaled = {};
 	}
 }
 

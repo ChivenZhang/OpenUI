@@ -680,7 +680,7 @@ inline bool operator ==(UIColor const& a, UIColor const& b)
 struct UIImage
 {
 	uint32_t Width = 0, Height = 0, Stride = 0, Channel = 0;
-	union { void* Pixels; uint64_t /*For GPU Handle*/ Handle = 0; };
+	union { void* Pixels; uint64_t /*For GPU Handle*/ Texture = 0; };
 	enum { Byte = 0, Float, GPUByte, GPUFloat, } Format = Byte;
 };
 using UIImageRaw = UIRaw<UIImage>;
