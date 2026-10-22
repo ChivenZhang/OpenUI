@@ -1990,7 +1990,8 @@ inline bool UITypeC(UIPropDisplay const& src, UIString& dst)
 {
     switch (src.Value)
     {
-    default: return false;
+    default:
+    case UI_CSS_DISPLAY_NONE: dst = "none"; return true;
     case UI_CSS_DISPLAY_BLOCK: dst = "block"; return true;
     case UI_CSS_DISPLAY_INLINE: dst = "inline"; return true;
     case UI_CSS_DISPLAY_RUN_IN: dst = "run-in"; return true;
@@ -2014,7 +2015,6 @@ inline bool UITypeC(UIPropDisplay const& src, UIString& dst)
     case UI_CSS_DISPLAY_RUBY_BASE_CONTAINER: dst = "ruby-base-container"; return true;
     case UI_CSS_DISPLAY_RUBY_TEXT_CONTAINER: dst = "ruby-text-container"; return true;
     case UI_CSS_DISPLAY_CONTENTS: dst = "contents"; return true;
-    case UI_CSS_DISPLAY_NONE: dst = "none"; return true;
     case UI_CSS_DISPLAY_INLINE_BLOCK: dst = "inline-block"; return true;
     case UI_CSS_DISPLAY_INLINE_TABLE: dst = "inline-table"; return true;
     case UI_CSS_DISPLAY_INLINE_FLEX: dst = "inline-flex"; return true;
