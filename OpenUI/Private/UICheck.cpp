@@ -38,7 +38,7 @@ UICheck::UICheck(UICanvasRaw canvas)
 	hovered = &PRIVATE()->OnHovered;
 
 	PRIVATE()->Button = UINew<UIButton>(canvas);
-	addWidget(PRIVATE()->Button);
+	this->addWidget(PRIVATE()->Button);
 	PRIVATE()->Button->setMinSize({16.0f, UI_CSS_MIN_WIDTH_LENGTH}, {16.0f, UI_CSS_MIN_HEIGHT_LENGTH});
 	PRIVATE()->Button->setMargin(
 		{ 8.0f },
@@ -63,13 +63,14 @@ UICheck::UICheck(UICanvasRaw canvas)
 	}
 
 	PRIVATE()->Label = UINew<UILabel>(canvas);
-	addWidget(PRIVATE()->Label);
+	this->addWidget(PRIVATE()->Label);
 	{
 		auto style = PRIVATE()->Label->getStyle();
 		style.Normal.Background.Pen = style.Hover.Background.Pen = { .Style = UIPen::NoPen, };
 		style.Normal.Background.Brush = style.Hover.Background.Brush = { .Style = UIBrush::NoBrush, };
 		style.Normal.Foreground.Font = style.Hover.Foreground.Font = { .Align = UIFont::AlignLeft | UIFont::AlignVCenter, };
 		PRIVATE()->Label->setStyle(style);
+		PRIVATE()->Label->setText("Hello");
 	}
 
 	PRIVATE()->Button->clicked->connect(this, [=](bool checked) {
@@ -100,14 +101,15 @@ UICheck::~UICheck()
 
 void UICheck::arrange(UIRect client)
 {
-	this->setAlignSelf({UI_CSS_ALIGN_SELF_STRETCH});
+	this->setFlexWrap({UI_CSS_FLEX_WRAP_NOWRAP});
+	this->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
 	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
-	PRIVATE()->Button->setFlexGrow({UI_CSS_FLEX_GROW_NUMBER, 0});
+	PRIVATE()->Button->setFlexGrow({0, UI_CSS_FLEX_GROW_NUMBER});
 	PRIVATE()->Button->setAlignSelf({UI_CSS_ALIGN_SELF_CENTER});
 
-	PRIVATE()->Label->setFlexGrow({UI_CSS_FLEX_GROW_NUMBER, 1});
-	PRIVATE()->Label->setAlignSelf({UI_CSS_ALIGN_SELF_STRETCH});
+	PRIVATE()->Label->setFlexGrow({1, UI_CSS_FLEX_GROW_NUMBER});
+	PRIVATE()->Label->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
 
 	auto painter = getCanvas()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;
@@ -119,6 +121,16 @@ void UICheck::arrange(UIRect client)
 		{8 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
 		{0, UI_CSS_MARGIN_LENGTH},
 		{8 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH}
+		);
+
+	PRIVATE()->Label->setMinHeight(
+		{fontSize * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH}
+		);
+	PRIVATE()->Label->setMargin(
+		{0 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH},
+		{0 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
 		{0, UI_CSS_MARGIN_LENGTH}
 		);
 }

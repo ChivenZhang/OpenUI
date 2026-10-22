@@ -18,8 +18,6 @@ public:
 	virtual ~UIBuilder();
 	UICanvasRaw getCanvas() const;
 	virtual bool setFactory(UIString tag, UIFactoryRef value);
-	virtual bool unsetFactory(UIString tag);
-	virtual void unsetFactory();
 	virtual UIWidgetRef buildWidget(UIString html) const;
 
 	template<class T, class... Args>

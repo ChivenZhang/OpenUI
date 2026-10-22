@@ -107,6 +107,7 @@ UIRadio::~UIRadio()
 
 void UIRadio::arrange(UIRect client)
 {
+	this->setFlexWrap({UI_CSS_FLEX_WRAP_NOWRAP});
 	this->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
 	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
@@ -131,6 +132,16 @@ void UIRadio::arrange(UIRect client)
 	auto style = PRIVATE()->Button->getStyle();
 	style.Round = { (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) , (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) };
 	PRIVATE()->Button->setStyle(style);
+
+	PRIVATE()->Label->setMinHeight(
+		{fontSize * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH}
+		);
+	PRIVATE()->Label->setMargin(
+		{0 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH},
+		{0 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
+		{0, UI_CSS_MARGIN_LENGTH}
+		);
 }
 
 void UIRadio::layout(UIRect client)

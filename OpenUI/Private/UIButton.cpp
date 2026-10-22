@@ -53,6 +53,7 @@ UIButton::~UIButton()
 
 void UIButton::arrange(UIRect client)
 {
+	this->setFlexWrap({UI_CSS_FLEX_WRAP_NOWRAP});
 	this->setAlignItems({UI_CSS_ALIGN_ITEMS_STRETCH});
 	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 

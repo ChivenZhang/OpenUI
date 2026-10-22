@@ -38,19 +38,9 @@ UICanvasRaw UIBuilder::getCanvas() const
 
 bool UIBuilder::setFactory(UIString tag, UIFactoryRef value)
 {
-	if (value == nullptr) return false;
+	if (value == nullptr) return PRIVATE()->FactoryMap.erase(tag);
 	PRIVATE()->FactoryMap[tag] = value;
 	return true;
-}
-
-bool UIBuilder::unsetFactory(UIString tag)
-{
-	return PRIVATE()->FactoryMap.erase(tag);
-}
-
-void UIBuilder::unsetFactory()
-{
-	PRIVATE()->FactoryMap.clear();
 }
 
 UIWidgetRef UIBuilder::buildWidget(UIString html) const
