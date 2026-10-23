@@ -46,6 +46,18 @@ UISlider::UISlider(UICanvasRaw canvas)
 	PRIVATE()->Handle = UINew<UIButton>(canvas);
 	addWidget(PRIVATE()->Handle);
 	PRIVATE()->Handle->setFixedSize({16, UI_CSS_WIDTH_LENGTH}, {16, UI_CSS_HEIGHT_LENGTH});
+	{
+		auto style = PRIVATE()->Handle->getStyle();
+		style.Round = { 8, 8 };
+		style.Normal.Pen = UIFramePen;
+		style.Hover.Pen = UIAccentHoverPen;
+		style.Press.Pen = UIAccentPen;
+		style.Normal.Brush = style.Hover.Brush = UIFrameBrush;
+		style.Press.Brush = UIAccentBrush;
+		style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
+		style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
+		PRIVATE()->Handle->setStyle(style);
+	}
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });
 	PRIVATE()->Handle->released->connect(this, [=]() {

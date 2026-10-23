@@ -13,38 +13,14 @@
 #include "UIFactory.h"
 #include "UILabel.h"
 
-static constexpr UIPen UIButtonPenNormal
-{
-	.Color {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f},
-};
-static constexpr UIPen UIButtonPenHover
-{
-	.Color {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f},
-};
-static constexpr UIPen UIButtonPenPress
-{
-	.Color {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f},
-};
-static constexpr UIPen UIButtonPenDisable
-{
-	.Color {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f},
-};
-static constexpr UIBrush UIButtonBrushNormal
-{
-	.Color {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f},
-};
-static constexpr UIBrush UIButtonBrushHover
-{
-	.Color {224 / 255.0f, 238 / 255.0f, 249 / 255.0f, 1.0f},
-};
-static constexpr UIBrush UIButtonBrushPress
-{
-	.Color {204 / 255.0f, 228 / 255.0f, 247 / 255.0f, 1.0f},
-};
-static constexpr UIBrush UIButtonBrushDisable
-{
-	.Color {0.8f, 0.8f, 0.8f, 1.0f},
-};
+static constexpr UIPen UIButtonPenNormal = UIAccentPen;
+static constexpr UIPen UIButtonPenHover = UIAccentHoverPen;
+static constexpr UIPen UIButtonPenPress = UIAccentPressPen;
+static constexpr UIPen UIButtonPenDisable = UIDisabledPen;
+static constexpr UIBrush UIButtonBrushNormal = UIFrameBrush;
+static constexpr UIBrush UIButtonBrushHover = UIAccentHoverBrush;
+static constexpr UIBrush UIButtonBrushPress = UIAccentPressBrush;
+static constexpr UIBrush UIButtonBrushDisable = UIDisabledBrush;
 
 /// @brief 
 struct UIButtonStyle
@@ -54,16 +30,29 @@ struct UIButtonStyle
 		UIPen Pen;
 		UIBrush Brush;
 	};
-	UIFloat2 Round{ 5, 5, };
+	UIFloat2 Round{ 2, 2, };
 	UILabelStyle Label =
 	{
-		.Normal {.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }}, .Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},},
-		.Hover {.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }}, .Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }}},
+		.Normal
+		{
+			.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }, .Brush = UITextBrush, },
+			.Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},
+		},
+		.Hover
+		{
+			.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }, .Brush = UIAccentBrush, },
+			.Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},
+		},
+		.Disable
+		{
+			.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }, .Brush = UIMutedBrush, },
+			.Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},
+		},
 	};
 	ButtonMode Normal{ .Pen = UIButtonPenNormal, .Brush = UIButtonBrushNormal };
 	ButtonMode Hover{ .Pen = UIButtonPenHover, .Brush = UIButtonBrushHover };
 	ButtonMode Press{ .Pen = UIButtonPenPress, .Brush = UIButtonBrushPress };
-	ButtonMode Disable{ .Pen = UIButtonPenDisable, };
+	ButtonMode Disable{ .Pen = UIButtonPenDisable, .Brush = UIButtonBrushDisable, };
 };
 
 /// @brief Button

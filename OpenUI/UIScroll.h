@@ -17,7 +17,7 @@
 struct UIScrollStyle
 {
 	UIPen Pen = UIFramePen;
-	UIBrush Brush = UIFrameBrush;
+	UIBrush Brush = UIInsetBrush;
 };
 
 /// @brief Scroll

@@ -16,8 +16,8 @@
 /// @brief 
 struct UIScrollBarStyle
 {
-	UIPen Pen = UINoPen;
-	UIBrush Brush = UIFrameBrush;
+	UIPen Pen{ .Style = UIPen::NoPen, };
+	UIBrush Brush = UIInsetBrush;
 };
 
 /// @brief Scroll bar

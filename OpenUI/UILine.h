@@ -16,7 +16,7 @@
 struct UILineStyle
 {
 	UIPen Pen = UIFramePen;
-	UIBrush Brush = UIFrameBrush;
+	UIBrush Brush{ .Style = UIBrush::NoBrush, };
 };
 
 /// @brief HLine

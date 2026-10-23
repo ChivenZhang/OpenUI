@@ -19,12 +19,12 @@ struct UIInputStyle
 	{
 		UIPen Pen{ .Style = UIPen::NoPen, };
 		UIFont Font{ .LineWrap = false, .Align = UIFont::AlignLeft | UIFont::AlignVCenter, .Ellipsize = UIFont::EllipsizeNone, };
-		UIBrush Brush{ .Color {0,0,0,1}, };
+		UIBrush Brush = UITextBrush;
 	} Foreground;
 	struct
 	{
 		UIPen Pen = UIFramePen;
-		UIBrush Brush = UIWhiteBrush;
+		UIBrush Brush = UIInsetBrush;
 	} Background;
 };
 

@@ -49,16 +49,22 @@ UICheck::UICheck(UICanvasRaw canvas)
 	PRIVATE()->Button->setCheckable(true);
 
 	{
-		PRIVATE()->Style.Round = { 4, 4 };
-		PRIVATE()->Style.Normal.Pen = PRIVATE()->Style.Hover.Pen = PRIVATE()->Style.Press.Pen = { .Color = {0 / 255.0f, 120 / 255.0f, 212 / 255.0f, 1.0f} };
-		PRIVATE()->Style.Normal.Brush = PRIVATE()->Style.Hover.Brush = PRIVATE()->Style.Press.Brush = { .Color = {253 / 255.0f, 253 / 255.0f, 253 / 255.0f, 1.0f} };
-	}
-	{
 		auto style = PRIVATE()->Button->getStyle();
-		style.Round = { 2, 2 };
-		style.Normal.Brush.Style = style.Press.Brush.Style = style.Hover.Brush.Style = UIBrush::NoBrush;
+		style.Round = PRIVATE()->Style.Round;
+		style.Normal.Pen = PRIVATE()->Style.Normal.Pen;
+		style.Hover.Pen = PRIVATE()->Style.Hover.Pen;
+		style.Press.Pen = PRIVATE()->Style.Press.Pen;
+		style.Disable.Pen = PRIVATE()->Style.Disable.Pen;
+		style.Normal.Brush = PRIVATE()->Style.Normal.Brush;
+		style.Hover.Brush = PRIVATE()->Style.Hover.Brush;
+		style.Press.Brush = PRIVATE()->Style.Press.Brush;
+		style.Disable.Brush = PRIVATE()->Style.Disable.Brush;
+		style.Label.Normal.Foreground.Brush = UIInkBrush;
+		style.Label.Hover.Foreground.Brush = UIInkBrush;
+		style.Label.Normal.Foreground.Font.Align = UIFont::AlignCenter | UIFont::AlignVCenter;
+		style.Label.Hover.Foreground.Font.Align = UIFont::AlignCenter | UIFont::AlignVCenter;
+		style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
 		style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
-		style.Label.Normal.Foreground.Brush.Color = style.Label.Hover.Foreground.Brush.Color = PRIVATE()->Button->getStyle().Normal.Pen.Color;
 		PRIVATE()->Button->setStyle(style);
 	}
 
@@ -70,7 +76,6 @@ UICheck::UICheck(UICanvasRaw canvas)
 		style.Normal.Background.Brush = style.Hover.Background.Brush = { .Style = UIBrush::NoBrush, };
 		style.Normal.Foreground.Font = style.Hover.Foreground.Font = { .Align = UIFont::AlignLeft | UIFont::AlignVCenter, };
 		PRIVATE()->Label->setStyle(style);
-		PRIVATE()->Label->setText("Hello");
 	}
 
 	PRIVATE()->Button->clicked->connect(this, [=](bool checked) {
@@ -102,14 +107,14 @@ UICheck::~UICheck()
 void UICheck::arrange(UIRect client)
 {
 	this->setFlexWrap({UI_CSS_FLEX_WRAP_NOWRAP});
-	this->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
+	this->setAlignSelf({UI_CSS_ALIGN_SELF_STRETCH});
 	this->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 
 	PRIVATE()->Button->setFlexGrow({0, UI_CSS_FLEX_GROW_NUMBER});
 	PRIVATE()->Button->setAlignSelf({UI_CSS_ALIGN_SELF_CENTER});
 
 	PRIVATE()->Label->setFlexGrow({1, UI_CSS_FLEX_GROW_NUMBER});
-	PRIVATE()->Label->setAlignSelf({UI_CSS_ALIGN_ITEMS_STRETCH});
+	PRIVATE()->Label->setAlignSelf({UI_CSS_ALIGN_SELF_STRETCH});
 
 	auto painter = getCanvas()->getPainter();
 	auto fontSize = painter->getFont().Size * 1.0f;

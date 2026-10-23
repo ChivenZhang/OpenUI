@@ -18,33 +18,44 @@ struct UIComboStyle
 {
 	UIButtonStyle Button
 	{
+		.Round{ 2, 2 },
 		.Label
 		{
 			.Normal
 			{
-				.Foreground {.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, },
+				.Foreground {.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, .Brush = UITextBrush, },
 				.Background {.Pen = {.Style = UIPen::NoPen,}, .Brush = {.Style = UIBrush::NoBrush, },},
 			},
 			.Hover
 			{
-				.Foreground {.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, },
+				.Foreground {.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, .Brush = UITextBrush, },
+				.Background {.Pen = {.Style = UIPen::NoPen,}, .Brush = {.Style = UIBrush::NoBrush, },},
+			},
+			.Disable
+			{
+				.Foreground {.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, .Brush = UIMutedBrush, },
 				.Background {.Pen = {.Style = UIPen::NoPen,}, .Brush = {.Style = UIBrush::NoBrush, },},
 			},
 		},
 		.Normal
 		{
-			.Pen = UIButtonPenNormal,
-			.Brush = UIButtonBrushNormal,
+			.Pen = UIFramePen,
+			.Brush = UIInsetBrush,
 		},
 		.Hover
 		{
-			.Pen = UIButtonPenHover,
-			.Brush = UIButtonBrushHover,
+			.Pen = UIAccentHoverPen,
+			.Brush = UIInsetBrush,
 		},
 		.Press
 		{
-			.Pen = UIButtonPenPress,
-			.Brush = UIButtonBrushPress,
+			.Pen = UIAccentPen,
+			.Brush = UIAccentSoftBrush,
+		},
+		.Disable
+		{
+			.Pen = UIDisabledPen,
+			.Brush = UIDisabledBrush,
 		},
 	};
 	UIButtonStyle Items
@@ -54,29 +65,29 @@ struct UIComboStyle
 		{
 			.Normal
 			{
-				.Foreground {.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, },
+				.Foreground {.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, .Brush = UITextBrush, },
 				.Background {.Pen = {.Style = UIPen::NoPen,}, .Brush = {.Style = UIBrush::NoBrush,}},
 			},
 			.Hover
 			{
-				.Foreground{.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, },
+				.Foreground{.Font = {.Align = UIFont::AlignLeft | UIFont::AlignVCenter}, .Brush = UIAccentBrush, },
 				.Background{.Pen = {.Style = UIPen::NoPen,}, .Brush = {.Style = UIBrush::NoBrush,}},
 			},
 		},
 		.Normal
 		{
 			.Pen = {.Style = UIPen::NoPen,},
-			.Brush = UIButtonBrushNormal,
+			.Brush = UIInsetBrush,
 		},
 		.Hover
 		{
-			.Pen = {.Style = UIPen::NoPen,},
-			.Brush = UIButtonBrushHover,
+			.Pen = UIAccentPen,
+			.Brush = UIAccentSoftBrush,
 		},
 		.Press
 		{
-			.Pen = {.Style = UIPen::NoPen,},
-			.Brush = UIButtonBrushPress,
+			.Pen = UIAccentPen,
+			.Brush = UIAccentHoverBrush,
 		},
 	};
 };

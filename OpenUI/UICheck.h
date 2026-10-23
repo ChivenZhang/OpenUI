@@ -23,8 +23,11 @@ struct UICheckStyle
 		UIFont Font;
 		UIBrush Brush;
 	};
-	UIFloat2 Round;
-	CheckMode Normal, Hover, Press, Disable;
+	UIFloat2 Round{ 2, 2 };
+	CheckMode Normal{ .Pen = UIFramePen, .Brush = UIInsetBrush, };
+	CheckMode Hover{ .Pen = UIAccentPen, .Brush = UIAccentSoftBrush, };
+	CheckMode Press{ .Pen = UIAccentPen, .Brush = UIAccentBrush, };
+	CheckMode Disable{ .Pen = UIDisabledPen, .Brush = UIDisabledBrush, };
 };
 
 /// @brief Check

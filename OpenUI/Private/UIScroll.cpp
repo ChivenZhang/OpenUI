@@ -34,8 +34,12 @@ UIScroll::UIScroll(UICanvasRaw canvas)
 	PRIVATE()->HorizonScrollBar->setOrientation(UI::Horizontal);
 	PRIVATE()->HorizonScrollBar->setSingleStep(80);
 	auto style = PRIVATE()->HorizonScrollBar->getHandle()->getStyle();
-	style.Round = { 0, 0 };
-	style.Normal.Pen = UIFramePen;
+	style.Round = { 6, 6 };
+	style.Normal.Pen = style.Hover.Pen = style.Press.Pen = { .Style = UIPen::NoPen, };
+	style.Normal.Brush = UIThumbBrush;
+	style.Hover.Brush = style.Press.Brush = UIAccentBrush;
+	style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
+	style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
 	PRIVATE()->HorizonScrollBar->getHandle()->setStyle(style);
 
 	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(canvas);
@@ -45,8 +49,12 @@ UIScroll::UIScroll(UICanvasRaw canvas)
 	PRIVATE()->VerticalScrollBar->setOrientation(UI::Vertical);
 	PRIVATE()->VerticalScrollBar->setSingleStep(80);
 	style = PRIVATE()->VerticalScrollBar->getHandle()->getStyle();
-	style.Round = { 0, 0 };
-	style.Normal.Pen = UIFramePen;
+	style.Round = { 6, 6 };
+	style.Normal.Pen = style.Hover.Pen = style.Press.Pen = { .Style = UIPen::NoPen, };
+	style.Normal.Brush = UIThumbBrush;
+	style.Hover.Brush = style.Press.Brush = UIAccentBrush;
+	style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
+	style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
 	PRIVATE()->VerticalScrollBar->getHandle()->setStyle(style);
 }
 

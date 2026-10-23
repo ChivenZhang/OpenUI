@@ -84,223 +84,126 @@ void sample(UICanvasRaw context, SDL_Window* window)
 {
 	auto builder = context->getBuilder();
 	auto scale = context->getConfig().DisplayScale;
+	auto px = [=](float value) { return value * scale; };
 
-	auto layout = builder->newWidget<UIFlow>();
-	context->addWidget(layout);
+	auto page = builder->newWidget<UIHBox>();
+	context->addWidget(page);
+	page->setFixedWidth({100.0f, UI_CSS_WIDTH_PERCENTAGE});
+	page->setFixedHeight({100.0f, UI_CSS_HEIGHT_PERCENTAGE});
 
-	//if (false)
+	auto filters = builder->newWidget<UIVBox>();
+	page->addWidget(filters);
+	filters->setMinWidth(px(190));
 	{
-		auto scroll = builder->newWidget<UIScroll>();
-		layout->addWidget(scroll);
-		scroll->setFixedSize(300 * scale, 200 * scale);
-		scroll->setHorizontalValue(150);
-		scroll->setVerticalValue(150);
-		//if (false)
-		{
-			auto label = builder->newWidget<UILabel>();
-			scroll->addWidget(label);
-			label->setFixedSize(300 * scale, 300 * scale);
-			label->setScaledContents(UILabel::ScaleKeepRatio);
-			int img_width, img_height, channels;
-			auto image_data = stbi_load("../../OpenUI.png", &img_width, &img_height, &channels, 4);
-			if (image_data) label->setPixmap({ (uint32_t)img_width, (uint32_t)img_height, (uint32_t)(img_width * 4), 0, image_data });
-			stbi_image_free(image_data);
-		}
-	}
-	//if (false)
-	{
-		auto vbox = builder->newWidget<UIVBox>();
-		layout->addWidget(vbox);
-		vbox->setFixedSize(200 * scale, 200 * scale);
-		{
-			auto button = builder->newWidget<UIButton>();
-			vbox->addWidget(button);
-			button->setText("Button0");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			vbox->addWidget(button);
-			button->setText("Button1");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			vbox->addWidget(button);
-			button->setText("Button2");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			vbox->addWidget(button);
-			button->setText("Button3");
-		}
-	}
-	//if (false)
-	{
-		auto hbox = builder->newWidget<UIHBox>();
-		layout->addWidget(hbox);
-		hbox->setFixedSize(250 * scale, 200 * scale);
-		{
-			auto button = builder->newWidget<UIButton>();
-			hbox->addWidget(button);
-			button->setText("Button0");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			hbox->addWidget(button);
-			button->setText("Button1");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			hbox->addWidget(button);
-			button->setText("Button2");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			hbox->addWidget(button);
-			button->setText("Button3");
-		}
-	}
-	if (false)
-	{
-		auto grid = builder->newWidget<UIGrid>();
-		layout->addWidget(grid);
-		grid->setRowStretch({ 1,1,1 });
-		grid->setColumnStretch({ 1,1,1 });
-		grid->setFixedSize(200 * scale, 200 * scale);
-		{
-			auto button = builder->newWidget<UIButton>();
-			grid->addWidget(button, 0, 0, 2, 2);
-			button->setText("Button0");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			grid->addWidget(button, 0, 2, 3, 1);
-			button->setText("Button1");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			grid->addWidget(button, 2, 0, 1, 1);
-			button->setText("Button2");
-		}
-		{
-			auto button = builder->newWidget<UIButton>();
-			grid->addWidget(button, 2, 1, 1, 1);
-			button->setText("Button3");
-		}
-	}
-	//if (false)
-	{
-		auto group = builder->newWidget<UIVBox>();
-		layout->addWidget(group);
-		group->setFixedSize(200 * scale, 200 * scale);
+		auto title = builder->newWidget<UILabel>();
+		filters->addWidget(title);
+		title->setFixedSize(px(180), px(36));
+		title->setText("道具仓库");
+
+		auto caption = builder->newWidget<UILabel>();
+		filters->addWidget(caption);
+		caption->setFixedSize(px(180), px(28));
+		caption->setText("分类");
+
+		auto all = builder->newWidget<UIRadio>();
+		filters->addWidget(all);
+		all->setFixedSize(px(180), px(32));
+		all->setText("全部");
+		all->setChecked(true);
+
+		const char* categories[] = { "武器", "防具", "消耗" };
+		for (auto name : categories)
 		{
 			auto radio = builder->newWidget<UIRadio>();
-			group->addWidget(radio);
-			radio->setFixedSize(100 * scale, 30 * scale);
-			radio->setText("Radio");
-			radio->setChecked(true);
-
-			auto radio0 = builder->newWidget<UIRadio>();
-			group->addWidget(radio0);
-			radio0->setFixedSize(100 * scale, 30 * scale);
-			radio0->setText("Radio");
-			radio0->setExclusive(radio->getExclusive());
-
-			auto radio1 = builder->newWidget<UIRadio>();
-			group->addWidget(radio1);
-			radio1->setFixedSize(100 * scale, 30 * scale);
-			radio1->setText("Radio");
-			radio1->setExclusive(radio->getExclusive());
+			filters->addWidget(radio);
+			radio->setFixedSize(px(180), px(32));
+			radio->setText(name);
+			radio->setExclusive(all->getExclusive());
 		}
+
+		auto split = builder->newWidget<UIHLine>();
+		filters->addWidget(split);
+		split->setFixedSize(px(180), px(8));
+
+		auto owned = builder->newWidget<UICheck>();
+		filters->addWidget(owned);
+		owned->setFixedSize(px(180), px(32));
+		owned->setText("仅未装备");
+		owned->setChecked(true);
+
+		auto tradable = builder->newWidget<UICheck>();
+		filters->addWidget(tradable);
+		tradable->setFixedSize(px(180), px(32));
+		tradable->setText("可交易");
+
+		auto weightLabel = builder->newWidget<UILabel>();
+		filters->addWidget(weightLabel);
+		weightLabel->setFixedSize(px(180), px(28));
+		weightLabel->setText("负重");
+
+		auto weight = builder->newWidget<UISlider>();
+		filters->addWidget(weight);
+		weight->setFixedSize(px(180), px(32));
+		weight->setRange(0, 100);
+		weight->setValue(62);
+	}
+
+	auto gutter = builder->newWidget<UIVLine>();
+	page->addWidget(gutter);
+	gutter->setFixedWidth(px(8));
+	gutter->setFlexShrink({0.0f});
+
+	auto itemsFlow = builder->newWidget<UIFlow>();
+	page->addWidget(itemsFlow);
+	{
+		const char* items[] = {
+			"古金长剑", "裂脊巨斧", "猎影短弓", "余烬法杖",
+			"王城胸甲", "巡礼斗篷", "铁棘护手", "远行靴",
+			"治疗药膏", "魔力药水", "火把", "回城卷轴",
+			"古金币", "狼牙项链", "星铁锭", "空白符文",
+			"破旧地图", "旅人干粮", "青铜钥匙", "守望号角",
+			"灰烬之心", "潮汐珍珠", "龙骨碎片", "未名遗物",
+		};
+
+		auto selected = builder->newWidget<UILabel>();
+		auto summary = builder->newWidget<UILabel>();
+
+		for (int index = 0; index < 24; ++index)
 		{
-			auto check = builder->newWidget<UICheck>();
-			group->addWidget(check);
-			check->setFixedSize(100 * scale, 30 * scale);
-			check->setText("Check");
-			check->setChecked(true);
+			auto item = builder->newWidget<UIButton>();
+			itemsFlow->addWidget(item);
+			item->setFixedSize(px(120), px(40));
+			item->setText(items[index]);
+			item->clicked->connect(nullptr, [=](bool) {
+				selected->setText(items[index]);
+				summary->setText(UIString(items[index]) + "  x1    可交易");
+				});
+			if (index == 0)
+			{
+				selected->setText(items[index]);
+				summary->setText(UIString(items[index]) + "  x1    可交易");
+			}
 		}
-		{
-			auto check = builder->newWidget<UICheck>();
-			group->addWidget(check);
-			check->setFixedSize(100 * scale, 30 * scale);
-			check->setText("Check");
-		}
-	}
-	//if (false)
-	{
-		auto label = builder->newWidget<UILabel>();
-		layout->addWidget(label);
-		label->setFixedSize(100 * scale, 30 * scale);
-		label->setText("Label");
-	}
-	//if (false)
-	{
-		auto button = builder->newWidget<UIButton>();
-		layout->addWidget(button);
-		button->setFixedSize(100 * scale, 30 * scale);
-		button->setText("Button");
-	}
-	//if (false)
-	{
-		auto slider = builder->newWidget<UISlider>();
-		layout->addWidget(slider);
-		slider->setFixedSize(100 * scale, 30 * scale);
-		slider->setRange(0, 100 * scale);
-		slider->setValue(25 * scale);
-	}
-	//if (false)
-	{
-		auto slider = builder->newWidget<UISlider>();
-		layout->addWidget(slider);
-		slider->setOrientation(UI::Vertical);
-		slider->setFixedSize(30 * scale, 100 * scale);
-		slider->setRange(0, 100 * scale);
-		slider->setValue(25 * scale);
-	}
-	//if(false)
-	{
-		auto hline = builder->newWidget<UIHLine>();
-		layout->addWidget(hline);
-		hline->setFixedSize(100 * scale, 30 * scale);
-	}
-	//if(false)
-	{
-		auto vline = builder->newWidget<UIVLine>();
-		layout->addWidget(vline);
-		vline->setFixedSize(30 * scale, 100 * scale);
-	}
-	//if (false)
-	{
-		auto combo = builder->newWidget<UICombo>();
-		layout->addWidget(combo);
-		combo->setFixedSize(100 * scale, 30 * scale);
-		combo->setMaxCount(4);
-		combo->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
-		combo->setCurrentIndex(0);
-		combo->currentTextChanged->connect(nullptr, [](UIString text) {
-			printf("combo1 %s\n", text.c_str());
-			});
 
-		auto combo2 = builder->newWidget<UICombo>();
-		layout->addWidget(combo2);
-		combo2->setFixedSize(100 * scale, 30 * scale);
-		combo2->setItems({ "黄金糕狮子头螺蛳粉", "黄金糕", "狮子头", "螺蛳粉", "蚵仔煎", "双皮奶", "龙须面" });
-		combo2->setCurrentText("黄金糕");
-		combo2->currentTextChanged->connect(nullptr, [](UIString text) {
-			printf("combo2 %s\n", text.c_str());
-			});
-	}
-	// if(false)
-	{
-		auto input = builder->newWidget<UIInput>();
-		layout->addWidget(input);
-		input->setFixedSize(100 * scale, 30 * scale);
-		input->setText("Hello,OpenUI");
-		input->editingStarted->connect(nullptr, [=](UIRect rect) {
+		auto detailGutter = builder->newWidget<UIVLine>();
+		page->addWidget(detailGutter);
+		detailGutter->setFixedWidth(px(8));
+		detailGutter->setFlexShrink({0.0f});
+
+		auto detail = builder->newWidget<UIVBox>();
+		page->addWidget(detail);
+		detail->setMinWidth(px(274));
+
+		auto search = builder->newWidget<UIInput>();
+		detail->addWidget(search);
+		search->setFixedSize(px(260), px(36));
+		search->setPlaceholderText("搜索道具");
+		search->editingStarted->connect(nullptr, [=](UIRect rect) {
 			SDL_StartTextInput(window);
 			SDL_Rect sdlRect{ (int)rect.X, (int)rect.Y, (int)rect.W, (int)rect.H };
 			SDL_SetTextInputArea(window, &sdlRect, 0);
 			});
-		input->textPasted->connect(nullptr, [=](UIString& value) {
+		search->textPasted->connect(nullptr, [=](UIString& value) {
 			if (SDL_HasClipboardText())
 			{
 				auto result = SDL_GetClipboardText();
@@ -308,9 +211,94 @@ void sample(UICanvasRaw context, SDL_Window* window)
 				SDL_free(result);
 			}
 			});
-		input->textCopied->connect(nullptr, [=](UIString const& value) {
+		search->textCopied->connect(nullptr, [=](UIString const& value) {
 			SDL_ClearClipboardData();
 			SDL_SetClipboardText(value.c_str());
 			});
+
+		auto sort = builder->newWidget<UICombo>();
+		detail->addWidget(sort);
+		sort->setFixedSize(px(260), px(36));
+		sort->setMaxCount(4);
+		sort->setItems({ "按稀有度", "按名称", "按重量", "按获得时间" });
+		sort->setCurrentIndex(0);
+
+		auto tidy = builder->newWidget<UIButton>();
+		detail->addWidget(tidy);
+		tidy->setFixedSize(px(260), px(36));
+		tidy->setText("整理");
+
+		selected->setFixedSize(px(260), px(32));
+		detail->addWidget(selected);
+
+		auto portraitRow = builder->newWidget<UIHBox>();
+		detail->addWidget(portraitRow);
+		portraitRow->setFixedSize(px(260), px(120));
+		{
+			auto portrait = builder->newWidget<UILabel>();
+			portraitRow->addWidget(portrait);
+			portrait->setFixedSize(px(200), px(120));
+			portrait->setScaledContents(UILabel::ScaleKeepRatio);
+			portrait->setText("纹章");
+			int imgWidth = 0, imgHeight = 0, channels = 0;
+			auto imageData = stbi_load("../../OpenUI.png", &imgWidth, &imgHeight, &channels, 4);
+			if (imageData)
+			{
+				portrait->setPixmap({ (uint32_t)imgWidth, (uint32_t)imgHeight, (uint32_t)(imgWidth * 4), 0, imageData });
+				stbi_image_free(imageData);
+			}
+
+			auto durability = builder->newWidget<UISlider>();
+			portraitRow->addWidget(durability);
+			durability->setOrientation(UI::Vertical);
+			durability->setFixedSize(px(36), px(120));
+			durability->setRange(0, 100);
+			durability->setValue(80);
+		}
+
+		summary->setFixedSize(px(260), px(28));
+		detail->addWidget(summary);
+
+		auto traits = builder->newWidget<UIFlow>();
+		detail->addWidget(traits);
+		traits->setFixedSize(px(260), px(72));
+		const char* traitNames[] = { "锋利", "古老", "可附魔" };
+		for (auto traitName : traitNames)
+		{
+			auto trait = builder->newWidget<UILabel>();
+			traits->addWidget(trait);
+			trait->setFixedSize(px(76), px(28));
+			trait->setText(traitName);
+		}
+
+		auto detailRule = builder->newWidget<UIHLine>();
+		detail->addWidget(detailRule);
+		detailRule->setFixedSize(px(260), px(8));
+
+		auto countLabel = builder->newWidget<UILabel>();
+		detail->addWidget(countLabel);
+		countLabel->setFixedSize(px(260), px(28));
+		countLabel->setText("取出数量");
+
+		auto count = builder->newWidget<UISlider>();
+		detail->addWidget(count);
+		count->setFixedSize(px(260), px(32));
+		count->setRange(1, 20);
+		count->setValue(1);
+
+		auto actions = builder->newWidget<UIHBox>();
+		detail->addWidget(actions);
+		actions->setFixedSize(px(260), px(40));
+		{
+			auto equip = builder->newWidget<UIButton>();
+			actions->addWidget(equip);
+			equip->setFixedSize(px(120), px(36));
+			equip->setText("装备");
+
+			auto drop = builder->newWidget<UIButton>();
+			actions->addWidget(drop);
+			drop->setFixedSize(px(120), px(36));
+			drop->setText("丢弃");
+		}
 	}
 }

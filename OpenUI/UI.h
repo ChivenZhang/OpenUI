@@ -759,7 +759,8 @@ static constexpr UIPen UIBluePen
 };
 static constexpr UIPen UIFramePen
 {
-	.Color { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f },
+	.Color { 110 / 255.0f, 90 / 255.0f, 58 / 255.0f, 1.0f },
+	.Width = 1.0f,
 };
 
 struct UIBrush
@@ -815,7 +816,67 @@ static constexpr UIBrush UIBlueBrush
 };
 static constexpr UIBrush UIFrameBrush
 {
-	.Color { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f },
+	.Color { 28 / 255.0f, 24 / 255.0f, 20 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UIInsetBrush
+{
+	.Color { 16 / 255.0f, 14 / 255.0f, 12 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UITextBrush
+{
+	.Color { 230 / 255.0f, 215 / 255.0f, 184 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UIMutedBrush
+{
+	.Color { 138 / 255.0f, 123 / 255.0f, 102 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UIInkBrush
+{
+	.Color { 20 / 255.0f, 15 / 255.0f, 12 / 255.0f, 1.0f },
+};
+static constexpr UIPen UIAccentPen
+{
+	.Color { 212 / 255.0f, 168 / 255.0f, 83 / 255.0f, 1.0f },
+	.Width = 1.0f,
+};
+static constexpr UIPen UIAccentHoverPen
+{
+	.Color { 240 / 255.0f, 212 / 255.0f, 138 / 255.0f, 1.0f },
+	.Width = 1.0f,
+};
+static constexpr UIPen UIAccentPressPen
+{
+	.Color { 140 / 255.0f, 106 / 255.0f, 47 / 255.0f, 1.0f },
+	.Width = 1.0f,
+};
+static constexpr UIBrush UIAccentBrush
+{
+	.Color { 212 / 255.0f, 168 / 255.0f, 83 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UIAccentHoverBrush
+{
+	.Color { 50 / 255.0f, 42 / 255.0f, 32 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UIAccentPressBrush
+{
+	.Color { 16 / 255.0f, 13 / 255.0f, 10 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UIAccentSoftBrush
+{
+	.Color { 42 / 255.0f, 36 / 255.0f, 28 / 255.0f, 1.0f },
+};
+static constexpr UIPen UIDisabledPen
+{
+	.Color { 58 / 255.0f, 52 / 255.0f, 44 / 255.0f, 1.0f },
+	.Width = 1.0f,
+};
+static constexpr UIBrush UIDisabledBrush
+{
+	.Color { 20 / 255.0f, 18 / 255.0f, 16 / 255.0f, 1.0f },
+};
+static constexpr UIBrush UIThumbBrush
+{
+	.Color { 140 / 255.0f, 115 / 255.0f, 68 / 255.0f, 1.0f },
 };
 
 #ifndef OPENUI_FONT_FAMILY

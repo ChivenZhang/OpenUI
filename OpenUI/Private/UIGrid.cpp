@@ -31,9 +31,6 @@ UIGrid::UIGrid(UICanvasRaw canvas)
 	UIWidget(canvas)
 {
 	m_Private = new UIGridPrivate;
-
-	PRIVATE()->Style.Pen = { .Color = { 108 / 255.0f, 110 / 255.0f, 111 / 255.0f, 1.0f }, };
-	PRIVATE()->Style.Brush = { .Color = { 238 / 255.0f, 238 / 255.0f, 242 / 255.0f, 1.0f }, };
 }
 
 UIGrid::~UIGrid()

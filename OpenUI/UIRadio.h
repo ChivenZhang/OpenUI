@@ -23,8 +23,11 @@ struct UIRadioStyle
 		UIFont Font;
 		UIBrush Brush;
 	};
-	UIFloat2 Round;
-	RadioMode Normal, Hover, Press, Disable;
+	UIFloat2 Round{ 8, 8 };
+	RadioMode Normal{ .Pen = UIFramePen, .Brush = UIInsetBrush, };
+	RadioMode Hover{ .Pen = UIAccentPen, .Brush = UIAccentSoftBrush, };
+	RadioMode Press{ .Pen = UIAccentPen, .Brush = UIAccentBrush, };
+	RadioMode Disable{ .Pen = UIDisabledPen, .Brush = UIDisabledBrush, };
 };
 
 class UIRadioGroup;

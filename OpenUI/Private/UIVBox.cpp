@@ -49,12 +49,9 @@ void UIVBox::arrange(UIRect client)
 void UIVBox::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(UINoPen);
-	painter->setBrush(PRIVATE()->Style.Brush);
-	painter->drawRect(client.X, client.Y, client.W, client.H);
 
 	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(UINoBrush);
+	painter->setBrush(PRIVATE()->Style.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 

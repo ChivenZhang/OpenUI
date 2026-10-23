@@ -21,15 +21,19 @@ struct UILabelStyle
 		{
 			UIPen Pen{ .Style = UIPen::NoPen, };
 			UIFont Font{ .Align = UIFont::AlignLeft | UIFont::AlignVCenter, };
-			UIBrush Brush{ .Color {0,0,0,1}, };
+			UIBrush Brush = UITextBrush;
 		} Foreground;
 		struct
 		{
-			UIPen Pen = UIFramePen;
-			UIBrush Brush = UIFrameBrush;
+			UIPen Pen{ .Style = UIPen::NoPen, };
+			UIBrush Brush{ .Style = UIBrush::NoBrush, };
 		} Background;
 	};
-	LabelMode Normal, Hover, Disable;
+	LabelMode Normal, Hover;
+	LabelMode Disable
+	{
+		.Foreground {.Brush = UIMutedBrush, },
+	};
 };
 
 /// @brief Label

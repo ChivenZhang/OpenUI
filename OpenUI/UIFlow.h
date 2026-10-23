@@ -15,8 +15,8 @@
 /// @brief 
 struct UIFlowStyle
 {
-	UIPen Pen;
-	UIBrush Brush;
+	UIPen Pen{ .Style = UIPen::NoPen, };
+	UIBrush Brush{ .Style = UIBrush::NoBrush, };
 };
 
 /// @brief Flow

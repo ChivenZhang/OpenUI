@@ -97,7 +97,7 @@ void UIInput::paint(UIRect client, UIPainterRaw painter)
 		if (PRIVATE()->Selection.W != 0 && PRIVATE()->Selection.H != 0)
 		{
 			painter->setPen({ .Style = UIPen::NoPen });
-			painter->setBrush({ .Color = { 153 / 255.0f, 201 / 255.0f, 239 / 255.0f, 255 / 255.0f} });
+			painter->setBrush({ .Color = { 90 / 255.0f, 68 / 255.0f, 32 / 255.0f, 1.0f } });
 			painter->drawRect(PRIVATE()->Selection.X, PRIVATE()->Selection.Y + 1, PRIVATE()->Selection.W, PRIVATE()->Selection.H - 2);
 		}
 

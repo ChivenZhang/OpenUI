@@ -15,8 +15,8 @@
 /// @brief 
 struct UIHBoxStyle
 {
-	UIPen Pen = UIFramePen;
-	UIBrush Brush = UIFrameBrush;
+	UIPen Pen{ .Style = UIPen::NoPen, };
+	UIBrush Brush{ .Style = UIBrush::NoBrush, };
 };
 
 /// @brief HBox

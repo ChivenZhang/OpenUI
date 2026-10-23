@@ -16,8 +16,8 @@
 /// @brief 
 struct UISliderStyle
 {
-	UIPen Pen = UIFramePen;
-	UIBrush Brush = UIFrameBrush;
+	UIPen Pen{ .Color { 58 / 255.0f, 50 / 255.0f, 40 / 255.0f, 1.0f }, .Width = 4.0f, };
+	UIBrush Brush{ .Style = UIBrush::NoBrush, };
 };
 
 /// @brief Handle
