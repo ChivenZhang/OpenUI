@@ -76,14 +76,14 @@ UIWidgetRef UIBuilder::buildWidget(UIString html) const
 				widget->setAttribText(a.Name, a.Value);
 
 				std::cout << UIString((depth + 1) * 4, ' ');
-				std::cout << "-attr :" << a.Name << " = " << a.Value << std::endl;
+				std::cout << "-param '" << a.Name << "' = '" << a.Value << "'"  << std::endl;
 			}
 			for (auto& s : w.Style)
 			{
 				widget->setStyleText(s.Name, s.Value);
 
 				std::cout << UIString((depth + 1) * 4, ' ');
-				std::cout << "-style:" << s.Name << " = " << s.Value << std::endl;
+				std::cout << "-style '" << s.Name << "' = '" << s.Value << "'" << std::endl;
 			}
 
 			for (auto& c : w.Children)

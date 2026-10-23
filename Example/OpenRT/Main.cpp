@@ -36,24 +36,23 @@ int main()
 	auto canvas = device->getCanvas();
 	device->setCursor("pointer");
 
-	//canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
-	//	<style>
-	//		div {
-	//			width: 100%;
-	//			height: 100%;
-	//		}
-	//		button {
-	//			width: 120px;
-	//			height: 40px;
-	//		}
-	//	</style>
-	//	<div>
-	//		<button>Button</button>
-	//		<button>Button</button>
-	//	</div>
-	//)"));
+	canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
+		<style>
+			div {
+				width: 100%;
+				height: 100%;
+			}
+			button {
+				width: 120px;
+				height: 40px;
+			}
+		</style>
+		<div>
+			<button class="a" >Button</button>
+		</div>
+	)"));
 
-	ingame(canvas);
+	//ingame(canvas);
 
 	while (device->update()) continue;
 	device = nullptr;

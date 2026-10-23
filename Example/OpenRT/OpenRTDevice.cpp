@@ -346,7 +346,7 @@ bool OpenRTDevice::update()
 
 	auto t1 = SDL_GetTicksNS() * 1e-9;
 
-	std::cout << 1.0f / (t1 - t0) << " fps" << std::endl;
+	// std::cout << 1.0f / (t1 - t0) << " fps" << std::endl;
 	return true;
 }
 
