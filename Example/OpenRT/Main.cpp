@@ -15,6 +15,7 @@
 #include "OpenRTDevice.h"
 
 void sample(UICanvasRaw context, SDL_Window* window);
+void ingame(UICanvasRaw context);
 
 int main()
 {
@@ -52,7 +53,7 @@ int main()
 	//	</div>
 	//)"));
 
-	sample(canvas, window);
+	ingame(canvas);
 
 	while (device->update()) continue;
 	device = nullptr;
@@ -93,7 +94,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 
 	auto filters = builder->newWidget<UIVBox>();
 	page->addWidget(filters);
-	filters->setMinWidth(px(190));
+	filters->setMinWidth(px(180));
 	{
 		auto title = builder->newWidget<UILabel>();
 		filters->addWidget(title);
