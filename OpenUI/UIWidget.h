@@ -23,6 +23,50 @@ class UIWidget;
 using UIWidgetRef = UIRef<UIWidget>;
 using UIWidgetRaw = UIRaw<UIWidget>;
 
+/// @brief CSS properties bound on one widget state.
+struct UIWidgetStyle
+{
+	UIPropDisplay Display;
+	UIPropDirection Direction;
+	UIPropBoxSizing BoxSizing;
+	UIPropPosition Position;
+	UIPropLeft Left;
+	UIPropTop Top;
+	UIPropRight Right;
+	UIPropBottom Bottom;
+	UIPropWidth Width;
+	UIPropHeight Height;
+	UIPropMinWidth MinWidth;
+	UIPropMinHeight MinHeight;
+	UIPropMaxWidth MaxWidth;
+	UIPropMaxHeight MaxHeight;
+	UIPropBorder Border;
+	UIPropColor BorderColor;
+	UIPropBorderRadius BorderRadius;
+	UIPropBackground Background;
+	UIPropForeground Foreground;
+	UIPropMargin Margin;
+	UIPropPadding Padding;
+	UIPropFlexDirection FlexDirection;
+	UIPropFlexWrap FlexWrap;
+	UIPropJustifyContent JustifyContent;
+	UIPropAlignItems AlignItems;
+	UIPropAlignContent AlignContent;
+	UIPropAlignSelf AlignSelf;
+	UIPropJustifyItems JustifyItems;
+	UIPropJustifySelf JustifySelf;
+	UIPropFlex Flex;
+	UIPropAspectRatio AspectRatio;
+	UIPropOverflow Overflow;
+	UIPropGridTemplateColumns GridTemplateColumns;
+	UIPropGridTemplateRows GridTemplateRows;
+	UIPropGridAutoColumns GridAutoColumns;
+	UIPropGridAutoRows GridAutoRows;
+	UIPropGridColumn GridColumn;
+	UIPropGridRow GridRow;
+	UIPropGap Gap;
+};
+
 /// @brief Base interface of widget
 class OPENUI_API UIWidget : public UIReactor, public UIHandler, public UIFilter, public std::enable_shared_from_this<UIWidget>
 {
@@ -51,6 +95,61 @@ public:
 	virtual void paint(UIRect client, UIPainterRaw painter);
 	virtual bool filter(UIReactorRaw source, UIEventRaw event) override;
 	virtual void handle(UIReactorRaw source, UIEventRaw event) final override;
+
+	// ================================DOM Attrib======================================
+
+	UIAttribRaw getAttribs() const;
+	void setAttribs(UIAttribRef value);
+	virtual UIString getAttribText(UIString name) const;
+	virtual void setAttribText(UIString name, UIString value);
+
+	template<class T>
+	T const& getAttrib(UIString const& key, T const& value = T()) const
+	{
+		return getAttribs()->getAttrib<T>(key, value);
+	}
+
+	template<class T>
+	void setAttrib(UIString const& key, T const& value) const
+	{
+		getAttribs()->setAttrib<T>(key, value);
+	}
+
+	template<class T>
+	bool hasAttrib(UIString const& key) const
+	{
+		if (auto result = getAttribs()->getAttrib(key)) return result->getData(typeid(std::remove_cvref_t<T>));
+		return false;
+	}
+
+	// =================================CSS Style======================================
+
+	UIStyleRaw getStyles() const;
+	void setStyles(UIStyleRef value);
+	UIComputedStyleRaw getStyleComputed() const;
+	virtual UIString getStyleText() const;	// Style Sheet
+	virtual void setStyleText(UIString value);	// Style Sheet
+	virtual UIString getStyleText(UIString name) const;
+	virtual bool setStyleText(UIString name, UIString value);
+
+	template<class T>
+	T const& getStyle(UIString const& key, T const& value = T()) const
+	{
+		return getStyles()->getStyle<T>(key, value);
+	}
+
+	template<class T>
+	void setStyle(UIString const& key, T const& value = T(), bool inherited = false) const
+	{
+		getStyles()->setStyle<T>(key, value, inherited);
+	}
+
+	template<class T>
+	bool hasStyle(UIString const& key) const
+	{
+		if (auto result = getStyles()->getStyle(key)) return result->getData(typeid(std::remove_cvref_t<T>));
+		return false;
+	}
 
 	// ================================== Attrib Query =================================
 
@@ -146,15 +245,6 @@ public:
 	UIPropBorderBottomLeftRadius getBorderBottomLeftRadius() const;
 	void setBorderBottomLeftRadius(UIPropBorderBottomLeftRadius value);
 
-	UIPropBackground getBackground() const;
-	void setBackground(UIPropBackground value);
-	UIPropColor getBackgroundColor() const;
-	void setBackgroundColor(UIPropColor value);
-	UIPropForeground getForeground() const;
-	void setForeground(UIPropForeground value);
-	UIPropColor getForegroundColor() const;
-	void setForegroundColor(UIPropColor value);
-
 	void setMargin(UIPropMarginLeft left, UIPropMarginTop top, UIPropMarginRight right, UIPropMarginBottom bottom);
 	UIPropMarginTop getMarginTop() const;
 	void setMarginTop(UIPropMarginTop value);
@@ -244,62 +334,24 @@ public:
 	void setGridGap(float value);
 	void setGridGap(float row, float column);
 
-	// =================================CSS Style======================================
+	// ================================= Stroke & Fill ======================================
 
-	UIStyleRaw getStyles() const;
-	void setStyles(UIStyleRef value);
-	UIComputedStyleRaw getStyleComputed() const;
-	virtual UIString getStyleText() const;	// Style Sheet
-	virtual void setStyleText(UIString value);	// Style Sheet
-	virtual UIString getStyleText(UIString name) const;
-	virtual bool setStyleText(UIString name, UIString value);
-
-	template<class T>
-	T const& getStyle(UIString const& key, T const& value = T()) const
-	{
-		return getStyles()->getStyle<T>(key, value);
-	}
-
-	template<class T>
-	void setStyle(UIString const& key, T const& value = T(), bool inherited = false) const
-	{
-		getStyles()->setStyle<T>(key, value, inherited);
-	}
-
-	template<class T>
-	bool hasStyle(UIString const& key) const
-	{
-		if (auto result = getStyles()->getStyle(key)) return result->getData(typeid(std::remove_cvref_t<T>));
-		return false;
-	}
-
-	// ================================DOM Attrib======================================
-
-	UIAttribRaw getAttribs() const;
-	void setAttribs(UIAttribRef value);
-	virtual UIString getAttribText(UIString name) const;
-	virtual void setAttribText(UIString name, UIString value);
-
-	template<class T>
-	T const& getAttrib(UIString const& key, T const& value = T()) const
-	{
-		return getAttribs()->getAttrib<T>(key, value);
-	}
-
-	template<class T>
-	void setAttrib(UIString const& key, T const& value) const
-	{
-		getAttribs()->setAttrib<T>(key, value);
-	}
-
-	template<class T>
-	bool hasAttrib(UIString const& key) const
-	{
-		if (auto result = getAttribs()->getAttrib(key)) return result->getData(typeid(std::remove_cvref_t<T>));
-		return false;
-	}
+	UIPropBackground getBackground() const;
+	void setBackground(UIPropBackground value);
+	UIPropColor getBackgroundColor() const;
+	void setBackgroundColor(UIPropColor value);
+	UIPropForeground getForeground() const;
+	void setForeground(UIPropForeground value);
+	UIPropColor getForegroundColor() const;
+	void setForegroundColor(UIPropColor value);
 
 protected:
+	UIWidgetStyle& getStyleNormal();
+	UIWidgetStyle& getStyleHover();
+	UIWidgetStyle& getStyleActive();
+	UIWidgetStyle& getStyleDisabled();
+	UIWidgetStyle& getStyleChecked();
+
 	template<class T>
 	void setEmbedStyle(UIString const& key, T& value, bool inherited = false) const
 	{

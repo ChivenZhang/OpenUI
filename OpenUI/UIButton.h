@@ -21,7 +21,6 @@ public:
 	~UIButton() override;
 	void arrange(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
-	bool setStyleText(UIString name, UIString value) override;
 
 	UIString getText() const;
 	void setText(UIString const& text);
