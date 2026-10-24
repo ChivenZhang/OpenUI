@@ -124,6 +124,16 @@ typedef unsigned int ui_css_border_type_t, ui_css_border_bottom_type_t, ui_css_b
 
 enum
 {
+    UI_CSS_BORDER_RADIUS_LENGTH,
+    UI_CSS_BORDER_RADIUS_PERCENTAGE,
+};
+
+typedef unsigned int ui_css_border_radius_type_t, ui_css_border_top_left_radius_type_t,
+                     ui_css_border_top_right_radius_type_t, ui_css_border_bottom_right_radius_type_t,
+                     ui_css_border_bottom_left_radius_type_t;
+
+enum
+{
     UI_CSS_BOX_SIZING_CONTENT_BOX,
     UI_CSS_BOX_SIZING_BORDER_BOX,
 };

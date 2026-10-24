@@ -132,6 +132,28 @@ public:
 	void setBorderLeft(UIPropBorderLeft value);
 	UIPropBorderRight getBorderRight() const;
 	void setBorderRight(UIPropBorderRight value);
+	UIPropColor getBorderColor() const;
+	void setBorderColor(UIPropColor value);
+
+	UIPropBorderRadius getBorderRadius() const;
+	void setBorderRadius(UIPropBorderRadius value);
+	UIPropBorderTopLeftRadius getBorderTopLeftRadius() const;
+	void setBorderTopLeftRadius(UIPropBorderTopLeftRadius value);
+	UIPropBorderTopRightRadius getBorderTopRightRadius() const;
+	void setBorderTopRightRadius(UIPropBorderTopRightRadius value);
+	UIPropBorderBottomRightRadius getBorderBottomRightRadius() const;
+	void setBorderBottomRightRadius(UIPropBorderBottomRightRadius value);
+	UIPropBorderBottomLeftRadius getBorderBottomLeftRadius() const;
+	void setBorderBottomLeftRadius(UIPropBorderBottomLeftRadius value);
+
+	UIPropBackground getBackground() const;
+	void setBackground(UIPropBackground value);
+	UIPropColor getBackgroundColor() const;
+	void setBackgroundColor(UIPropColor value);
+	UIPropForeground getForeground() const;
+	void setForeground(UIPropForeground value);
+	UIPropColor getForegroundColor() const;
+	void setForegroundColor(UIPropColor value);
 
 	void setMargin(UIPropMarginLeft left, UIPropMarginTop top, UIPropMarginRight right, UIPropMarginBottom bottom);
 	UIPropMarginTop getMarginTop() const;

@@ -45,6 +45,16 @@ int main()
 			button {
 				width: 120px;
 				height: 40px;
+				border-radius: 8px;
+			}
+			button:hover {
+				background-color: #ff0000;
+			}
+			button:active {
+				background-color: #00ff00;
+			}
+			button:disabled {
+				background-color: #0000ff;
 			}
 		</style>
 		<div>

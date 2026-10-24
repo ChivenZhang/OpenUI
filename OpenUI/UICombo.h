@@ -13,10 +13,43 @@
 #include "UIFactory.h"
 #include "UIButton.h"
 
+/// @brief Appearance copied onto the combo's buttons through setStyleText.
+struct UIComboFace
+{
+	struct Mode
+	{
+		UIPen Pen;
+		UIBrush Brush;
+	};
+	UIFloat2 Round{ 2, 2 };
+	UILabelStyle Label =
+	{
+		.Normal
+		{
+			.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }, .Brush = UITextBrush, },
+			.Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},
+		},
+		.Hover
+		{
+			.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }, .Brush = UIAccentBrush, },
+			.Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},
+		},
+		.Disable
+		{
+			.Foreground {.Font { .Align = UIFont::AlignCenter | UIFont::AlignVCenter, }, .Brush = UIMutedBrush, },
+			.Background{.Pen {.Style = UIPen::NoPen, }, .Brush {.Style = UIBrush::NoBrush, }},
+		},
+	};
+	Mode Normal{ .Pen = UIAccentPen, .Brush = UIFrameBrush };
+	Mode Hover{ .Pen = UIAccentHoverPen, .Brush = UIAccentHoverBrush };
+	Mode Press{ .Pen = UIAccentPressPen, .Brush = UIAccentPressBrush };
+	Mode Disable{ .Pen = UIDisabledPen, .Brush = UIDisabledBrush };
+};
+
 /// @brief 
 struct UIComboStyle
 {
-	UIButtonStyle Button
+	UIComboFace Button
 	{
 		.Round{ 2, 2 },
 		.Label
@@ -58,7 +91,7 @@ struct UIComboStyle
 			.Brush = UIDisabledBrush,
 		},
 	};
-	UIButtonStyle Items
+	UIComboFace Items
 	{
 		.Round{ 0, 0 },
 		.Label

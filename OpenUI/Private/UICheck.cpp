@@ -11,6 +11,23 @@
 #include "../UICheck.h"
 #include "../UICanvas.h"
 
+static UIString checkCssColor(UIColor color)
+{
+	return "rgba("
+		+ std::to_string((int)(color.R * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.G * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.B * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.A * 255.0f + 0.5f)) + ")";
+}
+
+static void checkBindFace(UIButtonRaw button, UIString const& state, UIPen const& pen, UIBrush const& brush)
+{
+	auto suffix = state.empty() ? UIString() : ":" + state;
+	button->setStyleText("border-color" + suffix, pen.Style == UIPen::NoPen ? "rgba(0,0,0,0)" : checkCssColor(pen.Color));
+	button->setStyleText("border-width" + suffix, std::to_string(pen.Style == UIPen::NoPen ? 0.0f : pen.Width) + "px");
+	button->setStyleText("background-color" + suffix, brush.Style == UIBrush::NoBrush ? "rgba(0,0,0,0)" : checkCssColor(brush.Color));
+}
+
 struct UICheckPrivate : UIPrivate
 {
 	UICheckStyle Style;
@@ -48,25 +65,14 @@ UICheck::UICheck(UICanvasRaw canvas)
 		);
 	PRIVATE()->Button->setCheckable(true);
 
-	{
-		auto style = PRIVATE()->Button->getStyle();
-		style.Round = PRIVATE()->Style.Round;
-		style.Normal.Pen = PRIVATE()->Style.Normal.Pen;
-		style.Hover.Pen = PRIVATE()->Style.Hover.Pen;
-		style.Press.Pen = PRIVATE()->Style.Press.Pen;
-		style.Disable.Pen = PRIVATE()->Style.Disable.Pen;
-		style.Normal.Brush = PRIVATE()->Style.Normal.Brush;
-		style.Hover.Brush = PRIVATE()->Style.Hover.Brush;
-		style.Press.Brush = PRIVATE()->Style.Press.Brush;
-		style.Disable.Brush = PRIVATE()->Style.Disable.Brush;
-		style.Label.Normal.Foreground.Brush = UIInkBrush;
-		style.Label.Hover.Foreground.Brush = UIInkBrush;
-		style.Label.Normal.Foreground.Font.Align = UIFont::AlignCenter | UIFont::AlignVCenter;
-		style.Label.Hover.Foreground.Font.Align = UIFont::AlignCenter | UIFont::AlignVCenter;
-		style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
-		style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
-		PRIVATE()->Button->setStyle(style);
-	}
+	PRIVATE()->Button->setStyleText("border-radius", std::to_string(PRIVATE()->Style.Round.X) + "px");
+	checkBindFace(PRIVATE()->Button.get(), "", PRIVATE()->Style.Normal.Pen, PRIVATE()->Style.Normal.Brush);
+	checkBindFace(PRIVATE()->Button.get(), "hover", PRIVATE()->Style.Hover.Pen, PRIVATE()->Style.Hover.Brush);
+	checkBindFace(PRIVATE()->Button.get(), "active", PRIVATE()->Style.Press.Pen, PRIVATE()->Style.Press.Brush);
+	checkBindFace(PRIVATE()->Button.get(), "disabled", PRIVATE()->Style.Disable.Pen, PRIVATE()->Style.Disable.Brush);
+	PRIVATE()->Button->setStyleText("color", checkCssColor(UIInkBrush.Color));
+	PRIVATE()->Button->setStyleText("color:hover", checkCssColor(UIInkBrush.Color));
+	PRIVATE()->Button->setStyleText("color:active", checkCssColor(UIInkBrush.Color));
 
 	PRIVATE()->Label = UINew<UILabel>(canvas);
 	this->addWidget(PRIVATE()->Label);

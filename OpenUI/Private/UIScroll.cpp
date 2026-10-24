@@ -33,14 +33,26 @@ UIScroll::UIScroll(UICanvasRaw canvas)
 	PRIVATE()->HorizonScrollBar->setMinWidth({12, UI_CSS_MIN_WIDTH_LENGTH});
 	PRIVATE()->HorizonScrollBar->setOrientation(UI::Horizontal);
 	PRIVATE()->HorizonScrollBar->setSingleStep(80);
-	auto style = PRIVATE()->HorizonScrollBar->getHandle()->getStyle();
-	style.Round = { 6, 6 };
-	style.Normal.Pen = style.Hover.Pen = style.Press.Pen = { .Style = UIPen::NoPen, };
-	style.Normal.Brush = UIThumbBrush;
-	style.Hover.Brush = style.Press.Brush = UIAccentBrush;
-	style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
-	style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
-	PRIVATE()->HorizonScrollBar->getHandle()->setStyle(style);
+	auto css = [](UIColor color)
+	{
+		return "rgba("
+			+ std::to_string((int)(color.R * 255.0f + 0.5f)) + ","
+			+ std::to_string((int)(color.G * 255.0f + 0.5f)) + ","
+			+ std::to_string((int)(color.B * 255.0f + 0.5f)) + ","
+			+ std::to_string((int)(color.A * 255.0f + 0.5f)) + ")";
+	};
+	auto bindHandle = [&](UIButtonRaw handle)
+	{
+		handle->setStyleText("border-radius", "6px");
+		handle->setStyleText("border-color", "rgba(0,0,0,0)");
+		handle->setStyleText("border-color:hover", "rgba(0,0,0,0)");
+		handle->setStyleText("border-color:active", "rgba(0,0,0,0)");
+		handle->setStyleText("border-width", "0px");
+		handle->setStyleText("background-color", css(UIThumbBrush.Color));
+		handle->setStyleText("background-color:hover", css(UIAccentBrush.Color));
+		handle->setStyleText("background-color:active", css(UIAccentBrush.Color));
+	};
+	bindHandle(PRIVATE()->HorizonScrollBar->getHandle());
 
 	PRIVATE()->VerticalScrollBar = UINew<UIScrollBar>(canvas);
 	addWidget(PRIVATE()->VerticalScrollBar);
@@ -48,14 +60,7 @@ UIScroll::UIScroll(UICanvasRaw canvas)
 	PRIVATE()->VerticalScrollBar->setMinHeight({12, UI_CSS_MIN_HEIGHT_LENGTH});
 	PRIVATE()->VerticalScrollBar->setOrientation(UI::Vertical);
 	PRIVATE()->VerticalScrollBar->setSingleStep(80);
-	style = PRIVATE()->VerticalScrollBar->getHandle()->getStyle();
-	style.Round = { 6, 6 };
-	style.Normal.Pen = style.Hover.Pen = style.Press.Pen = { .Style = UIPen::NoPen, };
-	style.Normal.Brush = UIThumbBrush;
-	style.Hover.Brush = style.Press.Brush = UIAccentBrush;
-	style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
-	style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
-	PRIVATE()->VerticalScrollBar->getHandle()->setStyle(style);
+	bindHandle(PRIVATE()->VerticalScrollBar->getHandle());
 }
 
 UIScroll::~UIScroll()

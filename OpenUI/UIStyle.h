@@ -201,6 +201,27 @@ struct UIPropBorder
     UIPropBorderBottom Bottom;
 };
 
+struct UIPropBorderRadiusCorner
+{
+    float Horizontal = 0.0f;
+    float Vertical = 0.0f;
+    ui_css_border_radius_type_t HorizontalType = UI_CSS_BORDER_RADIUS_LENGTH;
+    ui_css_border_radius_type_t VerticalType = UI_CSS_BORDER_RADIUS_LENGTH;
+};
+
+using UIPropBorderTopLeftRadius = UIPropBorderRadiusCorner;
+using UIPropBorderTopRightRadius = UIPropBorderRadiusCorner;
+using UIPropBorderBottomRightRadius = UIPropBorderRadiusCorner;
+using UIPropBorderBottomLeftRadius = UIPropBorderRadiusCorner;
+
+struct UIPropBorderRadius
+{
+    UIPropBorderTopLeftRadius TopLeft;
+    UIPropBorderTopRightRadius TopRight;
+    UIPropBorderBottomRightRadius BottomRight;
+    UIPropBorderBottomLeftRadius BottomLeft;
+};
+
 struct UIPropBoxSizing
 {
     ui_css_box_sizing_type_t Value = UI_CSS_BOX_SIZING_CONTENT_BOX;
@@ -222,6 +243,16 @@ struct UIPropColor
         uint32_t RGBA = 0;
     } Value;
     ui_css_color_type_t Type = UI_CSS_COLOR_CURRENTCOLOR;
+};
+
+struct UIPropBackground
+{
+    UIPropColor Color;
+};
+
+struct UIPropForeground
+{
+    UIPropColor Color;
 };
 
 struct UIPropDirection
@@ -1823,6 +1854,122 @@ inline bool UITypeC(UIPropBorderRight const& src, UIString& dst)
     }
 }
 
+inline bool UIParseRadiusToken(UIString const& token, float& value, ui_css_border_radius_type_t& type)
+{
+    UICssMeasure measure;
+    if (UIParseMeasure(token, measure) == false) return false;
+    if (measure.Kind == UI_CSS_MEASURE_PERCENT) { type = UI_CSS_BORDER_RADIUS_PERCENTAGE; value = measure.Value; return true; }
+    if (measure.Kind == UI_CSS_MEASURE_LENGTH) { type = UI_CSS_BORDER_RADIUS_LENGTH; value = measure.Value; return true; }
+    return false;
+}
+
+inline UIString UIFormatRadiusToken(float value, ui_css_border_radius_type_t type)
+{
+    if (type == UI_CSS_BORDER_RADIUS_PERCENTAGE) return std::to_string(value) + "%";
+    return std::to_string(value) + "px";
+}
+
+inline bool UIApplyRadiusSides(UIString const& text, UIPropBorderRadiusCorner* corners, bool vertical)
+{
+    auto tokens = UISplitCssTokens(text);
+    if (tokens.empty() || tokens.size() > 4) return false;
+    float values[4] = {};
+    ui_css_border_radius_type_t types[4] = {};
+    for (size_t i = 0; i < tokens.size(); ++i)
+        if (UIParseRadiusToken(tokens[i], values[i], types[i]) == false) return false;
+    size_t topRight = tokens.size() > 1 ? 1 : 0;
+    size_t bottomRight = tokens.size() > 2 ? 2 : 0;
+    size_t bottomLeft = tokens.size() > 3 ? 3 : topRight;
+    size_t index[4] = {0, topRight, bottomRight, bottomLeft};
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (vertical)
+        {
+            corners[i].Vertical = values[index[i]];
+            corners[i].VerticalType = types[index[i]];
+        }
+        else
+        {
+            corners[i].Horizontal = values[index[i]];
+            corners[i].HorizontalType = types[index[i]];
+        }
+    }
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropBorderRadius& dst)
+{
+    auto parts = UISplitCssSlash(src);
+    if (parts.empty() || parts.size() > 2 || parts[0].empty()) return false;
+    UIPropBorderRadiusCorner corners[4];
+    if (UIApplyRadiusSides(parts[0], corners, false) == false) return false;
+    if (parts.size() == 1)
+    {
+        for (auto& corner : corners)
+        {
+            corner.Vertical = corner.Horizontal;
+            corner.VerticalType = corner.HorizontalType;
+        }
+    }
+    else if (parts[1].empty() || UIApplyRadiusSides(parts[1], corners, true) == false) return false;
+    dst.TopLeft = corners[0];
+    dst.TopRight = corners[1];
+    dst.BottomRight = corners[2];
+    dst.BottomLeft = corners[3];
+    return true;
+}
+template <>
+inline bool UITypeC(UIPropBorderRadius const& src, UIString& dst)
+{
+    auto horizontal = UIFormatRadiusToken(src.TopLeft.Horizontal, src.TopLeft.HorizontalType) + " "
+        + UIFormatRadiusToken(src.TopRight.Horizontal, src.TopRight.HorizontalType) + " "
+        + UIFormatRadiusToken(src.BottomRight.Horizontal, src.BottomRight.HorizontalType) + " "
+        + UIFormatRadiusToken(src.BottomLeft.Horizontal, src.BottomLeft.HorizontalType);
+    auto elliptical = src.TopLeft.Horizontal != src.TopLeft.Vertical || src.TopLeft.HorizontalType != src.TopLeft.VerticalType
+        || src.TopRight.Horizontal != src.TopRight.Vertical || src.TopRight.HorizontalType != src.TopRight.VerticalType
+        || src.BottomRight.Horizontal != src.BottomRight.Vertical || src.BottomRight.HorizontalType != src.BottomRight.VerticalType
+        || src.BottomLeft.Horizontal != src.BottomLeft.Vertical || src.BottomLeft.HorizontalType != src.BottomLeft.VerticalType;
+    if (elliptical == false)
+    {
+        dst = horizontal;
+        return true;
+    }
+    dst = horizontal + " / "
+        + UIFormatRadiusToken(src.TopLeft.Vertical, src.TopLeft.VerticalType) + " "
+        + UIFormatRadiusToken(src.TopRight.Vertical, src.TopRight.VerticalType) + " "
+        + UIFormatRadiusToken(src.BottomRight.Vertical, src.BottomRight.VerticalType) + " "
+        + UIFormatRadiusToken(src.BottomLeft.Vertical, src.BottomLeft.VerticalType);
+    return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropBorderRadiusCorner& dst)
+{
+    auto tokens = UISplitCssTokens(src);
+    if (tokens.size() == 1)
+    {
+        if (UIParseRadiusToken(tokens[0], dst.Horizontal, dst.HorizontalType) == false) return false;
+        dst.Vertical = dst.Horizontal;
+        dst.VerticalType = dst.HorizontalType;
+        return true;
+    }
+    if (tokens.size() == 2)
+    {
+        if (UIParseRadiusToken(tokens[0], dst.Horizontal, dst.HorizontalType) == false) return false;
+        return UIParseRadiusToken(tokens[1], dst.Vertical, dst.VerticalType);
+    }
+    return false;
+}
+template <>
+inline bool UITypeC(UIPropBorderRadiusCorner const& src, UIString& dst)
+{
+    dst = UIFormatRadiusToken(src.Horizontal, src.HorizontalType);
+    if (src.Horizontal != src.Vertical || src.HorizontalType != src.VerticalType)
+        dst += " " + UIFormatRadiusToken(src.Vertical, src.VerticalType);
+    return true;
+}
+
 // Box sizing
 template <>
 inline bool UITypeC(UIString const& src, UIPropBoxSizing& dst)
@@ -1909,16 +2056,63 @@ inline bool UITypeC(UIPropClear const& src, UIString& dst)
 template <>
 inline bool UITypeC(UIString const& src, UIPropColor& dst)
 {
-    return std::sscanf(src.c_str(), "rgba(%hhu,%hhu,%hhu,%hhu)", &dst.Value.R, &dst.Value.G, &dst.Value.B, &dst.Value.A);
+    auto text = UITrim(src);
+    if (text.size() >= 7 && text[0] == '#')
+    {
+        unsigned red = 0, green = 0, blue = 0, alpha = 255;
+        int count = 0;
+        if (text.size() == 7) count = std::sscanf(text.c_str(), "#%2x%2x%2x", &red, &green, &blue);
+        else if (text.size() == 9) count = std::sscanf(text.c_str(), "#%2x%2x%2x%2x", &red, &green, &blue, &alpha);
+        if ((text.size() == 7 && count == 3) || (text.size() == 9 && count == 4))
+        {
+            dst.Value.R = (uint8_t)red;
+            dst.Value.G = (uint8_t)green;
+            dst.Value.B = (uint8_t)blue;
+            dst.Value.A = (uint8_t)alpha;
+            dst.Type = UI_CSS_COLOR_HEX;
+            return true;
+        }
+    }
+    if (std::sscanf(text.c_str(), "rgba(%hhu,%hhu,%hhu,%hhu)", &dst.Value.R, &dst.Value.G, &dst.Value.B, &dst.Value.A) != 4) return false;
+    dst.Type = UI_CSS_COLOR_RGBA;
+    return true;
 }
 template <>
 inline bool UITypeC(UIPropColor const& src, UIString& dst)
 {
     char buffer[256] = {};
-    auto result = std::snprintf(buffer, sizeof(buffer), "rgba(%hhu,%hhu,%hhu,%hhu)", src.Value.R, src.Value.G, src.Value.B, src.Value.A);
+    int result = 0;
+    if (src.Type == UI_CSS_COLOR_HEX)
+    {
+        if (src.Value.A == 255) result = std::snprintf(buffer, sizeof(buffer), "#%02x%02x%02x", src.Value.R, src.Value.G, src.Value.B);
+        else result = std::snprintf(buffer, sizeof(buffer), "#%02x%02x%02x%02x", src.Value.R, src.Value.G, src.Value.B, src.Value.A);
+    }
+    else result = std::snprintf(buffer, sizeof(buffer), "rgba(%hhu,%hhu,%hhu,%hhu)", src.Value.R, src.Value.G, src.Value.B, src.Value.A);
     if (result <= 0) return false;
     dst = {buffer, (size_t) result};
     return true;
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropBackground& dst)
+{
+    return UITypeC(src, dst.Color);
+}
+template <>
+inline bool UITypeC(UIPropBackground const& src, UIString& dst)
+{
+    return UITypeC(src.Color, dst);
+}
+
+template <>
+inline bool UITypeC(UIString const& src, UIPropForeground& dst)
+{
+    return UITypeC(src, dst.Color);
+}
+template <>
+inline bool UITypeC(UIPropForeground const& src, UIString& dst)
+{
+    return UITypeC(src.Color, dst);
 }
 
 // Direction

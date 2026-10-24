@@ -13,6 +13,33 @@
 #include "../UIScroll.h"
 #include "../UICanvas.h"
 
+static UIString comboCssColor(UIColor color)
+{
+	return "rgba("
+		+ std::to_string((int)(color.R * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.G * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.B * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.A * 255.0f + 0.5f)) + ")";
+}
+
+static void comboBindFace(UIButtonRaw button, UIComboFace const& face)
+{
+	auto bind = [&](UIString const& state, UIComboFace::Mode const& mode, UIBrush const& text)
+	{
+		auto suffix = state.empty() ? UIString() : ":" + state;
+		button->setStyleText("border-color" + suffix, mode.Pen.Style == UIPen::NoPen ? "rgba(0,0,0,0)" : comboCssColor(mode.Pen.Color));
+		button->setStyleText("border-width" + suffix, std::to_string(mode.Pen.Style == UIPen::NoPen ? 0.0f : mode.Pen.Width) + "px");
+		button->setStyleText("background-color" + suffix, mode.Brush.Style == UIBrush::NoBrush ? "rgba(0,0,0,0)" : comboCssColor(mode.Brush.Color));
+		button->setStyleText("color" + suffix, text.Style == UIBrush::NoBrush ? "rgba(0,0,0,0)" : comboCssColor(text.Color));
+	};
+	button->setStyleText("border-radius", std::to_string(face.Round.X) + "px");
+	bind("", face.Normal, face.Label.Normal.Foreground.Brush);
+	bind("hover", face.Hover, face.Label.Hover.Foreground.Brush);
+	bind("active", face.Press, face.Label.Hover.Foreground.Brush);
+	bind("disabled", face.Disable, face.Label.Disable.Foreground.Brush);
+	button->getLabel()->setStyle(face.Label);
+}
+
 struct UIComboPrivate : UIPrivate
 {
 	int32_t Index = -1;
@@ -145,7 +172,7 @@ void UICombo::setItems(UIStringList const& texts)
 		auto button = UINew<UIButton>(getCanvas());
 		itemsWidget->addWidget(button);
 		button->setText(text);
-		button->setStyle(PRIVATE()->Style.Items);
+		comboBindFace(button.get(), PRIVATE()->Style.Items);
 		button->getLabel()->setMargin(
 			{ 8, UI_CSS_MARGIN_LENGTH},
 			{0, UI_CSS_MARGIN_LENGTH},
@@ -233,15 +260,14 @@ UIComboStyle UICombo::getStyle() const
 void UICombo::setStyle(UIComboStyle value)
 {
 	PRIVATE()->Style = value;
-	PRIVATE()->Button->setStyle(PRIVATE()->Style.Button);
+	comboBindFace(PRIVATE()->Button.get(), PRIVATE()->Style.Button);
 
 	auto contentWidget = PRIVATE()->Popup->getContentView();
 	for (size_t i = 0; contentWidget && i < contentWidget->getWidgets().size(); ++i)
 	{
 		auto itemWidget = UICast<UIButton>(contentWidget->getWidgets()[i]);
 		if (itemWidget == nullptr) continue;
-		itemWidget->setStyle(PRIVATE()->Style.Items);
-		itemWidget->getLabel()->setStyle(PRIVATE()->Style.Items.Label);
+		comboBindFace(itemWidget.get(), PRIVATE()->Style.Items);
 	}
 }
 

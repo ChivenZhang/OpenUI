@@ -47,16 +47,25 @@ UISlider::UISlider(UICanvasRaw canvas)
 	addWidget(PRIVATE()->Handle);
 	PRIVATE()->Handle->setFixedSize({16, UI_CSS_WIDTH_LENGTH}, {16, UI_CSS_HEIGHT_LENGTH});
 	{
-		auto style = PRIVATE()->Handle->getStyle();
-		style.Round = { 8, 8 };
-		style.Normal.Pen = UIFramePen;
-		style.Hover.Pen = UIAccentHoverPen;
-		style.Press.Pen = UIAccentPen;
-		style.Normal.Brush = style.Hover.Brush = UIFrameBrush;
-		style.Press.Brush = UIAccentBrush;
-		style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
-		style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
-		PRIVATE()->Handle->setStyle(style);
+		auto css = [](UIColor color)
+		{
+			return "rgba("
+				+ std::to_string((int)(color.R * 255.0f + 0.5f)) + ","
+				+ std::to_string((int)(color.G * 255.0f + 0.5f)) + ","
+				+ std::to_string((int)(color.B * 255.0f + 0.5f)) + ","
+				+ std::to_string((int)(color.A * 255.0f + 0.5f)) + ")";
+		};
+		auto handle = PRIVATE()->Handle.get();
+		handle->setStyleText("border-radius", "8px");
+		handle->setStyleText("border-color", css(UIFramePen.Color));
+		handle->setStyleText("border-color:hover", css(UIAccentHoverPen.Color));
+		handle->setStyleText("border-color:active", css(UIAccentPen.Color));
+		handle->setStyleText("border-width", std::to_string(UIFramePen.Width) + "px");
+		handle->setStyleText("border-width:hover", std::to_string(UIAccentHoverPen.Width) + "px");
+		handle->setStyleText("border-width:active", std::to_string(UIAccentPen.Width) + "px");
+		handle->setStyleText("background-color", css(UIFrameBrush.Color));
+		handle->setStyleText("background-color:hover", css(UIFrameBrush.Color));
+		handle->setStyleText("background-color:active", css(UIAccentBrush.Color));
 	}
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });

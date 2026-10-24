@@ -11,6 +11,23 @@
 #include "../UIRadio.h"
 #include "../UICanvas.h"
 
+static UIString radioCssColor(UIColor color)
+{
+	return "rgba("
+		+ std::to_string((int)(color.R * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.G * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.B * 255.0f + 0.5f)) + ","
+		+ std::to_string((int)(color.A * 255.0f + 0.5f)) + ")";
+}
+
+static void radioBindFace(UIButtonRaw button, UIString const& state, UIPen const& pen, UIBrush const& brush)
+{
+	auto suffix = state.empty() ? UIString() : ":" + state;
+	button->setStyleText("border-color" + suffix, pen.Style == UIPen::NoPen ? "rgba(0,0,0,0)" : radioCssColor(pen.Color));
+	button->setStyleText("border-width" + suffix, std::to_string(pen.Style == UIPen::NoPen ? 0.0f : pen.Width) + "px");
+	button->setStyleText("background-color" + suffix, brush.Style == UIBrush::NoBrush ? "rgba(0,0,0,0)" : radioCssColor(brush.Color));
+}
+
 /// @brief 
 struct UIRadioPrivate : UIPrivate
 {
@@ -55,21 +72,11 @@ UIRadio::UIRadio(UICanvasRaw canvas)
 	PRIVATE()->Label = UINew<UILabel>(canvas);
 	addWidget(PRIVATE()->Label);
 
-	{
-		auto style = PRIVATE()->Button->getStyle();
-		style.Round = { 8, 8 };
-		style.Normal.Pen = PRIVATE()->Style.Normal.Pen;
-		style.Hover.Pen = PRIVATE()->Style.Hover.Pen;
-		style.Press.Pen = PRIVATE()->Style.Press.Pen;
-		style.Disable.Pen = PRIVATE()->Style.Disable.Pen;
-		style.Normal.Brush = PRIVATE()->Style.Normal.Brush;
-		style.Hover.Brush = PRIVATE()->Style.Hover.Brush;
-		style.Press.Brush = PRIVATE()->Style.Press.Brush;
-		style.Disable.Brush = PRIVATE()->Style.Disable.Brush;
-		style.Label.Normal.Background.Pen.Style = style.Label.Hover.Background.Pen.Style = UIPen::NoPen;
-		style.Label.Normal.Background.Brush.Style = style.Label.Hover.Background.Brush.Style = UIBrush::NoBrush;
-		PRIVATE()->Button->setStyle(style);
-	}
+	PRIVATE()->Button->setStyleText("border-radius", "8px");
+	radioBindFace(PRIVATE()->Button.get(), "", PRIVATE()->Style.Normal.Pen, PRIVATE()->Style.Normal.Brush);
+	radioBindFace(PRIVATE()->Button.get(), "hover", PRIVATE()->Style.Hover.Pen, PRIVATE()->Style.Hover.Brush);
+	radioBindFace(PRIVATE()->Button.get(), "active", PRIVATE()->Style.Press.Pen, PRIVATE()->Style.Press.Brush);
+	radioBindFace(PRIVATE()->Button.get(), "disabled", PRIVATE()->Style.Disable.Pen, PRIVATE()->Style.Disable.Brush);
 	{
 		auto style = PRIVATE()->Label->getStyle();
 		style.Normal.Background.Pen = style.Hover.Background.Pen = { .Style = UIPen::NoPen, };
@@ -129,9 +136,8 @@ void UIRadio::arrange(UIRect client)
 		{8 * getCanvas()->getConfig().DisplayScale, UI_CSS_MARGIN_LENGTH},
 		{0, UI_CSS_MARGIN_LENGTH}
 		);
-	auto style = PRIVATE()->Button->getStyle();
-	style.Round = { (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) , (fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1) };
-	PRIVATE()->Button->setStyle(style);
+	auto round = fontSize * getCanvas()->getConfig().DisplayScale * 0.5f + 1;
+	PRIVATE()->Button->setStyleText("border-radius", std::to_string(round) + "px");
 
 	PRIVATE()->Label->setMinHeight(
 		{fontSize * getCanvas()->getConfig().DisplayScale, UI_CSS_HEIGHT_LENGTH}
