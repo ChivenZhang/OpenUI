@@ -149,7 +149,10 @@ void UICombo::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
 
-	painter->setPen(PRIVATE()->Style.Button.Normal.Pen);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
 	painter->drawLine(client.X + client.W - 20, client.Y + (client.H - 5) * 0.5f, client.X + client.W - 15, client.Y + (client.H + 5) * 0.5f);
 	painter->drawLine(client.X + client.W - 15, client.Y + (client.H + 5) * 0.5f, client.X + client.W - 10, client.Y + (client.H - 5) * 0.5f);
 }
@@ -260,7 +263,8 @@ UIComboStyle UICombo::getStyle() const
 void UICombo::setStyle(UIComboStyle value)
 {
 	PRIVATE()->Style = value;
-	comboBindFace(PRIVATE()->Button.get(), PRIVATE()->Style.Button);
+	writeFrame(getStyleNormal(), value.Button.Normal.Pen, value.Button.Normal.Brush);
+	if (PRIVATE()->Button) comboBindFace(PRIVATE()->Button.get(), PRIVATE()->Style.Button);
 
 	auto contentWidget = PRIVATE()->Popup->getContentView();
 	for (size_t i = 0; contentWidget && i < contentWidget->getWidgets().size(); ++i)
@@ -269,6 +273,29 @@ void UICombo::setStyle(UIComboStyle value)
 		if (itemWidget == nullptr) continue;
 		comboBindFace(itemWidget.get(), PRIVATE()->Style.Items);
 	}
+}
+
+bool UICombo::setStyleText(UIString name, UIString value)
+{
+	auto result = UIWidget::setStyleText(name, value);
+	UIString property = name;
+	auto split = name.find(':');
+	if (split != UIString::npos) property = name.substr(0, split);
+	switch (UIHash(property))
+	{
+	case UIHash("border"):
+	case UIHash("border-color"):
+	case UIHash("border-width"):
+	case UIHash("border-radius"):
+	case UIHash("background"):
+	case UIHash("background-color"):
+	case UIHash("color"):
+	case UIHash("foreground"):
+		if (PRIVATE()->Button) PRIVATE()->Button->setStyleText(name, value);
+		break;
+	default: break;
+	}
+	return result;
 }
 
 bool UICombo::filter(UIReactorRaw source, UIEventRaw event)

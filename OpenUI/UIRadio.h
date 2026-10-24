@@ -49,6 +49,7 @@ public:
 
 	UIRadioStyle getStyle() const;
 	void setStyle(UIRadioStyle const& style);
+	bool setStyleText(UIString name, UIString value) override;
 
 	bool getChecked() const;
 	void setChecked(bool value);

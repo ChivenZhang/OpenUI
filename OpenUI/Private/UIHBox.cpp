@@ -13,7 +13,6 @@
 /// @brief 
 struct UIHboxPrivateData : UIPrivate
 {
-	UIHBoxStyle Style;
 };
 #define PRIVATE() ((UIHboxPrivateData*) m_Private)
 
@@ -53,17 +52,22 @@ void UIHBox::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
 
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
 UIHBoxStyle UIHBox::getStyle() const
 {
-	return PRIVATE()->Style;
+	UIHBoxStyle result;
+	readFrame(getStyleNormal(), result.Pen, result.Brush);
+	return result;
 }
 
 void UIHBox::setStyle(UIHBoxStyle value)
 {
-	PRIVATE()->Style = value;
+	writeFrame(getStyleNormal(), value.Pen, value.Brush);
 }

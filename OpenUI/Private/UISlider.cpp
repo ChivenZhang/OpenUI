@@ -16,7 +16,6 @@ struct UISliderPrivate : UIPrivate
 {
 	UIFloat2 MousePos;
 	UIButtonRef Handle;
-	UISliderStyle Style;
 	UI::Orientation Orientation = UI::Horizontal;
 	int32_t Maximum = 0, Minimum = 0, PageStep = 1, SingleStep = 1, SliderPosition = 0, Value = 0;
 	bool SliderDown = false, Tracking = false;
@@ -36,6 +35,7 @@ UISlider::UISlider(UICanvasRaw canvas)
 	UIWidget(canvas)
 {
 	m_Private = new UISliderPrivate;
+	writeFrame(getStyleNormal(), { .Color = { 0.43f, 0.35f, 0.23f, 1.0f }, .Width = 4.0f }, UINoBrush);
 
 	sliderMoved = &PRIVATE()->OnSliderMoved;
 	sliderPressed = &PRIVATE()->OnSliderPressed;
@@ -163,8 +163,11 @@ void UISlider::layout(UIRect client)
 void UISlider::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 
 	if (PRIVATE()->Orientation == UI::Horizontal)
 	{

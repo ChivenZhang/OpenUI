@@ -12,7 +12,6 @@
 
 struct UIFlowPrivate : UIPrivate
 {
-	UIFlowStyle Style;
 };
 #define PRIVATE() ((UIFlowPrivate*) m_Private)
 
@@ -49,17 +48,22 @@ void UIFlow::arrange(UIRect client)
 void UIFlow::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 	painter->drawRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2);
 }
 
 UIFlowStyle UIFlow::getStyle() const
 {
-	return PRIVATE()->Style;
+	UIFlowStyle result;
+	readFrame(getStyleNormal(), result.Pen, result.Brush);
+	return result;
 }
 
 void UIFlow::setStyle(UIFlowStyle value)
 {
-	PRIVATE()->Style = value;
+	writeFrame(getStyleNormal(), value.Pen, value.Brush);
 }

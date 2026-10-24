@@ -34,6 +34,7 @@ UILabel::UILabel(UICanvasRaw canvas)
 	linkActivated = &PRIVATE()->LinkActivated;
 
 	this->setEmbedAttrib("textContent", PRIVATE()->Text);
+	setStyle(PRIVATE()->Style);
 }
 
 UILabel::~UILabel()
@@ -142,19 +143,10 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
 
+	auto style = getStyle();
+	auto const& mode = getEnable() == false ? style.Disable : PRIVATE()->Hovered ? style.Hover : style.Normal;
 	painter->setPen(UINoPen);
-	if (getEnable() == false)
-	{
-		painter->setBrush(PRIVATE()->Style.Disable.Background.Brush);
-	}
-	else if (PRIVATE()->Hovered)
-	{
-		painter->setBrush(PRIVATE()->Style.Hover.Background.Brush);
-	}
-	else
-	{
-		painter->setBrush(PRIVATE()->Style.Normal.Background.Brush);
-	}
+	painter->setBrush(mode.Background.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 
 	if (PRIVATE()->Image.Pixels)
@@ -189,43 +181,14 @@ void UILabel::paint(UIRect client, UIPainterRaw painter)
 	auto textContent = this->getAttribText("textContent");
 	if (textContent.empty() == false)
 	{
-		if (getEnable() == false)
-		{
-			painter->setPen(PRIVATE()->Style.Disable.Foreground.Pen);
-			painter->setFont(PRIVATE()->Style.Disable.Foreground.Font);
-			painter->setBrush(PRIVATE()->Style.Disable.Foreground.Brush);
-		}
-		else if (PRIVATE()->Hovered)
-		{
-			painter->setPen(PRIVATE()->Style.Hover.Foreground.Pen);
-			painter->setFont(PRIVATE()->Style.Hover.Foreground.Font);
-			painter->setBrush(PRIVATE()->Style.Hover.Foreground.Brush);
-		}
-		else
-		{
-			painter->setPen(PRIVATE()->Style.Normal.Foreground.Pen);
-			painter->setFont(PRIVATE()->Style.Normal.Foreground.Font);
-			painter->setBrush(PRIVATE()->Style.Normal.Foreground.Brush);
-		}
+		painter->setPen(mode.Foreground.Pen);
+		painter->setFont(mode.Foreground.Font);
+		painter->setBrush(mode.Foreground.Brush);
 		painter->drawText(client.X, client.Y, client.W, client.H, textContent);
 	}
 
 	painter->setBrush(UINoBrush);
-	if (getEnable() == false)
-	{
-		// TODO: getStyle(name:disabled);
-		painter->setPen(PRIVATE()->Style.Disable.Background.Pen);
-	}
-	else if (PRIVATE()->Hovered)
-	{
-		// TODO: getStyle(name:hovered);
-		painter->setPen(PRIVATE()->Style.Hover.Background.Pen);
-	}
-	else
-	{
-		// TODO: getStyle(name);
-		painter->setPen(PRIVATE()->Style.Normal.Background.Pen);
-	}
+	painter->setPen(mode.Background.Pen);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
@@ -241,12 +204,32 @@ void UILabel::setText(UIString const& text)
 
 UILabelStyle UILabel::getStyle() const
 {
-	return PRIVATE()->Style;
+	UILabelStyle result = PRIVATE()->Style;
+	auto read = [&](UILabelStyle::LabelMode& mode, UIWidgetStyle const& src)
+	{
+		readFrame(src, mode.Background.Pen, mode.Background.Brush);
+		if (src.Foreground.Color.Type == UI_CSS_COLOR_CURRENTCOLOR) return;
+		auto text = readColor(src.Foreground.Color);
+		mode.Foreground.Brush = text.A <= 0.0f ? UIBrush{ .Style = UIBrush::NoBrush } : UIBrush{ .Color = text };
+	};
+	read(result.Normal, getStyleNormal());
+	read(result.Hover, getStyleHover());
+	read(result.Disable, getStyleDisabled());
+	return result;
 }
 
 void UILabel::setStyle(UILabelStyle const& style)
 {
 	PRIVATE()->Style = style;
+	auto write = [&](UIWidgetStyle& dst, UILabelStyle::LabelMode const& mode)
+	{
+		writeFrame(dst, mode.Background.Pen, mode.Background.Brush);
+		if (mode.Foreground.Brush.Style == UIBrush::NoBrush) dst.Foreground.Color = {};
+		else writeColor(dst.Foreground.Color, mode.Foreground.Brush.Color);
+	};
+	write(getStyleNormal(), style.Normal);
+	write(getStyleHover(), style.Hover);
+	write(getStyleDisabled(), style.Disable);
 }
 
 UIFontAligns UILabel::getAlignment() const

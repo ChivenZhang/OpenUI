@@ -11,18 +11,20 @@
 #include "../UIButton.h"
 #include "../UICanvas.h"
 
+static UIPropColor buttonColor(UIColor color)
+{
+	UIPropColor result;
+	result.Type = UI_CSS_COLOR_RGBA;
+	result.Value.R = (uint8_t)(color.R * 255.0f + 0.5f);
+	result.Value.G = (uint8_t)(color.G * 255.0f + 0.5f);
+	result.Value.B = (uint8_t)(color.B * 255.0f + 0.5f);
+	result.Value.A = (uint8_t)(color.A * 255.0f + 0.5f);
+	return result;
+}
+
 static UIColor buttonColor(UIPropColor const& color)
 {
 	return { color.Value.R / 255.0f, color.Value.G / 255.0f, color.Value.B / 255.0f, color.Value.A / 255.0f };
-}
-
-static UIString buttonCssColor(UIColor color)
-{
-	return "rgba("
-		+ std::to_string((int)(color.R * 255.0f + 0.5f)) + ","
-		+ std::to_string((int)(color.G * 255.0f + 0.5f)) + ","
-		+ std::to_string((int)(color.B * 255.0f + 0.5f)) + ","
-		+ std::to_string((int)(color.A * 255.0f + 0.5f)) + ")";
 }
 
 struct UIButtonPrivate : UIPrivate
@@ -62,20 +64,27 @@ UIButton::UIButton(UICanvasRaw canvas)
 	label.Hover.Foreground.Font.Align = align;
 	label.Disable.Foreground.Font.Align = align;
 	PRIVATE()->Label->setStyle(label);
-	auto bind = [&](UIString const& state, UIPen const& pen, UIBrush const& fill, UIBrush const& text)
+
+	auto apply = [&](UIWidgetStyle& style, UIPen const& pen, UIBrush const& fill, UIBrush const& text)
 	{
-		auto suffix = state.empty() ? UIString() : ":" + state;
-		this->setStyleText("border-color" + suffix, buttonCssColor(pen.Color));
-		this->setStyleText("border-width" + suffix, std::to_string(pen.Width) + "px");
-		this->setStyleText("background-color" + suffix, buttonCssColor(fill.Color));
-		this->setStyleText("color" + suffix, buttonCssColor(text.Color));
+		style.BorderColor = buttonColor(pen.Color);
+		style.Border.Left = { pen.Width, UI_CSS_BORDER_LENGTH };
+		style.Border.Top = { pen.Width, UI_CSS_BORDER_LENGTH };
+		style.Border.Right = { pen.Width, UI_CSS_BORDER_LENGTH };
+		style.Border.Bottom = { pen.Width, UI_CSS_BORDER_LENGTH };
+		style.Background.Color = buttonColor(fill.Color);
+		style.Foreground.Color = buttonColor(text.Color);
 	};
-	bind("", UIAccentPen, UIFrameBrush, UITextBrush);
-	bind("hover", UIAccentHoverPen, UIAccentHoverBrush, UIAccentBrush);
-	bind("active", UIAccentPressPen, UIAccentPressBrush, UIAccentBrush);
-	bind("disabled", UIDisabledPen, UIDisabledBrush, UIMutedBrush);
-	bind("checked", UIAccentPressPen, UIAccentPressBrush, UIAccentBrush);
-	this->setStyleText("border-radius", "2px");
+	apply(getStyleNormal(), UIAccentPen, UIFrameBrush, UITextBrush);
+	apply(getStyleHover(), UIAccentHoverPen, UIAccentHoverBrush, UIAccentBrush);
+	apply(getStyleActive(), UIAccentPressPen, UIAccentPressBrush, UIAccentBrush);
+	apply(getStyleDisabled(), UIDisabledPen, UIDisabledBrush, UIMutedBrush);
+	apply(getStyleChecked(), UIAccentPressPen, UIAccentPressBrush, UIAccentBrush);
+	UIPropBorderRadiusCorner corner{ 2.0f, 2.0f, UI_CSS_BORDER_RADIUS_LENGTH, UI_CSS_BORDER_RADIUS_LENGTH };
+	getStyleNormal().BorderRadius.TopLeft = corner;
+	getStyleNormal().BorderRadius.TopRight = corner;
+	getStyleNormal().BorderRadius.BottomRight = corner;
+	getStyleNormal().BorderRadius.BottomLeft = corner;
 }
 
 UIButton::~UIButton()
@@ -132,6 +141,68 @@ void UIButton::paint(UIRect client, UIPainterRaw painter)
 	label.Hover.Foreground.Brush = textBrush;
 	label.Disable.Foreground.Brush = textBrush;
 	PRIVATE()->Label->setStyle(label);
+}
+
+bool UIButton::setStyleText(UIString name, UIString value)
+{
+	UIString property = name;
+	UIString state;
+	auto split = name.find(':');
+	if (split != UIString::npos)
+	{
+		property = name.substr(0, split);
+		state = name.substr(split + 1);
+	}
+
+	UIWidgetStyle* style = nullptr;
+	switch (UIHash(state))
+	{
+	case UIHash(""):
+	case UIHash("normal"): style = &getStyleNormal(); break;
+	case UIHash("hover"): style = &getStyleHover(); break;
+	case UIHash("active"): style = &getStyleActive(); break;
+	case UIHash("disabled"): style = &getStyleDisabled(); break;
+	case UIHash("checked"): style = &getStyleChecked(); break;
+	default: return UIWidget::setStyleText(name, value);
+	}
+
+	auto group = [&](char const* prop) -> UIString
+	{
+		if (state.empty()) return prop;
+		return UIString(prop) + ":" + state;
+	};
+	switch (UIHash(property))
+	{
+	case UIHash("border-color"):
+		setEmbedStyle(name, style->BorderColor);
+		break;
+	case UIHash("border-width"):
+		setEmbedStyle(group("border"), style->Border);
+		setEmbedStyle(name, style->Border);
+		break;
+	case UIHash("background"):
+		setEmbedStyle(name, style->Background);
+		setEmbedStyle(group("background-color"), style->Background.Color);
+		break;
+	case UIHash("background-color"):
+		setEmbedStyle(group("background"), style->Background);
+		setEmbedStyle(name, style->Background.Color);
+		break;
+	case UIHash("color"):
+		setEmbedStyle(group("foreground"), style->Foreground, true);
+		setEmbedStyle(name, style->Foreground.Color, true);
+		break;
+	case UIHash("foreground"):
+		setEmbedStyle(name, style->Foreground, true);
+		setEmbedStyle(group("color"), style->Foreground.Color, true);
+		break;
+	case UIHash("border-radius"):
+		setEmbedStyle(name, style->BorderRadius);
+		break;
+	default:
+		return UIWidget::setStyleText(name, value);
+	}
+	return getStyles()->setStyleText(name, value);
 }
 
 UIString UIButton::getText() const

@@ -65,11 +65,7 @@ UICheck::UICheck(UICanvasRaw canvas)
 		);
 	PRIVATE()->Button->setCheckable(true);
 
-	PRIVATE()->Button->setStyleText("border-radius", std::to_string(PRIVATE()->Style.Round.X) + "px");
-	checkBindFace(PRIVATE()->Button.get(), "", PRIVATE()->Style.Normal.Pen, PRIVATE()->Style.Normal.Brush);
-	checkBindFace(PRIVATE()->Button.get(), "hover", PRIVATE()->Style.Hover.Pen, PRIVATE()->Style.Hover.Brush);
-	checkBindFace(PRIVATE()->Button.get(), "active", PRIVATE()->Style.Press.Pen, PRIVATE()->Style.Press.Brush);
-	checkBindFace(PRIVATE()->Button.get(), "disabled", PRIVATE()->Style.Disable.Pen, PRIVATE()->Style.Disable.Brush);
+	setStyle(PRIVATE()->Style);
 	PRIVATE()->Button->setStyleText("color", checkCssColor(UIInkBrush.Color));
 	PRIVATE()->Button->setStyleText("color:hover", checkCssColor(UIInkBrush.Color));
 	PRIVATE()->Button->setStyleText("color:active", checkCssColor(UIInkBrush.Color));
@@ -173,6 +169,35 @@ UICheckStyle UICheck::getStyle() const
 void UICheck::setStyle(UICheckStyle const& style)
 {
 	PRIVATE()->Style = style;
+	if (PRIVATE()->Button == nullptr) return;
+	PRIVATE()->Button->setStyleText("border-radius", std::to_string(style.Round.X) + "px");
+	checkBindFace(PRIVATE()->Button.get(), "", style.Normal.Pen, style.Normal.Brush);
+	checkBindFace(PRIVATE()->Button.get(), "hover", style.Hover.Pen, style.Hover.Brush);
+	checkBindFace(PRIVATE()->Button.get(), "active", style.Press.Pen, style.Press.Brush);
+	checkBindFace(PRIVATE()->Button.get(), "disabled", style.Disable.Pen, style.Disable.Brush);
+}
+
+bool UICheck::setStyleText(UIString name, UIString value)
+{
+	auto result = UIWidget::setStyleText(name, value);
+	UIString property = name;
+	auto split = name.find(':');
+	if (split != UIString::npos) property = name.substr(0, split);
+	switch (UIHash(property))
+	{
+	case UIHash("border"):
+	case UIHash("border-color"):
+	case UIHash("border-width"):
+	case UIHash("border-radius"):
+	case UIHash("background"):
+	case UIHash("background-color"):
+	case UIHash("color"):
+	case UIHash("foreground"):
+		if (PRIVATE()->Button) PRIVATE()->Button->setStyleText(name, value);
+		break;
+	default: break;
+	}
+	return result;
 }
 
 bool UICheck::getChecked() const

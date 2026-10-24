@@ -149,6 +149,7 @@ public:
 
 	UIComboStyle getStyle() const;
 	void setStyle(UIComboStyle value);
+	bool setStyleText(UIString name, UIString value) override;
 
 protected:
 	bool filter(UIReactorRaw source, UIEventRaw event) override;

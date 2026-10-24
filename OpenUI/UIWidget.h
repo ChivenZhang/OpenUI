@@ -347,10 +347,19 @@ public:
 
 protected:
 	UIWidgetStyle& getStyleNormal();
+	UIWidgetStyle const& getStyleNormal() const;
 	UIWidgetStyle& getStyleHover();
+	UIWidgetStyle const& getStyleHover() const;
 	UIWidgetStyle& getStyleActive();
+	UIWidgetStyle const& getStyleActive() const;
 	UIWidgetStyle& getStyleDisabled();
+	UIWidgetStyle const& getStyleDisabled() const;
 	UIWidgetStyle& getStyleChecked();
+	UIWidgetStyle const& getStyleChecked() const;
+	void writeFrame(UIWidgetStyle& style, UIPen const& pen, UIBrush const& brush);
+	void readFrame(UIWidgetStyle const& style, UIPen& pen, UIBrush& brush) const;
+	void writeColor(UIPropColor& dst, UIColor const& color);
+	UIColor readColor(UIPropColor const& color) const;
 
 	template<class T>
 	void setEmbedStyle(UIString const& key, T& value, bool inherited = false) const

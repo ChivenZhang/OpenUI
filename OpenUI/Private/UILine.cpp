@@ -12,7 +12,6 @@
 
 struct UILinePrivate : UIPrivate
 {
-	UILineStyle Style;
 };
 #define PRIVATE() ((UILinePrivate*)m_Private)
 
@@ -21,6 +20,7 @@ UIHLine::UIHLine(UICanvasRaw canvas)
 	UIWidget(canvas)
 {
 	m_Private = new UILinePrivate;
+	writeFrame(getStyleNormal(), UIFramePen, UINoBrush);
 }
 
 UIHLine::~UIHLine()
@@ -31,19 +31,24 @@ UIHLine::~UIHLine()
 void UIHLine::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 	painter->drawLine(client.X + 1, client.Y + client.H * 0.5f, client.X + 1 + client.W - 2, client.Y + client.H * 0.5f);
 }
 
 UILineStyle UIHLine::getStyle() const
 {
-	return PRIVATE()->Style;
+	UILineStyle result;
+	readFrame(getStyleNormal(), result.Pen, result.Brush);
+	return result;
 }
 
 void UIHLine::setStyle(UILineStyle value)
 {
-	PRIVATE()->Style = value;
+	writeFrame(getStyleNormal(), value.Pen, value.Brush);
 }
 
 UIVLine::UIVLine(UICanvasRaw canvas)
@@ -51,6 +56,7 @@ UIVLine::UIVLine(UICanvasRaw canvas)
 	UIWidget(canvas)
 {
 	m_Private = new UILinePrivate;
+	writeFrame(getStyleNormal(), UIFramePen, UINoBrush);
 }
 
 UIVLine::~UIVLine()
@@ -61,17 +67,22 @@ UIVLine::~UIVLine()
 void UIVLine::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 	painter->drawLine(client.X + client.W * 0.5f, client.Y + 1, client.X + client.W * 0.5f, client.Y + 1 + client.H - 2);
 }
 
 UILineStyle UIVLine::getStyle() const
 {
-	return PRIVATE()->Style;
+	UILineStyle result;
+	readFrame(getStyleNormal(), result.Pen, result.Brush);
+	return result;
 }
 
 void UIVLine::setStyle(UILineStyle value)
 {
-	PRIVATE()->Style = value;
+	writeFrame(getStyleNormal(), value.Pen, value.Brush);
 }

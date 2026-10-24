@@ -45,6 +45,7 @@ public:
 
 	UICheckStyle getStyle() const;
 	void setStyle(UICheckStyle const& style);
+	bool setStyleText(UIString name, UIString value) override;
 
 	bool getChecked() const;
 	void setChecked(bool value);

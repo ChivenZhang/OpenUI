@@ -1303,7 +1303,17 @@ UIWidgetStyle& UIWidget::getStyleNormal()
     return PRIVATE()->Normal;
 }
 
+UIWidgetStyle const& UIWidget::getStyleNormal() const
+{
+    return PRIVATE()->Normal;
+}
+
 UIWidgetStyle& UIWidget::getStyleHover()
+{
+    return PRIVATE()->Hover;
+}
+
+UIWidgetStyle const& UIWidget::getStyleHover() const
 {
     return PRIVATE()->Hover;
 }
@@ -1313,7 +1323,17 @@ UIWidgetStyle& UIWidget::getStyleActive()
     return PRIVATE()->Active;
 }
 
+UIWidgetStyle const& UIWidget::getStyleActive() const
+{
+    return PRIVATE()->Active;
+}
+
 UIWidgetStyle& UIWidget::getStyleDisabled()
+{
+    return PRIVATE()->Disabled;
+}
+
+UIWidgetStyle const& UIWidget::getStyleDisabled() const
 {
     return PRIVATE()->Disabled;
 }
@@ -1321,6 +1341,62 @@ UIWidgetStyle& UIWidget::getStyleDisabled()
 UIWidgetStyle& UIWidget::getStyleChecked()
 {
     return PRIVATE()->Checked;
+}
+
+UIWidgetStyle const& UIWidget::getStyleChecked() const
+{
+    return PRIVATE()->Checked;
+}
+
+void UIWidget::writeColor(UIPropColor& dst, UIColor const& color)
+{
+    dst.Type = UI_CSS_COLOR_RGBA;
+    dst.Value.R = (uint8_t)(color.R * 255.0f + 0.5f);
+    dst.Value.G = (uint8_t)(color.G * 255.0f + 0.5f);
+    dst.Value.B = (uint8_t)(color.B * 255.0f + 0.5f);
+    dst.Value.A = (uint8_t)(color.A * 255.0f + 0.5f);
+}
+
+UIColor UIWidget::readColor(UIPropColor const& color) const
+{
+    return { color.Value.R / 255.0f, color.Value.G / 255.0f, color.Value.B / 255.0f, color.Value.A / 255.0f };
+}
+
+void UIWidget::writeFrame(UIWidgetStyle& style, UIPen const& pen, UIBrush const& brush)
+{
+    if (pen.Style == UIPen::NoPen)
+    {
+        style.BorderColor = {};
+        style.Border.Left = {};
+        style.Border.Top = {};
+        style.Border.Right = {};
+        style.Border.Bottom = {};
+    }
+    else
+    {
+        writeColor(style.BorderColor, pen.Color);
+        style.Border.Left = { pen.Width, UI_CSS_BORDER_LENGTH };
+        style.Border.Top = { pen.Width, UI_CSS_BORDER_LENGTH };
+        style.Border.Right = { pen.Width, UI_CSS_BORDER_LENGTH };
+        style.Border.Bottom = { pen.Width, UI_CSS_BORDER_LENGTH };
+    }
+    if (brush.Style == UIBrush::NoBrush) style.Background.Color = {};
+    else writeColor(style.Background.Color, brush.Color);
+}
+
+void UIWidget::readFrame(UIWidgetStyle const& style, UIPen& pen, UIBrush& brush) const
+{
+    auto border = readColor(style.BorderColor);
+    float width = 0.0f;
+    if (style.Border.Top.Type == UI_CSS_BORDER_LENGTH) width = style.Border.Top.Value;
+    else if (style.Border.Top.Type == UI_CSS_BORDER_THIN) width = 1.0f;
+    else if (style.Border.Top.Type == UI_CSS_BORDER_MEDIUM) width = 3.0f;
+    else if (style.Border.Top.Type == UI_CSS_BORDER_THICK) width = 5.0f;
+    if (border.A <= 0.0f || width <= 0.0f) pen = UINoPen;
+    else pen = { .Color = border, .Width = width };
+    auto fill = readColor(style.Background.Color);
+    if (fill.A <= 0.0f) brush = UINoBrush;
+    else brush = { .Color = fill };
 }
 UIString UIWidget::getStyleText() const
 {

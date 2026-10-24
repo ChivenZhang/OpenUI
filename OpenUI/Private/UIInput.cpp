@@ -52,6 +52,7 @@ UIInput::UIInput(UICanvasRaw canvas)
 	textEdited = &PRIVATE()->OnTextEdited;
 	textPasted = &PRIVATE()->OnTextPasted;
 	textCopied = &PRIVATE()->OnTextCopied;
+	setStyle(PRIVATE()->Style);
 }
 
 UIInput::~UIInput()
@@ -88,8 +89,9 @@ void UIInput::layout(UIRect client)
 void UIInput::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
+	auto style = getStyle();
 	painter->setPen(UINoPen);
-	painter->setBrush(PRIVATE()->Style.Background.Brush);
+	painter->setBrush(style.Background.Brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 
 	if (PRIVATE()->Text.empty() == false)
@@ -102,29 +104,39 @@ void UIInput::paint(UIRect client, UIPainterRaw painter)
 		}
 
 		painter->setPen(UINoPen);
-		painter->setFont(PRIVATE()->Style.Foreground.Font);
-		painter->setBrush(PRIVATE()->Style.Foreground.Brush);
+		painter->setFont(style.Foreground.Font);
+		painter->setBrush(style.Foreground.Brush);
 		UIRect cursorRect;
 		painter->drawText(PRIVATE()->SelectOffset + client.X, client.Y, -1, client.H, PRIVATE()->Text, nullptr, PRIVATE()->Cursor, &cursorRect);
 
-		painter->setPen(PRIVATE()->Style.Background.Pen);
+		painter->setPen(style.Background.Pen);
 		painter->setBrush({ .Style = UIBrush::NoBrush });
 		painter->drawLine(cursorRect.X, cursorRect.Y, cursorRect.X, cursorRect.Y + cursorRect.H);
 	}
 
-	painter->setPen(PRIVATE()->Style.Background.Pen);
+	painter->setPen(style.Background.Pen);
 	painter->setBrush(UINoBrush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
 UIInputStyle UIInput::getStyle() const
 {
-	return PRIVATE()->Style;
+	UIInputStyle result = PRIVATE()->Style;
+	readFrame(getStyleNormal(), result.Background.Pen, result.Background.Brush);
+	if (getStyleNormal().Foreground.Color.Type != UI_CSS_COLOR_CURRENTCOLOR)
+	{
+		auto text = readColor(getStyleNormal().Foreground.Color);
+		result.Foreground.Brush = text.A <= 0.0f ? UIBrush{ .Style = UIBrush::NoBrush } : UIBrush{ .Color = text };
+	}
+	return result;
 }
 
 void UIInput::setStyle(UIInputStyle value)
 {
 	PRIVATE()->Style = value;
+	writeFrame(getStyleNormal(), value.Background.Pen, value.Background.Brush);
+	if (value.Foreground.Brush.Style == UIBrush::NoBrush) getStyleNormal().Foreground.Color = {};
+	else writeColor(getStyleNormal().Foreground.Color, value.Foreground.Brush.Color);
 }
 
 UIInput::echo_t UIInput::getEchoMode() const

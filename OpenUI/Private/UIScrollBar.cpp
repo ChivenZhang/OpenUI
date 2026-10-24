@@ -15,7 +15,6 @@ struct UIScrollBarPrivate : UIPrivate
 {
 	UIFloat2 MousePos;
 	UIButtonRef Handle;
-	UIScrollBarStyle Style;
 	UI::Orientation Orientation = UI::Horizontal;
 	bool SliderDown = false, Tracking = false;
 	int32_t Maximum = 0, Minimum = 0, PageStep = 1, SingleStep = 1, SliderPosition = 0, Value = 0;
@@ -33,6 +32,7 @@ UIScrollBar::UIScrollBar(UICanvasRaw canvas)
 	UIWidget(canvas)
 {
 	m_Private = new UIScrollBarPrivate;
+	writeFrame(getStyleNormal(), UINoPen, UIInsetBrush);
 
 	sliderMoved = &PRIVATE()->OnSliderMoved;
 	sliderPressed = &PRIVATE()->OnSliderPressed;
@@ -136,8 +136,11 @@ void UIScrollBar::layout(UIRect client)
 void UIScrollBar::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 	painter->drawRect(client.X + 1, client.Y + 1, client.W - 2, client.H - 2);
 }
 

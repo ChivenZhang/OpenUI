@@ -19,7 +19,6 @@ struct UIGridItem
 /// @brief 
 struct UIGridPrivate : UIPrivate
 {
-	UIGridStyle Style;
 	UIMap<UIWidgetRaw, UIGridItem> GridItemMap;
 	UIList<uint32_t> RowStretch, ColumnStretch;
 	UIList<float> RowPercent, ColumnPercent, RowSummary, ColumnSummary;
@@ -74,8 +73,11 @@ void UIGrid::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
 
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
@@ -108,12 +110,14 @@ void UIGrid::removeWidget()
 
 UIGridStyle UIGrid::getStyle() const
 {
-	return PRIVATE()->Style;
+	UIGridStyle result;
+	readFrame(getStyleNormal(), result.Pen, result.Brush);
+	return result;
 }
 
 void UIGrid::setStyle(UIGridStyle value)
 {
-	PRIVATE()->Style = value;
+	writeFrame(getStyleNormal(), value.Pen, value.Brush);
 }
 
 size_t UIGrid::getRowCount() const

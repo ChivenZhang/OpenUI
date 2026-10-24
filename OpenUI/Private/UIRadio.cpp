@@ -72,11 +72,7 @@ UIRadio::UIRadio(UICanvasRaw canvas)
 	PRIVATE()->Label = UINew<UILabel>(canvas);
 	addWidget(PRIVATE()->Label);
 
-	PRIVATE()->Button->setStyleText("border-radius", "8px");
-	radioBindFace(PRIVATE()->Button.get(), "", PRIVATE()->Style.Normal.Pen, PRIVATE()->Style.Normal.Brush);
-	radioBindFace(PRIVATE()->Button.get(), "hover", PRIVATE()->Style.Hover.Pen, PRIVATE()->Style.Hover.Brush);
-	radioBindFace(PRIVATE()->Button.get(), "active", PRIVATE()->Style.Press.Pen, PRIVATE()->Style.Press.Brush);
-	radioBindFace(PRIVATE()->Button.get(), "disabled", PRIVATE()->Style.Disable.Pen, PRIVATE()->Style.Disable.Brush);
+	setStyle(PRIVATE()->Style);
 	{
 		auto style = PRIVATE()->Label->getStyle();
 		style.Normal.Background.Pen = style.Hover.Background.Pen = { .Style = UIPen::NoPen, };
@@ -177,6 +173,35 @@ UIRadioStyle UIRadio::getStyle() const
 void UIRadio::setStyle(UIRadioStyle const& style)
 {
 	PRIVATE()->Style = style;
+	if (PRIVATE()->Button == nullptr) return;
+	PRIVATE()->Button->setStyleText("border-radius", std::to_string(style.Round.X) + "px");
+	radioBindFace(PRIVATE()->Button.get(), "", style.Normal.Pen, style.Normal.Brush);
+	radioBindFace(PRIVATE()->Button.get(), "hover", style.Hover.Pen, style.Hover.Brush);
+	radioBindFace(PRIVATE()->Button.get(), "active", style.Press.Pen, style.Press.Brush);
+	radioBindFace(PRIVATE()->Button.get(), "disabled", style.Disable.Pen, style.Disable.Brush);
+}
+
+bool UIRadio::setStyleText(UIString name, UIString value)
+{
+	auto result = UIWidget::setStyleText(name, value);
+	UIString property = name;
+	auto split = name.find(':');
+	if (split != UIString::npos) property = name.substr(0, split);
+	switch (UIHash(property))
+	{
+	case UIHash("border"):
+	case UIHash("border-color"):
+	case UIHash("border-width"):
+	case UIHash("border-radius"):
+	case UIHash("background"):
+	case UIHash("background-color"):
+	case UIHash("color"):
+	case UIHash("foreground"):
+		if (PRIVATE()->Button) PRIVATE()->Button->setStyleText(name, value);
+		break;
+	default: break;
+	}
+	return result;
 }
 
 bool UIRadio::getChecked() const

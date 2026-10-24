@@ -13,7 +13,6 @@
 /// @brief 
 struct UIVBoxPrivate : UIPrivate
 {
-	UIVBoxStyle Style;
 };
 #define PRIVATE() ((UIVBoxPrivate*) m_Private)
 
@@ -50,17 +49,22 @@ void UIVBox::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
 
-	painter->setPen(PRIVATE()->Style.Pen);
-	painter->setBrush(PRIVATE()->Style.Brush);
+	UIPen pen;
+	UIBrush brush;
+	readFrame(getStyleNormal(), pen, brush);
+	painter->setPen(pen);
+	painter->setBrush(brush);
 	painter->drawRect(client.X, client.Y, client.W, client.H);
 }
 
 UIVBoxStyle UIVBox::getStyle() const
 {
-	return PRIVATE()->Style;
+	UIVBoxStyle result;
+	readFrame(getStyleNormal(), result.Pen, result.Brush);
+	return result;
 }
 
 void UIVBox::setStyle(UIVBoxStyle value)
 {
-	PRIVATE()->Style = value;
+	writeFrame(getStyleNormal(), value.Pen, value.Brush);
 }

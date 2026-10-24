@@ -36,33 +36,33 @@ int main()
 	auto canvas = device->getCanvas();
 	device->setCursor("pointer");
 
-	canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
-		<style>
-			div {
-				width: 100%;
-				height: 100%;
-			}
-			button {
-				width: 120px;
-				height: 40px;
-				border-radius: 8px;
-			}
-			button:hover {
-				background-color: #ff0000;
-			}
-			button:active {
-				background-color: #00ff00;
-			}
-			button:disabled {
-				background-color: #0000ff;
-			}
-		</style>
-		<div>
-			<button class="a" >Button</button>
-		</div>
-	)"));
+	// canvas->addWidget(canvas->getBuilder()->buildWidget(R"(
+	// 	<style>
+	// 		div {
+	// 			width: 100%;
+	// 			height: 100%;
+	// 		}
+	// 		button {
+	// 			width: 120px;
+	// 			height: 40px;
+	// 			border-radius: 8px;
+	// 		}
+	// 		button:hover {
+	// 			background-color: #ff0000;
+	// 		}
+	// 		button:active {
+	// 			background-color: #00ff00;
+	// 		}
+	// 		button:disabled {
+	// 			background-color: #0000ff;
+	// 		}
+	// 	</style>
+	// 	<div>
+	// 		<button class="a" >Button</button>
+	// 	</div>
+	// )"));
 
-	//ingame(canvas);
+	sample(canvas, window);
 
 	while (device->update()) continue;
 	device = nullptr;
