@@ -45,6 +45,18 @@ struct UIWidgetStyle
 	UIPropBorderRadius BorderRadius;
 	UIPropBackground Background;
 	UIPropForeground Foreground;
+	UIPropFontFamily FontFamily;
+	UIPropFontSize FontSize;
+	UIPropFontStyle FontStyle;
+	UIPropFontWeight FontWeight;
+	UIPropFontStretch FontStretch;
+	UIPropLetterSpacing LetterSpacing;
+	UIPropLineHeight LineHeight;
+	UIPropTextAlign TextAlign;
+	UIPropTextIndent TextIndent;
+	UIPropTextOverflow TextOverflow;
+	UIPropWhiteSpace WhiteSpace;
+	UIPropWordSpacing WordSpacing;
 	UIPropMargin Margin;
 	UIPropPadding Padding;
 	UIPropFlexDirection FlexDirection;
@@ -360,6 +372,8 @@ protected:
 	void readFrame(UIWidgetStyle const& style, UIPen& pen, UIBrush& brush) const;
 	void writeColor(UIPropColor& dst, UIColor const& color);
 	UIColor readColor(UIPropColor const& color) const;
+	void assignFontFamily(UIWidgetStyle& style, UIString const& family);
+	void applyFontFamily(UIWidgetStyle const& style, UIFont& font) const;
 
 	template<class T>
 	void setEmbedStyle(UIString const& key, T& value, bool inherited = false) const
@@ -411,3 +425,92 @@ private:
 	friend class UICanvas;
 	UIPrivateRaw m_Private;
 };
+
+inline UIPropColor UIPropFrom(UIColor const& color)
+{
+	UIPropColor result;
+	result.Type = UI_CSS_COLOR_RGBA;
+	result.Value.R = (uint8_t)(color.R * 255.0f + 0.5f);
+	result.Value.G = (uint8_t)(color.G * 255.0f + 0.5f);
+	result.Value.B = (uint8_t)(color.B * 255.0f + 0.5f);
+	result.Value.A = (uint8_t)(color.A * 255.0f + 0.5f);
+	return result;
+}
+
+inline UIColor UIColorFrom(UIPropColor const& color)
+{
+	return { color.Value.R / 255.0f, color.Value.G / 255.0f, color.Value.B / 255.0f, color.Value.A / 255.0f };
+}
+
+inline void UICornerRadius(UIWidgetStyle& style, float radius)
+{
+	UIPropBorderRadiusCorner corner;
+	corner.Horizontal = radius;
+	corner.Vertical = radius;
+	corner.HorizontalType = UI_CSS_BORDER_RADIUS_LENGTH;
+	corner.VerticalType = UI_CSS_BORDER_RADIUS_LENGTH;
+	style.BorderRadius.TopLeft = corner;
+	style.BorderRadius.TopRight = corner;
+	style.BorderRadius.BottomRight = corner;
+	style.BorderRadius.BottomLeft = corner;
+}
+
+inline void UIPlate(UIWidgetStyle& style, UIPen const& border, UIBrush const& fill, UIBrush const& text, float radius)
+{
+	if (border.Style == UIPen::NoPen)
+	{
+		style.BorderColor = {};
+		style.Border.Left = {};
+		style.Border.Top = {};
+		style.Border.Right = {};
+		style.Border.Bottom = {};
+	}
+	else
+	{
+		style.BorderColor = UIPropFrom(border.Color);
+		style.Border.Left = { border.Width, UI_CSS_BORDER_LENGTH };
+		style.Border.Top = { border.Width, UI_CSS_BORDER_LENGTH };
+		style.Border.Right = { border.Width, UI_CSS_BORDER_LENGTH };
+		style.Border.Bottom = { border.Width, UI_CSS_BORDER_LENGTH };
+	}
+	style.Background.Color = fill.Style == UIBrush::NoBrush ? UIPropColor{} : UIPropFrom(fill.Color);
+	style.Foreground.Color = text.Style == UIBrush::NoBrush ? UIPropColor{} : UIPropFrom(text.Color);
+	UICornerRadius(style, radius);
+}
+
+struct UIFace
+{
+	UIPen Border = UINoPen;
+	UIBrush Fill{ .Style = UIBrush::NoBrush };
+	UIBrush Text{ .Style = UIBrush::NoBrush };
+	float Radius = 0;
+};
+
+inline UIFace UIFaceOf(UIWidgetStyle const& style, UIRect const& client)
+{
+	UIFace face;
+	auto border = UIColorFrom(style.BorderColor);
+	float width = 0.0f;
+	if (style.Border.Top.Type == UI_CSS_BORDER_LENGTH) width = style.Border.Top.Value;
+	else if (style.Border.Top.Type == UI_CSS_BORDER_THIN) width = 1.0f;
+	else if (style.Border.Top.Type == UI_CSS_BORDER_MEDIUM) width = 3.0f;
+	else if (style.Border.Top.Type == UI_CSS_BORDER_THICK) width = 5.0f;
+	if (border.A > 0.0f && width > 0.0f) face.Border = { .Color = border, .Width = width };
+	auto fill = UIColorFrom(style.Background.Color);
+	if (fill.A > 0.0f) face.Fill = { .Color = fill };
+	auto text = UIColorFrom(style.Foreground.Color);
+	if (text.A > 0.0f) face.Text = { .Color = text };
+	auto radius = style.BorderRadius.TopLeft;
+	face.Radius = radius.HorizontalType == UI_CSS_BORDER_RADIUS_PERCENTAGE ? client.W * radius.Horizontal / 100.0f : radius.Horizontal;
+	return face;
+}
+
+inline void UIDrawFace(UIPainterRaw painter, UIRect rect, UIFace const& face)
+{
+	if (painter == nullptr) return;
+	if (face.Border.Style == UIPen::NoPen && face.Fill.Style == UIBrush::NoBrush) return;
+	painter->setPen(face.Border);
+	painter->setBrush(face.Fill);
+	if (face.Radius < 0.5f) painter->drawRect(rect.X, rect.Y, rect.W, rect.H);
+	else painter->drawRoundedRect(rect.X, rect.Y, rect.W, rect.H, face.Radius, face.Radius);
+}

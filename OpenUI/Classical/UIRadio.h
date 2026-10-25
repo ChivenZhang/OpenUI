@@ -1,0 +1,63 @@
+#pragma once
+/*=================================================
+* Copyright © 2020-2025 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by ChivenZhang@gmail.com.
+*
+* =================================================*/
+#include "../UIWidget.h"
+#include "../UIFactory.h"
+
+class UIRadioGroup;
+using UIRadioGroupRef = UIRef<UIRadioGroup>;
+using UIRadioGroupRaw = UIRaw<UIRadioGroup>;
+
+/// @brief Radio
+class OPENUI_API UIRadio : public UIWidget
+{
+public:
+	explicit UIRadio(UICanvasRaw canvas);
+	~UIRadio() override;
+	void arrange(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+
+	UIString getText() const;
+	void setText(UIString const& text);
+
+	bool getChecked() const;
+	void setChecked(bool value);
+
+	UIRadioGroupRef getExclusive() const;
+	void setExclusive(UIRadioGroupRef group);
+
+protected:
+	void mouseDoubleEvent(UIMouseEventRaw event) override;
+	void mousePressEvent(UIMouseEventRaw event) override;
+	void mouseReleaseEvent(UIMouseEventRaw event) override;
+	void mouseMoveEvent(UIMouseEventRaw event) override;
+	void enterEvent(UIMouseEventRaw event) override;
+	void leaveEvent(UIMouseEventRaw event) override;
+
+public:
+	UISignalAsRaw<bool /*checked*/> clicked;
+	UISignalAsRaw<> pressed;
+	UISignalAsRaw<> released;
+	UISignalAsRaw<> hovered;
+
+private:
+	UIPrivateRaw m_Private;
+};
+using UIRadioRef = UIRef<UIRadio>;
+using UIRadioRaw = UIRaw<UIRadio>;
+
+/// @brief 
+class UIRadioGroup
+{
+private:
+	friend class UIRadio;
+	UIRadioRaw Active = nullptr;
+};

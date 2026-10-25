@@ -1,0 +1,83 @@
+#pragma once
+/*=================================================
+* Copyright © 2020-2025 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by ChivenZhang@gmail.com.
+*
+* =================================================*/
+#include "../UIWidget.h"
+#include "../UIFactory.h"
+#include "UIButton.h"
+
+/// @brief 
+struct UISliderStyle
+{
+	UIPen Pen{ .Color { 58 / 255.0f, 50 / 255.0f, 40 / 255.0f, 1.0f }, .Width = 4.0f, };
+	UIBrush Brush{ .Style = UIBrush::NoBrush, };
+};
+
+/// @brief Handle
+class OPENUI_API UISlider : public UIWidget
+{
+public:
+	enum ticks_t
+	{
+		TicksNone,
+		TicksBothSides,
+		TicksAbove,
+		TicksBelow,
+		TicksLeft = TicksAbove,
+		TicksRight = TicksBelow,
+	};
+
+public:
+	explicit UISlider(UICanvasRaw canvas);
+	~UISlider() override;
+	void arrange(UIRect client) override;
+	bool filter(UIReactorRaw source, UIEventRaw event) override;
+	void layout(UIRect client) override;
+	void paint(UIRect client, UIPainterRaw painter) override;
+	using UIWidget::removeWidget;
+	void removeWidget() override;
+
+	UI::Orientation getOrientation() const;
+	void setOrientation(UI::Orientation value);
+
+	int32_t getMinimum() const;
+	int32_t getMaximum() const;
+	int32_t getRange() const;
+	void setRange(int32_t min, int32_t max);
+
+	int32_t getValue() const;
+	void setValue(int32_t value);
+
+	bool getTracking() const;
+	void setTracking(bool value);
+
+	int32_t getSingleStep() const;
+	void setSingleStep(int32_t value);
+
+	int32_t getTickInterval() const;
+	void setTickInterval(int32_t value);
+
+	ticks_t getTickPosition() const;
+	void setTickPosition(ticks_t value);
+
+	UIButtonRaw getHandle() const;
+
+public:
+	UISignalAsRaw<> sliderPressed;
+	UISignalAsRaw<> sliderReleased;
+	UISignalAsRaw<int32_t /*value*/> sliderMoved;
+	UISignalAsRaw<int32_t /*value*/> valueChanged;
+	UISignalAsRaw<int32_t /*min*/, int32_t /*max*/> rangeChanged;
+
+private:
+	UIPrivateRaw m_Private;
+};
+using UISliderRef = UIRef<UISlider>;
+using UISliderRaw = UIRaw<UISlider>;

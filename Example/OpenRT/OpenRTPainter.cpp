@@ -182,8 +182,10 @@ struct OpenRTTextFrame
 	float OriginY = 0;
 };
 
-static void pango_applyFont(PangoLayout* layout, UIFont const& font)
+static OpenRTTextFrame pango_layoutText(PangoLayout* layout, UIFont const& font, float x, float y, float width, float height, UIString const& text)
 {
+	OpenRTTextFrame frame;
+
 	auto* desc = pango_font_description_new();
 	pango_font_description_set_family(desc, font.Family.empty() ? OPENUI_FONT_FAMILY : font.Family.c_str());
 	pango_font_description_set_style(desc, (PangoStyle)font.Style);
@@ -231,12 +233,6 @@ static void pango_applyFont(PangoLayout* layout, UIFont const& font)
 	}
 	pango_layout_set_attributes(layout, attrs);
 	pango_attr_list_unref(attrs);
-}
-
-static OpenRTTextFrame pango_layoutText(PangoLayout* layout, UIFont const& font, float x, float y, float width, float height, UIString const& text)
-{
-	OpenRTTextFrame frame;
-	pango_applyFont(layout, font);
 	pango_layout_set_width(layout, pango_units(width));
 	pango_layout_set_height(layout, pango_units(height));
 	pango_layout_set_text(layout, text.c_str(), (int)text.size());

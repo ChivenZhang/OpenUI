@@ -16,6 +16,7 @@
 
 void sample(UICanvasRaw context, SDL_Window* window);
 void ingame(UICanvasRaw context);
+void desktop(UICanvasRaw canvas);
 
 int main()
 {
@@ -62,6 +63,8 @@ int main()
 	// 	</div>
 	// )"));
 
+	// desktop(canvas);
+
 	sample(canvas, window);
 
 	while (device->update()) continue;
@@ -76,19 +79,19 @@ int main()
 
 #include "OpenUI/UICanvas.h"
 #include "OpenUI/UIBuilder.h"
-#include "OpenUI/UIHBox.h"
-#include "OpenUI/UIVBox.h"
-#include "OpenUI/UIFlow.h"
-#include "OpenUI/UIScroll.h"
-#include "OpenUI/UIGrid.h"
-#include "OpenUI/UILabel.h"
-#include "OpenUI/UIButton.h"
-#include "OpenUI/UISlider.h"
-#include "OpenUI/UIRadio.h"
-#include "OpenUI/UICheck.h"
-#include "OpenUI/UICombo.h"
-#include "OpenUI/UILine.h"
-#include "OpenUI/UIInput.h"
+#include "OpenUI/Classical/UIHBox.h"
+#include "OpenUI/Classical/UIVBox.h"
+#include "OpenUI/Classical/UIFlow.h"
+#include "OpenUI/Classical/UIScroll.h"
+#include "OpenUI/Classical/UIGrid.h"
+#include "OpenUI/Classical/UILabel.h"
+#include "OpenUI/Classical/UIButton.h"
+#include "OpenUI/Classical/UISlider.h"
+#include "OpenUI/Classical/UIRadio.h"
+#include "OpenUI/Classical/UICheck.h"
+#include "OpenUI/Classical/UICombo.h"
+#include "OpenUI/Classical/UILine.h"
+#include "OpenUI/Classical/UIInput.h"
 
 void sample(UICanvasRaw context, SDL_Window* window)
 {

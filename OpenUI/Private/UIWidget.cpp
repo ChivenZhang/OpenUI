@@ -1362,6 +1362,99 @@ UIColor UIWidget::readColor(UIPropColor const& color) const
     return { color.Value.R / 255.0f, color.Value.G / 255.0f, color.Value.B / 255.0f, color.Value.A / 255.0f };
 }
 
+void UIWidget::assignFontFamily(UIWidgetStyle& style, UIString const& family)
+{
+    UIPropFontFamily parsed;
+    if (family.empty()) style.FontFamily = {};
+    else if (UITypeC(family, parsed)) style.FontFamily = parsed;
+}
+
+void UIWidget::applyFontFamily(UIWidgetStyle const& style, UIFont& font) const
+{
+    if (style.FontFamily.Name.empty() == false) font.Family = style.FontFamily.Name;
+    switch (style.FontSize.Type)
+    {
+    case UI_CSS_FONT_SIZE_XX_SMALL: font.Size = 9; break;
+    case UI_CSS_FONT_SIZE_X_SMALL: font.Size = 10; break;
+    case UI_CSS_FONT_SIZE_SMALL: font.Size = 13; break;
+    case UI_CSS_FONT_SIZE_LARGE: font.Size = 18; break;
+    case UI_CSS_FONT_SIZE_X_LARGE: font.Size = 24; break;
+    case UI_CSS_FONT_SIZE_XX_LARGE: font.Size = 32; break;
+    case UI_CSS_FONT_SIZE_XXX_LARGE: font.Size = 48; break;
+    case UI_CSS_FONT_SIZE_LARGER: font.Size = (uint32_t)(font.Size * 1.2f + 0.5f); if (font.Size < 1) font.Size = 1; break;
+    case UI_CSS_FONT_SIZE_SMALLER: font.Size = (uint32_t)(font.Size / 1.2f + 0.5f); if (font.Size < 1) font.Size = 1; break;
+    case UI_CSS_FONT_SIZE_LENGTH:
+        if (style.FontSize.Value > 0.0f) font.Size = (uint32_t)(style.FontSize.Value + 0.5f);
+        break;
+    default: break;
+    }
+    switch (style.FontStyle.Value)
+    {
+    default:
+    case UI_CSS_FONT_STYLE_NORMAL: font.Style = UIFont::StyleNormal; break;
+    case UI_CSS_FONT_STYLE_ITALIC: font.Style = UIFont::StyleItalic; break;
+    case UI_CSS_FONT_STYLE_OBLIQUE: font.Style = UIFont::StyleOblique; break;
+    }
+    auto snapWeight = [](int value) -> UIFont::weight_t
+    {
+        if (value < 150) return UIFont::WeightThin;
+        if (value < 250) return UIFont::WeightExtraLight;
+        if (value < 350) return UIFont::WeightLight;
+        if (value < 450) return UIFont::WeightNormal;
+        if (value < 550) return UIFont::WeightMedium;
+        if (value < 650) return UIFont::WeightDemiBold;
+        if (value < 750) return UIFont::WeightBold;
+        if (value < 850) return UIFont::WeightExtraBold;
+        return UIFont::WeightBlack;
+    };
+    switch (style.FontWeight.Type)
+    {
+    case UI_CSS_FONT_WEIGHT_BOLD: font.Weight = UIFont::WeightBold; break;
+    case UI_CSS_FONT_WEIGHT_BOLDER: font.Weight = snapWeight((int)font.Weight + 200); break;
+    case UI_CSS_FONT_WEIGHT_LIGHTER: font.Weight = snapWeight((int)font.Weight - 200); break;
+    case UI_CSS_FONT_WEIGHT_NUMBER: font.Weight = snapWeight((int)(style.FontWeight.Value + 0.5f)); break;
+    default: break;
+    }
+    if (style.LetterSpacing.Type == UI_CSS_LETTER_SPACING_LENGTH)
+        font.Spacing = style.LetterSpacing.Value > 0.0f ? (uint32_t)(style.LetterSpacing.Value + 0.5f) : 0;
+    switch (style.LineHeight.Type)
+    {
+    case UI_CSS_LINE_HEIGHT_NUMBER: font.LineSpacing = style.LineHeight.Value; break;
+    case UI_CSS_LINE_HEIGHT_PERCENTAGE: font.LineSpacing = style.LineHeight.Value / 100.0f; break;
+    case UI_CSS_LINE_HEIGHT_LENGTH:
+        if (font.Size > 0) font.LineSpacing = style.LineHeight.Value / (float)font.Size;
+        break;
+    default: break;
+    }
+    uint32_t horizontal = 0;
+    bool align = true;
+    switch (style.TextAlign.Value)
+    {
+    case UI_CSS_TEXT_ALIGN_LEFT: horizontal = UIFont::AlignLeft; break;
+    case UI_CSS_TEXT_ALIGN_END:
+    case UI_CSS_TEXT_ALIGN_RIGHT: horizontal = UIFont::AlignRight; break;
+    case UI_CSS_TEXT_ALIGN_CENTER: horizontal = UIFont::AlignCenter; break;
+    case UI_CSS_TEXT_ALIGN_JUSTIFY:
+    case UI_CSS_TEXT_ALIGN_JUSTIFY_ALL: horizontal = UIFont::AlignJustify; break;
+    default: align = false; break;
+    }
+    if (align)
+    {
+        uint32_t keep = font.Align & ~(uint32_t)(UIFont::AlignLeft | UIFont::AlignRight | UIFont::AlignCenter | UIFont::AlignJustify);
+        font.Align = keep | horizontal;
+    }
+    if (style.TextOverflow.Value == UI_CSS_TEXT_OVERFLOW_ELLIPSIS) font.Ellipsize = UIFont::EllipsizeEnd;
+    switch (style.WhiteSpace.Value)
+    {
+    case UI_CSS_WHITE_SPACE_NOWRAP:
+    case UI_CSS_WHITE_SPACE_PRE: font.LineWrap = false; break;
+    case UI_CSS_WHITE_SPACE_PRE_WRAP:
+    case UI_CSS_WHITE_SPACE_BREAK_SPACES:
+    case UI_CSS_WHITE_SPACE_PRE_LINE: font.LineWrap = true; break;
+    default: break;
+    }
+}
+
 void UIWidget::writeFrame(UIWidgetStyle& style, UIPen const& pen, UIBrush const& brush)
 {
     if (pen.Style == UIPen::NoPen)
@@ -1634,13 +1727,20 @@ bool UIWidget::setStyleText(UIString name, UIString value)
     case UIHash("float-offset"): setStyle<UIPropFloatOffset>(name);
         break;
     //case UIHash("float-reference"): setStyle<UIPropFloatReference>(name); break;
-    //case UIHash("font-family"): setStyle<UIPropFontFamily>(name, {}, true); break;
-    case UIHash("font-size"): setStyle<UIPropFontSize>(name, {}, true);
+    case UIHash("font-family"):
+        setEmbedStyle(name, style.FontFamily, true);
         break;
-    case UIHash("font-stretch"): setStyle<UIPropFontStretch>(name);
+    case UIHash("font-size"):
+        setEmbedStyle(name, style.FontSize, true);
         break;
-    //case UIHash("font-style"): setStyle<UIPropFontStyle>(name, {}, true); break;
-    case UIHash("font-weight"): setStyle<UIPropFontWeight>(name, {}, true);
+    case UIHash("font-stretch"):
+        setEmbedStyle(name, style.FontStretch, true);
+        break;
+    case UIHash("font-style"):
+        setEmbedStyle(name, style.FontStyle, true);
+        break;
+    case UIHash("font-weight"):
+        setEmbedStyle(name, style.FontWeight, true);
         break;
     //case UIHash("hanging-punctuation"): setStyle<UIPropHangingPunctuation>(name); break;
     case UIHash("height"):
@@ -1661,10 +1761,12 @@ bool UIWidget::setStyleText(UIString name, UIString value)
     case UIHash("left"):
         setEmbedStyle(name, style.Left);
         break;
-    case UIHash("letter-spacing"): setStyle<UIPropLetterSpacing>(name, {}, true);
+    case UIHash("letter-spacing"):
+        setEmbedStyle(name, style.LetterSpacing, true);
         break;
     //case UIHash("line-break"): setStyle<UIPropLineBreak>(name); break;
-    case UIHash("line-height"): setStyle<UIPropLineHeight>(name, {}, true);
+    case UIHash("line-height"):
+        setEmbedStyle(name, style.LineHeight, true);
         break;
     case UIHash("margin"):
         setEmbedStyle(name, style.Margin);
@@ -1737,17 +1839,22 @@ bool UIWidget::setStyleText(UIString name, UIString value)
         break;
     case UIHash("tab-size"): setStyle<UIPropTabSize>(name);
         break;
-    //case UIHash("text-align"): setStyle<UIPropTextAlign>(name, {}, true); break;
+    case UIHash("text-align"):
+        setEmbedStyle(name, style.TextAlign, true);
+        break;
     //case UIHash("text-align-all"): setStyle<UIPropTextAlignAll>(name); break;
     //case UIHash("text-align-last"): setStyle<UIPropTextAlignLast>(name); break;
     //case UIHash("text-combine-upright"): setStyle<UIPropTextCombineUpright>(name); break;
     //case UIHash("text-decoration-line"): setStyle<UIPropTextDecorationLine>(name); break;
     //case UIHash("text-decoration-style"): setStyle<UIPropTextDecorationStyle>(name); break;
-    case UIHash("text-indent"): setStyle<UIPropTextIndent>(name, {}, true);
+    case UIHash("text-indent"):
+        setEmbedStyle(name, style.TextIndent, true);
         break;
     //case UIHash("text-justify"): setStyle<UIPropTextJustify>(name); break;
     //case UIHash("text-orientation"): setStyle<UIPropTextOrientation>(name); break;
-    //case UIHash("text-overflow"): setStyle<UIPropTextOverflow>(name); break;
+    case UIHash("text-overflow"):
+        setEmbedStyle(name, style.TextOverflow);
+        break;
     //case UIHash("text-transform"): setStyle<UIPropTextTransform>(name, {}, true); break;
     case UIHash("top"):
         setEmbedStyle(name, style.Top);
@@ -1756,12 +1863,16 @@ bool UIWidget::setStyleText(UIString name, UIString value)
     //case UIHash("vertical-align"): setStyle<UIPropVerticalAlign>(name); break;
     case UIHash("visibility"): setStyle<UIPropVisibility>(name, {}, true);
         break;
-    //case UIHash("white-space"): setStyle<UIPropWhiteSpace>(name, {}, true); break;
+    case UIHash("white-space"):
+        setEmbedStyle(name, style.WhiteSpace, true);
+        break;
     case UIHash("width"):
         setEmbedStyle(name, style.Width);
         break;
     //case UIHash("word-break"): setStyle<UIPropWordBreak>(name); break;
-    //case UIHash("word-spacing"): setStyle<UIPropWordSpacing>(name, {}, true); break;
+    case UIHash("word-spacing"):
+        setEmbedStyle(name, style.WordSpacing, true);
+        break;
     //case UIHash("word-wrap"): setStyle<UIPropWordWrap>(name); break;
     //case UIHash("wrap-flow"): setStyle<UIPropWrapFlow>(name); break;
     //case UIHash("wrap-through"): setStyle<UIPropWrapThrough>(name); break;

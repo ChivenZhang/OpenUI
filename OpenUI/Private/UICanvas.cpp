@@ -9,17 +9,17 @@
 *
 * =================================================*/
 #include "../UICanvas.h"
-#include "../UIButton.h"
-#include "../UICombo.h"
-#include "../UIInput.h"
-#include "../UILine.h"
+#include "../Classical/UIButton.h"
+#include "../Classical/UICombo.h"
+#include "../Classical/UIInput.h"
+#include "../Classical/UILine.h"
 #include <yoga/Yoga.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "OpenUI/UICheck.h"
-#include "OpenUI/UIRadio.h"
+#include "OpenUI/Classical/UICheck.h"
+#include "OpenUI/Classical/UIRadio.h"
 
 struct UITopLevelWidget
 {

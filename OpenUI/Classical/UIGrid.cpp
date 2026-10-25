@@ -1,0 +1,243 @@
+/*=================================================
+* Copyright © 2020-2025 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by ChivenZhang@gmail.com.
+*
+* =================================================*/
+#include "UIGrid.h"
+
+/// @brief 
+struct UIGridItem
+{
+	uint32_t Row = 0, Column = 0, RowSpan = 1, ColumnSpan = 1;
+};
+
+/// @brief 
+struct UIGridPrivate : UIPrivate
+{
+	UIMap<UIWidgetRaw, UIGridItem> GridItemMap;
+	UIList<uint32_t> RowStretch, ColumnStretch;
+	UIList<float> RowPercent, ColumnPercent, RowSummary, ColumnSummary;
+};
+#define PRIVATE() ((UIGridPrivate*) m_Private)
+
+UIGrid::UIGrid(UICanvasRaw canvas)
+	:
+	UIWidget(canvas)
+{
+	m_Private = new UIGridPrivate;
+}
+
+UIGrid::~UIGrid()
+{
+	delete m_Private; m_Private = nullptr;
+}
+
+void UIGrid::arrange(UIRect client)
+{
+	for (size_t i = 0; i < getWidgets().size(); ++i)
+	{
+		getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_NONE});
+
+		auto result = PRIVATE()->GridItemMap.find(getWidgets()[i].get());
+		if (result != PRIVATE()->GridItemMap.end())
+		{
+			auto row = result->second.Row;
+			auto col = result->second.Column;
+			auto rowSpan = result->second.RowSpan;
+			auto colSpan = result->second.ColumnSpan;
+			auto posX = PRIVATE()->ColumnSummary[col];
+			auto posY = PRIVATE()->RowSummary[row];
+			auto width = 0.0f, height = 0.0f;
+			for (size_t k = 0; k < rowSpan && row + k < getRowCount(); ++k) height += PRIVATE()->RowPercent[row + k];
+			for (size_t k = 0; k < colSpan && col + k < getColumnCount(); ++k) width += PRIVATE()->ColumnPercent[col + k];
+
+			getWidgets()[i]->setDisplayType({UI_CSS_DISPLAY_FLEX});
+			getWidgets()[i]->setPositionType({UI_CSS_POSITION_ABSOLUTE});
+			getWidgets()[i]->setFixedPos({posX, UI_CSS_LEFT_PERCENTAGE}, {posY, UI_CSS_TOP_PERCENTAGE});
+			getWidgets()[i]->setFixedSize({width, UI_CSS_WIDTH_PERCENTAGE}, {height, UI_CSS_HEIGHT_PERCENTAGE});
+		}
+	}
+}
+
+void UIGrid::layout(UIRect client)
+{
+	UIWidget::layout(client);
+}
+
+void UIGrid::paint(UIRect client, UIPainterRaw painter)
+{
+	UIWidget::paint(client, painter);
+	UIDrawFace(painter, client, UIFaceOf(getStyleNormal(), client));
+}
+
+bool UIGrid::addWidget(UIWidgetRef value)
+{
+	auto result = UIWidget::addWidget(value);
+	if (result) PRIVATE()->GridItemMap.emplace(value.get(), UIGridItem{ 0,0,1,1 });
+	return result;
+}
+
+bool UIGrid::addWidget(UIWidgetRef value, uint32_t row, uint32_t column, uint32_t rowSpan, uint32_t columnSpan)
+{
+	auto result = UIWidget::addWidget(value);
+	if (result) PRIVATE()->GridItemMap.emplace(value.get(), UIGridItem{ row, column, rowSpan, columnSpan });
+	return result;
+}
+
+bool UIGrid::removeWidget(UIWidgetRef value)
+{
+	auto result = UIWidget::removeWidget(value);
+	if (result) PRIVATE()->GridItemMap.erase(value.get());
+	return result;
+}
+
+void UIGrid::removeWidget()
+{
+	UIWidget::removeWidget();
+	PRIVATE()->GridItemMap.clear();
+}
+
+UIGridStyle UIGrid::getStyle() const
+{
+	UIGridStyle result;
+	readFrame(getStyleNormal(), result.Pen, result.Brush);
+	return result;
+}
+
+void UIGrid::setStyle(UIGridStyle value)
+{
+	writeFrame(getStyleNormal(), value.Pen, value.Brush);
+}
+
+size_t UIGrid::getRowCount() const
+{
+	return PRIVATE()->RowStretch.size();
+}
+
+uint32_t UIGrid::getRowStretch(size_t index) const
+{
+	if (index < PRIVATE()->RowStretch.size()) return PRIVATE()->RowStretch[index];
+	return 0;
+}
+
+void UIGrid::setRowStretch(size_t index, uint32_t stretch)
+{
+	auto oldRow = getRowCount();
+	auto oldCol = getColumnCount();
+	auto newRow = std::max(oldRow, index + 1);
+	auto newCol = std::max(oldCol, size_t(1));
+	PRIVATE()->RowStretch.resize(newRow, 1);
+	PRIVATE()->ColumnStretch.resize(newCol, 1);
+	PRIVATE()->RowStretch[index] = std::max(1u, stretch);
+	PRIVATE()->RowPercent.resize(PRIVATE()->RowStretch.size());
+	PRIVATE()->ColumnPercent.resize(PRIVATE()->ColumnStretch.size());
+	PRIVATE()->RowSummary.resize(PRIVATE()->RowStretch.size());
+	PRIVATE()->ColumnSummary.resize(PRIVATE()->ColumnStretch.size());
+
+	uint32_t rowStretches = 0, colStretches = 0;
+	for (size_t i = 0; i < getRowCount(); ++i) rowStretches += getRowStretch(i);
+	for (size_t i = 0; i < getColumnCount(); ++i) colStretches += getColumnStretch(i);
+	uint32_t rowStretch = 0, colStretch = 0;
+	for (size_t i = 0; i < getRowCount(); ++i)
+	{
+		PRIVATE()->RowPercent[i] = getRowStretch(i) * 100.0f / rowStretches;
+		PRIVATE()->RowSummary[i] = rowStretch * 100.0f / rowStretches;
+		rowStretch += getRowStretch(i);
+	}
+	for (size_t i = 0; i < getColumnCount(); ++i)
+	{
+		PRIVATE()->ColumnPercent[i] = getColumnStretch(i) * 100.0f / colStretches;
+		PRIVATE()->ColumnSummary[i] = colStretch * 100.0f / colStretches;
+		colStretch += getColumnStretch(i);
+	}
+}
+
+void UIGrid::setRowStretch(UIList<uint32_t> stretch)
+{
+	PRIVATE()->RowStretch = stretch;
+	PRIVATE()->RowPercent.resize(PRIVATE()->RowStretch.size());
+	PRIVATE()->RowSummary.resize(PRIVATE()->RowStretch.size());
+
+	for (size_t i = 0; i < PRIVATE()->RowStretch.size(); ++i)
+	{
+		PRIVATE()->RowStretch[i] = std::max(1u, PRIVATE()->RowStretch[i]);
+	}
+
+	uint32_t rowStretch = 0, rowStretches = 0;
+	for (size_t i = 0; i < getRowCount(); ++i) rowStretches += getRowStretch(i);
+	for (size_t i = 0; i < getRowCount(); ++i)
+	{
+		PRIVATE()->RowPercent[i] = getRowStretch(i) * 100.0f / rowStretches;
+		PRIVATE()->RowSummary[i] = rowStretch * 100.0f / rowStretches;
+		rowStretch += getRowStretch(i);
+	}
+}
+
+size_t UIGrid::getColumnCount() const
+{
+	return PRIVATE()->ColumnStretch.size();
+}
+
+uint32_t UIGrid::getColumnStretch(size_t index) const
+{
+	if (index < PRIVATE()->ColumnStretch.size()) return PRIVATE()->ColumnStretch[index];
+	return 0;
+}
+
+void UIGrid::setColumnStretch(size_t index, uint32_t stretch)
+{
+	auto oldRow = getRowCount();
+	auto oldCol = getColumnCount();
+	auto newRow = std::max(oldRow, size_t(1));
+	auto newCol = std::max(oldCol, index + 1);
+	PRIVATE()->RowStretch.resize(newRow, 1);
+	PRIVATE()->ColumnStretch.resize(newCol, 1);
+	PRIVATE()->ColumnStretch[index] = std::max(1u, stretch);
+	PRIVATE()->RowPercent.resize(PRIVATE()->RowStretch.size());
+	PRIVATE()->ColumnPercent.resize(PRIVATE()->ColumnStretch.size());
+	PRIVATE()->RowSummary.resize(PRIVATE()->RowStretch.size());
+	PRIVATE()->ColumnSummary.resize(PRIVATE()->ColumnStretch.size());
+
+	uint32_t rowStretches = 0, colStretches = 0;
+	for (size_t i = 0; i < getRowCount(); ++i) rowStretches += getRowStretch(i);
+	for (size_t i = 0; i < getColumnCount(); ++i) colStretches += getColumnStretch(i);
+	uint32_t rowStretch = 0, colStretch = 0;
+	for (size_t i = 0; i < getRowCount(); ++i)
+	{
+		PRIVATE()->RowPercent[i] = getRowStretch(i) * 100.0f / rowStretches;
+		PRIVATE()->RowSummary[i] = rowStretch * 100.0f / rowStretches;
+		rowStretch += getRowStretch(i);
+	}
+	for (size_t i = 0; i < getColumnCount(); ++i)
+	{
+		PRIVATE()->ColumnPercent[i] = getColumnStretch(i) * 100.0f / colStretches;
+		PRIVATE()->ColumnSummary[i] = colStretch * 100.0f / colStretches;
+		colStretch += getColumnStretch(i);
+	}
+}
+
+void UIGrid::setColumnStretch(UIList<uint32_t> stretch)
+{
+	PRIVATE()->ColumnStretch = stretch;
+	PRIVATE()->ColumnPercent.resize(PRIVATE()->ColumnStretch.size());
+	PRIVATE()->ColumnSummary.resize(PRIVATE()->ColumnStretch.size());
+
+	for (size_t i = 0; i < PRIVATE()->ColumnStretch.size(); ++i)
+	{
+		PRIVATE()->ColumnStretch[i] = std::max(1u, PRIVATE()->ColumnStretch[i]);
+	}
+
+	uint32_t colStretch = 0, colStretches = 0;
+	for (size_t i = 0; i < getColumnCount(); ++i) colStretches += getColumnStretch(i);
+	for (size_t i = 0; i < getColumnCount(); ++i)
+	{
+		PRIVATE()->ColumnPercent[i] = getColumnStretch(i) * 100.0f / colStretches;
+		PRIVATE()->ColumnSummary[i] = colStretch * 100.0f / colStretches;
+		colStretch += getColumnStretch(i);
+	}
+}
