@@ -6,8 +6,9 @@
   }, {
     "name" : "lexbor"
   }, {
-    "name" : "fontconfig"
-  }, {
+    "name" : "freetype",
+    "features": ["png"]
+  },{
     "name" : "harfbuzz",
     "features" : [ "icu" ]
   }, {

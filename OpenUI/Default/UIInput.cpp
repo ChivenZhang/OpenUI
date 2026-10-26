@@ -1,5 +1,5 @@
 /*=================================================
-* Copyright © 2020-2025 ChivenZhang.
+* Copyright © 2020-2026 ChivenZhang.
 * All Rights Reserved.
 * =====================Note=========================
 *
@@ -10,20 +10,22 @@
 * =================================================*/
 #include "UIInput.h"
 #include "../UICanvas.h"
-#include "../Private/UIPieceTable.h"
+#include "../Private/UIPieceTableV2.h"
 #include <algorithm>
+#include <climits>
 
 #include "OpenUI/UIDevice.h"
 
 struct UIInputPrivate : UIPrivate
 {
 	UIInputStyle Style;
-	UIRef<UIPieceTable> PieceTable;
+	UIPieceTableV2 PieceTable;
 	UIRect Selection;
 	bool ReadOnly = false, MousePress = false;
-	UIString Text, SelectedText, PlaceholderText;
+	UIString PlaceholderText;
 	UIInput::echo_t EchoMode = UIInput::EchoModeNormal;
-	int32_t CursorStart = -1, Cursor = 0, MaxLength = INT16_MAX, SelectOffset = 0;
+	int32_t MaxLength = INT16_MAX;
+	float SelectOffset = 0, DragOffset = 0;
 
 	UISignalAs<int32_t /*oldPos*/, int32_t /*newPos*/> OnCursorPositionChanged;
 	UISignalAs<UIRect /*area*/> OnEditingStarted;
@@ -37,6 +39,14 @@ struct UIInputPrivate : UIPrivate
 	UISignalAs<UIString const& /*text*/> OnTextCopied;
 };
 #define PRIVATE() ((UIInputPrivate*) m_Private)
+
+struct InputState
+{
+	UIString Text;
+	int32_t Cursor = 0;
+	int32_t SelectionStart = -1;
+	int32_t SelectionLength = 0;
+};
 
 static int32_t inputCodePoints(UIString const& text, int32_t byteIndex)
 {
@@ -87,41 +97,168 @@ static bool inputMasked(UIInput::echo_t mode, bool focused)
 	return false;
 }
 
-static UIInputDisplay inputDisplay(UIInputPrivate* data, bool focused)
+static bool inputCopyAllowed(UIInput::echo_t mode)
+{
+	return mode != UIInput::EchoModeNoEcho && mode != UIInput::EchoModePassword;
+}
+
+static UIInputDisplay inputDisplay(UIInputPrivate const* data, bool focused)
 {
 	UIInputDisplay shown;
+	UIString const& text = data->PieceTable.text();
+	int32_t cursor = data->PieceTable.cursor();
+	int32_t anchor = data->PieceTable.anchor();
 	if (data->EchoMode == UIInput::EchoModeNoEcho) return shown;
 	if (inputMasked(data->EchoMode, focused))
 	{
-		shown.Text = inputMask(data->Text);
-		shown.Cursor = inputCodePoints(data->Text, data->Cursor);
-		shown.CursorStart = data->CursorStart < 0 ? -1 : inputCodePoints(data->Text, data->CursorStart);
+		shown.Text = inputMask(text);
+		shown.Cursor = inputCodePoints(text, cursor);
+		shown.CursorStart = anchor < 0 ? -1 : inputCodePoints(text, anchor);
 		return shown;
 	}
-	shown.Text = data->Text;
-	shown.Cursor = data->Cursor;
-	shown.CursorStart = data->CursorStart;
+	shown.Text = text;
+	shown.Cursor = cursor;
+	shown.CursorStart = anchor;
 	return shown;
 }
 
-static int32_t inputCursorFromDisplay(UIInputPrivate* data, bool focused, int32_t displayCursor)
+static int32_t inputCursorFromDisplay(UIInputPrivate const* data, bool focused, int32_t displayCursor)
 {
-	if (data->EchoMode == UIInput::EchoModeNoEcho) return data->Cursor;
-	if (inputMasked(data->EchoMode, focused)) return inputByteIndex(data->Text, displayCursor);
-	return std::clamp<int32_t>(displayCursor, 0, (int32_t)data->Text.size());
+	if (data->EchoMode == UIInput::EchoModeNoEcho) return data->PieceTable.cursor();
+	if (inputMasked(data->EchoMode, focused)) return inputByteIndex(data->PieceTable.text(), displayCursor);
+	return std::clamp<int32_t>(displayCursor, 0, (int32_t)data->PieceTable.size());
 }
 
-static void inputNotifyText(UIInputPrivate* data, UIString const& previous, bool edited)
+static UIFont inputFont(UIFont font)
 {
-	if (previous == data->Text) return;
-	data->OnTextChanged.signal(data->Text);
-	if (edited) data->OnTextEdited.signal(data->Text);
+	font.LineWrap = false;
+	font.Ellipsize = UIFont::EllipsizeNone;
+	return font;
 }
 
-static void inputNotifyCursor(UIInputPrivate* data, int32_t previous)
+static UIRect inputField(UIRect bounds)
 {
-	if (previous == data->Cursor) return;
-	data->OnCursorPositionChanged.signal(previous, data->Cursor);
+	return { bounds.X + 8.0f, bounds.Y, std::max(0.0f, bounds.W - 16.0f), bounds.H };
+}
+
+static void inputClampOffset(UIInputPrivate* data, UIRect const& field, float textWidth)
+{
+	if (textWidth <= field.W) data->SelectOffset = 0;
+	else data->SelectOffset = std::clamp(data->SelectOffset, field.W - textWidth, 0.0f);
+}
+
+static void inputRevealCaret(UIInputPrivate* data, UIRect const& field, float textWidth, float caretLocal)
+{
+	inputClampOffset(data, field, textWidth);
+	if (textWidth <= field.W) return;
+	float caretX = field.X + data->SelectOffset + caretLocal;
+	float right = field.X + field.W - 1.0f;
+	if (caretX < field.X) data->SelectOffset += field.X - caretX;
+	else if (caretX > right) data->SelectOffset -= caretX - right;
+	inputClampOffset(data, field, textWidth);
+}
+
+static float inputOrigin(UIRect const& field, float offset, float textWidth)
+{
+	return textWidth <= field.W ? field.X : field.X + offset;
+}
+
+static float inputLayoutWidth(UIRect const& field, float textWidth)
+{
+	return textWidth <= field.W ? field.W : 0.0f;
+}
+
+static int32_t inputHitDisplay(UIPainterRaw painter, UIFont const& font, UIRect const& field, float offset, UIString const& text, float x, float y, UIRect* cursorRect)
+{
+	painter->setFont(font);
+	float textWidth = painter->boundingRect(0, 0, 0, field.H, text, 0).W;
+	float hitX = std::clamp(x, field.X, std::max(field.X, field.X + field.W - 1.0f));
+	int cursor = 0;
+	painter->boundingRect(inputOrigin(field, offset, textWidth), field.Y, inputLayoutWidth(field, textWidth), field.H, text, hitX, y, &cursor, cursorRect);
+	return cursor;
+}
+
+static InputState inputState(UIInputPrivate const* data)
+{
+	InputState state;
+	state.Text = data->PieceTable.text();
+	state.Cursor = data->PieceTable.cursor();
+	data->PieceTable.selection(state.SelectionStart, state.SelectionLength);
+	return state;
+}
+
+static void inputPublish(UIInputPrivate* data, UICanvasRaw canvas, InputState const& previous, bool edited)
+{
+	InputState now = inputState(data);
+	if (previous.Text != now.Text)
+	{
+		data->OnTextChanged.signal(now.Text);
+		if (edited) data->OnTextEdited.signal(now.Text);
+	}
+	if (previous.Cursor != now.Cursor)
+		data->OnCursorPositionChanged.signal(previous.Cursor, now.Cursor);
+	if (previous.SelectionStart != now.SelectionStart || previous.SelectionLength != now.SelectionLength)
+		data->OnSelectionChanged.signal();
+	if (canvas) canvas->layoutWidget();
+}
+
+static UIString inputSingleLine(UIString text)
+{
+	text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
+	text.erase(std::remove(text.begin(), text.end(), '\r'), text.end());
+	return text;
+}
+
+static void inputTrimBytes(UIString& text, size_t room)
+{
+	if (text.size() <= room) return;
+	size_t keep = 0;
+	while (keep < text.size())
+	{
+		int32_t bytes = ::UIUTF8Num(text[keep]);
+		if (bytes <= 0) bytes = 1;
+		if (keep + (size_t)bytes > room) break;
+		keep += (size_t)bytes;
+	}
+	text.resize(keep);
+}
+
+static size_t inputRoom(UIInputPrivate const* data)
+{
+	if (data->MaxLength <= 0) return 0;
+	size_t current = data->PieceTable.size();
+	size_t selected = (size_t)std::max(0, data->PieceTable.selectionLength());
+	if (current >= selected) current -= selected;
+	size_t limit = (size_t)data->MaxLength;
+	if (limit <= current) return 0;
+	return limit - current;
+}
+
+static bool inputCommit(UIInputPrivate* data, UICanvasRaw canvas, UIString text, bool merge)
+{
+	if (data->ReadOnly)
+	{
+		data->OnInputRejected.signal();
+		return false;
+	}
+	text = inputSingleLine(std::move(text));
+	if (text.empty()) return false;
+	size_t room = inputRoom(data);
+	if (room == 0)
+	{
+		data->OnInputRejected.signal();
+		return false;
+	}
+	inputTrimBytes(text, room);
+	if (text.empty())
+	{
+		data->OnInputRejected.signal();
+		return false;
+	}
+	auto previous = inputState(data);
+	if (data->PieceTable.insert(text, merge) == false) return false;
+	inputPublish(data, canvas, previous, true);
+	return true;
 }
 
 UIInput::UIInput(UICanvasRaw canvas)
@@ -129,7 +266,6 @@ UIInput::UIInput(UICanvasRaw canvas)
 	UIWidget(canvas)
 {
 	m_Private = new UIInputPrivate;
-	PRIVATE()->PieceTable = UINew<UIPieceTable>();
 
 	cursorPositionChanged = &PRIVATE()->OnCursorPositionChanged;
 	editingStarted = &PRIVATE()->OnEditingStarted;
@@ -155,21 +291,27 @@ void UIInput::arrange(UIRect client)
 
 void UIInput::layout(UIRect client)
 {
-	UIRect cursorRect;
 	auto painter = getCanvas()->getPainter();
 	bool focused = getCanvas() && getCanvas()->getFocus() == this;
 	auto shown = inputDisplay(PRIVATE(), focused);
-	painter->setFont(getStyle().Foreground.Font);
-	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X + 8, getBounds().Y, std::max(0.0f, getBounds().W - 16), getBounds().H, shown.Text, shown.Cursor, &cursorRect);
+	auto font = inputFont(getStyle().Foreground.Font);
+	auto field = inputField(client);
+	painter->setFont(font);
+	UIRect caretNatural;
+	auto natural = painter->boundingRect(0, 0, 0, field.H, shown.Text, shown.Cursor, &caretNatural);
+	inputRevealCaret(PRIVATE(), field, natural.W, caretNatural.X);
 
+	float origin = inputOrigin(field, PRIVATE()->SelectOffset, natural.W);
+	float layoutWidth = inputLayoutWidth(field, natural.W);
+	UIRect cursorRect;
+	painter->boundingRect(origin, field.Y, layoutWidth, field.H, shown.Text, shown.Cursor, &cursorRect);
 	if (shown.CursorStart != -1 && shown.CursorStart != shown.Cursor)
 	{
 		UIRect cursorStartRect;
-		painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X + 8, getBounds().Y, std::max(0.0f, getBounds().W - 16), getBounds().H, shown.Text, shown.CursorStart, &cursorStartRect);
-
-		auto selectionX = std::min<float>(cursorStartRect.X, cursorRect.X);
-		auto selectionY = std::max<float>(cursorStartRect.X, cursorRect.X);
-		PRIVATE()->Selection = { selectionX, client.Y, (selectionY - selectionX), client.H };
+		painter->boundingRect(origin, field.Y, layoutWidth, field.H, shown.Text, shown.CursorStart, &cursorStartRect);
+		float x0 = std::min(cursorStartRect.X, cursorRect.X);
+		float x1 = std::max(cursorStartRect.X, cursorRect.X);
+		PRIVATE()->Selection = UIOverlap(field, UIRect{ x0, field.Y, x1 - x0, field.H });
 	}
 	else
 	{
@@ -188,13 +330,15 @@ void UIInput::paint(UIRect client, UIPainterRaw painter)
 	UIDrawFace(painter, client, face);
 
 	auto style = getStyle();
-	painter->setFont(style.Foreground.Font);
-	UIRect field{ PRIVATE()->SelectOffset + client.X, client.Y, std::max(0.0f, client.W - 16), client.H };
-	if (PRIVATE()->Text.empty() && focused == false)
+	auto font = inputFont(style.Foreground.Font);
+	auto field = inputField(client);
+	painter->setFont(font);
+	painter->setClipRect(field.X, field.Y, field.W, field.H);
+	if (PRIVATE()->PieceTable.empty() && focused == false)
 	{
 		painter->setPen(UINoPen);
 		painter->setBrush(UICtrlMutedBrush);
-		painter->drawText(field.X + 8, field.Y, field.W, field.H, PRIVATE()->PlaceholderText);
+		painter->drawText(field.X, field.Y, 0, field.H, PRIVATE()->PlaceholderText);
 		return;
 	}
 
@@ -206,10 +350,12 @@ void UIInput::paint(UIRect client, UIPainterRaw painter)
 	}
 
 	auto shown = inputDisplay(PRIVATE(), focused);
+	float textWidth = painter->boundingRect(0, 0, 0, field.H, shown.Text, 0).W;
+	float origin = inputOrigin(field, PRIVATE()->SelectOffset, textWidth);
 	painter->setPen(UINoPen);
 	painter->setBrush(face.Text.Style == UIBrush::NoBrush ? style.Foreground.Brush : face.Text);
 	UIRect cursorRect;
-	painter->drawText(field.X + 8, field.Y, field.W, field.H, shown.Text, nullptr, shown.Cursor, &cursorRect);
+	painter->drawText(origin, field.Y, inputLayoutWidth(field, textWidth), field.H, shown.Text, nullptr, shown.Cursor, &cursorRect);
 
 	if (focused)
 	{
@@ -262,7 +408,8 @@ int32_t UIInput::getMaxLength() const
 
 void UIInput::setMaxLength(int32_t value)
 {
-	PRIVATE()->MaxLength = value;
+	PRIVATE()->MaxLength = value < 0 ? 0 : value;
+	setText(PRIVATE()->PieceTable.text());
 }
 
 UIString UIInput::getPlaceholderText() const
@@ -297,67 +444,114 @@ void UIInput::setAlignment(UIFontAligns value)
 
 int32_t UIInput::getCursorPosition() const
 {
-	return PRIVATE()->Cursor;
+	return PRIVATE()->PieceTable.cursor();
 }
 
 int32_t UIInput::getCursorPosition(int32_t x, int32_t y) const
 {
-	int32_t cursor = -1;
 	auto painter = getCanvas()->getPainter();
 	bool focused = getCanvas() && getCanvas()->getFocus() == this;
 	auto shown = inputDisplay(PRIVATE(), focused);
-	painter->setFont(getStyle().Foreground.Font);
-	int32_t displayCursor = -1;
-	painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X + 8, getBounds().Y, std::max(0.0f, getBounds().W - 16), getBounds().H, shown.Text, x, y, &displayCursor);
+	auto field = inputField(getBounds());
+	int32_t displayCursor = inputHitDisplay(painter, inputFont(getStyle().Foreground.Font), field, PRIVATE()->SelectOffset, shown.Text, (float)x, (float)y, nullptr);
 	return inputCursorFromDisplay(PRIVATE(), focused, displayCursor);
 }
 
 void UIInput::setCursorPosition(int32_t value)
 {
-	auto previous = PRIVATE()->Cursor;
-	PRIVATE()->Cursor = std::clamp<int32_t>(value, 0, PRIVATE()->Text.length());
-	inputNotifyCursor(PRIVATE(), previous);
-	if (getCanvas()) getCanvas()->layoutWidget();
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.moveCaret(value, false);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
+
+UIString UIInput::getDisplayText() const
+{
+	bool focused = getCanvas() && getCanvas()->getFocus() == this;
+	return inputDisplay(PRIVATE(), focused).Text;
 }
 
 UIString UIInput::getSelectedText() const
 {
-	int32_t start, length;
-	getSelection(start, length);
-	return PRIVATE()->Text.substr(start, length);
+	return PRIVATE()->PieceTable.selectedText();
+}
+
+bool UIInput::hasSelectedText() const
+{
+	return PRIVATE()->PieceTable.hasSelection();
 }
 
 void UIInput::getSelection(int32_t& start, int32_t& length) const
 {
-	start = std::min(PRIVATE()->CursorStart, PRIVATE()->Cursor);
-	length = std::abs(PRIVATE()->CursorStart - PRIVATE()->Cursor);
+	PRIVATE()->PieceTable.selection(start, length);
+}
+
+int32_t UIInput::getSelectionStart() const
+{
+	int32_t start = -1;
+	int32_t length = 0;
+	getSelection(start, length);
+	return length > 0 ? start : -1;
+}
+
+int32_t UIInput::getSelectionEnd() const
+{
+	int32_t start = -1;
+	int32_t length = 0;
+	getSelection(start, length);
+	return length > 0 ? start + length : -1;
+}
+
+int32_t UIInput::getSelectionLength() const
+{
+	return PRIVATE()->PieceTable.selectionLength();
 }
 
 void UIInput::setSelection(int32_t start, int32_t length)
 {
-	auto painter = getCanvas()->getPainter();
-	PRIVATE()->CursorStart = std::clamp<int32_t>(start, 0, PRIVATE()->Text.size());
-	PRIVATE()->Cursor = std::clamp<int32_t>(start + std::max<int32_t>(0, length), 0, PRIVATE()->Text.size());
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.setSelection(start, length);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
 
-	if (getCanvas()) getCanvas()->layoutWidget();
+void UIInput::selectAll()
+{
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.selectAll();
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
 }
 
 UIString UIInput::getText() const
 {
-	return PRIVATE()->Text;
+	return PRIVATE()->PieceTable.text();
 }
 
 void UIInput::setText(UIString const& value)
 {
-	auto previous = PRIVATE()->Text;
-	auto previousCursor = PRIVATE()->Cursor;
-	PRIVATE()->Cursor = 0;
-	PRIVATE()->CursorStart = -1;
-	PRIVATE()->PieceTable = UINew<UIPieceTable>(value);
-	PRIVATE()->Text = PRIVATE()->PieceTable->getText();
-	PRIVATE()->SelectedText = UIString();
-	inputNotifyText(PRIVATE(), previous, false);
-	inputNotifyCursor(PRIVATE(), previousCursor);
+	UIString text = value;
+	inputTrimBytes(text, PRIVATE()->MaxLength > 0 ? (size_t)PRIVATE()->MaxLength : 0);
+	auto previous = inputState(PRIVATE());
+	if (PRIVATE()->PieceTable.setText(text) == false) return;
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
+
+bool UIInput::isModified() const
+{
+	return PRIVATE()->PieceTable.isModified();
+}
+
+void UIInput::setModified(bool value)
+{
+	PRIVATE()->PieceTable.setModified(value);
+}
+
+bool UIInput::isUndoAvailable() const
+{
+	return PRIVATE()->PieceTable.canUndo();
+}
+
+bool UIInput::isRedoAvailable() const
+{
+	return PRIVATE()->PieceTable.canRedo();
 }
 
 void UIInput::backspace()
@@ -367,33 +561,9 @@ void UIInput::backspace()
 		PRIVATE()->OnInputRejected.signal();
 		return;
 	}
-	auto previous = PRIVATE()->Text;
-	auto previousCursor = PRIVATE()->Cursor;
-	if (PRIVATE()->CursorStart != -1 && PRIVATE()->CursorStart != PRIVATE()->Cursor)
-	{
-		int32_t start, length;
-		getSelection(start, length);
-		PRIVATE()->PieceTable->remove(start, length);
-		PRIVATE()->Text = PRIVATE()->PieceTable->getText();
-		PRIVATE()->Cursor = std::min(PRIVATE()->CursorStart, PRIVATE()->Cursor);
-		PRIVATE()->CursorStart = -1;
-	}
-	else
-	{
-		int32_t bytes = 0;
-		for (size_t i = 0; i < 6 && i + 1 <= PRIVATE()->Cursor; ++i)
-		{
-			bytes = ::UIUTF8Num(PRIVATE()->Text[PRIVATE()->Cursor - i - 1]);
-			if (bytes) break;
-		}
-		PRIVATE()->PieceTable->remove(PRIVATE()->Cursor - bytes, bytes);
-		PRIVATE()->Cursor = PRIVATE()->Cursor - bytes;
-	}
-	PRIVATE()->Text = PRIVATE()->PieceTable->getText();
-	PRIVATE()->Cursor = std::clamp<int32_t>(PRIVATE()->Cursor, 0, PRIVATE()->Text.length());
-	deselect();
-	inputNotifyText(PRIVATE(), previous, true);
-	inputNotifyCursor(PRIVATE(), previousCursor);
+	auto previous = inputState(PRIVATE());
+	if (PRIVATE()->PieceTable.backspace() == false) return;
+	inputPublish(PRIVATE(), getCanvas(), previous, true);
 }
 
 void UIInput::del()
@@ -403,67 +573,74 @@ void UIInput::del()
 		PRIVATE()->OnInputRejected.signal();
 		return;
 	}
-	auto previous = PRIVATE()->Text;
-	auto previousCursor = PRIVATE()->Cursor;
-	if (PRIVATE()->CursorStart != -1 && PRIVATE()->CursorStart != PRIVATE()->Cursor)
-	{
-		int32_t start, length;
-		getSelection(start, length);
-		PRIVATE()->PieceTable->remove(start, length);
-		PRIVATE()->Cursor = std::min(PRIVATE()->CursorStart, PRIVATE()->Cursor);
-		PRIVATE()->CursorStart = -1;
-	}
-	else
-	{
-		auto bytes = ::UIUTF8Num(PRIVATE()->Text[PRIVATE()->Cursor]);
-		PRIVATE()->PieceTable->remove(PRIVATE()->Cursor, bytes);
-	}
-	PRIVATE()->Text = PRIVATE()->PieceTable->getText();
-	PRIVATE()->Cursor = std::clamp<int32_t>(PRIVATE()->Cursor, 0, PRIVATE()->Text.length());
-	deselect();
-	inputNotifyText(PRIVATE(), previous, true);
-	inputNotifyCursor(PRIVATE(), previousCursor);
+	auto previous = inputState(PRIVATE());
+	if (PRIVATE()->PieceTable.del() == false) return;
+	inputPublish(PRIVATE(), getCanvas(), previous, true);
 }
 
 void UIInput::deselect()
 {
-	PRIVATE()->CursorStart = -1;
-
-	if (getCanvas()) getCanvas()->layoutWidget();
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.deselect();
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
 }
 
 void UIInput::insert(UIString const& text)
 {
-	if (PRIVATE()->ReadOnly || PRIVATE()->MaxLength <= PRIVATE()->Text.size())
-	{
-		PRIVATE()->OnInputRejected.signal();
-		return;
-	}
-	auto previous = PRIVATE()->Text;
-	auto previousCursor = PRIVATE()->Cursor;
-	PRIVATE()->PieceTable->insert(PRIVATE()->Cursor, text);
-	PRIVATE()->Cursor += text.length();
-	PRIVATE()->Text = PRIVATE()->PieceTable->getText();
-	PRIVATE()->Cursor = std::clamp<int32_t>(PRIVATE()->Cursor, 0, PRIVATE()->Text.length());
-	inputNotifyText(PRIVATE(), previous, true);
-	inputNotifyCursor(PRIVATE(), previousCursor);
+	inputCommit(PRIVATE(), getCanvas(), text, true);
+}
+
+void UIInput::cursorBackward(bool mark, int32_t steps)
+{
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.moveCodePoints(-steps, mark);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
+
+void UIInput::cursorForward(bool mark, int32_t steps)
+{
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.moveCodePoints(steps, mark);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
+
+void UIInput::cursorWordBackward(bool mark)
+{
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.moveWords(-1, mark);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
+
+void UIInput::cursorWordForward(bool mark)
+{
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.moveWords(1, mark);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
+
+void UIInput::home(bool mark)
+{
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.moveHome(mark);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
+}
+
+void UIInput::end(bool mark)
+{
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.moveEnd(mark);
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
 }
 
 void UIInput::clear()
 {
-	auto previous = PRIVATE()->Text;
-	auto previousCursor = PRIVATE()->Cursor;
-	PRIVATE()->Cursor = 0;
-	PRIVATE()->PieceTable = UINew<UIPieceTable>();
-	PRIVATE()->Text = PRIVATE()->PieceTable->getText();
-	deselect();
-	inputNotifyText(PRIVATE(), previous, false);
-	inputNotifyCursor(PRIVATE(), previousCursor);
+	setText(UIString());
 }
 
-UIString UIInput::copy()
+UIString UIInput::copy() const
 {
-	return getSelectedText();
+	if (inputCopyAllowed(PRIVATE()->EchoMode) == false) return UIString();
+	return PRIVATE()->PieceTable.selectedText();
 }
 
 void UIInput::cut()
@@ -473,39 +650,39 @@ void UIInput::cut()
 		PRIVATE()->OnInputRejected.signal();
 		return;
 	}
-	auto previous = PRIVATE()->Text;
-	auto previousCursor = PRIVATE()->Cursor;
-	if (PRIVATE()->CursorStart != -1 && PRIVATE()->CursorStart != PRIVATE()->Cursor)
-	{
-		int32_t start, length;
-		getSelection(start, length);
-		PRIVATE()->PieceTable->remove(start, length);
-		PRIVATE()->Cursor = std::min(PRIVATE()->CursorStart, PRIVATE()->Cursor);
-		PRIVATE()->CursorStart = -1;
-		PRIVATE()->Text = PRIVATE()->PieceTable->getText();
-		PRIVATE()->Cursor = std::clamp<int32_t>(PRIVATE()->Cursor, 0, PRIVATE()->Text.length());
-		deselect();
-		inputNotifyText(PRIVATE(), previous, true);
-		inputNotifyCursor(PRIVATE(), previousCursor);
-	}
+	if (inputCopyAllowed(PRIVATE()->EchoMode) == false) return;
+	UIString text = PRIVATE()->PieceTable.selectedText();
+	if (text.empty()) return;
+	PRIVATE()->OnTextCopied.signal(text);
+	auto previous = inputState(PRIVATE());
+	if (PRIVATE()->PieceTable.removeSelection() == false) return;
+	inputPublish(PRIVATE(), getCanvas(), previous, true);
+}
+
+void UIInput::paste()
+{
+	UIString text;
+	PRIVATE()->OnTextPasted.signal(text);
+	paste(text);
 }
 
 void UIInput::paste(UIString const& text)
 {
-	cut();
-	insert(text);
+	inputCommit(PRIVATE(), getCanvas(), text, false);
 }
 
 void UIInput::redo()
 {
-	/*PRIVATE()->PieceTable->redo();
-	PRIVATE()->Text = PRIVATE()->PieceTable->getText();*/
+	auto previous = inputState(PRIVATE());
+	if (PRIVATE()->PieceTable.redo() == false) return;
+	inputPublish(PRIVATE(), getCanvas(), previous, true);
 }
 
 void UIInput::undo()
 {
-	/*PRIVATE()->PieceTable->undo();
-	PRIVATE()->Text = PRIVATE()->PieceTable->getText();*/
+	auto previous = inputState(PRIVATE());
+	if (PRIVATE()->PieceTable.undo() == false) return;
+	inputPublish(PRIVATE(), getCanvas(), previous, true);
 }
 
 void UIInput::keyPressEvent(UIKeyEventRaw event)
@@ -520,103 +697,111 @@ void UIInput::keyPressEvent(UIKeyEventRaw event)
 		}
 		return;
 	}
-	auto previousCursor = PRIVATE()->Cursor;
-	// Backspace
+
+	bool shift = (event->Modifiers & UIInputEnum::KEY_MOD_SHIFT) != 0;
+	bool ctrl = (event->Modifiers & UIInputEnum::KEY_MOD_CTRL) != 0;
 	if (event->Key == UIInputEnum::KEY_BACKSPACE)
 	{
-		this->backspace();
-	}
-	// Del
-	if (event->Key == UIInputEnum::KEY_DELETE)
-	{
-		this->del();
-	}
-	// Left
-	if (event->Key == UIInputEnum::KEY_LEFT)
-	{
-		int32_t bytes = 0;
-		for (size_t i = 0; i < 6 && i + 1 <= PRIVATE()->Cursor; ++i)
+		if (ctrl)
 		{
-			bytes = ::UIUTF8Num(PRIVATE()->Text[PRIVATE()->Cursor - i - 1]);
-			if (bytes) break;
+			if (PRIVATE()->ReadOnly) PRIVATE()->OnInputRejected.signal();
+			else
+			{
+				auto previous = inputState(PRIVATE());
+				if (PRIVATE()->PieceTable.deletePreviousWord()) inputPublish(PRIVATE(), getCanvas(), previous, true);
+			}
 		}
-		PRIVATE()->Cursor = PRIVATE()->Cursor - bytes;
-		PRIVATE()->Cursor = std::clamp<int32_t>(PRIVATE()->Cursor, 0, PRIVATE()->Text.length());
-		deselect();
-		inputNotifyCursor(PRIVATE(), previousCursor);
+		else backspace();
 	}
-	// Right
-	if (event->Key == UIInputEnum::KEY_RIGHT)
+	else if (event->Key == UIInputEnum::KEY_DELETE)
 	{
-		auto bytes = ::UIUTF8Num(PRIVATE()->Text[PRIVATE()->Cursor]);
-		PRIVATE()->Cursor = PRIVATE()->Cursor + bytes;
-		PRIVATE()->Cursor = std::clamp<int32_t>(PRIVATE()->Cursor, 0, PRIVATE()->Text.length());
-		deselect();
-		inputNotifyCursor(PRIVATE(), previousCursor);
+		if (ctrl)
+		{
+			if (PRIVATE()->ReadOnly) PRIVATE()->OnInputRejected.signal();
+			else
+			{
+				auto previous = inputState(PRIVATE());
+				if (PRIVATE()->PieceTable.deleteNextWord()) inputPublish(PRIVATE(), getCanvas(), previous, true);
+			}
+		}
+		else del();
 	}
-	// CTRL + A
-	if (event->Key == UIInputEnum::KEY_A && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
+	else if (event->Key == UIInputEnum::KEY_LEFT)
 	{
-		setSelection(0, PRIVATE()->Text.length());
+		if (ctrl) cursorWordBackward(shift);
+		else cursorBackward(shift, 1);
 	}
-	// CTRL + C
-	if (event->Key == UIInputEnum::KEY_C && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
+	else if (event->Key == UIInputEnum::KEY_RIGHT)
+	{
+		if (ctrl) cursorWordForward(shift);
+		else cursorForward(shift, 1);
+	}
+	else if (event->Key == UIInputEnum::KEY_HOME)
+	{
+		home(shift);
+	}
+	else if (event->Key == UIInputEnum::KEY_END)
+	{
+		end(shift);
+	}
+	else if (event->Key == UIInputEnum::KEY_A && ctrl)
+	{
+		selectAll();
+	}
+	else if (event->Key == UIInputEnum::KEY_C && ctrl)
 	{
 		auto text = copy();
-		PRIVATE()->OnTextCopied.signal(text);
+		if (text.empty() == false) PRIVATE()->OnTextCopied.signal(text);
 	}
-	// CTRL + V
-	if (event->Key == UIInputEnum::KEY_V && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
+	else if (event->Key == UIInputEnum::KEY_X && ctrl)
 	{
-		UIString text;
-		PRIVATE()->OnTextPasted.signal(text);
-		paste(text);
+		cut();
 	}
-	// CTRL + Z
-	if (event->Key == UIInputEnum::KEY_Z && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
+	else if (event->Key == UIInputEnum::KEY_V && ctrl)
+	{
+		paste();
+	}
+	else if (event->Key == UIInputEnum::KEY_Z && ctrl)
 	{
 		undo();
 	}
-	// CTRL + Y
-	if (event->Key == UIInputEnum::KEY_Y && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
+	else if (event->Key == UIInputEnum::KEY_Y && ctrl)
 	{
 		redo();
-	}
-	// CTRL + X
-	if (event->Key == UIInputEnum::KEY_X && (event->Modifiers & UIInputEnum::KEY_MOD_CTRL))
-	{
-		cut();
 	}
 }
 
 void UIInput::inputEvent(UITextInputEventRaw event)
 {
-	if (getCanvas()->getFocus() == this)
+	if (event == nullptr || event->Done == false) return;
+	if (getCanvas()->getFocus() != this) return;
+	if (PRIVATE()->ReadOnly)
 	{
-		if (event->Done)
-		{
-			if (PRIVATE()->ReadOnly)
-			{
-				PRIVATE()->OnInputRejected.signal();
-				return;
-			}
-
-			cut();
-			insert(event->Text);
-			deselect();
-			auto shown = inputDisplay(PRIVATE(), true);
-			UIRect cursorRect;
-			auto painter = getCanvas()->getPainter();
-			painter->setFont(getStyle().Foreground.Font);
-			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X + 8, getBounds().Y, std::max(0.0f, getBounds().W - 16), getBounds().H, shown.Text, shown.Cursor, &cursorRect);
-			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
-		}
+		PRIVATE()->OnInputRejected.signal();
+		return;
 	}
+
+	insert(event->Text);
+	auto shown = inputDisplay(PRIVATE(), true);
+	auto font = inputFont(getStyle().Foreground.Font);
+	auto field = inputField(getBounds());
+	auto painter = getCanvas()->getPainter();
+	painter->setFont(font);
+	float textWidth = painter->boundingRect(0, 0, 0, field.H, shown.Text, 0).W;
+	UIRect cursorRect;
+	painter->boundingRect(inputOrigin(field, PRIVATE()->SelectOffset, textWidth), field.Y, inputLayoutWidth(field, textWidth), field.H, shown.Text, shown.Cursor, &cursorRect);
+	if (cursorRect.X < field.X) cursorRect.X = field.X;
+	if (cursorRect.X > field.X + field.W) cursorRect.X = field.X + field.W;
+	PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 }
 
 void UIInput::mouseDoubleEvent(UIMouseEventRaw event)
 {
 	mousePressEvent(event);
+	if (PRIVATE()->MousePress == false) return;
+	auto previous = inputState(PRIVATE());
+	PRIVATE()->PieceTable.selectWord();
+	inputPublish(PRIVATE(), getCanvas(), previous, false);
 }
 
 void UIInput::mousePressEvent(UIMouseEventRaw event)
@@ -627,28 +812,28 @@ void UIInput::mousePressEvent(UIMouseEventRaw event)
 		{
 			UIRect cursorRect;
 			auto painter = getCanvas()->getPainter();
-			bool focused = true;
+			bool focused = getCanvas() && getCanvas()->getFocus() == this;
 			auto shown = inputDisplay(PRIVATE(), focused);
-			auto previousCursor = PRIVATE()->Cursor;
-			int32_t displayCursor = PRIVATE()->Cursor;
-			painter->setFont(getStyle().Foreground.Font);
-			painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X + 8, getBounds().Y, std::max(0.0f, getBounds().W - 16), getBounds().H, shown.Text, event->X, event->Y, &displayCursor, &cursorRect);
-			PRIVATE()->Cursor = inputCursorFromDisplay(PRIVATE(), focused, displayCursor);
-			inputNotifyCursor(PRIVATE(), previousCursor);
-			PRIVATE()->CursorStart = PRIVATE()->Cursor;
+			auto field = inputField(getBounds());
+			int32_t displayCursor = inputHitDisplay(painter, inputFont(getStyle().Foreground.Font), field, PRIVATE()->SelectOffset, shown.Text, event->X, event->Y, &cursorRect);
+			auto previous = inputState(PRIVATE());
+			PRIVATE()->PieceTable.beginDrag(inputCursorFromDisplay(PRIVATE(), focused, displayCursor));
 			PRIVATE()->MousePress = true;
+			PRIVATE()->DragOffset = PRIVATE()->SelectOffset;
 
 			getCanvas()->setFocus(this);
 			if (getCanvas()->getDevice()) getCanvas()->getDevice()->setKeyboard(true);
-
+			inputPublish(PRIVATE(), getCanvas(), previous, false);
 			PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), cursorRect));
 		}
 	}
 	else
 	{
-		if (getCanvas()->getFocus() == this && getCanvas()->getDevice()) getCanvas()->getDevice()->setKeyboard(false);
-
-		getCanvas()->setFocus(nullptr);
+		if (getCanvas()->getFocus() == this && getCanvas()->getDevice())
+		{
+			getCanvas()->getDevice()->setKeyboard(false);
+			getCanvas()->setFocus(nullptr);
+		}
 	}
 }
 
@@ -657,11 +842,8 @@ void UIInput::mouseReleaseEvent(UIMouseEventRaw event)
 	if (event->Button == UIInputEnum::MOUSE_BUTTON_LEFT)
 	{
 		PRIVATE()->MousePress = false;
-		if (PRIVATE()->CursorStart == PRIVATE()->Cursor)
-		{
-			PRIVATE()->CursorStart = -1;
-			PRIVATE()->Selection = {};
-		}
+		if (PRIVATE()->PieceTable.anchor() == PRIVATE()->PieceTable.cursor())
+			PRIVATE()->PieceTable.deselect();
 	}
 }
 
@@ -671,20 +853,25 @@ void UIInput::mouseMoveEvent(UIMouseEventRaw event)
 	{
 		if (PRIVATE()->MousePress)
 		{
-			auto viewport = UIOverlap(getViewport(), getBounds());
 			auto painter = getCanvas()->getPainter();
 			bool focused = getCanvas() && getCanvas()->getFocus() == this;
 			auto shown = inputDisplay(PRIVATE(), focused);
-			auto previousCursor = PRIVATE()->Cursor;
-			int32_t displayCursor = 0;
-			painter->setFont(getStyle().Foreground.Font);
-			auto boundRect = painter->boundingRect(PRIVATE()->SelectOffset + getBounds().X + 8, getBounds().Y, std::max(0.0f, getBounds().W - 16), getBounds().H, shown.Text, event->X, event->Y, &displayCursor);
-			PRIVATE()->Cursor = inputCursorFromDisplay(PRIVATE(), focused, displayCursor);
-			inputNotifyCursor(PRIVATE(), previousCursor);
-			if (event->X < viewport.X && boundRect.X < viewport.X) PRIVATE()->SelectOffset += 1;
-			if (event->X > (viewport.X + viewport.W) && boundRect.X + boundRect.W > (viewport.X + viewport.W)) PRIVATE()->SelectOffset -= 1;
-
-			if (getCanvas()) getCanvas()->layoutWidget();
+			auto font = inputFont(getStyle().Foreground.Font);
+			auto field = inputField(getBounds());
+			painter->setFont(font);
+			float textWidth = painter->boundingRect(0, 0, 0, field.H, shown.Text, 0).W;
+			if (textWidth > field.W)
+			{
+				float offset = PRIVATE()->DragOffset;
+				if (event->X < field.X) offset += field.X - event->X;
+				else if (event->X > field.X + field.W) offset -= event->X - (field.X + field.W);
+				PRIVATE()->SelectOffset = offset;
+				inputClampOffset(PRIVATE(), field, textWidth);
+			}
+			int32_t displayCursor = inputHitDisplay(painter, font, field, PRIVATE()->SelectOffset, shown.Text, event->X, event->Y, nullptr);
+			auto previous = inputState(PRIVATE());
+			PRIVATE()->PieceTable.moveCaret(inputCursorFromDisplay(PRIVATE(), focused, displayCursor), true);
+			inputPublish(PRIVATE(), getCanvas(), previous, false);
 		}
 	}
 }
@@ -696,6 +883,7 @@ void UIInput::focusInEvent(UIFocusEventRaw event)
 
 void UIInput::focusOutEvent(UIFocusEventRaw event)
 {
+	PRIVATE()->PieceTable.endUndoGroup();
 	if (getCanvas()->getFocus() == this && getCanvas()->getDevice()) getCanvas()->getDevice()->setKeyboard(false);
 
 	PRIVATE()->OnEditingFinished.signal();

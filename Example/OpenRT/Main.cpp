@@ -93,6 +93,7 @@ int main()
 #include "OpenUI/Default/UICombo.h"
 #include "OpenUI/Default/UILine.h"
 #include "OpenUI/Default/UIInput.h"
+#include "OpenUI/Default/UIText.h"
 
 void sample(UICanvasRaw context, SDL_Window* window)
 {
@@ -196,6 +197,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 
 		auto selected = builder->newWidget<UILabel>();
 		auto summary = builder->newWidget<UILabel>();
+		auto note = builder->newWidget<UIText>();
 
 		for (int index = 0; index < 24; ++index)
 		{
@@ -206,11 +208,13 @@ void sample(UICanvasRaw context, SDL_Window* window)
 			item->clicked->connect(nullptr, [=](bool) {
 				selected->setText(items[index]);
 				summary->setText(UIString(items[index]) + "  x1    可交易");
+				note->setText(UIString(items[index]) + "\n王城旧藏。\n可交易，取出后记入行囊。");
 				});
 			if (index == 0)
 			{
 				selected->setText(items[index]);
 				summary->setText(UIString(items[index]) + "  x1    可交易");
+				note->setText(UIString(items[index]) + "\n王城旧藏。\n可交易，取出后记入行囊。");
 			}
 		}
 
@@ -288,6 +292,27 @@ void sample(UICanvasRaw context, SDL_Window* window)
 
 		summary->setFixedSize(px(260), px(28));
 		detail->addWidget(summary);
+
+		detail->addWidget(note);
+		note->setFixedSize(px(260), px(72));
+		note->setPlaceholderText("备注");
+		note->editingStarted->connect(nullptr, [=](UIRect rect) {
+			SDL_StartTextInput(window);
+			SDL_Rect sdlRect{ (int)rect.X, (int)rect.Y, (int)rect.W, (int)rect.H };
+			SDL_SetTextInputArea(window, &sdlRect, 0);
+			});
+		note->textPasted->connect(nullptr, [=](UIString& value) {
+			if (SDL_HasClipboardText())
+			{
+				auto result = SDL_GetClipboardText();
+				value = UIString(result);
+				SDL_free(result);
+			}
+			});
+		note->textCopied->connect(nullptr, [=](UIString const& value) {
+			SDL_ClearClipboardData();
+			SDL_SetClipboardText(value.c_str());
+			});
 
 		auto traits = builder->newWidget<UIFlow>();
 		detail->addWidget(traits);

@@ -880,7 +880,7 @@ static constexpr UIBrush UIThumbBrush
 };
 
 #ifndef OPENUI_FONT_FAMILY
-#define OPENUI_FONT_FAMILY "Arial"
+#define OPENUI_FONT_FAMILY "Segoe UI Emoji"
 #endif
 
 struct UIFont

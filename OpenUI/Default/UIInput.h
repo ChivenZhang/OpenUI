@@ -28,7 +28,7 @@ struct UIInputStyle
 	} Background;
 };
 
-/// @brief Input
+/// @brief Single-line text input.
 class OPENUI_API UIInput : public UIWidget
 {
 public:
@@ -69,21 +69,39 @@ public:
 	int32_t getCursorPosition(int32_t x, int32_t y) const;
 	void setCursorPosition(int32_t value);
 
+	UIString getDisplayText() const;
 	UIString getSelectedText() const;
+	bool hasSelectedText() const;
 	void getSelection(int32_t& start, int32_t& length) const;
+	int32_t getSelectionStart() const;
+	int32_t getSelectionEnd() const;
+	int32_t getSelectionLength() const;
 	void setSelection(int32_t start, int32_t length);
+	void selectAll();
 
 	UIString getText() const;
 	void setText(UIString const& value);
+
+	bool isModified() const;
+	void setModified(bool value);
+	bool isUndoAvailable() const;
+	bool isRedoAvailable() const;
 
 	void backspace();
 	void del();
 	void deselect();
 	void insert(UIString const& text);
+	void cursorBackward(bool mark, int32_t steps = 1);
+	void cursorForward(bool mark, int32_t steps = 1);
+	void cursorWordBackward(bool mark);
+	void cursorWordForward(bool mark);
+	void home(bool mark);
+	void end(bool mark);
 
 	void clear();
-	UIString copy();
+	UIString copy() const;
 	void cut();
+	void paste();
 	void paste(UIString const& text);
 	void redo();
 	void undo();

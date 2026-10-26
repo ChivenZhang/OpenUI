@@ -1,6 +1,8 @@
 ﻿
 file(GLOB_RECURSE OPENUI_SOURCE_FILES CONFIGURE_DEPENDS "*.cpp" "*.h")
-add_library(OpenUI STATIC ${OPENUI_SOURCE_FILES})
+add_library(OpenUI STATIC ${OPENUI_SOURCE_FILES}
+        Default/UIText.cpp
+        Default/UIText.h)
 
 target_link_libraries(OpenUI PRIVATE yogacore)
 

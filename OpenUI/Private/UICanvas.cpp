@@ -12,6 +12,7 @@
 #include "../Default/UIButton.h"
 #include "../Default/UICombo.h"
 #include "../Default/UIInput.h"
+#include "../Default/UIText.h"
 #include "../Default/UILine.h"
 #include "OpenUI/Default/UICheck.h"
 #include "OpenUI/Default/UIProgress.h"
@@ -68,6 +69,7 @@ UICanvas::UICanvas(UIConfig config)
 	PRIVATE()->Builder->setFactory("button", UINew<UIWidgetFactory<UIButton>>());
 	PRIVATE()->Builder->setFactory("button:hover", UINew<UIWidgetFactory<UIButton>>());
 	PRIVATE()->Builder->setFactory("text", UINew<UIWidgetFactory<UIInput>>());
+	PRIVATE()->Builder->setFactory("textarea", UINew<UIWidgetFactory<UIText>>());
 	PRIVATE()->Builder->setFactory("select", UINew<UIWidgetFactory<UICombo>>());
 	PRIVATE()->Builder->setFactory("radio", UINew<UIWidgetFactory<UIRadio>>());
 	PRIVATE()->Builder->setFactory("checkbox", UINew<UIWidgetFactory<UICheck>>());

@@ -343,6 +343,7 @@ static bool nvg_drawGlyphBitmap(NVGcontext* vg, UIMap<OpenRTGlyphKey, OpenRTGlyp
 	}
 
 	if (FT_Load_Glyph(face, glyph, FT_LOAD_RENDER | FT_LOAD_COLOR) != 0) return false;
+
 	auto const& bitmap = face->glyph->bitmap;
 	OpenRTGlyphImage cached;
 	cached.Left = face->glyph->bitmap_left;

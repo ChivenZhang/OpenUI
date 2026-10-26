@@ -162,7 +162,6 @@ bool OpenRTDevice::update()
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
-		UI_INFO("%u", event.type);
 		switch (event.type)
 		{
 		case SDL_EVENT_QUIT:
@@ -172,15 +171,13 @@ bool OpenRTDevice::update()
 			break;
 		case SDL_EVENT_KEY_DOWN:
 			{
-				UIKeyDownEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod, UIString(),
-									event.key.repeat);
+				UIKeyDownEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod, UIString(), event.key.repeat);
 				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_KEY_UP:
 			{
-				UIKeyUpEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod, UIString(),
-									event.key.repeat);
+				UIKeyUpEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod, UIString(), event.key.repeat);
 				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
