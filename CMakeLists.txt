@@ -19,14 +19,12 @@ find_package(PkgConfig REQUIRED)
 include_directories(${OPENUI_SOURCE_DIR})
 include_directories(${OPENUI_EXTERNAL_DIR}/yoga)
 include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
-include_directories(${OPENUI_EXTERNAL_DIR}/nanovg)
 add_subdirectory(OpenUI)
 add_subdirectory(External/yoga)
 
 if (OPENUI_ENABLE_EXAMPLE)
 
     add_subdirectory(External/OpenRT)
-    add_subdirectory(External/nanovg)
 
     find_program(SLANGC_EXECUTABLE slangc)
     find_program(GLSLANG_VALIDATOR glslangValidator)

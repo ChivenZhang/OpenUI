@@ -6,9 +6,9 @@ if (OPENUI_ENABLE_OPENRT)
 
     file(GLOB_RECURSE OPENRT_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.c ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
     add_executable(UI-OpenRT ${OPENRT_EXAMPLE_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/Desktop.cpp)
-    add_dependencies(UI-OpenRT OpenUI OpenRT nanovg Shader)
+    add_dependencies(UI-OpenRT OpenUI OpenRT Shader)
 
-    target_link_libraries(UI-OpenRT PRIVATE OpenUI OpenRT nanovg)
+    target_link_libraries(UI-OpenRT PRIVATE OpenUI OpenRT)
 
     find_package(Freetype REQUIRED)
     target_link_libraries(UI-OpenRT PRIVATE Freetype::Freetype) # since CMake 3.10

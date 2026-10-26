@@ -11,8 +11,8 @@
 #ifdef OPENUI_ENABLE_OPENRT
 #include "OpenRTPainter.h"
 #include <OpenUI/UICanvas.h>
-#include <nanovg.h>
-#include <nanovg_rt.h>
+#include "nanovg.h"
+#include "nanovg_rt.h"
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
