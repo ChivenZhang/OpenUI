@@ -18,7 +18,7 @@ struct UISliderPrivate : UIPrivate
 	UIButtonRef Handle;
 	UI::Orientation Orientation = UI::Horizontal;
 	int32_t Maximum = 0, Minimum = 0, PageStep = 1, SingleStep = 1, SliderPosition = 0, Value = 0;
-	bool SliderDown = false, Tracking = false;
+	bool SliderDown = false, Tracking = false, Hovered = false;
 	int32_t TickInterval = 0;
 	UISlider::ticks_t TickPosition;
 
@@ -35,10 +35,10 @@ UISlider::UISlider(UICanvasRaw canvas)
 	UIWidget(canvas)
 {
 	m_Private = new UISliderPrivate;
-	UIPlate(getStyleNormal(), UINoPen, UICtrlTrackBrush, UINoBrush, 0);
-	UIPlate(getStyleHover(), UINoPen, UICtrlTrackBrush, UINoBrush, 0);
-	UIPlate(getStyleActive(), UINoPen, UICtrlTrackBrush, UINoBrush, 0);
-	UIPlate(getStyleDisabled(), UINoPen, UICtrlDisabledFillBrush, UINoBrush, 0);
+	UIPlate(getStyleNormal(), UICtrlAccentPen, UICtrlTrackBrush, UICtrlPaperBrush, 7);
+	UIPlate(getStyleHover(), UICtrlAccentHoverPen, UICtrlTrackBrush, UICtrlPaperBrush, 7);
+	UIPlate(getStyleActive(), UICtrlAccentPressPen, UICtrlTrackBrush, UICtrlHoverBrush, 7);
+	UIPlate(getStyleDisabled(), UICtrlDisabledPen, UICtrlDisabledFillBrush, UICtrlDisabledFillBrush, 7);
 
 	sliderMoved = &PRIVATE()->OnSliderMoved;
 	sliderPressed = &PRIVATE()->OnSliderPressed;
@@ -50,25 +50,18 @@ UISlider::UISlider(UICanvasRaw canvas)
 	addWidget(PRIVATE()->Handle);
 	PRIVATE()->Handle->setFixedSize({16, UI_CSS_WIDTH_LENGTH}, {16, UI_CSS_HEIGHT_LENGTH});
 	{
-		auto css = [](UIColor color)
-		{
-			return "rgba("
-				+ std::to_string((int)(color.R * 255.0f + 0.5f)) + ","
-				+ std::to_string((int)(color.G * 255.0f + 0.5f)) + ","
-				+ std::to_string((int)(color.B * 255.0f + 0.5f)) + ","
-				+ std::to_string((int)(color.A * 255.0f + 0.5f)) + ")";
-		};
 		auto handle = PRIVATE()->Handle.get();
-		handle->setStyleText("border-radius", "7px");
-		handle->setStyleText("border-color", css(UICtrlAccent));
-		handle->setStyleText("border-color:hover", css(UICtrlAccentHover));
-		handle->setStyleText("border-color:active", css(UICtrlAccentPress));
-		handle->setStyleText("border-width", "1px");
-		handle->setStyleText("border-width:hover", "1px");
-		handle->setStyleText("border-width:active", "1px");
-		handle->setStyleText("background-color", css(UICtrlPaper));
-		handle->setStyleText("background-color:hover", css(UICtrlPaper));
-		handle->setStyleText("background-color:active", css(UICtrlHover));
+		char const* clear = "rgba(0,0,0,0)";
+		handle->setStyleText("background-color", clear);
+		handle->setStyleText("background-color:hover", clear);
+		handle->setStyleText("background-color:active", clear);
+		handle->setStyleText("background-color:disabled", clear);
+		handle->setStyleText("border-color", clear);
+		handle->setStyleText("border-color:hover", clear);
+		handle->setStyleText("border-color:active", clear);
+		handle->setStyleText("border-color:disabled", clear);
+		handle->setStyleText("border-width", "0px");
+		handle->setStyleText("color", clear);
 	}
 
 	PRIVATE()->Handle->pressed->connect(this, [=]() { PRIVATE()->OnSliderPressed.signal(); });
@@ -104,6 +97,7 @@ bool UISlider::filter(UIReactorRaw source, UIEventRaw _event)
 	case UIHash("MouseMove"):
 	{
 		auto event = UICast<UIMouseEvent>(_event);
+		PRIVATE()->Hovered = PRIVATE()->Handle->inBounds(event->X, event->Y);
 		if (PRIVATE()->Handle->getDown())
 		{
 			auto oldValue = std::clamp(PRIVATE()->Value, getMinimum(), getMaximum());
@@ -166,23 +160,36 @@ void UISlider::layout(UIRect client)
 void UISlider::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
-	auto& style = getEnable() == false ? getStyleDisabled()
+	UIWidgetStyle& style = getEnable() == false ? getStyleDisabled()
 		: PRIVATE()->Handle && PRIVATE()->Handle->getDown() ? getStyleActive()
+		: PRIVATE()->Hovered ? getStyleHover()
 		: getStyleNormal();
 	auto face = UIFaceOf(style, client);
 	UIColor track = face.Fill.Style == UIBrush::NoBrush ? UICtrlTrack : face.Fill.Color;
 	painter->setPen({ .Color = track, .Width = 4.0f });
 	painter->setBrush(UINoBrush);
+	float knobX = client.X + client.W * 0.5f;
+	float knobY = client.Y + client.H * 0.5f;
 	if (PRIVATE()->Orientation == UI::Horizontal)
 	{
-		float mid = client.Y + client.H * 0.5f;
-		painter->drawLine(client.X + 8, mid, client.X + client.W - 8, mid);
+		knobY = client.Y + client.H * 0.5f;
+		painter->drawLine(client.X + 8, knobY, client.X + client.W - 8, knobY);
 	}
 	else
 	{
-		float mid = client.X + client.W * 0.5f;
-		painter->drawLine(mid, client.Y + 8, mid, client.Y + client.H - 8);
+		knobX = client.X + client.W * 0.5f;
+		painter->drawLine(knobX, client.Y + 8, knobX, client.Y + client.H - 8);
 	}
+	if (PRIVATE()->Handle)
+	{
+		auto bounds = PRIVATE()->Handle->getBounds();
+		if (PRIVATE()->Orientation == UI::Horizontal) knobX = bounds.X + bounds.W * 0.5f;
+		else knobY = bounds.Y + bounds.H * 0.5f;
+	}
+	UIRect knob{ knobX - 7.0f, knobY - 7.0f, 14.0f, 14.0f };
+	UIPen border = face.Border.Style == UIPen::NoPen ? UICtrlAccentPen : face.Border;
+	UIBrush fill = face.Text.Style == UIBrush::NoBrush ? UICtrlPaperBrush : face.Text;
+	UIDrawFace(painter, knob, { .Border = border, .Fill = fill, .Radius = 7 });
 }
 
 void UISlider::removeWidget()

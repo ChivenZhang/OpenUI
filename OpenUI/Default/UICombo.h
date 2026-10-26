@@ -132,7 +132,6 @@ public:
 	explicit UICombo(UICanvasRaw canvas);
 	~UICombo() override;
 	void arrange(UIRect client) override;
-	void layout(UIRect client) override;
 	void paint(UIRect client, UIPainterRaw painter) override;
 
 	UIStringList const& getItems() const;

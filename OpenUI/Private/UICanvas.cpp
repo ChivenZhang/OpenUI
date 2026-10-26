@@ -9,17 +9,17 @@
 *
 * =================================================*/
 #include "../UICanvas.h"
-#include "../Classical/UIButton.h"
-#include "../Classical/UICombo.h"
-#include "../Classical/UIInput.h"
-#include "../Classical/UILine.h"
+#include "../Default/UIButton.h"
+#include "../Default/UICombo.h"
+#include "../Default/UIInput.h"
+#include "../Default/UILine.h"
+#include "OpenUI/Default/UICheck.h"
+#include "OpenUI/Default/UIProgress.h"
+#include "OpenUI/Default/UIRadio.h"
 #include <yoga/Yoga.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include "OpenUI/Classical/UICheck.h"
-#include "OpenUI/Classical/UIRadio.h"
 
 struct UITopLevelWidget
 {
@@ -71,6 +71,7 @@ UICanvas::UICanvas(UIConfig config)
 	PRIVATE()->Builder->setFactory("select", UINew<UIWidgetFactory<UICombo>>());
 	PRIVATE()->Builder->setFactory("radio", UINew<UIWidgetFactory<UIRadio>>());
 	PRIVATE()->Builder->setFactory("checkbox", UINew<UIWidgetFactory<UICheck>>());
+	PRIVATE()->Builder->setFactory("progress", UINew<UIWidgetFactory<UIProgress>>());
 }
 
 UICanvas::~UICanvas()

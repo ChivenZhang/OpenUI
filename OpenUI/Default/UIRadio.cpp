@@ -82,19 +82,9 @@ void UIRadio::paint(UIRect client, UIPainterRaw painter)
 		UIDrawFace(painter, inner, { .Border = UINoPen, .Fill = face.Text, .Radius = dot * 0.5f });
 	}
 	UIWidgetStyle& textStyle = getEnable() ? getStyleNormal() : getStyleDisabled();
-	uint32_t horizontal = UIFont::AlignLeft;
-	switch (textStyle.TextAlign.Value)
-	{
-	case UI_CSS_TEXT_ALIGN_END:
-	case UI_CSS_TEXT_ALIGN_RIGHT: horizontal = UIFont::AlignRight; break;
-	case UI_CSS_TEXT_ALIGN_CENTER: horizontal = UIFont::AlignCenter; break;
-	case UI_CSS_TEXT_ALIGN_JUSTIFY:
-	case UI_CSS_TEXT_ALIGN_JUSTIFY_ALL: horizontal = UIFont::AlignJustify; break;
-	default: break;
-	}
-	UIFont font;
-	font.Align = horizontal | UIFont::AlignVCenter;
+	UIFont font = {};
 	applyFontFamily(textStyle, font);
+	font.Align |= UIFont::AlignVCenter;
 	UIRect text{ mark.X + mark.W + 8, client.Y, std::max(0.0f, client.W - mark.W - 12), client.H };
 	auto label = UIFaceOf(textStyle, text);
 	UIBrush brush = label.Text.Style == UIBrush::NoBrush ? UICtrlInkBrush : label.Text;

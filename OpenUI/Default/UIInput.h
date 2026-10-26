@@ -95,6 +95,8 @@ protected:
 	void mousePressEvent(UIMouseEventRaw event) override;
 	void mouseReleaseEvent(UIMouseEventRaw event) override;
 	void mouseMoveEvent(UIMouseEventRaw event) override;
+	void focusInEvent(UIFocusEventRaw event) override;
+	void focusOutEvent(UIFocusEventRaw event) override;
 
 public:
 	UISignalAsRaw<int32_t /*oldPos*/, int32_t /*newPos*/> cursorPositionChanged;

@@ -98,6 +98,7 @@ void UICombo::arrange(UIRect client)
 {
 	setMinWidth({30});
 	setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
+
 	PRIVATE()->Button->setFlexGrow({1});
 	PRIVATE()->Button->getLabel()->setMargin(
 		{8, UI_CSS_MARGIN_LENGTH},
@@ -106,8 +107,6 @@ void UICombo::arrange(UIRect client)
 		{0, UI_CSS_MARGIN_LENGTH}
 		);
 
-	PRIVATE()->Popup->setAlignItems({UI_CSS_ALIGN_ITEMS_STRETCH});
-	PRIVATE()->Popup->setJustifyContent({UI_CSS_JUSTIFY_CONTENT_SPACE_EVENLY});
 	PRIVATE()->Popup->setPositionType({UI_CSS_POSITION_ABSOLUTE});
 	PRIVATE()->Popup->setFixedHeight({0, UI_CSS_HEIGHT_LENGTH});
 
@@ -143,10 +142,6 @@ void UICombo::arrange(UIRect client)
 	PRIVATE()->Popup->setFixedHeight({std::max<float>(painter->getFont().Size, PRIVATE()->Popup->getFixedHeight().Value), UI_CSS_HEIGHT_LENGTH});
 }
 
-void UICombo::layout(UIRect client)
-{
-}
-
 void UICombo::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
@@ -161,14 +156,14 @@ void UICombo::setItems(UIStringList const& texts)
 {
 	PRIVATE()->Items = texts;
 	PRIVATE()->Popup->removeWidget();
-	auto itemsWidget = UINew<UIVBox>(getCanvas());
-	PRIVATE()->Popup->addWidget(itemsWidget);
+	auto layoutWidget = UINew<UIVBox>(getCanvas());
+	PRIVATE()->Popup->addWidget(layoutWidget);
 
 	for (size_t i = 0; i < PRIVATE()->Items.size(); ++i)
 	{
 		auto text = PRIVATE()->Items[i];
 		auto button = UINew<UIButton>(getCanvas());
-		itemsWidget->addWidget(button);
+		layoutWidget->addWidget(button);
 		button->setText(text);
 		comboBindFace(button.get(), PRIVATE()->Style.Items);
 		button->getLabel()->setMargin(

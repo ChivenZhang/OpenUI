@@ -79,19 +79,20 @@ int main()
 
 #include "OpenUI/UICanvas.h"
 #include "OpenUI/UIBuilder.h"
-#include "OpenUI/Classical/UIHBox.h"
-#include "OpenUI/Classical/UIVBox.h"
-#include "OpenUI/Classical/UIFlow.h"
-#include "OpenUI/Classical/UIScroll.h"
-#include "OpenUI/Classical/UIGrid.h"
-#include "OpenUI/Classical/UILabel.h"
-#include "OpenUI/Classical/UIButton.h"
-#include "OpenUI/Classical/UISlider.h"
-#include "OpenUI/Classical/UIRadio.h"
-#include "OpenUI/Classical/UICheck.h"
-#include "OpenUI/Classical/UICombo.h"
-#include "OpenUI/Classical/UILine.h"
-#include "OpenUI/Classical/UIInput.h"
+#include "OpenUI/Default/UIHBox.h"
+#include "OpenUI/Default/UIVBox.h"
+#include "OpenUI/Default/UIFlow.h"
+#include "OpenUI/Default/UIScroll.h"
+#include "OpenUI/Default/UIGrid.h"
+#include "OpenUI/Default/UILabel.h"
+#include "OpenUI/Default/UIButton.h"
+#include "OpenUI/Default/UISlider.h"
+#include "OpenUI/Default/UIProgress.h"
+#include "OpenUI/Default/UIRadio.h"
+#include "OpenUI/Default/UICheck.h"
+#include "OpenUI/Default/UICombo.h"
+#include "OpenUI/Default/UILine.h"
+#include "OpenUI/Default/UIInput.h"
 
 void sample(UICanvasRaw context, SDL_Window* window)
 {
@@ -103,10 +104,12 @@ void sample(UICanvasRaw context, SDL_Window* window)
 	context->addWidget(page);
 	page->setFixedWidth({100.0f, UI_CSS_WIDTH_PERCENTAGE});
 	page->setFixedHeight({100.0f, UI_CSS_HEIGHT_PERCENTAGE});
+	page->setStyleText("background-color", "#F4F5F7");
 
 	auto filters = builder->newWidget<UIVBox>();
 	page->addWidget(filters);
 	filters->setMinWidth(px(180));
+	filters->setStyleText("background-color", "#FFFFFF");
 	{
 		auto title = builder->newWidget<UILabel>();
 		filters->addWidget(title);
@@ -159,6 +162,18 @@ void sample(UICanvasRaw context, SDL_Window* window)
 		weight->setFixedSize(px(180), px(32));
 		weight->setRange(0, 100);
 		weight->setValue(62);
+
+		auto load = builder->newWidget<UIProgress>();
+		filters->addWidget(load);
+		load->setFixedSize(px(180), px(24));
+		load->setRange(0, 100);
+		load->setValue(62);
+		load->setText("62%");
+		auto loadRaw = load.get();
+		weight->sliderMoved->connect(nullptr, [loadRaw](int32_t value) {
+			loadRaw->setValue(value);
+			loadRaw->setText(std::to_string(value) + "%");
+			});
 	}
 
 	auto gutter = builder->newWidget<UIVLine>();
@@ -168,6 +183,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 
 	auto itemsFlow = builder->newWidget<UIFlow>();
 	page->addWidget(itemsFlow);
+	itemsFlow->setStyleText("background-color", "#FFFFFF");
 	{
 		const char* items[] = {
 			"古金长剑", "裂脊巨斧", "猎影短弓", "余烬法杖",
@@ -206,6 +222,7 @@ void sample(UICanvasRaw context, SDL_Window* window)
 		auto detail = builder->newWidget<UIVBox>();
 		page->addWidget(detail);
 		detail->setMinWidth(px(274));
+		detail->setStyleText("background-color", "#FFFFFF");
 
 		auto search = builder->newWidget<UIInput>();
 		detail->addWidget(search);

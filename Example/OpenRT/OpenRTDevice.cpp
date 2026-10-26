@@ -162,6 +162,7 @@ bool OpenRTDevice::update()
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
+		UI_INFO("%u", event.type);
 		switch (event.type)
 		{
 		case SDL_EVENT_QUIT:
