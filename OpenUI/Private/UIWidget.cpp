@@ -1298,6 +1298,126 @@ void UIWidget::setForegroundColor(UIPropColor value)
     PRIVATE()->Normal.Foreground.Color = value;
 }
 
+UIPropFontFamily UIWidget::getFontFamily() const
+{
+    return PRIVATE()->Normal.FontFamily;
+}
+
+void UIWidget::setFontFamily(UIPropFontFamily value)
+{
+    PRIVATE()->Normal.FontFamily = value;
+}
+
+UIPropFontSize UIWidget::getFontSize() const
+{
+    return PRIVATE()->Normal.FontSize;
+}
+
+void UIWidget::setFontSize(UIPropFontSize value)
+{
+    PRIVATE()->Normal.FontSize = value;
+}
+
+UIPropFontStyle UIWidget::getFontStyle() const
+{
+    return PRIVATE()->Normal.FontStyle;
+}
+
+void UIWidget::setFontStyle(UIPropFontStyle value)
+{
+    PRIVATE()->Normal.FontStyle = value;
+}
+
+UIPropFontWeight UIWidget::getFontWeight() const
+{
+    return PRIVATE()->Normal.FontWeight;
+}
+
+void UIWidget::setFontWeight(UIPropFontWeight value)
+{
+    PRIVATE()->Normal.FontWeight = value;
+}
+
+UIPropFontStretch UIWidget::getFontStretch() const
+{
+    return PRIVATE()->Normal.FontStretch;
+}
+
+void UIWidget::setFontStretch(UIPropFontStretch value)
+{
+    PRIVATE()->Normal.FontStretch = value;
+}
+
+UIPropLetterSpacing UIWidget::getLetterSpacing() const
+{
+    return PRIVATE()->Normal.LetterSpacing;
+}
+
+void UIWidget::setLetterSpacing(UIPropLetterSpacing value)
+{
+    PRIVATE()->Normal.LetterSpacing = value;
+}
+
+UIPropLineHeight UIWidget::getLineHeight() const
+{
+    return PRIVATE()->Normal.LineHeight;
+}
+
+void UIWidget::setLineHeight(UIPropLineHeight value)
+{
+    PRIVATE()->Normal.LineHeight = value;
+}
+
+UIPropTextAlign UIWidget::getTextAlign() const
+{
+    return PRIVATE()->Normal.TextAlign;
+}
+
+void UIWidget::setTextAlign(UIPropTextAlign value)
+{
+    PRIVATE()->Normal.TextAlign = value;
+}
+
+UIPropTextIndent UIWidget::getTextIndent() const
+{
+    return PRIVATE()->Normal.TextIndent;
+}
+
+void UIWidget::setTextIndent(UIPropTextIndent value)
+{
+    PRIVATE()->Normal.TextIndent = value;
+}
+
+UIPropTextOverflow UIWidget::getTextOverflow() const
+{
+    return PRIVATE()->Normal.TextOverflow;
+}
+
+void UIWidget::setTextOverflow(UIPropTextOverflow value)
+{
+    PRIVATE()->Normal.TextOverflow = value;
+}
+
+UIPropWhiteSpace UIWidget::getWhiteSpace() const
+{
+    return PRIVATE()->Normal.WhiteSpace;
+}
+
+void UIWidget::setWhiteSpace(UIPropWhiteSpace value)
+{
+    PRIVATE()->Normal.WhiteSpace = value;
+}
+
+UIPropWordSpacing UIWidget::getWordSpacing() const
+{
+    return PRIVATE()->Normal.WordSpacing;
+}
+
+void UIWidget::setWordSpacing(UIPropWordSpacing value)
+{
+    PRIVATE()->Normal.WordSpacing = value;
+}
+
 UIWidgetStyle& UIWidget::getStyleNormal()
 {
     return PRIVATE()->Normal;

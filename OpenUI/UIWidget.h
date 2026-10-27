@@ -356,6 +356,30 @@ public:
 	void setForeground(UIPropForeground value);
 	UIPropColor getForegroundColor() const;
 	void setForegroundColor(UIPropColor value);
+	UIPropFontFamily getFontFamily() const;
+	void setFontFamily(UIPropFontFamily value);
+	UIPropFontSize getFontSize() const;
+	void setFontSize(UIPropFontSize value);
+	UIPropFontStyle getFontStyle() const;
+	void setFontStyle(UIPropFontStyle value);
+	UIPropFontWeight getFontWeight() const;
+	void setFontWeight(UIPropFontWeight value);
+	UIPropFontStretch getFontStretch() const;
+	void setFontStretch(UIPropFontStretch value);
+	UIPropLetterSpacing getLetterSpacing() const;
+	void setLetterSpacing(UIPropLetterSpacing value);
+	UIPropLineHeight getLineHeight() const;
+	void setLineHeight(UIPropLineHeight value);
+	UIPropTextAlign getTextAlign() const;
+	void setTextAlign(UIPropTextAlign value);
+	UIPropTextIndent getTextIndent() const;
+	void setTextIndent(UIPropTextIndent value);
+	UIPropTextOverflow getTextOverflow() const;
+	void setTextOverflow(UIPropTextOverflow value);
+	UIPropWhiteSpace getWhiteSpace() const;
+	void setWhiteSpace(UIPropWhiteSpace value);
+	UIPropWordSpacing getWordSpacing() const;
+	void setWordSpacing(UIPropWordSpacing value);
 
 protected:
 	UIWidgetStyle& getStyleNormal();
