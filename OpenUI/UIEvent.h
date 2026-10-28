@@ -252,7 +252,10 @@ public:
 		:
 		UIKeyEvent(UIHash("TextInput"), key, modifiers, nativeScanCode, nativeVirtualKey, nativeModifiers, text, count), Done(done), Start(start), Length(length) {}
 
+	// Done=false replaces the IME preedit overlay; empty text cancels it.
+	// Done=true commits Text to the document once.
 	const bool Done;
+	// Preedit cursor/selection in UTF-8 characters, not bytes. UINT32_MAX means end.
 	const uint32_t Start, Length;
 };
 using UITextInputEventRaw = UIRaw<UITextInputEvent>;

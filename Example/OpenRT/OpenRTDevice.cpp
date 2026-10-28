@@ -183,15 +183,19 @@ bool OpenRTDevice::update()
 			break;
 		case SDL_EVENT_TEXT_EDITING:
 			{
-				UITextInputEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod,
-										event.edit.text, event.key.repeat, false, event.edit.start, event.edit.length);
+				auto modifiers = SDL_GetModState();
+				UITextInputEvent event2(0, SDL3InputEnum::GetModifierEnum(modifiers), 0, 0, modifiers,
+					event.edit.text ? event.edit.text : "", 1, false,
+					event.edit.start < 0 ? UINT32_MAX : uint32_t(event.edit.start),
+					event.edit.length < 0 ? 0 : uint32_t(event.edit.length));
 				canvas->sendEvent(nullptr, &event2);
 			}
 			break;
 		case SDL_EVENT_TEXT_INPUT:
 			{
-				UITextInputEvent event2(SDL3InputEnum::GetKeyboardEnum(event.key.key), SDL3InputEnum::GetModifierEnum(event.key.mod), event.key.scancode, event.key.key, event.key.mod,
-										event.edit.text, event.key.repeat, true);
+				auto modifiers = SDL_GetModState();
+				UITextInputEvent event2(0, SDL3InputEnum::GetModifierEnum(modifiers), 0, 0, modifiers,
+					event.text.text ? event.text.text : "", 1, true);
 				canvas->sendEvent(nullptr, &event2);
 			}
 			break;

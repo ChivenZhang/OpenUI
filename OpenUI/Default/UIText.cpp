@@ -10,7 +10,8 @@
 * =================================================*/
 #include "UIText.h"
 #include "../UICanvas.h"
-#include "../Private/UIPieceTableV2.h"
+#include "../Private/UIPieceTableV3.h"
+#include "../Private/UIComposition.h"
 #include <algorithm>
 #include <climits>
 
@@ -19,7 +20,8 @@
 struct UITextPrivate : UIPrivate
 {
 	UITextStyle Style;
-	UIPieceTableV2 PieceTable;
+	UIPieceTableV3 PieceTable;
+	UIComposition Composition;
 	UIList<UIRect> Selection;
 	UIRect Caret;
 	bool ReadOnly = false, MousePress = false, TabChangesFocus = false;
@@ -40,7 +42,7 @@ struct UITextPrivate : UIPrivate
 
 struct TextState
 {
-	UIString Text;
+	uint64_t Revision = 0;
 	int32_t Cursor = 0;
 	int32_t SelectionStart = -1;
 	int32_t SelectionLength = 0;
@@ -55,7 +57,7 @@ struct TextBox
 static TextState textState(UITextPrivate const* data)
 {
 	TextState state;
-	state.Text = data->PieceTable.text();
+	state.Revision = data->PieceTable.revision();
 	state.Cursor = data->PieceTable.cursor();
 	data->PieceTable.selection(state.SelectionStart, state.SelectionLength);
 	return state;
@@ -63,11 +65,14 @@ static TextState textState(UITextPrivate const* data)
 
 static void textPublish(UITextPrivate* data, UICanvasRaw canvas, TextState const& previous, bool edited)
 {
+	data->Composition.clear();
 	TextState now = textState(data);
-	if (previous.Text != now.Text)
+	if (previous.Revision != now.Revision)
 	{
-		data->OnTextChanged.signal(now.Text);
-		if (edited) data->OnTextEdited.signal(now.Text);
+		// Keep signal arguments stable if a slot edits the widget again.
+		UIString text = data->PieceTable.text();
+		data->OnTextChanged.signal(text);
+		if (edited) data->OnTextEdited.signal(text);
 	}
 	if (previous.Cursor != now.Cursor)
 		data->OnCursorPositionChanged.signal(previous.Cursor, now.Cursor);
@@ -106,18 +111,18 @@ static void textTrimBytes(UIString& text, size_t room)
 	text.resize(keep);
 }
 
-static size_t textRoom(UITextPrivate const* data)
+static size_t textRoom(UITextPrivate const* data, bool replaceSelection)
 {
 	if (data->MaxLength <= 0) return 0;
 	size_t current = data->PieceTable.size();
-	size_t selected = (size_t)std::max(0, data->PieceTable.selectionLength());
+	size_t selected = replaceSelection ? (size_t)std::max(0, data->PieceTable.selectionLength()) : 0;
 	if (current >= selected) current -= selected;
 	size_t limit = (size_t)data->MaxLength;
 	if (limit <= current) return 0;
 	return limit - current;
 }
 
-static bool textCommit(UITextPrivate* data, UICanvasRaw canvas, UIString text, bool merge)
+static bool textCommit(UITextPrivate* data, UICanvasRaw canvas, UIString text, bool merge, bool atEnd = false)
 {
 	if (data->ReadOnly)
 	{
@@ -126,7 +131,7 @@ static bool textCommit(UITextPrivate* data, UICanvasRaw canvas, UIString text, b
 	}
 	text = textNormalize(std::move(text));
 	if (text.empty()) return false;
-	size_t room = textRoom(data);
+	size_t room = textRoom(data, !atEnd);
 	if (room == 0)
 	{
 		data->OnInputRejected.signal();
@@ -140,7 +145,8 @@ static bool textCommit(UITextPrivate* data, UICanvasRaw canvas, UIString text, b
 	}
 	auto previous = textState(data);
 	data->PreferredX = -1;
-	if (data->PieceTable.insert(text, merge) == false) return false;
+	bool changed = atEnd ? data->PieceTable.insertAt(data->PieceTable.size(), text) : data->PieceTable.insert(text, merge);
+	if (!changed) return false;
 	textPublish(data, canvas, previous, true);
 	return true;
 }
@@ -208,22 +214,6 @@ static void textSelection(UIList<UIRect>& out, TextBox const& box, UIRect start,
 	push({ left, end.Y, std::max(0.0f, end.X - left), end.H });
 }
 
-static int32_t textBlockStart(UIString const& text, int32_t cursor)
-{
-	if (cursor < 0) return 0;
-	if (cursor > (int32_t)text.size()) cursor = (int32_t)text.size();
-	while (cursor > 0 && text[(size_t)cursor - 1] != '\n') --cursor;
-	return cursor;
-}
-
-static int32_t textNextBlock(UIString const& text, int32_t cursor)
-{
-	if (cursor < 0) cursor = 0;
-	while (cursor < (int32_t)text.size() && text[(size_t)cursor] != '\n') ++cursor;
-	if (cursor < (int32_t)text.size() && text[(size_t)cursor] == '\n') ++cursor;
-	return cursor;
-}
-
 static void textMoveVertical(UITextPrivate* data, UIPainterRaw painter, UIFont const& font, TextBox box, int32_t direction, float distance, bool mark)
 {
 	UIString const& text = data->PieceTable.text();
@@ -268,11 +258,14 @@ void UIText::layout(UIRect client)
 {
 	auto painter = getCanvas()->getPainter();
 	auto font = getStyle().Foreground.Font;
-	UIString const& text = PRIVATE()->PieceTable.text();
+	bool focused = getCanvas()->getFocus() == this;
+	if (!focused) PRIVATE()->Composition.clear();
+	auto shown = PRIVATE()->Composition.display(PRIVATE()->PieceTable, focused);
+	UIString const& text = shown.Text;
 	auto measure = [&](TextBox const& box, UIRect& caret)
 	{
 		painter->setFont(font);
-		UIRect bounds = painter->boundingRect(box.OriginX, box.OriginY, box.W, 0, text, (float)PRIVATE()->PieceTable.cursor(), &caret);
+		UIRect bounds = painter->boundingRect(box.OriginX, box.OriginY, box.W, 0, text, (float)shown.Cursor, &caret);
 		if (caret.H < 1.0f) caret.H = std::max(1.0f, (float)font.Size);
 		return bounds;
 	};
@@ -298,12 +291,10 @@ void UIText::layout(UIRect client)
 	PRIVATE()->Caret = caret;
 
 	PRIVATE()->Selection.clear();
-	int32_t start = 0, length = 0;
-	PRIVATE()->PieceTable.selection(start, length);
-	if (length > 0)
+	if (shown.CursorStart >= 0 && shown.CursorStart != shown.Cursor)
 	{
-		UIRect end = textCaretAt(painter, font, box, text, start + length);
-		UIRect from = textCaretAt(painter, font, box, text, start);
+		UIRect end = textCaretAt(painter, font, box, text, shown.Cursor);
+		UIRect from = textCaretAt(painter, font, box, text, shown.CursorStart);
 		textSelection(PRIVATE()->Selection, box, from, end);
 	}
 }
@@ -312,6 +303,7 @@ void UIText::paint(UIRect client, UIPainterRaw painter)
 {
 	UIWidget::paint(client, painter);
 	bool focused = getCanvas() && getCanvas()->getFocus() == this;
+	if (!focused) PRIVATE()->Composition.clear();
 	auto& widgetStyle = getEnable() == false ? getStyleDisabled()
 		: focused ? getStyleActive()
 		: getStyleNormal();
@@ -339,9 +331,21 @@ void UIText::paint(UIRect client, UIPainterRaw painter)
 
 	painter->setPen(UINoPen);
 	painter->setBrush(face.Text.Style == UIBrush::NoBrush ? style.Foreground.Brush : face.Text);
+	auto shown = PRIVATE()->Composition.display(PRIVATE()->PieceTable, focused);
 	UIRect caret;
-	painter->drawText(box.OriginX, box.OriginY, box.W, 0, PRIVATE()->PieceTable.text(), nullptr, (float)PRIVATE()->PieceTable.cursor(), &caret);
+	painter->drawText(box.OriginX, box.OriginY, box.W, 0, shown.Text, nullptr, (float)shown.Cursor, &caret);
 	if (caret.H < 1.0f) caret.H = std::max(1.0f, (float)style.Foreground.Font.Size);
+	if (shown.CompositionStart >= 0)
+	{
+		auto start = textCaretAt(painter, style.Foreground.Font, box, shown.Text, shown.CompositionStart);
+		auto end = textCaretAt(painter, style.Foreground.Font, box, shown.Text, shown.CompositionEnd);
+		UIList<UIRect> lines;
+		textSelection(lines, box, start, end);
+		painter->setPen(UICtrlAccentPen);
+		for (auto const& rect : lines)
+			for (float y = rect.Y + start.H; y <= rect.Y + rect.H + 0.5f; y += start.H)
+				painter->drawLine(rect.X, y - 1, rect.X + rect.W, y - 1);
+	}
 
 	if (focused)
 	{
@@ -405,6 +409,8 @@ bool UIText::getReadOnly() const
 void UIText::setReadOnly(bool value)
 {
 	PRIVATE()->ReadOnly = value;
+	if (value) PRIVATE()->Composition.clear();
+	if (getCanvas()) getCanvas()->layoutWidget();
 }
 
 bool UIText::getLineWrap() const
@@ -448,7 +454,10 @@ int32_t UIText::getCursorPosition(int32_t x, int32_t y) const
 	auto painter = getCanvas()->getPainter();
 	auto font = getStyle().Foreground.Font;
 	TextBox box = textBox(PRIVATE(), getBounds());
-	return textHit(painter, font, box, PRIVATE()->PieceTable.text(), (float)x, (float)y);
+	bool focused = getCanvas()->getFocus() == this;
+	auto shown = PRIVATE()->Composition.display(PRIVATE()->PieceTable, focused);
+	int32_t offset = textHit(painter, font, box, shown.Text, (float)x, (float)y);
+	return focused ? PRIVATE()->Composition.documentOffset(PRIVATE()->PieceTable, offset) : offset;
 }
 
 void UIText::setCursorPosition(int32_t value)
@@ -516,6 +525,8 @@ UIString UIText::getText() const
 
 void UIText::setText(UIString const& value)
 {
+	PRIVATE()->Composition.clear();
+	if (getCanvas()) getCanvas()->layoutWidget();
 	UIString text = textNormalize(value);
 	textTrimBytes(text, PRIVATE()->MaxLength > 0 ? (size_t)PRIVATE()->MaxLength : 0);
 	auto previous = textState(PRIVATE());
@@ -528,16 +539,12 @@ void UIText::append(UIString const& text)
 {
 	UIString block = textNormalize(text);
 	if (PRIVATE()->PieceTable.empty() == false) block.insert(0, 1, '\n');
-	PRIVATE()->PieceTable.moveCaret((int32_t)PRIVATE()->PieceTable.size(), false);
-	textCommit(PRIVATE(), getCanvas(), block, false);
+	textCommit(PRIVATE(), getCanvas(), block, false, true);
 }
 
 int32_t UIText::getBlockCount() const
 {
-	int32_t count = 1;
-	for (char value : PRIVATE()->PieceTable.text())
-		if (value == '\n') ++count;
-	return count;
+	return int32_t(std::min(PRIVATE()->PieceTable.lineCount(), size_t(INT32_MAX)));
 }
 
 bool UIText::isModified() const
@@ -650,9 +657,14 @@ void UIText::cursorDown(bool mark)
 
 void UIText::home(bool mark)
 {
-	if (getCanvas() == nullptr || getCanvas()->getPainter() == nullptr) return;
 	auto previous = textState(PRIVATE());
 	PRIVATE()->PreferredX = -1;
+	if (!getLineWrap() || getCanvas() == nullptr || getCanvas()->getPainter() == nullptr)
+	{
+		PRIVATE()->PieceTable.moveLineHome(mark);
+		textPublish(PRIVATE(), getCanvas(), previous, false);
+		return;
+	}
 	auto font = getStyle().Foreground.Font;
 	TextBox box = textBox(PRIVATE(), getBounds());
 	UIRect caret = textCaretAt(getCanvas()->getPainter(), font, box, PRIVATE()->PieceTable.text(), PRIVATE()->PieceTable.cursor());
@@ -663,9 +675,14 @@ void UIText::home(bool mark)
 
 void UIText::end(bool mark)
 {
-	if (getCanvas() == nullptr || getCanvas()->getPainter() == nullptr) return;
 	auto previous = textState(PRIVATE());
 	PRIVATE()->PreferredX = -1;
+	if (!getLineWrap() || getCanvas() == nullptr || getCanvas()->getPainter() == nullptr)
+	{
+		PRIVATE()->PieceTable.moveLineEnd(mark);
+		textPublish(PRIVATE(), getCanvas(), previous, false);
+		return;
+	}
 	auto font = getStyle().Foreground.Font;
 	TextBox box = textBox(PRIVATE(), getBounds());
 	UIRect caret = textCaretAt(getCanvas()->getPainter(), font, box, PRIVATE()->PieceTable.text(), PRIVATE()->PieceTable.cursor());
@@ -714,6 +731,7 @@ void UIText::paste(UIString const& text)
 
 void UIText::redo()
 {
+	if (PRIVATE()->ReadOnly) { PRIVATE()->OnInputRejected.signal(); return; }
 	auto previous = textState(PRIVATE());
 	PRIVATE()->PreferredX = -1;
 	if (PRIVATE()->PieceTable.redo() == false) return;
@@ -722,6 +740,7 @@ void UIText::redo()
 
 void UIText::undo()
 {
+	if (PRIVATE()->ReadOnly) { PRIVATE()->OnInputRejected.signal(); return; }
 	auto previous = textState(PRIVATE());
 	PRIVATE()->PreferredX = -1;
 	if (PRIVATE()->PieceTable.undo() == false) return;
@@ -731,6 +750,14 @@ void UIText::undo()
 void UIText::keyPressEvent(UIKeyEventRaw event)
 {
 	if (event == nullptr) return;
+	if (getCanvas() == nullptr || getCanvas()->getFocus() != this) return;
+	if (PRIVATE()->Composition.active(PRIVATE()->PieceTable))
+	{
+		// Navigation, deletion and Enter belong to the IME during composition.
+		event->Accept = true;
+		return;
+	}
+
 	bool shift = (event->Modifiers & UIInputEnum::KEY_MOD_SHIFT) != 0;
 	bool ctrl = (event->Modifiers & UIInputEnum::KEY_MOD_CTRL) != 0;
 	if (event->Key == UIInputEnum::KEY_ENTER)
@@ -794,9 +821,8 @@ void UIText::keyPressEvent(UIKeyEventRaw event)
 		{
 			auto previous = textState(PRIVATE());
 			PRIVATE()->PreferredX = -1;
-			int32_t cursor = PRIVATE()->PieceTable.cursor();
-			int32_t start = textBlockStart(PRIVATE()->PieceTable.text(), cursor);
-			int32_t index = start == 0 ? 0 : textBlockStart(PRIVATE()->PieceTable.text(), start - 1);
+			size_t line = PRIVATE()->PieceTable.positionAt(PRIVATE()->PieceTable.cursor()).Line;
+			int32_t index = int32_t(PRIVATE()->PieceTable.lineStart(line == 0 ? 0 : line - 1));
 			PRIVATE()->PieceTable.moveCaret(index, shift);
 			textPublish(PRIVATE(), getCanvas(), previous, false);
 		}
@@ -809,7 +835,8 @@ void UIText::keyPressEvent(UIKeyEventRaw event)
 		{
 			auto previous = textState(PRIVATE());
 			PRIVATE()->PreferredX = -1;
-			int32_t index = textNextBlock(PRIVATE()->PieceTable.text(), PRIVATE()->PieceTable.cursor());
+			size_t line = PRIVATE()->PieceTable.positionAt(PRIVATE()->PieceTable.cursor()).Line;
+			int32_t index = int32_t(PRIVATE()->PieceTable.lineStart(line + 1));
 			PRIVATE()->PieceTable.moveCaret(index, shift);
 			textPublish(PRIVATE(), getCanvas(), previous, false);
 		}
@@ -876,8 +903,7 @@ void UIText::keyPressEvent(UIKeyEventRaw event)
 	}
 	else if (event->Key == UIInputEnum::KEY_Z && ctrl)
 	{
-		if (shift) redo();
-		else undo();
+		undo();
 		event->Accept = true;
 	}
 	else if (event->Key == UIInputEnum::KEY_Y && ctrl)
@@ -889,17 +915,27 @@ void UIText::keyPressEvent(UIKeyEventRaw event)
 
 void UIText::inputEvent(UITextInputEventRaw event)
 {
-	if (event == nullptr || event->Done == false) return;
-	if (getCanvas()->getFocus() != this) return;
+	if (event == nullptr) return;
+	if (getCanvas() == nullptr || getCanvas()->getFocus() != this) return;
 	if (PRIVATE()->ReadOnly)
 	{
 		PRIVATE()->OnInputRejected.signal();
 		return;
 	}
-	insert(event->Text);
-	TextBox box = textBox(PRIVATE(), getBounds());
-	UIRect caret = textCaretAt(getCanvas()->getPainter(), getStyle().Foreground.Font, box, PRIVATE()->PieceTable.text(), PRIVATE()->PieceTable.cursor());
-	PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), caret));
+	if (!event->Done)
+		PRIVATE()->Composition.update(PRIVATE()->PieceTable, event->Text, event->Start, event->Length);
+	else
+	{
+		bool composing = PRIVATE()->Composition.pending(PRIVATE()->PieceTable);
+		PRIVATE()->Composition.clear();
+		textCommit(PRIVATE(), getCanvas(), event->Text, !composing);
+		if (composing) PRIVATE()->PieceTable.endUndoGroup();
+	}
+	event->Accept = true;
+	getCanvas()->layoutWidget();
+	if (getCanvas()->getPainter() == nullptr) return;
+	layout(getBounds());
+	PRIVATE()->OnEditingStarted.signal(UIOverlap(getViewport(), PRIVATE()->Caret));
 }
 
 void UIText::wheelEvent(UIMouseWheelEventRaw event)
@@ -932,8 +968,7 @@ void UIText::mousePressEvent(UIMouseEventRaw event)
 		{
 			auto painter = getCanvas()->getPainter();
 			auto font = getStyle().Foreground.Font;
-			TextBox box = textBox(PRIVATE(), getBounds());
-			int32_t cursor = textHit(painter, font, box, PRIVATE()->PieceTable.text(), (float)event->X, (float)event->Y);
+			int32_t cursor = getCursorPosition(event->X, event->Y);
 			auto previous = textState(PRIVATE());
 			PRIVATE()->PreferredX = -1;
 			PRIVATE()->PieceTable.beginDrag(cursor);
@@ -947,6 +982,7 @@ void UIText::mousePressEvent(UIMouseEventRaw event)
 	}
 	else
 	{
+		PRIVATE()->Composition.clear();
 		if (getCanvas()->getFocus() == this && getCanvas()->getDevice())
 		{
 			getCanvas()->getDevice()->setKeyboard(false);
@@ -989,6 +1025,8 @@ void UIText::focusInEvent(UIFocusEventRaw event)
 
 void UIText::focusOutEvent(UIFocusEventRaw event)
 {
+	PRIVATE()->Composition.clear();
+	if (getCanvas()) getCanvas()->layoutWidget();
 	PRIVATE()->PieceTable.endUndoGroup();
 	if (getCanvas()->getFocus() == this && getCanvas()->getDevice()) getCanvas()->getDevice()->setKeyboard(false);
 	PRIVATE()->OnEditingFinished.signal();

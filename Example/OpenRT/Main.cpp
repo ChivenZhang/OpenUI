@@ -20,6 +20,9 @@ void desktop(UICanvasRaw canvas);
 
 int main()
 {
+	// Render preedit text in UIInput/UIText; keep the native candidate list.
+	// Windows only emits SDL_EVENT_TEXT_EDITING when composition is enabled.
+	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "composition");
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
@@ -46,7 +49,7 @@ int main()
 	// 		button {
 	// 			width: 120px;
 	// 			height: 40px;
-	// 			border-radius: 8px;
+	// 			border-radius: 4px;
 	// 		}
 	// 		button:hover {
 	// 			background-color: #ff0000;
@@ -59,13 +62,11 @@ int main()
 	// 		}
 	// 	</style>
 	// 	<div>
-	// 		<button class="a" >Button</button>
+	// 		<button class="a">Button</button>
 	// 	</div>
 	// )"));
 
-	// desktop(canvas);
-
-	sample(canvas, window);
+	sample(canvas, device->getWindow());
 
 	while (device->update()) continue;
 	device = nullptr;

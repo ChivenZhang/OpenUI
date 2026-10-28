@@ -21,6 +21,7 @@ public:
 	};
 	struct style_t
 	{
+		// Pseudo-class states are appended to Name, e.g. "font-size:hover".
 		UIString Name, Value;
 		uint32_t Priority;
 	};
