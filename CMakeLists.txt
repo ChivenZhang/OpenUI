@@ -18,8 +18,8 @@ endif()
 find_package(PkgConfig REQUIRED)
 
 include_directories(${OPENUI_SOURCE_DIR})
+include_directories(${OPENUI_EXTERNAL_DIR})
 include_directories(${OPENUI_EXTERNAL_DIR}/yoga)
-include_directories(${OPENUI_EXTERNAL_DIR}/OpenRT)
 add_subdirectory(OpenUI)
 add_subdirectory(External/yoga)
 

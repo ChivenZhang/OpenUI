@@ -10,9 +10,8 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_OPENRT
 #include "OpenRTRender.h"
-#include <OpenRT.h>
+#include <OpenRT/OpenRTX.h>
 #include <OpenUI/UICanvas.h>
-#include "OpenRTX.h"
 
 OpenRTRender::OpenRTRender(UICanvasRaw canvas)
     :

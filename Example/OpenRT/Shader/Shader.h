@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenRT.h"
+#include <OpenRT/OpenRT.h>
 #include "OpenGL/Screen.h"
 #include "Vulkan/Screen.h"
 #include "DirectX/Screen.h"

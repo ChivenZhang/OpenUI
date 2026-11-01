@@ -11,7 +11,6 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_OPENRT
 #include <OpenUI/UIDevice.h>
-#include <OpenRT.h>
 #include <SDL3/SDL.h>
 
 class OpenRTDevice : public UIDevice

@@ -1,6 +1,6 @@
 #pragma once
 #include "nanovg.h"
-#include "OpenRT.h"
+#include <OpenRT/OpenRT.h>
 
 // Create flags for rtCreateRT(). Same bit layout as nanovg_gl.h's NVGcreateFlags,
 // named differently so both headers can coexist in one translation unit.

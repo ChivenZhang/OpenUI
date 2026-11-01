@@ -9,8 +9,8 @@
 *
 * =================================================*/
 #define OPENRTX_IMPLEMENTATION
-#include <OpenRTX.h>
-#include <OpenGL.h>
+#include <OpenRT/OpenRTX.h>
+#include <OpenRT/OpenGL.h>
 #include <SDL3/SDL.h>
 #include "OpenRTDevice.h"
 

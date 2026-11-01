@@ -11,7 +11,7 @@
 * =================================================*/
 #ifdef OPENUI_ENABLE_OPENRT
 #include <OpenUI/UIRender.h>
-#include <OpenRT.h>
+#include <OpenRT/OpenRT.h>
 
 class OpenRTRender : public UIRender
 {

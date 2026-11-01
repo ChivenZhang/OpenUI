@@ -13,26 +13,8 @@
 #include "OpenRTRender.h"
 #include "OpenRTPainter.h"
 #include "../SDL3InputEnum.h"
-#include "OpenGL.h"
-
-static void presentFrame(rt_module_render_t& module, rt_mesh_t& mesh, int width, int height, rt_texture_t* source)
-{
-	rt_pass_render_t pass = {};
-	pass.screen.color.clear = true;
-	pass.screen.color.value = {0.3f, 0.3f, 0.32f, 1.0f};
-	pass.screen.color.blend.src = RT_BLEND_ONE;
-	pass.screen.color.blend.dst = RT_BLEND_ONE_MINUS_SRC_ALPHA;
-	rt_begin_render(pass);
-	rt_set_viewport(0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f);
-	if (source && source->handle && module.handle && mesh.handle)
-	{
-		rt_bind_module_render(module);
-		rt_bind_texture(*source, {.binding = 0});
-		rt_draw_mesh(mesh);
-	}
-	rt_end_render(pass);
-	rt_submit();
-}
+#include <OpenRT/OpenRTX.h>
+#include <OpenRT/OpenGL.h>
 
 OpenRTDevice::OpenRTDevice()
 {
