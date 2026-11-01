@@ -12,7 +12,7 @@
 #include "OpenRTDevice.h"
 #include "OpenRTRender.h"
 #include "OpenRTPainter.h"
-#include "../SDL3InputEnum.h"
+#include "SDL3InputEnum.h"
 #include <OpenRT/OpenRTX.h>
 #include <OpenRT/OpenGL.h>
 
