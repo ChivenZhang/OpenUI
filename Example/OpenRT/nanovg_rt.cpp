@@ -36,7 +36,7 @@ enum RTVGbinding
 	RTVG_TEX_BINDING = 2,
 };
 
-// rt_bind_buffer binds a sub-range of the uniform buffer, so every block must
+// Bindings record a sub-range of the uniform buffer, so every block must
 // start at an offset that satisfies the strictest alignment any backend asks for.
 constexpr size_t RTVG_UNIFORM_ALIGN = 256;
 
@@ -44,6 +44,7 @@ struct RTVGtexture
 {
 	rt_texture_t texture;
 	rt_sampler_t sampler;
+	rt_binding_t binding;
 	int id;
 	int width, height;
 	int type;
@@ -243,6 +244,7 @@ static int rt_renderDeleteTexture(void* uptr, int image)
 
 	if (auto tex = nvg_findTexture(rt, image))
 	{
+		if (tex->binding.handle) rt_destroy_binding(tex->binding);
 		rt_destroy_sampler(tex->sampler);
 		if ((tex->flags & RTVG_IMAGE_NODELETE) == 0) rt_destroy_texture(tex->texture);
 		rt->textures.erase(image);
@@ -483,21 +485,65 @@ static RTVGpipeline nvg_pipelinePlain(RTVGcontext* rt, const RTVGcall* call)
 // ====================================================================
 // Draw calls (all run inside the offscreen render pass opened by renderFlush)
 
+static void nvg_releaseBindings(RTVGcontext* rt)
+{
+	for (auto& item : rt->textures)
+	{
+		if (item.second.binding.handle == 0) continue;
+		rt_destroy_binding(item.second.binding);
+		item.second.binding = {};
+	}
+}
+
 static void nvg_bindPipeline(RTVGcontext* rt, const RTVGpipeline& p, int uniformOffset, int image)
 {
 	rt_bind_module_render(nvg_getModule(rt, p));
-	rt_bind_buffer(rt->viewBuf, { .binding = RTVG_VIEW_BINDING, .offset = rt->viewOffset, .size = sizeof(RTVGviewUniforms) });
-	rt_bind_buffer(rt->fragBuf, { .binding = RTVG_FRAG_BINDING, .offset = (size_t)uniformOffset, .size = rt->fragSize });
 
 	RTVGtexture* tex = nullptr;
 	if (image != 0) tex = nvg_findTexture(rt, image);
 	// If no image is set, use empty texture
 	if (tex == nullptr) tex = nvg_findTexture(rt, rt->dummyTex);
-	if (tex != nullptr)
+	if (tex == nullptr) return;
+
+	if (tex->binding.handle == 0)
 	{
-		rt_bind_texture(tex->texture, { .binding = RTVG_TEX_BINDING });
-		rt_bind_sampler(tex->sampler, { .binding = shader::fill_sampler_binding(rt_get_backend()) });
+		uint32_t samplerBinding = shader::fill_sampler_binding(rt_get_backend());
+		tex->binding = rt_create_binding({
+			.layout = rt->layout,
+			.entry = {
+				{
+					.binding = RTVG_FRAG_BINDING,
+					.buffer = rt->fragBuf,
+					.buffer_bind = {.binding = RTVG_FRAG_BINDING, .offset = (size_t)uniformOffset, .size = rt->fragSize},
+				},
+				{
+					.binding = RTVG_VIEW_BINDING,
+					.buffer = rt->viewBuf,
+					.buffer_bind = {.binding = RTVG_VIEW_BINDING, .offset = rt->viewOffset, .size = sizeof(RTVGviewUniforms)},
+				},
+				{
+					.binding = RTVG_TEX_BINDING,
+					.texture = tex->texture.default_view,
+					.texture_bind = {.binding = RTVG_TEX_BINDING},
+				},
+				{
+					.binding = samplerBinding,
+					.sampler = tex->sampler,
+					.sampler_bind = {.binding = samplerBinding},
+				},
+			},
+		});
 	}
+	else
+	{
+		tex->binding.entry[0].buffer = rt->fragBuf;
+		tex->binding.entry[0].buffer_bind.offset = (size_t)uniformOffset;
+		tex->binding.entry[0].buffer_bind.size = rt->fragSize;
+		tex->binding.entry[1].buffer = rt->viewBuf;
+		tex->binding.entry[1].buffer_bind.offset = rt->viewOffset;
+		tex->binding.entry[1].buffer_bind.size = sizeof(RTVGviewUniforms);
+	}
+	rt_bind_binding(tex->binding);
 }
 
 static void nvg_fill(RTVGcontext* rt, RTVGcall* call)
@@ -594,13 +640,14 @@ static void nvg_triangles(RTVGcontext* rt, RTVGcall* call)
 // ====================================================================
 // Frame
 
-static void nvg_ensureBuffer(rt_buffer_t& buffer, size_t needed, rt_buffer_usages_t usage)
+static bool nvg_ensureBuffer(rt_buffer_t& buffer, size_t needed, rt_buffer_usages_t usage)
 {
-	if (needed <= buffer.size) return;
+	if (needed <= buffer.size) return false;
 	size_t size = buffer.size ? buffer.size : 1024;
 	while (size < needed) size *= 2;
 	rt_destroy_buffer(buffer);
 	buffer = rt_create_buffer({ .size = size, .usages = usage, });
+	return true;
 }
 
 static void rt_renderViewport(void* uptr, float width, float height, float devicePixelRatio)
@@ -717,9 +764,10 @@ static void rt_renderFlush(void* uptr)
 		size_t vertBytes = (size_t)rt->nverts * sizeof(NVGvertex);
 		size_t fragBytes = (size_t)rt->nuniforms * rt->fragSize;
 		size_t viewBytes = passes.size() * RTVG_UNIFORM_ALIGN;
-		nvg_ensureBuffer(rt->vertBuf, vertBytes, RT_BUFFER_USAGE_VERTEX | RT_BUFFER_USAGE_COPY_DST);
-		nvg_ensureBuffer(rt->fragBuf, fragBytes, RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST);
-		nvg_ensureBuffer(rt->viewBuf, viewBytes, RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST);
+		bool grown = false;
+		grown |= nvg_ensureBuffer(rt->vertBuf, vertBytes, RT_BUFFER_USAGE_VERTEX | RT_BUFFER_USAGE_COPY_DST);
+		grown |= nvg_ensureBuffer(rt->fragBuf, fragBytes, RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST);
+		grown |= nvg_ensureBuffer(rt->viewBuf, viewBytes, RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST);
 
 		std::vector<uint8_t> views(viewBytes);
 		for (size_t p = 0; p < passes.size(); ++p)
@@ -736,6 +784,8 @@ static void rt_renderFlush(void* uptr)
 			rt_copy_buffer_data({ .data = rt->uniforms.data(), .size = fragBytes, }, { .buffer = rt->fragBuf, }, fragBytes);
 		rt_copy_buffer_data({ .data = views.data(), .size = viewBytes, }, { .buffer = rt->viewBuf, }, viewBytes);
 		rt_end_transfer(transfer);
+		// A reallocated uniform buffer is a new GPU object, so bindings that captured the old one are stale.
+		if (grown) nvg_releaseBindings(rt);
 	}
 
 	for (size_t p = 0; p < passes.size(); ++p)
@@ -1036,6 +1086,7 @@ static void rt_renderDelete(void* uptr)
 
 	for (auto& texture : rt->textures)
 	{
+		if (texture.second.binding.handle) rt_destroy_binding(texture.second.binding);
 		rt_destroy_sampler(texture.second.sampler);
 		if ((texture.second.flags & RTVG_IMAGE_NODELETE) == 0)  rt_destroy_texture(texture.second.texture);
 	}

@@ -11,6 +11,7 @@
 #ifdef OPENUI_ENABLE_OPENRT
 #include "OpenRTRender.h"
 #include <OpenRT/OpenRTX.h>
+#include <map>
 #include <OpenUI/UICanvas.h>
 
 OpenRTRender::OpenRTRender(UICanvasRaw canvas)
@@ -155,11 +156,22 @@ void OpenRTRender::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIIma
         .vertex = {rt_vertex_vertex, {}, rt_vertex_uv,},
     });
     static auto sampler = rt_create_sampler({.min_filter = RT_LINEAR, .mag_filter = RT_LINEAR, .address_u = RT_CLAMP_TO_EDGE, .address_v = RT_CLAMP_TO_EDGE, .address_w = RT_CLAMP_TO_EDGE,});
+    static std::map<uint32_t, rt_binding_t> bindings;
+    auto& binding = bindings[src->default_view.handle];
+    if (binding.handle == 0)
+    {
+        binding = rt_create_binding({
+            .layout = layout,
+            .entry = {
+                {.binding = 0, .texture = src->default_view, .texture_bind = {.binding = 0}},
+                {.binding = 0, .sampler = sampler, .sampler_bind = {.binding = 0}},
+            },
+        });
+    }
     rt_pass_render_t pass{.colors = {{.texture_view = dst->default_view, .clear = false,}},};
     rt_begin_render(pass);
     rt_bind_module_render(module);
-    rt_bind_texture_view(src->default_view, {.binding = 0,});
-    rt_bind_sampler(sampler, {.binding = 0,});
+    rt_bind_binding(binding);
     static auto screen = rt_create_mesh_screen();
     rt_draw_mesh(screen);
     rt_end_render(pass);
