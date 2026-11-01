@@ -159,6 +159,7 @@ struct RTVGcontext
 	rt_buffer_t vertBuf;
 	rt_buffer_t fragBuf;
 	rt_buffer_t viewBuf;
+	rt_layout_t layout;
 
 	// Render modules keyed by fixed-function state.
 	std::map<RTVGmoduleKey, rt_module_render_t> modules;
@@ -206,7 +207,7 @@ static int rt_renderCreateTexture(void* uptr, int type, int w, int h, int imageF
 	info.height = (uint32_t)h;
 	info.target = RT_TEXTURE_2D;
 	info.format = (type == NVG_TEXTURE_RGBA) ? RT_TEXTURE_RGBA8UNORM : RT_TEXTURE_R8UNORM;
-	info.usage = RT_TEXTURE_USAGE_COPY_SRC | RT_TEXTURE_USAGE_COPY_DST | RT_TEXTURE_USAGE_TEXTURE_BINDING;
+	info.usages = RT_TEXTURE_USAGE_COPY_SRC | RT_TEXTURE_USAGE_COPY_DST | RT_TEXTURE_USAGE_TEXTURE_BINDING;
 	info.min_filter = minFilter;
 	info.mag_filter = magFilter;
 	info.address_u = addressU;
@@ -422,10 +423,10 @@ static rt_module_render_t& nvg_getModule(RTVGcontext* rt, const RTVGpipeline& p)
 	auto found = rt->modules.find(key);
 	if (found != rt->modules.end()) return found->second;
 
-	rt_module_render_info_t info = {};
 	auto backend = rt_get_backend();
 	auto vs = shader::fill_vs(backend);
 	auto fs = shader::fill_fs(backend);
+	rt_module_render_info_t info = { .layout = rt->layout };
 	info.vshader = { vs.code, vs.size, vs.entry };
 	info.fshader = { fs.code, fs.size, fs.entry };
 
@@ -456,10 +457,6 @@ static rt_module_render_t& nvg_getModule(RTVGcontext* rt, const RTVGpipeline& p)
 	info.stencil.back.zpass = p.back.zpass;
 
 	nvg_setVertexLayout(info);
-	info.binding[0] = { .binding = RTVG_FRAG_BINDING, .type = RT_BINDING_UNIFORM_BUFFER };
-	info.binding[1] = { .binding = RTVG_VIEW_BINDING, .type = RT_BINDING_UNIFORM_BUFFER };
-	info.binding[2] = { .binding = RTVG_TEX_BINDING, .type = RT_BINDING_TEXTURE };
-	info.binding[3] = { .binding = shader::fill_sampler_binding(backend), .type = RT_BINDING_SAMPLER };
 
 	info.cull_mode = p.cull;
 	info.wind_mode = RT_CCW;
@@ -603,7 +600,7 @@ static void nvg_ensureBuffer(rt_buffer_t& buffer, size_t needed, rt_buffer_usage
 	size_t size = buffer.size ? buffer.size : 1024;
 	while (size < needed) size *= 2;
 	rt_destroy_buffer(buffer);
-	buffer = rt_create_buffer({ .size = size, .usage = usage, });
+	buffer = rt_create_buffer({ .size = size, .usages = usage, });
 }
 
 static void rt_renderViewport(void* uptr, float width, float height, float devicePixelRatio)
@@ -1004,10 +1001,20 @@ static int rt_renderCreate(void* uptr)
 
 	rt->fragSize = (sizeof(RTVGfragUniforms) + RTVG_UNIFORM_ALIGN - 1) & ~(RTVG_UNIFORM_ALIGN - 1);
 
+	auto backend = rt_get_backend();
+	rt->layout = rt_create_layout({
+		.entry = {
+			{.binding = RTVG_FRAG_BINDING, .stages = RT_STAGE_FRAGMENT, .type = RT_BINDING_UNIFORM_BUFFER},
+			{.binding = RTVG_VIEW_BINDING, .stages = RT_STAGE_VERTEX, .type = RT_BINDING_UNIFORM_BUFFER},
+			{.binding = RTVG_TEX_BINDING, .stages = RT_STAGE_FRAGMENT, .type = RT_BINDING_TEXTURE},
+			{.binding = shader::fill_sampler_binding(backend), .stages = RT_STAGE_FRAGMENT, .type = RT_BINDING_SAMPLER},
+		},
+	});
+
 	// Dynamic per-frame buffers; grown on demand in renderFlush.
-	rt->vertBuf = rt_create_buffer({ .size = sizeof(NVGvertex) * 4096, .usage = RT_BUFFER_USAGE_VERTEX | RT_BUFFER_USAGE_COPY_DST, });
-	rt->fragBuf = rt_create_buffer({ .size = rt->fragSize * 128, .usage = RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST, });
-	rt->viewBuf = rt_create_buffer({ .size = RTVG_UNIFORM_ALIGN, .usage = RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST, });
+	rt->vertBuf = rt_create_buffer({ .size = sizeof(NVGvertex) * 4096, .usages = RT_BUFFER_USAGE_VERTEX | RT_BUFFER_USAGE_COPY_DST, });
+	rt->fragBuf = rt_create_buffer({ .size = rt->fragSize * 128, .usages = RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST, });
+	rt->viewBuf = rt_create_buffer({ .size = RTVG_UNIFORM_ALIGN, .usages = RT_BUFFER_USAGE_UNIFORM | RT_BUFFER_USAGE_COPY_DST, });
 
 	// Some platforms does not allow to have samples to unset textures.
 	// Create empty one which is bound when there's no texture specified.
@@ -1025,6 +1032,7 @@ static void rt_renderDelete(void* uptr)
 	for (auto& module : rt->modules)
 		rt_destroy_module_render(module.second);
 	rt->modules.clear();
+	rt_destroy_layout(rt->layout);
 
 	for (auto& texture : rt->textures)
 	{

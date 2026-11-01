@@ -487,7 +487,7 @@ void OpenRTPainter::setTarget(UIImageRaw value)
 				slot.stencil = rt_create_texture({
 					.width = color->width, .height = color->height, .target = RT_TEXTURE_2D,
 					.format = RT_TEXTURE_DEPTH24PLUS_STENCIL8,
-					.usage = RT_TEXTURE_USAGE_RENDER_ATTACHMENT,
+					.usages = RT_TEXTURE_USAGE_RENDER_ATTACHMENT,
 					.min_filter = RT_NEAREST, .mag_filter = RT_NEAREST,
 					.address_u = RT_CLAMP_TO_EDGE, .address_v = RT_CLAMP_TO_EDGE, .address_w = RT_CLAMP_TO_EDGE,
 					.mipmaps = 1,
