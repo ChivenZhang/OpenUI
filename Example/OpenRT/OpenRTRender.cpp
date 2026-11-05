@@ -58,6 +58,7 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
         rt_texture_t texture = rt_create_texture({
             .width = width,
             .height = height,
+            .mipmaps = 1,
             .target = RT_TEXTURE_2D,
             .format = RT_TEXTURE_RGBA8UNORM,
             .usages = RT_TEXTURE_USAGE_COPY_SRC | RT_TEXTURE_USAGE_COPY_DST | RT_TEXTURE_USAGE_TEXTURE_BINDING | RT_TEXTURE_USAGE_RENDER_ATTACHMENT,
@@ -66,7 +67,6 @@ UIImage OpenRTRender::newImage(uint32_t width, uint32_t height)
             .address_u = RT_CLAMP_TO_BORDER,
             .address_v = RT_CLAMP_TO_BORDER,
             .address_w = RT_CLAMP_TO_BORDER,
-            .mipmaps = 1,
             .border = {0.0f, 0.0f, 0.0f, 0.0f},
         });
         auto result = m_Textures.emplace(texture.handle, texture);
@@ -95,7 +95,7 @@ void OpenRTRender::delImage(UIImage value)
     m_Targets.emplace_back(value);
 
     auto& texture = *(rt_texture_t*)value.Texture;
-    rt_pass_render_t pass{.colors = {{.texture_view = texture.default_view, .clear = true,}},};
+    rt_pass_render_t pass{.colors = {{.texture = texture.default_view, .clear = true,}},};
     rt_begin_render(pass);
     rt_end_render(pass);
 }
@@ -168,7 +168,7 @@ void OpenRTRender::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIIma
             },
         });
     }
-    rt_pass_render_t pass{.colors = {{.texture_view = dst->default_view, .clear = false,}},};
+    rt_pass_render_t pass{.colors = {{.texture = dst->default_view, .clear = false,}},};
     rt_begin_render(pass);
     rt_bind_module_render(module);
     rt_bind_binding(binding);

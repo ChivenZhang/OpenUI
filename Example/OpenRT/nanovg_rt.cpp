@@ -796,8 +796,8 @@ static void rt_renderFlush(void* uptr)
 
 		// Stencil is cleared on every pass so fill winding starts from zero.
 		rt_pass_render_t pass = {
-			.colors = { { .texture_view = batch.color, .clear = false, } },
-			.depth = { .texture_view = batch.stencil, .clear = true, },
+			.colors = { { .texture = batch.color, .clear = false, } },
+			.depth = { .texture = batch.stencil, .clear = true, },
 			.stencil = { .clear = true, .value = 0, .refer = 0, },
 		};
 		rt_begin_render(pass);
