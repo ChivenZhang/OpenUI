@@ -163,8 +163,8 @@ void OpenRTRender::render(UIRect client, UIMat4 matrix, UIImageRaw srcImg, UIIma
         binding = rt_create_binding({
             .layout = layout,
             .entry = {
-                {.binding = 0, .texture = src->default_view, .texture_bind = {.binding = 0}},
-                {.binding = 0, .sampler = sampler, .sampler_bind = {.binding = 0}},
+                {.binding = 0, .texture = src->default_view,},
+                {.binding = 0, .sampler = sampler,},
             },
         });
     }

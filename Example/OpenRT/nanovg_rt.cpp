@@ -514,22 +514,20 @@ static void nvg_bindPipeline(RTVGcontext* rt, const RTVGpipeline& p, int uniform
 				{
 					.binding = RTVG_FRAG_BINDING,
 					.buffer = rt->fragBuf,
-					.buffer_bind = {.binding = RTVG_FRAG_BINDING, .offset = (size_t)uniformOffset, .size = rt->fragSize},
+					.buffer_bind = {.offset = (size_t)uniformOffset, .size = rt->fragSize},
 				},
 				{
 					.binding = RTVG_VIEW_BINDING,
 					.buffer = rt->viewBuf,
-					.buffer_bind = {.binding = RTVG_VIEW_BINDING, .offset = rt->viewOffset, .size = sizeof(RTVGviewUniforms)},
+					.buffer_bind = {.offset = rt->viewOffset, .size = sizeof(RTVGviewUniforms)},
 				},
 				{
 					.binding = RTVG_TEX_BINDING,
 					.texture = tex->texture.default_view,
-					.texture_bind = {.binding = RTVG_TEX_BINDING},
 				},
 				{
 					.binding = samplerBinding,
 					.sampler = tex->sampler,
-					.sampler_bind = {.binding = samplerBinding},
 				},
 			},
 		});
